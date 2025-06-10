@@ -1,0 +1,52 @@
+#page-home-panel-chat {
+  width: 100%;
+  padding: 64px 0;
+
+  .chat-header {
+    height: 64px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    padding: 16px 0 10px;
+    z-index: 10;
+    background-color: var(--mantine-color-body);
+
+    .mantine-Tabs-list {
+      padding: 0 20px;
+    }
+
+    .action {
+      position: absolute;
+      top: 0;
+      right: 0;
+      height: 100%;
+      padding: 16px 20px 10px;
+    }
+  }
+
+  .mantine-Tabs-tab {
+    padding-bottom: 0.75rem;
+    margin-right: 1.5rem;
+  }
+
+  .mantine-Avatar-root {
+    border-radius: 4px;
+  }
+  .chats {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(480px, 100%), 1fr));
+    justify-content: start;
+    .chat {
+      padding: 5px 20px;
+      cursor: pointer;
+      &:hover {
+        background-color: var(--tab-background);
+      }
+    }
+  }
+}

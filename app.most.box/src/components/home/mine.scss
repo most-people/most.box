@@ -1,0 +1,30 @@
+#page-home-panel-mine {
+  max-width: 400px;
+  width: 100%;
+  margin: 8px;
+  padding-bottom: 64px;
+  .header {
+    background-color: var(--tab-background);
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+  }
+
+  .menu-list {
+    background-color: var(--tab-background);
+    border-radius: 8px;
+    .menu-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 20px;
+      text-decoration: none;
+      color: var(--tab-color);
+      height: 64px;
+
+      &:hover {
+        color: var(--tab-active-text);
+      }
+    }
+  }
+}

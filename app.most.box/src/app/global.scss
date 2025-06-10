@@ -1,0 +1,107 @@
+:root {
+  --red: #c93721;
+}
+:root[data-mantine-color-scheme="light"] {
+  --tab-background: #0000000a;
+  --tab-color: #8e8e8f;
+
+  --message-background: rgba(0, 0, 0, 0.04);
+  --message-color: #222325;
+}
+:root[data-mantine-color-scheme="dark"] {
+  --mantine-color-body: #151718;
+  --tab-background: #ffffff0a;
+  --tab-color: #787c80;
+
+  --message-background: #f5faf70a;
+  --message-color: #fff;
+}
+
+html {
+  height: 100%;
+}
+body {
+  min-height: 100%;
+  position: relative;
+  word-break: break-word;
+}
+body::after {
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  content: "";
+  width: 100%;
+  height: 100%;
+  background-image: url("/img/noise.png");
+  background-size: 109px;
+  background-repeat: repeat;
+  opacity: 0.06;
+  z-index: 100;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+#app {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  justify-content: space-between;
+  padding: 0 20px;
+  background-color: var(--mantine-color-body);
+  height: 64px;
+  border-bottom: 1px solid var(--tab-background);
+  flex-wrap: nowrap;
+}
+
+.mantine-Textarea-input {
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #ddd;
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #ccc;
+  }
+}
+
+.badge-notify {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  padding: 0;
+  width: 8px;
+  height: 8px;
+}
+
+.text-overflow-2 {
+  display: -webkit-box;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

@@ -1,0 +1,95 @@
+#page-mega {
+    padding: 64px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .keyboard-container {
+        margin-top: 30px;
+        width: 100%;
+        max-width: 320px;
+    }
+
+    .key-pad {
+        position: relative;
+        width: 280px; /* 增加宽度以容纳间隙 */
+        height: 280px; /* 增加高度以容纳间隙 */
+        margin: 0 auto;
+    }
+
+    .direction-key {
+        position: absolute;
+        width: 80px;
+        height: 80px;
+        border-radius: 12px;
+        font-size: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border: none;
+        cursor: pointer;
+
+        &:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        &.up {
+            top: 0;
+            left: 100px; /* 调整位置 */
+        }
+
+        &.left {
+            top: 100px; /* 调整位置 */
+            left: 0;
+        }
+
+        &.down {
+            top: 100px; /* 调整位置 */
+            left: 100px; /* 调整位置 */
+        }
+
+        &.right {
+            top: 100px; /* 调整位置 */
+            left: 200px; /* 调整位置 */
+        }
+
+        &.pressed {
+            background-color: #228be6;
+            color: white;
+            transform: translateY(2px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        &:not(.pressed) {
+            background-color: #e9ecef;
+            color: #343a40;
+        }
+    }
+
+    .key-status {
+        margin-top: 30px;
+        padding: 12px 24px;
+        background-color: #f1f3f5;
+        border-radius: 12px;
+        min-width: 220px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+
+        &.active {
+            background-color: #e7f5ff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+    }
+}
+
+@media (max-width: 480px) {
+    #page-mega {
+        .key-pad {
+            transform: scale(0.9);
+        }
+    }
+}

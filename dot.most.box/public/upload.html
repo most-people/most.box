@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>文件上传 - Dot Most Box</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .container {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        padding: 40px;
+        max-width: 600px;
+        width: 100%;
+        position: relative;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 40px;
+      }
+
+      .header h1 {
+        color: #333;
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+      }
+
+      .header p {
+        color: #666;
+        font-size: 1.1rem;
+      }
+
+      .upload-section {
+        margin-bottom: 30px;
+      }
+
+      .upload-section h2 {
+        color: #444;
+        margin-bottom: 20px;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .upload-area {
+        border: 2px dashed #ddd;
+        border-radius: 15px;
+        padding: 40px 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        margin-bottom: 20px;
+      }
+
+      .upload-area:hover {
+        border-color: #667eea;
+        background-color: #f8f9ff;
+      }
+
+      .upload-area.dragover {
+        border-color: #667eea;
+        background-color: #f0f4ff;
+        transform: scale(1.02);
+      }
+
+      .upload-icon {
+        font-size: 3rem;
+        color: #ddd;
+        margin-bottom: 20px;
+      }
+
+      .upload-text {
+        color: #666;
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+      }
+
+      .file-input {
+        display: none;
+      }
+
+      .btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 25px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin: 5px;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+      }
+
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .progress-container {
+        margin-top: 20px;
+        display: none;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background-color: #f0f0f0;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        width: 0%;
+        transition: width 0.3s ease;
+      }
+
+      .progress-text {
+        text-align: center;
+        margin-top: 10px;
+        color: #666;
+      }
+
+      .file-list {
+        margin-top: 20px;
+      }
+
+      .file-item {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .file-info {
+        flex: 1;
+      }
+
+      .file-name {
+        font-weight: 500;
+        color: #333;
+        margin-bottom: 5px;
+      }
+
+      .file-size {
+        color: #666;
+        font-size: 0.9rem;
+      }
+
+      .file-status {
+        padding: 5px 15px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 500;
+      }
+
+      .status-pending {
+        background: #fff3cd;
+        color: #856404;
+      }
+
+      .status-uploading {
+        background: #d1ecf1;
+        color: #0c5460;
+      }
+
+      .status-success {
+        background: #d4edda;
+        color: #155724;
+      }
+
+      .status-error {
+        background: #f8d7da;
+        color: #721c24;
+      }
+
+      .result {
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 8px;
+        display: none;
+      }
+
+      .result.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+
+      .result.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+
+      .token-input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 1rem;
+        margin-bottom: 20px;
+        transition: border-color 0.3s ease;
+      }
+
+      .token-input:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 20px;
+          margin: 10px;
+        }
+
+        .header h1 {
+          font-size: 2rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>📦 DOT.MOST.BOX</h1>
+        <p>安全便捷的文件上传服务</p>
+        <button
+          class="btn"
+          onclick="logout()"
+          style="
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #dc3545;
+            font-size: 14px;
+            padding: 8px 16px;
+          "
+        >
+          退出登录
+        </button>
+      </div>
+
+      <div class="token-section">
+        <input
+          type="text"
+          class="token-input"
+          id="tokenInput"
+          placeholder="请输入您的授权 Token"
+        />
+      </div>
+
+      <div class="upload-section">
+        <h2>📄 单文件上传</h2>
+        <div class="upload-area" id="fileUploadArea">
+          <div class="upload-icon">📁</div>
+          <div class="upload-text">点击选择文件或拖拽文件到此处</div>
+          <button
+            class="btn"
+            onclick="document.getElementById('fileInput').click()"
+          >
+            选择文件
+          </button>
+          <input type="file" id="fileInput" class="file-input" multiple />
+        </div>
+      </div>
+
+      <div class="upload-section">
+        <h2>📁 文件夹上传</h2>
+        <div class="upload-area" id="folderUploadArea">
+          <div class="upload-icon">📂</div>
+          <div class="upload-text">点击选择文件夹或拖拽文件夹到此处</div>
+          <button
+            class="btn"
+            onclick="document.getElementById('folderInput').click()"
+          >
+            选择文件夹
+          </button>
+          <input
+            type="file"
+            id="folderInput"
+            class="file-input"
+            webkitdirectory
+            multiple
+          />
+        </div>
+      </div>
+
+      <div class="file-list" id="fileList"></div>
+
+      <div class="progress-container" id="progressContainer">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text" id="progressText">准备上传...</div>
+      </div>
+
+      <div class="result" id="result"></div>
+
+      <div style="text-align: center; margin-top: 30px">
+        <button class="btn" id="uploadBtn" onclick="startUpload()" disabled>
+          开始上传
+        </button>
+        <button class="btn" onclick="clearFiles()">清空列表</button>
+      </div>
+    </div>
+
+    <script>
+      let selectedFiles = [];
+      let isUploading = false;
+
+      // 获取DOM元素
+      const tokenInput = document.getElementById("tokenInput");
+      const fileInput = document.getElementById("fileInput");
+      const folderInput = document.getElementById("folderInput");
+      const fileUploadArea = document.getElementById("fileUploadArea");
+      const folderUploadArea = document.getElementById("folderUploadArea");
+      const fileList = document.getElementById("fileList");
+      const uploadBtn = document.getElementById("uploadBtn");
+      const progressContainer = document.getElementById("progressContainer");
+      const progressFill = document.getElementById("progressFill");
+      const progressText = document.getElementById("progressText");
+      const result = document.getElementById("result");
+
+      // 页面加载时检查token
+      window.addEventListener("DOMContentLoaded", function () {
+        const savedToken = localStorage.getItem("token");
+        if (savedToken) {
+          tokenInput.value = savedToken;
+          updateUploadButton();
+        } else {
+          // 没有token，跳转到登录页面
+          window.location.href = "/sign.html";
+          return;
+        }
+      });
+
+      // Token输入监听
+      tokenInput.addEventListener("input", function () {
+        // 保存token到localStorage
+        const token = tokenInput.value.trim();
+        if (token) {
+          localStorage.setItem("token", token);
+        } else {
+          localStorage.removeItem("token");
+        }
+        updateUploadButton();
+      });
+
+      // 添加退出登录功能
+      function logout() {
+        localStorage.removeItem("token");
+        window.location.href = "/sign.html";
+      }
+
+      // 文件选择监听
+      fileInput.addEventListener("change", (e) =>
+        handleFileSelect(e.target.files, false)
+      );
+      folderInput.addEventListener("change", (e) =>
+        handleFileSelect(e.target.files, true)
+      );
+
+      // 拖拽功能
+      [fileUploadArea, folderUploadArea].forEach((area) => {
+        area.addEventListener("dragover", handleDragOver);
+        area.addEventListener("dragleave", handleDragLeave);
+        area.addEventListener("drop", handleDrop);
+      });
+
+      function handleDragOver(e) {
+        e.preventDefault();
+        e.currentTarget.classList.add("dragover");
+      }
+
+      function handleDragLeave(e) {
+        e.preventDefault();
+        e.currentTarget.classList.remove("dragover");
+      }
+
+      function handleDrop(e) {
+        e.preventDefault();
+        e.currentTarget.classList.remove("dragover");
+
+        const files = e.dataTransfer.files;
+        const isFolder = e.currentTarget === folderUploadArea;
+        handleFileSelect(files, isFolder);
+      }
+
+      function handleFileSelect(files, isFolder) {
+        if (isUploading) return;
+
+        const newFiles = Array.from(files).map((file) => ({
+          file: file,
+          name: file.name,
+          size: file.size,
+          path: file.webkitRelativePath || file.name,
+          isFolder: isFolder,
+          status: "pending",
+          id: Date.now() + Math.random(),
+        }));
+
+        selectedFiles = [...selectedFiles, ...newFiles];
+        updateFileList();
+        updateUploadButton();
+      }
+
+      function updateFileList() {
+        fileList.innerHTML = "";
+
+        selectedFiles.forEach((fileInfo) => {
+          const fileItem = document.createElement("div");
+          fileItem.className = "file-item";
+          fileItem.innerHTML = `
+                    <div class="file-info">
+                        <div class="file-name">${fileInfo.path}</div>
+                        <div class="file-size">${formatFileSize(
+                          fileInfo.size
+                        )}</div>
+                    </div>
+                    <div class="file-status status-${fileInfo.status}">
+                        ${getStatusText(fileInfo.status)}
+                    </div>
+                `;
+          fileList.appendChild(fileItem);
+        });
+      }
+
+      function updateUploadButton() {
+        const hasToken = tokenInput.value.trim() !== "";
+        const hasFiles = selectedFiles.length > 0;
+        uploadBtn.disabled = !hasToken || !hasFiles || isUploading;
+      }
+
+      function formatFileSize(bytes) {
+        if (bytes === 0) return "0 Bytes";
+        const k = 1024;
+        const sizes = ["Bytes", "KB", "MB", "GB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+      }
+
+      function getStatusText(status) {
+        const statusMap = {
+          pending: "等待上传",
+          uploading: "上传中...",
+          success: "上传成功",
+          error: "上传失败",
+        };
+        return statusMap[status] || status;
+      }
+
+      async function startUpload() {
+        if (isUploading || selectedFiles.length === 0) return;
+
+        const token = tokenInput.value.trim();
+        if (!token) {
+          showResult("请输入授权 Token", "error");
+          return;
+        }
+
+        isUploading = true;
+        updateUploadButton();
+        progressContainer.style.display = "block";
+        result.style.display = "none";
+
+        try {
+          let uploadedCount = 0;
+          const totalFiles = selectedFiles.length;
+
+          for (let i = 0; i < selectedFiles.length; i++) {
+            const fileInfo = selectedFiles[i];
+            fileInfo.status = "uploading";
+            updateFileList();
+
+            try {
+              await uploadSingleFile(fileInfo, token);
+              fileInfo.status = "success";
+              uploadedCount++;
+            } catch (error) {
+              fileInfo.status = "error";
+              console.error("文件上传失败:", error);
+            }
+
+            updateFileList();
+            updateProgress(uploadedCount, totalFiles);
+          }
+
+          if (uploadedCount === totalFiles) {
+            showResult(
+              `所有文件上传成功！共上传 ${uploadedCount} 个文件`,
+              "success"
+            );
+          } else {
+            showResult(
+              `部分文件上传失败。成功: ${uploadedCount}/${totalFiles}`,
+              "error"
+            );
+          }
+        } catch (error) {
+          showResult("上传过程中发生错误: " + error.message, "error");
+        } finally {
+          isUploading = false;
+          updateUploadButton();
+          setTimeout(() => {
+            progressContainer.style.display = "none";
+          }, 2000);
+        }
+      }
+
+      async function uploadSingleFile(fileInfo, token) {
+        const formData = new FormData();
+        formData.append("file", fileInfo.file);
+        formData.append("path", fileInfo.path);
+
+        const response = await fetch("/files.upload", {
+          method: "PUT",
+          headers: {
+            Authorization: token,
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || "上传失败");
+        }
+
+        return await response.json();
+      }
+
+      function updateProgress(completed, total) {
+        const percentage = (completed / total) * 100;
+        progressFill.style.width = percentage + "%";
+        progressText.textContent = `上传进度: ${completed}/${total} (${Math.round(
+          percentage
+        )}%)`;
+      }
+
+      function showResult(message, type) {
+        result.textContent = message;
+        result.className = `result ${type}`;
+        result.style.display = "block";
+      }
+
+      function clearFiles() {
+        if (isUploading) return;
+        selectedFiles = [];
+        updateFileList();
+        updateUploadButton();
+        result.style.display = "none";
+        progressContainer.style.display = "none";
+        fileInput.value = "";
+        folderInput.value = "";
+      }
+    </script>
+  </body>
+</html>

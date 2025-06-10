@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dot.most.box</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: system-ui;
+        }
+
+        .container {
+            text-align: center;
+            background: white;
+            padding: 3rem;
+            border-radius: 3rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            word-break: break-word;
+            margin: 2rem;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 1rem;
+            font-size: 2.5rem;
+        }
+
+        p {
+            color: #666;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .emoji {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+
+        a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        a:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="emoji">🎉</div>
+        <h1>DOT.MOST.BOX</h1>
+        <p>节点已成功运行</p>
+        <a id="ipv6" href="#" target="_blank"></a>
+        <p>為 全 人 類 徹 底 解 放 奮 鬥 終 身</p>
+    </div>
+
+    <script>
+        // 页面加载完成后获取IPv6地址
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/ipv6');
+                const data = await response.json();
+                ipv6.textContent = data.url;
+                ipv6.href = data.url;
+            } catch (error) {
+                console.error(error)
+            }
+        });
+    </script>
+</body>
+
+</html>
