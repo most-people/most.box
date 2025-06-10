@@ -37,7 +37,7 @@ export const useUserStore = create<State>((set) => ({
     const jwt = localStorage.getItem("jwt");
     const jwtSecret = localStorage.getItem("jwtSecret");
     if (jwt && jwtSecret) {
-      const wallet = mp.verifyJWT(jwt, jwtSecret) as MostWallet | null;
+      const wallet = mp.verifyJWT(jwt, jwtSecret);
       if (wallet) {
         set({ wallet });
       }

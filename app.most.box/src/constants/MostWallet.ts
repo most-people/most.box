@@ -66,7 +66,7 @@ export const mostEncode = (
     new Uint8Array(getBytes(private_key))
   );
   if (!encrypted) {
-    console.error("加密失败");
+    console.info("加密失败");
     return "";
   }
   return ["mp://2", encodeBase64(nonce), encodeBase64(encrypted)].join(".");
@@ -79,7 +79,7 @@ export const mostDecode = (
 ) => {
   const [prefix, nonce64, encrypted64] = data.split(".");
   if (prefix !== "mp://2") {
-    console.error("无效的密文");
+    console.info("无效的密文");
     return "";
   }
   const decrypted = nacl.box.open(
@@ -89,7 +89,7 @@ export const mostDecode = (
     new Uint8Array(getBytes(private_key))
   );
   if (!decrypted) {
-    console.error("解密失败");
+    console.info("解密失败");
     return "";
   }
   return new TextDecoder().decode(decrypted);

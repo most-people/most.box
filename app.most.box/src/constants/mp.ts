@@ -4,11 +4,15 @@ import {
   decodeBase64,
   toUtf8String,
   ZeroAddress,
-  computeHmac,
 } from "ethers";
 import { createAvatar } from "@dicebear/core";
 import { botttsNeutral, icons } from "@dicebear/collection";
-import { type MostWallet, mostWallet } from "@/constants/MostWallet";
+import {
+  mostDecode,
+  mostEncode,
+  type MostWallet,
+  mostWallet,
+} from "@/constants/MostWallet";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/zh-cn";
@@ -111,71 +115,33 @@ const enBase64 = (str: string) => encodeBase64(toUtf8Bytes(str));
 // Base64 解码
 const deBase64 = (str: string) => toUtf8String(decodeBase64(str));
 
-// JWT 生成
-const createJWT = (data: MostWallet, secret: string, exp = 60) => {
-  const header = { alg: "HS256", typ: "JWT" };
-  const payload = {
-    exp: dayjs().add(exp, "second").unix(),
-    data,
-  };
-
-  const encodedHeader = enBase64(JSON.stringify(header));
-  const encodedPayload = enBase64(JSON.stringify(payload));
-  const dataToSign = `${encodedHeader}.${encodedPayload}`;
-
+const createJWT = (wallet: MostWallet, exp = 60) => {
+  const time = dayjs().add(exp, "second").valueOf();
+  const uuid = encodeBase64(crypto.getRandomValues(new Uint8Array(32)));
   // 获取设备指纹ID
-  const fingerprint = sessionStorage.getItem("fingerprint");
-
-  // HMAC-SHA256 签名
-  const signature = computeHmac(
-    "sha256",
-    toUtf8Bytes(`${secret}:${fingerprint}`),
-    toUtf8Bytes(dataToSign)
-  );
-
-  return `${encodedHeader}.${encodedPayload}.${encodeBase64(signature)}`;
+  const fingerprint = sessionStorage.getItem("fingerprint") || "";
+  const jwtSecret = [time, uuid].join(".");
+  const { public_key, private_key } = mostWallet(fingerprint, jwtSecret);
+  const jwt = mostEncode(JSON.stringify(wallet), public_key, private_key);
+  return {
+    jwt,
+    jwtSecret,
+  };
 };
-
-// JWT 验证
-const verifyJWT = (token: string, secret: string) => {
-  const parts = token.split(".");
-  if (parts.length !== 3) return null;
-
-  const [encodedHeader, encodedPayload, encodedSignature] = parts;
-  const dataToSign = `${encodedHeader}.${encodedPayload}`;
-
+const verifyJWT = (jwt: string, jwtSecret: string): MostWallet | null => {
   try {
     // 获取设备指纹ID
-    const fingerprint = sessionStorage.getItem("fingerprint");
-
-    // 计算签名
-    const calculatedSig = encodeBase64(
-      computeHmac(
-        "sha256",
-        toUtf8Bytes(`${secret}:${fingerprint}`),
-        toUtf8Bytes(dataToSign)
-      )
-    );
-    // 签名比对
-    if (calculatedSig !== encodedSignature) {
-      console.log("JWT 设备签名不一致");
-      return null;
+    const fingerprint = sessionStorage.getItem("fingerprint") || "";
+    const { public_key, private_key } = mostWallet(fingerprint, jwtSecret);
+    const json = mostDecode(jwt, public_key, private_key);
+    if (json) {
+      const wallet = JSON.parse(json);
+      return wallet;
     }
-
-    // 解码载荷
-    const payload = JSON.parse(deBase64(encodedPayload));
-
-    // 检查过期时间
-    if (dayjs().unix() > payload.exp) {
-      console.log("JWT 已过期");
-      return null;
-    }
-
-    return payload.data;
   } catch (error) {
-    console.log("JWT 验证失败:", error);
-    return null;
+    console.log("验证失败:", error);
   }
+  return null;
 };
 
 // 登录
@@ -186,8 +152,7 @@ const login = (username: string, password: string): MostWallet | null => {
       password,
       "I know loss mnemonic will lose my wallet."
     );
-    const jwtSecret = encodeBase64(crypto.getRandomValues(new Uint8Array(32)));
-    const jwt = createJWT(wallet, jwtSecret, 24 * 60 * 60); // 24小时有效期
+    const { jwt, jwtSecret } = createJWT(wallet, 24 * 60 * 60); // 24小时有效期
 
     // 验证并存储
     if (verifyJWT(jwt, jwtSecret)?.address === wallet.address) {
