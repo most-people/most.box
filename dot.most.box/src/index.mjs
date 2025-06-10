@@ -53,7 +53,7 @@ server.get("/ipv6", async (request, reply) => {
     }
   }
   return {
-    url: "",
+    url: `http://[::1]:${port}`,
   };
 });
 
