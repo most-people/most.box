@@ -34,10 +34,10 @@ interface State extends UserStore {
 export const useUserStore = create<State>((set) => ({
   wallet: undefined,
   initWallet() {
-    const token = localStorage.getItem("token");
-    const tokenSecret = localStorage.getItem("tokenSecret");
-    if (token && tokenSecret) {
-      const wallet = mp.verifyJWT(token, tokenSecret) as MostWallet | null;
+    const jwt = localStorage.getItem("jwt");
+    const jwtSecret = localStorage.getItem("jwtSecret");
+    if (jwt && jwtSecret) {
+      const wallet = mp.verifyJWT(jwt, jwtSecret) as MostWallet | null;
       if (wallet) {
         set({ wallet });
       }
@@ -47,7 +47,7 @@ export const useUserStore = create<State>((set) => ({
   firstPath: "",
   exit() {
     set({ wallet: undefined });
-    localStorage.removeItem("token");
-    localStorage.removeItem("tokenSecret");
+    localStorage.removeItem("jwt");
+    localStorage.removeItem("jwtSecret");
   },
 }));

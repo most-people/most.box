@@ -123,10 +123,13 @@ const createJWT = (data: MostWallet, secret: string, exp = 60) => {
   const encodedPayload = enBase64(JSON.stringify(payload));
   const dataToSign = `${encodedHeader}.${encodedPayload}`;
 
+  // 获取设备指纹ID
+  const fingerprint = sessionStorage.getItem("fingerprint");
+
   // HMAC-SHA256 签名
   const signature = computeHmac(
     "sha256",
-    decodeBase64(secret),
+    toUtf8Bytes(`${secret}:${fingerprint}`),
     toUtf8Bytes(dataToSign)
   );
 
@@ -142,19 +145,31 @@ const verifyJWT = (token: string, secret: string) => {
   const dataToSign = `${encodedHeader}.${encodedPayload}`;
 
   try {
+    // 获取设备指纹ID
+    const fingerprint = sessionStorage.getItem("fingerprint");
+
     // 计算签名
     const calculatedSig = encodeBase64(
-      computeHmac("sha256", decodeBase64(secret), toUtf8Bytes(dataToSign))
+      computeHmac(
+        "sha256",
+        toUtf8Bytes(`${secret}:${fingerprint}`),
+        toUtf8Bytes(dataToSign)
+      )
     );
-
     // 签名比对
-    if (calculatedSig !== encodedSignature) return null;
+    if (calculatedSig !== encodedSignature) {
+      console.log("JWT 设备签名不一致");
+      return null;
+    }
 
     // 解码载荷
     const payload = JSON.parse(deBase64(encodedPayload));
 
     // 检查过期时间
-    if (dayjs().unix() > payload.exp) return null;
+    if (dayjs().unix() > payload.exp) {
+      console.log("JWT 已过期");
+      return null;
+    }
 
     return payload.data;
   } catch (error) {
@@ -171,15 +186,13 @@ const login = (username: string, password: string): MostWallet | null => {
       password,
       "I know loss mnemonic will lose my wallet."
     );
-    const tokenSecret = encodeBase64(
-      crypto.getRandomValues(new Uint8Array(32))
-    );
-    const token = createJWT(wallet, tokenSecret, 24 * 60 * 60); // 24小时有效期
+    const jwtSecret = encodeBase64(crypto.getRandomValues(new Uint8Array(32)));
+    const jwt = createJWT(wallet, jwtSecret, 24 * 60 * 60); // 24小时有效期
 
     // 验证并存储
-    if (verifyJWT(token, tokenSecret)?.address === wallet.address) {
-      localStorage.setItem("token", token);
-      localStorage.setItem("tokenSecret", tokenSecret);
+    if (verifyJWT(jwt, jwtSecret)?.address === wallet.address) {
+      localStorage.setItem("jwt", jwt);
+      localStorage.setItem("jwtSecret", jwtSecret);
       return wallet;
     }
   } catch (error) {
