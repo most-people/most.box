@@ -28,6 +28,7 @@
     "@tiptap/extension-task-list": "^2.14.0",
     "@tiptap/react": "^2.14.0",
     "@tiptap/starter-kit": "^2.14.0",
+    "axios": "^1.9.0",
     "dayjs": "^1.11.13",
     "ethers": "^6.14.3",
     "qrcode.react": "^4.2.0",

@@ -54,14 +54,14 @@ export default function HomeMine() {
           </ActionIcon>
         </Group>
       </Box>
-      <Stack className="menu-list" mb="xs">
+      <Stack className="menu-list" mb="xs" gap={0}>
         <MenuItem icon="web3" label="Web3" link="/web3" />
+        <MenuItem icon="download" label="节点" link="/dot" />
       </Stack>
       <Stack className="menu-list" gap={0}>
         <MenuItem icon="about" label="关于" link="/about" />
         <MenuItem icon="setting" label="设置" link="/setting" />
         <MenuItem icon="join" label="志同道合" link="/join" />
-        <MenuItem icon="download" label="节点更新" link="/dot" />
       </Stack>
       <Stack className="menu-list" mt="xs">
         <MenuItem
