@@ -218,6 +218,7 @@ const mp = {
   topicJoin,
   topicSplit,
   playSound,
+  createToken,
 };
 
 export default mp;

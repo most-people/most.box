@@ -39,6 +39,7 @@ export const useUserStore = create<State>((set) => ({
     if (jwt && jwtSecret) {
       const wallet = mp.verifyJWT(jwt, jwtSecret);
       if (wallet) {
+        mp.createToken(wallet);
         set({ wallet });
       }
     }
