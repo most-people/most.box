@@ -1,9 +1,18 @@
 "use client";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
-import { Box, Text, Group, Stack, Paper } from "@mantine/core";
+import {
+  Box,
+  Text,
+  Group,
+  Stack,
+  Paper,
+  Button,
+  ActionIcon,
+} from "@mantine/core";
 import { api } from "@/constants/api";
 import "./files.scss";
+import Link from "next/link";
 
 interface FileItem {
   name: string;
@@ -16,7 +25,6 @@ interface FileItem {
 
 export default function PageDotFiles() {
   const [fileList, setFileList] = useState<FileItem[]>([]);
-  const [loading, setLoading] = useState(true);
 
   const fetchFiles = async () => {
     try {
@@ -24,8 +32,6 @@ export default function PageDotFiles() {
       setFileList(res.data);
     } catch (error) {
       console.error(error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -37,18 +43,14 @@ export default function PageDotFiles() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
+  const handleViewFile = (cid: string) => {
+    const url = `https://cid.most.red/ipfs/${cid}/`;
+    window.open(url, "_blank");
+  };
+
   useEffect(() => {
     fetchFiles();
   }, []);
-
-  if (loading) {
-    return (
-      <Box id="page-dot-files">
-        <AppHeader title="文件列表" />
-        <Text>加载中...</Text>
-      </Box>
-    );
-  }
 
   return (
     <Box id="page-dot-files">
@@ -66,16 +68,25 @@ export default function PageDotFiles() {
                   </Text>
                 </Stack>
               </Group>
-              <Stack gap={4} align="flex-end">
-                <Text size="sm">
-                  {item.type === "directory" ? "文件夹" : "文件"}
-                </Text>
-                {item.size > 0 && (
-                  <Text size="sm" c="dimmed">
-                    {formatFileSize(item.size)}
-                  </Text>
-                )}
-              </Stack>
+              <Group align="center">
+                <Stack gap={4} align="flex-end">
+                  {item.size > 0 && (
+                    <Text size="sm" c="dimmed">
+                      {formatFileSize(item.size)}
+                    </Text>
+                  )}
+                </Stack>
+
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  component={Link}
+                  href={`https://cid.most.red/ipfs/${item.cid["/"]}?filename=${item.name}`}
+                  target="_blank"
+                >
+                  🔍
+                </ActionIcon>
+              </Group>
             </Group>
           </Paper>
         ))}
