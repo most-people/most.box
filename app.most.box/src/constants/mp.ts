@@ -4,6 +4,7 @@ import {
   decodeBase64,
   toUtf8String,
   ZeroAddress,
+  HDNodeWallet,
 } from "ethers";
 import { createAvatar } from "@dicebear/core";
 import { botttsNeutral, icons } from "@dicebear/collection";
@@ -115,8 +116,8 @@ const enBase64 = (str: string) => encodeBase64(toUtf8Bytes(str));
 // Base64 解码
 const deBase64 = (str: string) => toUtf8String(decodeBase64(str));
 
-const createJWT = (wallet: MostWallet, exp = 60) => {
-  const time = dayjs().add(exp, "second").valueOf();
+const createJWT = (wallet: MostWallet) => {
+  const time = String(Date.now());
   const uuid = encodeBase64(crypto.getRandomValues(new Uint8Array(32)));
   // 获取设备指纹ID
   const fingerprint = sessionStorage.getItem("fingerprint") || "";
@@ -129,6 +130,11 @@ const createJWT = (wallet: MostWallet, exp = 60) => {
   };
 };
 const verifyJWT = (jwt: string, jwtSecret: string): MostWallet | null => {
+  const [time] = jwtSecret.split(".");
+  if (Date.now() - Number(time) > 24 * 60 * 60 * 1000) {
+    console.log("jwt 已过期");
+    return null;
+  }
   try {
     // 获取设备指纹ID
     const fingerprint = sessionStorage.getItem("fingerprint") || "";
@@ -144,6 +150,13 @@ const verifyJWT = (jwt: string, jwtSecret: string): MostWallet | null => {
   return null;
 };
 
+const createToken = async (wallet: MostWallet) => {
+  const message = Date.now().toString();
+  const ethWallet = HDNodeWallet.fromPhrase(wallet.mnemonic);
+  const signature = await ethWallet.signMessage(message);
+  localStorage.token = [wallet.address, message, signature].join(".");
+};
+
 // 登录
 const login = (username: string, password: string): MostWallet | null => {
   try {
@@ -152,12 +165,13 @@ const login = (username: string, password: string): MostWallet | null => {
       password,
       "I know loss mnemonic will lose my wallet."
     );
-    const { jwt, jwtSecret } = createJWT(wallet, 24 * 60 * 60); // 24小时有效期
+    const { jwt, jwtSecret } = createJWT(wallet); // 24小时有效期
 
     // 验证并存储
     if (verifyJWT(jwt, jwtSecret)?.address === wallet.address) {
       localStorage.setItem("jwt", jwt);
       localStorage.setItem("jwtSecret", jwtSecret);
+      createToken(wallet);
       return wallet;
     }
   } catch (error) {
