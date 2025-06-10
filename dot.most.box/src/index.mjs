@@ -12,10 +12,9 @@ const server = fastify();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 // 注册静态文件服务
 server.register(fastifyStatic, {
-  root: path.join(__dirname, "..", "public"),
+  root: path.join(__dirname, "../..", "app.most.box/out"),
   prefix: "/",
 });
 
