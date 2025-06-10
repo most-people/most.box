@@ -6,23 +6,17 @@ import { Avatar, Text, Stack, Group, Box, ActionIcon } from "@mantine/core";
 import { Icon, type IconName } from "@/components/Icon";
 import { notifications } from "@mantine/notifications";
 import { useUserStore } from "@/stores/userStore";
-import { useTopicStore } from "@/stores/topicStore";
 import mp from "@/constants/mp";
-import { useFriendStore } from "@/stores/friendStore";
 
 export default function HomeMine() {
   const wallet = useUserStore((state) => state.wallet);
   const address = wallet?.address || mp.ZeroAddress;
 
   const exit = useUserStore((state) => state.exit);
-  const resetTopic = useTopicStore((state) => state.reset);
-  const resetFriend = useFriendStore((state) => state.reset);
 
   const quit = () => {
     setTimeout(() => {
       exit();
-      resetTopic();
-      resetFriend();
     }, 1000);
   };
   return (

@@ -15,18 +15,16 @@ import {
   Menu,
   Flex,
 } from "@mantine/core";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import mp from "@/constants/mp";
-import { type MostWallet, mostWallet } from "dot.most.box";
+import { type MostWallet, mostWallet } from "@/constants/MostWallet";
 import { AppHeader } from "@/components/AppHeader";
 import { useRouter } from "next/navigation";
-import { useTopicStore } from "@/stores/topicStore";
 import "@/app/friend/chat.scss";
-import { useTopic } from "@/hooks/useTopic";
+import { type Message, type Friend } from "@/constants/chat";
 import { Messages } from "@/components/Messages";
 import { IconDoorExit, IconTrash, IconUsers } from "@tabler/icons-react";
 import { useBack } from "@/hooks/useBack";
-import { Friend } from "@/hooks/useFriend";
 
 const JoinTopic = ({ onUpdate }: { onUpdate: (hash: string) => void }) => {
   const router = useRouter();
@@ -95,13 +93,9 @@ export default function PageTopic() {
   const [hash] = useHash();
   const back = useBack();
   const [topicWallet, setTopicWallet] = useState<MostWallet | null>(null);
-  const quit = useTopicStore((state) => state.quit);
-  const join = useTopicStore((state) => state.join);
-  const topicInfo = useTopicStore((state) => state.topicInfo);
 
   const quitTopic = () => {
     if (topicWallet) {
-      quit(topicWallet.address);
       back();
     }
   };
@@ -115,12 +109,14 @@ export default function PageTopic() {
         "I know loss mnemonic will lose my wallet."
       );
       setTopicWallet(topicWallet);
-      join(name, password, topicWallet.address);
     } catch (error) {
       console.log("hash 解析错误", error);
     }
   };
-  const { messages, send, clear, del } = useTopic(topicWallet);
+  const messages: Message[] = [];
+  const send = () => {};
+  const clear = () => {};
+  const del = () => {};
 
   const [mounted, setMounted] = useState(false);
   const [showMember, setShowMember] = useState(false);
@@ -132,21 +128,7 @@ export default function PageTopic() {
     }
   }, [hash]);
 
-  const members = useMemo(() => {
-    const list: Friend[] = [];
-    if (topicInfo && topicWallet) {
-      for (const address in topicInfo[topicWallet.address]) {
-        const item = topicInfo[topicWallet.address][address];
-        list.push({
-          address,
-          username: item.value.username,
-          public_key: item.value.public_key,
-          timestamp: item.timestamp,
-        });
-      }
-    }
-    return list;
-  }, [topicInfo, topicWallet]);
+  const members: Friend[] = [];
 
   return (
     <Box id="page-chat">

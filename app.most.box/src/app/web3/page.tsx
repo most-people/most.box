@@ -16,14 +16,7 @@ import Link from "next/link";
 
 export default function Web3Page() {
   const wallet = useUserStore((state) => state.wallet);
-  const dot = useUserStore((state) => state.dot);
   const [showX25519, setShowX25519] = useState(false);
-
-  const clearNotify = () => {
-    if (dot) {
-      dot.put("notify", {});
-    }
-  };
 
   return (
     <Container>
@@ -67,9 +60,6 @@ export default function Web3Page() {
 
         <Divider my="md" />
 
-        <Anchor onClick={clearNotify}>
-          <Text>清除通知</Text>
-        </Anchor>
         <Anchor component={Link} href="/web3/mega">
           <Text>Mega ETH</Text>
         </Anchor>

@@ -13,24 +13,17 @@ import {
 import { useForm } from "@mantine/form";
 import mp from "@/constants/mp";
 import { AppHeader } from "@/components/AppHeader";
-import { useRouter } from "next/navigation";
 import "@/app/friend/chat.scss";
 import { getAddress, isAddress, ZeroAddress } from "ethers";
-import { useFriendStore } from "@/stores/friendStore";
 import { useUserStore } from "@/stores/userStore";
 import { useEffect, useState } from "react";
 import { useHash } from "@mantine/hooks";
-import { useFriend } from "@/hooks/useFriend";
 import { Messages } from "@/components/Messages";
 import { IconDoorExit, IconTrash } from "@tabler/icons-react";
 import { useBack } from "@/hooks/useBack";
-import { notifications } from "@mantine/notifications";
+import { type Friend, type Message } from "@/constants/chat";
 
 const AddFriend = () => {
-  const router = useRouter();
-  const dotClient = useUserStore((state) => state.dotClient);
-  const wallet = useUserStore((state) => state.wallet);
-
   const form = useForm({
     initialValues: {
       address: "",
@@ -43,21 +36,7 @@ const AddFriend = () => {
   const submit = () => {
     if (!form.validate().hasErrors) {
       const address = getAddress(form.values.address);
-      const dot = dotClient?.dot(address);
-      if (dot) {
-        dot.on("info", (info) => {
-          if (info.username && info.public_key) {
-            dot.off("info");
-            router.replace(`/friend#${address}`);
-            if (!wallet) {
-              notifications.show({
-                title: "提示",
-                message: "请先登录",
-              });
-            }
-          }
-        });
-      }
+      console.log("address", address);
     }
   };
 
@@ -102,14 +81,16 @@ export default function PageFriend() {
   const [friendAddress, setFriendAddress] = useState("");
 
   const wallet = useUserStore((state) => state.wallet);
-  const delFriend = useFriendStore((state) => state.delFriend);
 
   const removeFriend = () => {
-    delFriend(friendAddress);
     back();
   };
 
-  const { friend, messages, send, clear, del } = useFriend(friendAddress);
+  const [friend] = useState<Friend | null>(null);
+  const messages: Message[] = [];
+  const send = () => {};
+  const clear = () => {};
+  const del = () => {};
 
   const [mounted, setMounted] = useState(false);
 

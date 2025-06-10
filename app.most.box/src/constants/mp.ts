@@ -8,7 +8,7 @@ import {
 } from "ethers";
 import { createAvatar } from "@dicebear/core";
 import { botttsNeutral, icons } from "@dicebear/collection";
-import { type MostWallet, mostWallet } from "dot.most.box";
+import { type MostWallet, mostWallet } from "@/constants/MostWallet";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/zh-cn";

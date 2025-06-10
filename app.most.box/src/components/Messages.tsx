@@ -20,7 +20,7 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { useEffect, useRef, useState } from "react";
-import { Message } from "@/hooks/useFriend";
+import { type Message } from "@/constants/chat";
 import { useUserStore } from "@/stores/userStore";
 import mp from "@/constants/mp";
 import { usePathname } from "next/navigation";

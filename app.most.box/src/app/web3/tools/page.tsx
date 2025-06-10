@@ -13,7 +13,7 @@ import {
   Textarea,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { mostWallet } from "dot.most.box";
+import { mostWallet } from "@/constants/MostWallet";
 import { HDNodeWallet } from "ethers";
 import { QRCodeCanvas } from "qrcode.react";
 import { AppHeader } from "@/components/AppHeader";
@@ -141,7 +141,7 @@ export default function Web3ToolPage() {
         <Text size="xl">Most Wallet 账户查询</Text>
 
         <Text c="dimmed">
-          开源代码：https://www.npmjs.com/package/dot.most.box?activeTab=code
+          开源代码：https://www.npmjs.com/package/@/constants/MostWallet?activeTab=code
         </Text>
 
         {/* 模式切换开关 */}

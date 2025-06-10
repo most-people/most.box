@@ -18,7 +18,7 @@ import "./login.scss";
 import Link from "next/link";
 import { useState } from "react";
 import mp from "@/constants/mp";
-import { mostWallet } from "dot.most.box";
+import { mostWallet } from "@/constants/MostWallet";
 import { useUserStore } from "@/stores/userStore";
 import { useAccountStore } from "@/stores/accountStore";
 import { notifications } from "@mantine/notifications";
