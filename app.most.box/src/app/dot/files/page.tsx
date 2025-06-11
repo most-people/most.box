@@ -15,7 +15,12 @@ import {
 import { api, DotCID } from "@/constants/api";
 import "./files.scss";
 import Link from "next/link";
-import { IconUpload, IconFolderPlus, IconX } from "@tabler/icons-react";
+import {
+  IconUpload,
+  IconFolderPlus,
+  IconX,
+  IconClockSearch,
+} from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 
 interface FileItem {
@@ -253,7 +258,7 @@ export default function PageDotFiles() {
               <Stack gap="xs">
                 {previewFiles.map((item, index) => (
                   <Paper key={index} p="sm" withBorder>
-                    <Group justify="space-between" align="center">
+                    <Group justify="space-between" align="center" wrap="nowrap">
                       <Group align="center">
                         <Text size="sm">📄</Text>
                         <Stack gap={2}>
@@ -267,11 +272,10 @@ export default function PageDotFiles() {
                       </Group>
                       <ActionIcon
                         variant="subtle"
-                        color="red"
-                        size="sm"
+                        color="gray"
                         onClick={() => removePreviewFile(index)}
                       >
-                        <IconX size={14} />
+                        <IconX />
                       </ActionIcon>
                     </Group>
                   </Paper>
