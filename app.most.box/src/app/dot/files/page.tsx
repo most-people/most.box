@@ -15,12 +15,7 @@ import {
 import { api, DotCID } from "@/constants/api";
 import "./files.scss";
 import Link from "next/link";
-import {
-  IconUpload,
-  IconFolderPlus,
-  IconX,
-  IconClockSearch,
-} from "@tabler/icons-react";
+import { IconUpload, IconFolderPlus, IconX } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 
 interface FileItem {
