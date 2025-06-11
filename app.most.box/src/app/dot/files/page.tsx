@@ -111,14 +111,19 @@ export default function PageDotFiles() {
     const files = event.target.files;
     if (files && files.length > 0) {
       const fileArray = Array.from(files);
-      const previewData: PreviewFile[] = fileArray.map((file) => ({
-        file,
-        path: file.webkitRelativePath || file.name,
-        size: formatFileSize(file.size),
-      }));
-
-      setPreviewFiles(previewData);
-      setShowPreview(true);
+      // 如果是单个文件且不是文件夹上传，直接上传
+      if (fileArray.length === 1 && !fileArray[0].webkitRelativePath) {
+        uploadFiles(fileArray);
+      } else {
+        // 多个文件或文件夹上传才显示预览
+        const previewData: PreviewFile[] = fileArray.map((file) => ({
+          file,
+          path: file.webkitRelativePath || file.name,
+          size: formatFileSize(file.size),
+        }));
+        setPreviewFiles(previewData);
+        setShowPreview(true);
+      }
     }
     // 清空input值，允许重复选择同一文件
     event.target.value = "";
@@ -148,6 +153,38 @@ export default function PageDotFiles() {
       0
     );
     return formatFileSize(totalBytes);
+  };
+
+  // 在组件中添加删除函数
+  const deleteFile = async (fileName: string) => {
+    try {
+      // 使用文件名构建删除URL
+      await api.delete(`/files/${fileName}`);
+
+      notifications.show({
+        title: "删除成功",
+        message: `文件 ${fileName} 已删除`,
+        color: "green",
+      });
+
+      // 删除成功后刷新文件列表
+      await fetchFiles();
+    } catch (error) {
+      console.error("删除失败:", error);
+      notifications.show({
+        title: "删除失败",
+        message: `删除文件 ${fileName} 失败，请重试`,
+        color: "red",
+      });
+    }
+  };
+
+  // 添加确认删除的函数
+  const handleDeleteFile = (item: FileItem) => {
+    const confirmed = window.confirm(`确定要删除文件 "${item.name}" 吗？`);
+    if (confirmed) {
+      deleteFile(item.name);
+    }
   };
 
   useEffect(() => {
@@ -255,7 +292,7 @@ export default function PageDotFiles() {
                 loading={uploading}
                 disabled={previewFiles.length === 0}
               >
-                确认上传 ({previewFiles.length})
+                确认上传
               </Button>
             </Group>
           </Stack>
@@ -293,9 +330,7 @@ export default function PageDotFiles() {
                 <ActionIcon
                   variant="subtle"
                   color="gray"
-                  onClick={() => {
-                    /* 删除逻辑 */
-                  }}
+                  onClick={() => handleDeleteFile(item)}
                 >
                   🗑️
                 </ActionIcon>
