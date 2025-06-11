@@ -1,8 +1,13 @@
 import axios from "axios";
 
+const isDev = process.env.NODE_ENV !== "production";
+
+export const DotAPI = isDev ? "http://127.0.0.1:1976" : "https://dot.most.red";
+
+export const DotCID = isDev ? "http://127.0.0.1:8080" : "https://cid.most.red";
+
 export const api = axios.create({
-  // baseURL: "http://127.0.0.1:1976",
-  baseURL: "https://dot.most.red",
+  baseURL: DotAPI,
 });
 
 // 添加请求拦截器，自动在 header 中加载 Authorization

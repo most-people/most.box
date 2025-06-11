@@ -2,10 +2,14 @@ import fastify from "fastify";
 import fastifyStatic from "@fastify/static";
 import fastifyMultipart from "@fastify/multipart";
 import fastifyCors from "@fastify/cors";
+import { create } from "kubo-rpc-client";
 import path from "path";
 import os from "os";
 import { fileURLToPath } from "url";
 import { registerFiles } from "./files.mjs";
+
+// 创建 IPFS 客户端
+const ipfs = create({ url: "http://127.0.0.1:5001" });
 
 const port = 1976;
 
@@ -36,7 +40,7 @@ server.register(fastifyMultipart, {
 });
 
 // 注册文件路由
-registerFiles(server);
+registerFiles(server, ipfs);
 
 // 添加IPv6地址API接口
 server.get("/ipv6", async (request, reply) => {
@@ -59,6 +63,8 @@ server.get("/ipv6", async (request, reply) => {
 
 const start = async () => {
   try {
+    const peer = await ipfs.id();
+    console.log("IPFS", peer.id);
     await server.listen({ port, host: "::" });
     console.log(`http://[::1]:${port}`);
   } catch (err) {

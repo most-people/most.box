@@ -1,16 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
-import {
-  Box,
-  Text,
-  Group,
-  Stack,
-  Paper,
-  Button,
-  ActionIcon,
-} from "@mantine/core";
-import { api } from "@/constants/api";
+import { Box, Text, Group, Stack, Paper, ActionIcon } from "@mantine/core";
+import { api, DotCID } from "@/constants/api";
 import "./files.scss";
 import Link from "next/link";
 
@@ -41,11 +33,6 @@ export default function PageDotFiles() {
     const sizes = ["B", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-  };
-
-  const handleViewFile = (cid: string) => {
-    const url = `https://cid.most.red/ipfs/${cid}/`;
-    window.open(url, "_blank");
   };
 
   useEffect(() => {
@@ -81,7 +68,7 @@ export default function PageDotFiles() {
                   variant="subtle"
                   color="gray"
                   component={Link}
-                  href={`https://cid.most.red/ipfs/${item.cid["/"]}?filename=${item.name}`}
+                  href={`${DotCID}/ipfs/${item.cid["/"]}?filename=${item.name}`}
                   target="_blank"
                 >
                   🔍

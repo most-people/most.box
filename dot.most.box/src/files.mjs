@@ -1,14 +1,12 @@
-import { create } from "kubo-rpc-client";
 import { getAddress } from "./mp.mjs";
-
-// 创建 IPFS 客户端
-const ipfs = create({ url: "http://127.0.0.1:5001" });
 
 /**
  * 注册文件相关的路由
  * @param {import('fastify').FastifyInstance} server - Fastify 服务器实例
+ * 注册文件相关的路由
+ * @param {import('kubo-rpc-client').KuboRPCClient} ipfs - IPFS 客户端实例
  */
-export const registerFiles = (server) => {
+export const registerFiles = (server, ipfs) => {
   // 查看文件/目录
   server.post("/files/*", async (request, reply) => {
     const address = getAddress(request.headers.authorization);
