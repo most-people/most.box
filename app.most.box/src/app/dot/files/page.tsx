@@ -5,6 +5,7 @@ import { Box, Text, Group, Stack, Paper, ActionIcon } from "@mantine/core";
 import { api, DotCID } from "@/constants/api";
 import "./files.scss";
 import Link from "next/link";
+import { IconUpload, IconFolderPlus } from "@tabler/icons-react";
 
 interface FileItem {
   name: string;
@@ -43,6 +44,28 @@ export default function PageDotFiles() {
     <Box id="page-dot-files">
       <AppHeader title="文件列表" />
       <Stack gap="md" p="md">
+        <Group mb="md" gap="sm">
+          <ActionIcon
+            variant="filled"
+            color="blue"
+            size="lg"
+            onClick={() => {
+              /* 上传文件夹逻辑 */
+            }}
+          >
+            <IconFolderPlus />
+          </ActionIcon>
+          <ActionIcon
+            variant="filled"
+            color="green"
+            size="lg"
+            onClick={() => {
+              /* 上传文件逻辑 */
+            }}
+          >
+            <IconUpload />
+          </ActionIcon>
+        </Group>
         {fileList.map((item, index) => (
           <Paper key={index} p="md" withBorder radius="md">
             <Group justify="space-between" align="center">
@@ -63,7 +86,6 @@ export default function PageDotFiles() {
                     </Text>
                   )}
                 </Stack>
-
                 <ActionIcon
                   variant="subtle"
                   color="gray"
@@ -72,6 +94,15 @@ export default function PageDotFiles() {
                   target="_blank"
                 >
                   🔍
+                </ActionIcon>
+                <ActionIcon
+                  variant="subtle"
+                  color="gray"
+                  onClick={() => {
+                    /* 删除逻辑 */
+                  }}
+                >
+                  🗑️
                 </ActionIcon>
               </Group>
             </Group>
