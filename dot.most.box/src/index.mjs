@@ -60,31 +60,18 @@ const initIPv4 = async () => {
     "https://checkip.amazonaws.com",
     "https://ipinfo.io/ip",
   ];
-
-  let ipv4 = "";
   for (const api of apis) {
     try {
       const res = await axios.get(api, { timeout: 3000 });
       const ip = res.data?.trim();
       if (ip && /^\d+\.\d+\.\d+\.\d+$/.test(ip)) {
-        ipv4 = ip;
-        break;
+        network.ipv4.push(`http://${ipv4}:${port}`);
+        return;
       }
     } catch (error) {
-      console.error(api, error?.message);
+      // console.error(api, error?.message);
       continue;
     }
-  }
-  // 尝试获取 IPv4
-  try {
-    const res = await axios.get(`http://${ipv4}:${port}/ipv6`, {
-      timeout: 2000,
-    });
-    if (res.data) {
-      network.ipv4.push(`http://${ipv4}:${port}`);
-    }
-  } catch (error) {
-    console.error(ipv4, error?.message);
   }
 };
 
