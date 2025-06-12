@@ -11,8 +11,9 @@ import {
   Button,
   Modal,
   ScrollArea,
+  TextInput,
 } from "@mantine/core";
-import { api, DotCID } from "@/constants/api";
+import { api } from "@/constants/api";
 import "./files.scss";
 import Link from "next/link";
 import { IconUpload, IconFolderPlus, IconX } from "@tabler/icons-react";
@@ -35,6 +36,7 @@ interface PreviewFile {
 }
 
 export default function PageDotFiles() {
+  const [cidBaseUrl, setCidBaseUrl] = useState(api.DotCID);
   const wallet = useUserStore((state) => state.wallet);
   const [fileList, setFileList] = useState<FileItem[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -192,6 +194,20 @@ export default function PageDotFiles() {
     }
   };
 
+  const handleCidUrlChange = async () => {
+    const baseUrl = new URL(cidBaseUrl).origin;
+    api.DotCID = baseUrl;
+    localStorage.DotCID = baseUrl;
+    setCidBaseUrl(baseUrl);
+    // 修改 DotCID
+    notifications.show({
+      title: "CID 地址已更新",
+      message: baseUrl,
+      color: "green",
+    });
+    fetchFiles();
+  };
+
   useEffect(() => {
     fetchFiles();
   }, []);
@@ -199,6 +215,29 @@ export default function PageDotFiles() {
   return (
     <Box id="page-dot-files">
       <AppHeader title="文件列表" />
+
+      <Stack align="center" gap={0}>
+        <Group gap={4} p={10}>
+          <p>IPFS CID 浏览器</p>
+          <a
+            href={new URL(cidBaseUrl).origin + "/ipfs/"}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {new URL(cidBaseUrl).origin + "/ipfs/"}
+          </a>
+        </Group>
+        <Group mt="sm" justify="center">
+          <TextInput
+            leftSection="CID"
+            value={cidBaseUrl}
+            onChange={(event) => setCidBaseUrl(event.currentTarget.value)}
+            placeholder="输入 CID 地址"
+          />
+          <Button onClick={handleCidUrlChange}>设置</Button>
+        </Group>
+      </Stack>
+
       {wallet ? (
         <Stack gap="md" p="md">
           {/* 隐藏的文件输入框 */}
@@ -327,7 +366,7 @@ export default function PageDotFiles() {
                     variant="subtle"
                     color="gray"
                     component={Link}
-                    href={`${DotCID}/ipfs/${item.cid["/"]}?filename=${item.name}`}
+                    href={`${api.DotCID}/ipfs/${item.cid["/"]}?filename=${item.name}`}
                     target="_blank"
                   >
                     🔍

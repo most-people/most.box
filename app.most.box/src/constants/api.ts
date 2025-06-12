@@ -1,14 +1,24 @@
 import axios from "axios";
 
-const isDev = process.env.NODE_ENV !== "production";
+export const isDev = process.env.NODE_ENV !== "production";
 
-export const DotAPI = isDev ? "http://localhost:1976" : "https://dot.most.red";
-
-export const DotCID = isDev ? "http://localhost:8080" : "https://cid.most.red";
+const DotAPI = isDev ? "http://localhost:1976" : "https://dot.most.red";
+const DotCID = isDev ? "http://localhost:8080" : "https://cid.most.red";
 
 export const api = axios.create({
-  baseURL: DotAPI,
+  baseURL: localStorage.DotAPI || DotAPI,
 });
+
+// 扩展 AxiosInstance 类型
+declare module "axios" {
+  interface AxiosInstance {
+    DotCID: string;
+    DotAPI: string;
+  }
+}
+
+api.DotAPI = localStorage.DotAPI || DotAPI;
+api.DotCID = localStorage.DotCID || DotCID;
 
 // 添加请求拦截器，自动在 header 中加载 Authorization
 api.interceptors.request.use(

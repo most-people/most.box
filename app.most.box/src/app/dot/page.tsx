@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
 import { Box, TextInput, Button, Group, Stack } from "@mantine/core";
-import { api, DotCID } from "@/constants/api";
+import { api } from "@/constants/api";
 import "./dot.scss";
 import Link from "next/link";
 import { IconWorldWww } from "@tabler/icons-react";
@@ -11,30 +11,31 @@ import { notifications } from "@mantine/notifications";
 export default function PageDot() {
   const [apiLoading, setApiLoading] = useState(false);
   const [IPv6List, setIPv6List] = useState<string[]>([]);
-  const [apiBaseUrl, setApiBaseUrl] = useState(api.defaults.baseURL);
-  const [cidBaseUrl, setCidBaseUrl] = useState(DotCID);
+  const [apiBaseUrl, setApiBaseUrl] = useState(api.defaults.baseURL || "");
 
   const fetchIpv6 = async (first = false) => {
+    const baseUrl = new URL(apiBaseUrl).origin;
     try {
-      const res = await api(apiBaseUrl + "/ipv6");
+      const res = await api(baseUrl + "/ipv6");
       setIPv6List(res.data);
       if (!first) {
-        api.defaults.baseURL = apiBaseUrl;
-        localStorage.DotAPI = apiBaseUrl;
+        api.defaults.baseURL = baseUrl;
+        api.DotAPI = baseUrl;
+        localStorage.DotAPI = baseUrl;
         notifications.show({
           title: "节点已切换",
-          message: apiBaseUrl,
+          message: baseUrl,
           color: "green",
         });
       }
     } catch (error) {
       notifications.show({
         title: "节点未切换",
-        message: apiBaseUrl,
+        message: baseUrl,
         color: "red",
       });
       console.error(error);
-      setApiBaseUrl(api.defaults.baseURL);
+      setApiBaseUrl(api.defaults.baseURL || "");
     }
   };
 
@@ -42,15 +43,6 @@ export default function PageDot() {
     setApiLoading(true);
     await fetchIpv6();
     setApiLoading(false);
-  };
-  const handleCidUrlChange = async () => {
-    localStorage.DotCID = cidBaseUrl;
-    // 修改 DotCID
-    notifications.show({
-      title: "CID 地址已更新",
-      message: cidBaseUrl,
-      color: "green",
-    });
   };
 
   useEffect(() => {
@@ -94,25 +86,6 @@ export default function PageDot() {
           <Button onClick={handleApiUrlChange} loading={apiLoading}>
             更新
           </Button>
-        </Group>
-
-        <p>IPFS CID 浏览器</p>
-        <a
-          href={cidBaseUrl + "/ipfs/"}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {cidBaseUrl + "/ipfs/"}
-        </a>
-
-        <Group mt="sm" justify="center">
-          <TextInput
-            leftSection="CID"
-            value={cidBaseUrl}
-            onChange={(event) => setCidBaseUrl(event.currentTarget.value)}
-            placeholder="输入 CID 地址"
-          />
-          <Button onClick={handleCidUrlChange}>设置</Button>
         </Group>
       </div>
     </Box>
