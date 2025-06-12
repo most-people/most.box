@@ -15,8 +15,7 @@ export default function PageDot() {
 
   const fetchIpv6 = async (first = false) => {
     try {
-      const res = await api.get(apiBaseUrl + "/ipv6");
-      console.log("🌊", res);
+      const res = await api(apiBaseUrl + "/ipv6");
       setIPv6List(res.data);
       if (!first) {
         api.defaults.baseURL = apiBaseUrl;
@@ -71,6 +70,7 @@ export default function PageDot() {
           </>
         )}
         <p>為 全 人 類 徹 底 解 放 奮 鬥 終 身</p>
+
         <Link href="/dot/files">查看我的文件</Link>
 
         <Group mt="sm" justify="center">
