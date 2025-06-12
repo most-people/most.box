@@ -42,31 +42,45 @@ server.register(fastifyMultipart, {
 // 注册文件路由
 registerFiles(server, ipfs);
 
+const network = {
+  ipv4: [`http://localhost:${port}`],
+  ipv6: [`http://[::1]:${port}`],
+};
+
 // 添加IPv6地址API接口
-server.get("/ipv6", async (request, reply) => {
+server.get("/ipv6", async () => {
+  return network;
+});
+
+const initIP = () => {
   const interfaces = os.networkInterfaces();
   for (const name of Object.keys(interfaces)) {
     for (const iface of interfaces[name]) {
+      // 获取 IPv4 地址
+      if (iface.family === "IPv4" && !iface.internal) {
+        network.ipv4.push(`http://${iface.address}:${port}`);
+      }
+      // 获取 IPv6 地址
       if (
         iface.family === "IPv6" &&
         !iface.internal &&
         !iface.address.startsWith("fe80")
       ) {
-        return { url: `http://[${iface.address}]:${port}` };
+        network.ipv6.push(`http://[${iface.address}]:${port}`);
       }
     }
   }
-  return {
-    url: `http://[::1]:${port}`,
-  };
-});
+};
 
 const start = async () => {
+  // 获取 IP 地址
+  initIP();
+  // 运行 DOT.MOST.BOX
   try {
     const peer = await ipfs.id();
     console.log("IPFS", peer.id);
     await server.listen({ port, host: "::" });
-    console.log(`http://[::1]:${port}`);
+    console.log(network);
   } catch (err) {
     console.error(err);
     server.log.error(err);
