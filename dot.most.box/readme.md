@@ -81,3 +81,11 @@ journalctl -u ipfs.service -n 100
 # 查看今天的日志
 journalctl -u ipfs.service --since today
 ```
+
+公网 IPv6 访问
+
+```json
+{
+  "Gateway": ["/ip4/127.0.0.1/tcp/8080", "/ip6/::/tcp/8080"]
+}
+```
