@@ -41,7 +41,6 @@ kill 进程号
 ```bash
 # 创建一个systemd服务文件
 sudo nano /etc/systemd/system/ipfs.service
-
 ```
 
 ```ini
@@ -88,4 +87,23 @@ journalctl -u ipfs.service --since today
 {
   "Gateway": ["/ip4/127.0.0.1/tcp/8080", "/ip6/::/tcp/8080"]
 }
+```
+
+PM2 开机自动启动
+
+```bash
+# 1. 安装 PM2
+npm install -g pm2
+
+# 2. 启动应用
+pm2 start src/index.mjs --name "dot"
+
+# 3. 保存当前进程列表
+pm2 save
+
+# 4. 安装 Windows 启动工具
+npm install pm2-windows-startup -g
+
+# 5. 设置开机启动
+pm2-startup install
 ```
