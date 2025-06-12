@@ -50,30 +50,8 @@ const network = {
 
 // 获取 IPv6
 server.get("/ipv6", async () => {
-  return network;
+  return network.ipv6.slice(1);
 });
-
-const initIPv4 = async () => {
-  const apis = [
-    "https://api.ipify.org",
-    "https://ipv4.icanhazip.com",
-    "https://checkip.amazonaws.com",
-    "https://ipinfo.io/ip",
-  ];
-  for (const api of apis) {
-    try {
-      const res = await axios.get(api, { timeout: 3000 });
-      const ip = res.data?.trim();
-      if (ip && /^\d+\.\d+\.\d+\.\d+$/.test(ip)) {
-        network.ipv4.push(`http://${ipv4}:${port}`);
-        return;
-      }
-    } catch (error) {
-      // console.error(api, error?.message);
-      continue;
-    }
-  }
-};
 
 const initIP = () => {
   const interfaces = os.networkInterfaces();
@@ -93,7 +71,6 @@ const initIP = () => {
       }
     }
   }
-  initIPv4();
 };
 
 const start = async () => {
