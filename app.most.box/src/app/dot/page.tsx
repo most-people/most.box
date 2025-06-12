@@ -15,10 +15,9 @@ export default function PageDot() {
 
   const fetchIpv6 = async (first = false) => {
     try {
-      const res = await api(apiBaseUrl + "/ipv6");
-      if (Array.isArray(res.data)) {
-        setIPv6List(res.data);
-      }
+      const res = await api.get(apiBaseUrl + "/ipv6");
+      console.log("🌊", res);
+      setIPv6List(res.data);
       if (!first) {
         api.defaults.baseURL = apiBaseUrl;
         notifications.show({
