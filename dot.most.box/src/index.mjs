@@ -71,6 +71,7 @@ const initIPv4 = async () => {
         break;
       }
     } catch (error) {
+      console.error(api, error?.message);
       continue;
     }
   }
@@ -83,7 +84,7 @@ const initIPv4 = async () => {
       network.ipv4.push(`http://${ipv4}:${port}`);
     }
   } catch (error) {
-    // 获取 IPv4 获取失败
+    console.error(ipv4, error?.message);
   }
 };
 
