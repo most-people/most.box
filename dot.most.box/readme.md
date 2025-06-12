@@ -92,18 +92,21 @@ journalctl -u ipfs.service --since today
 PM2 开机自动启动
 
 ```bash
-# 1. 安装 PM2
+# Ubuntu
+pm2 startup
+
+# 安装 PM2
 npm install -g pm2
 
-# 2. 启动应用
+# 启动应用
 pm2 start src/index.mjs --name "dot"
 
-# 3. 保存当前进程列表
+# 保存当前进程列表
 pm2 save
 
-# 4. 安装 Windows 启动工具
+# Windows
 npm install pm2-windows-startup -g
 
-# 5. 设置开机启动
+# 设置开机启动
 pm2-startup install
 ```
