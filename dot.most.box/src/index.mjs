@@ -3,6 +3,7 @@ import fastifyStatic from "@fastify/static";
 import fastifyMultipart from "@fastify/multipart";
 import fastifyCors from "@fastify/cors";
 import { create } from "kubo-rpc-client";
+import axios from "axios";
 import path from "path";
 import os from "os";
 import { fileURLToPath } from "url";
@@ -47,10 +48,44 @@ const network = {
   ipv6: [`http://[::1]:${port}`],
 };
 
-// 添加IPv6地址API接口
+// 获取 IPv6
 server.get("/ipv6", async () => {
   return network;
 });
+
+const initIPv4 = async () => {
+  const apis = [
+    "https://api.ipify.org",
+    "https://ipv4.icanhazip.com",
+    "https://checkip.amazonaws.com",
+    "https://ipinfo.io/ip",
+  ];
+
+  let ipv4 = "";
+  for (const api of apis) {
+    try {
+      const res = await axios.get(api, { timeout: 3000 });
+      const ip = res.data?.trim();
+      if (ip && /^\d+\.\d+\.\d+\.\d+$/.test(ip)) {
+        ipv4 = ip;
+        break;
+      }
+    } catch (error) {
+      continue;
+    }
+  }
+  // 尝试获取 IPv4
+  try {
+    const res = await axios.get(`http://${ipv4}:${port}/ipv6`, {
+      timeout: 2000,
+    });
+    if (res.data) {
+      network.ipv4.push(`http://${ipv4}:${port}`);
+    }
+  } catch (error) {
+    // 获取 IPv4 获取失败
+  }
+};
 
 const initIP = () => {
   const interfaces = os.networkInterfaces();
@@ -70,6 +105,7 @@ const initIP = () => {
       }
     }
   }
+  initIPv4();
 };
 
 const start = async () => {
