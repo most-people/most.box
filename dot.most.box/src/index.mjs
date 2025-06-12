@@ -10,7 +10,7 @@ import { fileURLToPath } from "url";
 import { registerFiles } from "./files.mjs";
 
 // 创建 IPFS 客户端
-const ipfs = create({ url: "http://127.0.0.1:5001" });
+const ipfs = create({ url: "http://localhost:5001" });
 
 const port = 1976;
 
@@ -50,7 +50,7 @@ const network = {
 
 // 获取 IPv6
 server.get("/ipv6", async () => {
-  return network.ipv6;
+  return network.ipv6.slice(1);
 });
 
 const initIP = () => {

@@ -2,9 +2,9 @@ import axios from "axios";
 
 const isDev = process.env.NODE_ENV !== "production";
 
-export const DotAPI = isDev ? "http://127.0.0.1:1976" : "https://dot.most.red";
+export const DotAPI = isDev ? "http://localhost:1976" : "https://dot.most.red";
 
-export const DotCID = isDev ? "http://127.0.0.1:8080" : "https://cid.most.red";
+export const DotCID = isDev ? "http://localhost:8080" : "https://cid.most.red";
 
 export const api = axios.create({
   baseURL: DotAPI,
