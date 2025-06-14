@@ -12,6 +12,7 @@ import {
   Modal,
   ScrollArea,
   TextInput,
+  Center,
 } from "@mantine/core";
 import { api } from "@/constants/api";
 import "./files.scss";
@@ -36,8 +37,9 @@ interface PreviewFile {
 }
 
 export default function PageDotFiles() {
-  const [cidBaseUrl, setCidBaseUrl] = useState(api.DotCID);
+  const setItem = useUserStore((state) => state.setItem);
   const wallet = useUserStore((state) => state.wallet);
+  const dotCID = useUserStore((state) => state.dotCID);
   const [fileList, setFileList] = useState<FileItem[]>([]);
   const [uploading, setUploading] = useState(false);
   const [previewFiles, setPreviewFiles] = useState<PreviewFile[]>([]);
@@ -195,17 +197,14 @@ export default function PageDotFiles() {
   };
 
   const handleCidUrlChange = async () => {
-    const baseUrl = new URL(cidBaseUrl).origin;
-    api.DotCID = baseUrl;
-    localStorage.DotCID = baseUrl;
-    setCidBaseUrl(baseUrl);
-    // 修改 DotCID
+    const baseUrl = new URL(dotCID).origin;
+    localStorage.dotCID = baseUrl;
+    setItem("dotCID", baseUrl);
     notifications.show({
-      title: "CID 地址已更新",
+      title: "CID 地址已保存",
       message: baseUrl,
       color: "green",
     });
-    fetchFiles();
   };
 
   useEffect(() => {
@@ -216,25 +215,26 @@ export default function PageDotFiles() {
     <Box id="page-dot-files">
       <AppHeader title="文件列表" />
 
-      <Stack align="center" gap={0}>
-        <Group gap={4} p={10}>
-          <p>IPFS CID 浏览器</p>
+      <Stack align="center" gap={0} p="md">
+        <Group gap={4}>
+          <span>IPFS CID 浏览器</span>
           <a
-            href={new URL(cidBaseUrl).origin + "/ipfs/"}
+            href={new URL(dotCID).origin + "/ipfs/"}
             target="_blank"
             rel="noopener noreferrer"
           >
-            {new URL(cidBaseUrl).origin + "/ipfs/"}
+            {new URL(dotCID).origin + "/ipfs/"}
           </a>
         </Group>
-        <Group mt="sm" justify="center">
+        <Group mt="sm" w="100%">
           <TextInput
+            flex={1}
             leftSection="CID"
-            value={cidBaseUrl}
-            onChange={(event) => setCidBaseUrl(event.currentTarget.value)}
+            value={dotCID}
+            onChange={(event) => setItem("dotCID", event.currentTarget.value)}
             placeholder="输入 CID 地址"
           />
-          <Button onClick={handleCidUrlChange}>设置</Button>
+          <Button onClick={handleCidUrlChange}>保存</Button>
         </Group>
       </Stack>
 
@@ -366,7 +366,7 @@ export default function PageDotFiles() {
                     variant="subtle"
                     color="gray"
                     component={Link}
-                    href={`${api.DotCID}/ipfs/${item.cid["/"]}?filename=${item.name}`}
+                    href={`${dotCID}/ipfs/${item.cid["/"]}?filename=${item.name}`}
                     target="_blank"
                   >
                     🔍
@@ -389,9 +389,11 @@ export default function PageDotFiles() {
           )}
         </Stack>
       ) : (
-        <Button variant="gradient" component={Link} href="/login">
-          去登录
-        </Button>
+        <Center mt="md">
+          <Button variant="gradient" component={Link} href="/login">
+            去登录
+          </Button>
+        </Center>
       )}
     </Box>
   );

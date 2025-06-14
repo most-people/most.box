@@ -1,6 +1,7 @@
 import mp from "@/constants/mp";
 import { type MostWallet } from "@/constants/MostWallet";
 import { create } from "zustand";
+import { DotAPI, DotCID } from "@/constants/api";
 
 export interface People {
   value: string;
@@ -25,6 +26,8 @@ interface UserStore {
   initWallet: () => void;
   exit: () => void;
   firstPath: string;
+  dotAPI: string;
+  dotCID: string;
 }
 
 interface State extends UserStore {
@@ -46,6 +49,8 @@ export const useUserStore = create<State>((set) => ({
   },
   setItem: (key, value) => set((state) => ({ ...state, [key]: value })),
   firstPath: "",
+  dotAPI: DotAPI,
+  dotCID: DotCID,
   exit() {
     set({ wallet: undefined });
     localStorage.removeItem("jwt");

@@ -7,21 +7,23 @@ import "./dot.scss";
 import Link from "next/link";
 import { IconWorldWww } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
+import { useUserStore } from "@/stores/userStore";
 
 export default function PageDot() {
   const [apiLoading, setApiLoading] = useState(false);
   const [IPv6List, setIPv6List] = useState<string[]>([]);
-  const [apiBaseUrl, setApiBaseUrl] = useState(api.defaults.baseURL || "");
+  const dotAPI = useUserStore((state) => state.dotAPI);
+  const setItem = useUserStore((state) => state.setItem);
 
   const fetchIpv6 = async (first = false) => {
-    const baseUrl = new URL(apiBaseUrl).origin;
+    const baseUrl = new URL(dotAPI).origin;
     try {
       const res = await api(baseUrl + "/ipv6");
       setIPv6List(res.data);
       if (!first) {
         api.defaults.baseURL = baseUrl;
-        api.DotAPI = baseUrl;
-        localStorage.DotAPI = baseUrl;
+        setItem("dotAPI", baseUrl);
+        localStorage.dotAPI = baseUrl;
         notifications.show({
           title: "节点已切换",
           message: baseUrl,
@@ -35,7 +37,7 @@ export default function PageDot() {
         color: "red",
       });
       console.error(error);
-      setApiBaseUrl(api.defaults.baseURL || "");
+      setItem("dotAPI", api.defaults.baseURL || "");
     }
   };
 
@@ -51,7 +53,7 @@ export default function PageDot() {
 
   return (
     <Box id="page-dot">
-      <AppHeader title="DOT.MOST.BOX" />
+      <AppHeader title="节点" />
       <div className="container">
         <div className="emoji">🎉</div>
         <h1>DOT.MOST.BOX</h1>
@@ -79,8 +81,8 @@ export default function PageDot() {
         <Group mt="sm" justify="center">
           <TextInput
             leftSection={<IconWorldWww />}
-            value={apiBaseUrl}
-            onChange={(event) => setApiBaseUrl(event.currentTarget.value)}
+            value={dotAPI}
+            onChange={(event) => setItem("dotAPI", event.currentTarget.value)}
             placeholder="输入节点地址"
           />
           <Button onClick={handleApiUrlChange} loading={apiLoading}>

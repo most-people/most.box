@@ -82,9 +82,9 @@ const start = async () => {
     console.log("IPFS", peer.id);
     await server.listen({ port, host: "::" });
     console.log(network);
-  } catch (err) {
-    console.error(err);
-    server.log.error(err);
+  } catch (error) {
+    console.error(error);
+    server.log.error(error);
     process.exit(1);
   }
 };
