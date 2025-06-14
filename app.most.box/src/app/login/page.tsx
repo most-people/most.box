@@ -44,7 +44,7 @@ export default function PageLogin() {
       const signer = await connectOKX();
       if (signer) {
         const address = await signer.getAddress();
-        const sig = await signer.signMessage(address);
+        const sig = await signer.signMessage("Connect wallet " + address);
         login(address.slice(-4), sig);
       }
     } catch (error) {
