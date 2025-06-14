@@ -3,12 +3,14 @@ import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { useAccountStore } from "@/stores/accountStore";
 import { useUserStore } from "@/stores/userStore";
 import { useEffect } from "react";
-import { api } from "@/constants/api";
+import { useRouter } from "next/navigation";
 
 export default function AppProvider() {
   const setItem = useUserStore((state) => state.setItem);
   const initWallet = useUserStore((state) => state.initWallet);
+  const updateDot = useUserStore((state) => state.updateDot);
   const initAccount = useAccountStore((state) => state.initAccount);
+  const router = useRouter();
 
   const initFinger = async () => {
     try {
@@ -25,15 +27,13 @@ export default function AppProvider() {
 
   const initDot = async () => {
     const dotAPI = localStorage.dotAPI;
-    const dotCID = localStorage.dotCID;
-    if (dotAPI && dotCID) {
-      const res = await api(dotAPI + "/ipv6");
-      if (res.data?.length > 0) {
-        api.defaults.baseURL = dotAPI;
-        setItem("dotAPI", dotAPI);
-        setItem("dotCID", dotCID);
+    if (dotAPI) {
+      const list = await updateDot(dotAPI, true);
+      if (list) {
+        return;
       }
     }
+    router.push("/dot");
   };
 
   useEffect(() => {

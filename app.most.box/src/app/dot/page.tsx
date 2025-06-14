@@ -1,12 +1,10 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
 import { Box, TextInput, Button, Group, Stack } from "@mantine/core";
-import { api } from "@/constants/api";
 import "./dot.scss";
 import Link from "next/link";
 import { IconWorldWww } from "@tabler/icons-react";
-import { notifications } from "@mantine/notifications";
 import { useUserStore } from "@/stores/userStore";
 
 export default function PageDot() {
@@ -14,46 +12,20 @@ export default function PageDot() {
   const [IPv6List, setIPv6List] = useState<string[]>([]);
   const dotAPI = useUserStore((state) => state.dotAPI);
   const setItem = useUserStore((state) => state.setItem);
-
-  const fetchIpv6 = async (first = false) => {
-    const baseUrl = new URL(dotAPI).origin;
-    try {
-      const res = await api(baseUrl + "/ipv6");
-      setIPv6List(res.data);
-      if (!first) {
-        api.defaults.baseURL = baseUrl;
-        setItem("dotAPI", baseUrl);
-        localStorage.dotAPI = baseUrl;
-        notifications.show({
-          title: "节点已切换",
-          message: baseUrl,
-          color: "green",
-        });
-      }
-    } catch (error) {
-      notifications.show({
-        title: "节点未切换",
-        message: baseUrl,
-        color: "red",
-      });
-      console.error(error);
-      setItem("dotAPI", api.defaults.baseURL || "");
-    }
-  };
+  const updateDot = useUserStore((state) => state.updateDot);
 
   const handleApiUrlChange = async () => {
     setApiLoading(true);
-    await fetchIpv6();
+    const list = await updateDot(dotAPI);
+    if (list) {
+      setIPv6List(list);
+    }
     setApiLoading(false);
   };
 
-  useEffect(() => {
-    fetchIpv6(true);
-  }, []);
-
   return (
     <Box id="page-dot">
-      <AppHeader title="节点" />
+      <AppHeader title="确认节点" />
       <div className="container">
         <div className="emoji">🎉</div>
         <h1>DOT.MOST.BOX</h1>

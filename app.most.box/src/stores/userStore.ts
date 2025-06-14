@@ -1,7 +1,8 @@
 import mp from "@/constants/mp";
 import { type MostWallet } from "@/constants/MostWallet";
 import { create } from "zustand";
-import { DotAPI, DotCID } from "@/constants/api";
+import { api, DotAPI, DotCID } from "@/constants/api";
+import { notifications } from "@mantine/notifications";
 
 export interface People {
   value: string;
@@ -24,6 +25,7 @@ export interface Notify {
 interface UserStore {
   wallet?: MostWallet;
   initWallet: () => void;
+  updateDot: (url: string, first?: boolean) => Promise<string[] | null>;
   exit: () => void;
   firstPath: string;
   dotAPI: string;
@@ -46,6 +48,40 @@ export const useUserStore = create<State>((set) => ({
         set({ wallet });
       }
     }
+  },
+  async updateDot(url, first) {
+    const dotAPI = new URL(url).origin;
+    try {
+      const res = await api(dotAPI + "/ipv6");
+      const ipv6Set: Set<string> = new Set(res.data);
+      ipv6Set.add(dotAPI);
+      api.defaults.baseURL = dotAPI;
+      set({ dotAPI });
+      localStorage.dotAPI = dotAPI;
+
+      if (!first) {
+        notifications.show({
+          title: "节点已切换",
+          message: dotAPI,
+          color: "green",
+        });
+      }
+      if (dotAPI.endsWith("1976")) {
+        const dotCID = dotAPI.slice(0, -4) + "8080";
+        set({ dotCID });
+        localStorage.dotCID = dotCID;
+      }
+      return Array.from(ipv6Set);
+    } catch (error) {
+      notifications.show({
+        title: "节点未切换",
+        message: dotAPI,
+        color: "red",
+      });
+      console.error(error);
+      set({ dotAPI: api.defaults.baseURL || "" });
+    }
+    return null;
   },
   setItem: (key, value) => set((state) => ({ ...state, [key]: value })),
   firstPath: "",

@@ -201,15 +201,17 @@ export default function PageDotFiles() {
     localStorage.dotCID = baseUrl;
     setItem("dotCID", baseUrl);
     notifications.show({
-      title: "CID 地址已保存",
+      title: "CID 地址已更新",
       message: baseUrl,
       color: "green",
     });
   };
 
   useEffect(() => {
-    fetchFiles();
-  }, []);
+    if (wallet) {
+      fetchFiles();
+    }
+  }, [wallet]);
 
   return (
     <Box id="page-dot-files">
@@ -234,7 +236,7 @@ export default function PageDotFiles() {
             onChange={(event) => setItem("dotCID", event.currentTarget.value)}
             placeholder="输入 CID 地址"
           />
-          <Button onClick={handleCidUrlChange}>保存</Button>
+          <Button onClick={handleCidUrlChange}>更新</Button>
         </Group>
       </Stack>
 

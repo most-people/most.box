@@ -50,7 +50,7 @@ const network = {
 
 // 获取 IPv6
 server.get("/ipv6", async () => {
-  return network.ipv6;
+  return network.ipv6.slice(1);
 });
 
 const initIP = () => {
