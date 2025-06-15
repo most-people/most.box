@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
-import { Box, TextInput, Button, Group, Stack } from "@mantine/core";
+import { Box, TextInput, Button, Stack, Group } from "@mantine/core";
 import "./dot.scss";
 import Link from "next/link";
 import { IconWorldWww } from "@tabler/icons-react";
@@ -50,17 +50,20 @@ export default function PageDot() {
 
         <Link href="/dot/files">查看我的文件</Link>
 
-        <Group mt="sm" justify="center">
-          <TextInput
-            leftSection={<IconWorldWww />}
-            value={dotAPI}
-            onChange={(event) => setItem("dotAPI", event.currentTarget.value)}
-            placeholder="输入节点地址"
-          />
-          <Button onClick={handleApiUrlChange} loading={apiLoading}>
-            更新
-          </Button>
-        </Group>
+        <Stack mt="md">
+          <Group>
+            <TextInput
+              leftSection={<IconWorldWww />}
+              value={dotAPI}
+              onChange={(event) => setItem("dotAPI", event.currentTarget.value)}
+              placeholder="输入节点地址"
+            />
+            <Button onClick={handleApiUrlChange} loading={apiLoading}>
+              更新
+            </Button>
+          </Group>
+          <Link href="/dot/list">节点列表</Link>
+        </Stack>
       </div>
     </Box>
   );

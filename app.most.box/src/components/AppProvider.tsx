@@ -6,7 +6,6 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export default function AppProvider() {
-  const setItem = useUserStore((state) => state.setItem);
   const initWallet = useUserStore((state) => state.initWallet);
   const updateDot = useUserStore((state) => state.updateDot);
   const initAccount = useAccountStore((state) => state.initAccount);
@@ -40,7 +39,7 @@ export default function AppProvider() {
     initFinger();
     initAccount();
     initDot();
-    setItem("firstPath", window.location.pathname);
+    sessionStorage.firstPath = window.location.pathname;
   }, []);
 
   return null;
