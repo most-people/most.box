@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-contract UserRegistry {
-    struct User {
+contract DotRegistry {
+    struct Dot {
         string name;
         string[] apis;
         string[] cids;
         uint256 updatedAt;
     }
 
-    mapping(address => User) public users;
-    address[] public userList;
+    mapping(address => Dot) public dots;
+    address[] public dotList;
     mapping(address => bool) public exists;
 
     // 添加限制常量
@@ -18,9 +18,9 @@ contract UserRegistry {
     uint256 public constant MAX_ARRAY_LENGTH = 50;
     uint256 public constant MAX_STRING_LENGTH = 100;
 
-    event UserUpdated(address indexed user, uint256 timestamp);
+    event DotUpdated(address indexed dot, uint256 timestamp);
 
-    function setUser(
+    function setDot(
         string calldata name,
         string[] calldata apis,
         string[] calldata cids
@@ -45,22 +45,22 @@ contract UserRegistry {
         }
 
         if (!exists[msg.sender]) {
-            userList.push(msg.sender);
+            dotList.push(msg.sender);
             exists[msg.sender] = true;
         }
 
-        users[msg.sender] = User({
+        dots[msg.sender] = Dot({
             name: name,
             apis: apis,
             cids: cids,
             updatedAt: block.timestamp
         });
 
-        emit UserUpdated(msg.sender, block.timestamp);
+        emit DotUpdated(msg.sender, block.timestamp);
     }
 
-    function getUser(
-        address user
+    function getDot(
+        address dot
     )
         external
         view
@@ -71,15 +71,15 @@ contract UserRegistry {
             uint256 updatedAt
         )
     {
-        User storage u = users[user];
+        Dot storage u = dots[dot];
         return (u.name, u.apis, u.cids, u.updatedAt);
     }
 
-    function getUserCount() external view returns (uint256) {
-        return userList.length;
+    function getDotCount() external view returns (uint256) {
+        return dotList.length;
     }
 
-    function getUsers(
+    function getDots(
         uint256 start,
         uint256 count
     )
@@ -91,11 +91,11 @@ contract UserRegistry {
             uint256[] memory timestamps
         )
     {
-        require(start <= userList.length, "Invalid start");
+        require(start <= dotList.length, "Invalid start");
 
         uint256 end = start + count;
-        if (end > userList.length) {
-            end = userList.length;
+        if (end > dotList.length) {
+            end = dotList.length;
         }
 
         uint256 length = end - start;
@@ -104,15 +104,15 @@ contract UserRegistry {
         timestamps = new uint256[](length);
 
         for (uint256 i = 0; i < length; i++) {
-            address addr = userList[start + i];
-            User storage user = users[addr];
+            address addr = dotList[start + i];
+            Dot storage dot = dots[addr];
             addresses[i] = addr;
-            names[i] = user.name;
-            timestamps[i] = user.updatedAt;
+            names[i] = dot.name;
+            timestamps[i] = dot.updatedAt;
         }
     }
 
-    function getAllUsers()
+    function getAllDots()
         external
         view
         returns (
@@ -121,17 +121,17 @@ contract UserRegistry {
             uint256[] memory timestamps
         )
     {
-        uint256 length = userList.length;
+        uint256 length = dotList.length;
         addresses = new address[](length);
         names = new string[](length);
         timestamps = new uint256[](length);
 
         for (uint256 i = 0; i < length; i++) {
-            address addr = userList[i];
-            User storage user = users[addr];
+            address addr = dotList[i];
+            Dot storage dot = dots[addr];
             addresses[i] = addr;
-            names[i] = user.name;
-            timestamps[i] = user.updatedAt;
+            names[i] = dot.name;
+            timestamps[i] = dot.updatedAt;
         }
     }
 }
