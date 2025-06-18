@@ -67,7 +67,7 @@ contract UserRegistry {
             uint256[] memory timestamps
         )
     {
-        require(start < userList.length, "Invalid start");
+        require(start <= userList.length, "Invalid start");
 
         uint256 end = start + count;
         if (end > userList.length) {
