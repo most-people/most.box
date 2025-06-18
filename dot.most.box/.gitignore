@@ -1,8 +1,6 @@
 # 依赖目录
-node_modules/
-
-# 构建输出目录
-dist/
+/node_modules
+.env
 
 # 系统文件
 .DS_Store

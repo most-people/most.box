@@ -1,13 +1,15 @@
+import 'dotenv/config';
 import fastify from "fastify";
 import fastifyStatic from "@fastify/static";
 import fastifyMultipart from "@fastify/multipart";
 import fastifyCors from "@fastify/cors";
 import { create } from "kubo-rpc-client";
-import axios from "axios";
+import { ethers } from "ethers";
 import path from "path";
 import os from "os";
 import { fileURLToPath } from "url";
 import { registerFiles } from "./files.mjs";
+import DotContract from "./abi/DotContract.json" with { type: "json" };
 
 // 创建 IPFS 客户端
 const ipfs = create({ url: "http://localhost:5001" });
@@ -73,6 +75,51 @@ const initIP = () => {
   }
 };
 
+const arrayEqual = (arr1, arr2) => {
+  if (arr1.length !== arr2.length) {
+    return false;
+  }
+  const set1 = new Set(arr1);
+  const set2 = new Set(arr2);
+  return set1.size === set2.size && [...set1].every(x => set2.has(x));
+}
+
+const postIP = async (RPC) => {
+  const { PRIVATE_KEY, DOT_NAME } = process.env
+  if (!(PRIVATE_KEY && DOT_NAME)) {
+    console.error('请在 .env 文件设置 PRIVATE_KEY 和 DOT_NAME');
+    return;
+  }
+  const CONTRACT_ADDRESS = "0xdc82cef1a8416210afb87caeec908a4df843f016";
+  const provider = new ethers.JsonRpcProvider(RPC);
+  const dotContract = new ethers.Contract(CONTRACT_ADDRESS, DotContract.abi, provider);
+  const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
+  const contract = dotContract.connect(wallet);
+
+
+  // 开始获取
+  const [name, APIs, CIDs, update] = await contract.getDot(wallet.address);
+
+  const dot = {
+    name: DOT_NAME,
+    APIs: network.ipv6.slice(1),
+    CIDs: [],
+  }
+
+  if (arrayEqual(APIs, dot.APIs)) {
+    console.log("节点无变化");
+    return;
+  }
+
+  // 开始更新
+  try {
+    await contract.setDot(dot.name, dot.APIs, dot.CIDs);
+    console.log("节点信息已更新到合约");
+  } catch (error) {
+    console.error("更新节点信息失败:", error);
+  }
+};
+
 const start = async () => {
   // 获取 IP 地址
   initIP();
@@ -82,6 +129,9 @@ const start = async () => {
     console.log("IPFS", peer.id);
     await server.listen({ port, host: "::" });
     console.log(network);
+    // 推送 IP 地址
+    postIP("https://sepolia.base.org");
+    // postIP('https://mainnet.base.org');
   } catch (error) {
     console.error(error);
     server.log.error(error);

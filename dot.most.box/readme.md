@@ -110,3 +110,10 @@ npm install pm2-windows-startup -g
 # 设置开机启动
 pm2-startup install
 ```
+
+配置文件 .env
+
+```bash
+DOT_NAME=Test
+PRIVATE_KEY=0x0000000000000000000000000000000000000000000000000000000000000000
+```
