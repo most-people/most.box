@@ -10,6 +10,7 @@ import {
   Button,
   Loader,
   Alert,
+  Select,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { ethers } from "ethers";
@@ -59,11 +60,24 @@ export default function PageDotList() {
   const [loading, setLoading] = useState(true);
   const [checkingConnectivity, setCheckingConnectivity] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [network, setNetwork] = useState<"mainnet" | "testnet">("testnet");
 
   // 合约配置 - 基于你的代码示例
   const CONTRACT_ADDRESS = "0xdc82cef1a8416210afb87caeec908a4df843f016";
-  // const RPC = "https://mainnet.base.org"; // Base 主网 RPC
-  const RPC = "https://sepolia.base.org"; // Base 测试网 RPC
+
+  // 网络配置
+  const NETWORK_CONFIG = {
+    mainnet: {
+      rpc: "https://mainnet.base.org",
+      name: "Base 主网",
+    },
+    testnet: {
+      rpc: "https://sepolia.base.org",
+      name: "Base 测试网",
+    },
+  };
+
+  const RPC = NETWORK_CONFIG[network].rpc;
 
   // 获取节点列表
   const fetchNodes = async () => {
@@ -185,9 +199,21 @@ export default function PageDotList() {
     return `${time}ms`;
   };
 
+  // 网络切换处理
+  const handleNetworkChange = (value: string | null) => {
+    if (value && (value === "mainnet" || value === "testnet")) {
+      setNetwork(value);
+      notifications.show({
+        title: "网络已切换",
+        message: `已切换到 ${NETWORK_CONFIG[value].name}`,
+        color: "blue",
+      });
+    }
+  };
+
   useEffect(() => {
     fetchNodes();
-  }, []);
+  }, [network]); // 当网络切换时重新获取节点列表
 
   if (loading) {
     return (
@@ -223,9 +249,21 @@ export default function PageDotList() {
 
       <Box p="md">
         <Group justify="space-between" mb="md">
-          <Text size="lg" fw={500}>
-            共 {nodes.length} 个节点
-          </Text>
+          <Group>
+            <Text size="lg" fw={500}>
+              共 {nodes.length} 个节点
+            </Text>
+            <Select
+              value={network}
+              onChange={handleNetworkChange}
+              data={[
+                { value: "testnet", label: "Base 测试网" },
+                { value: "mainnet", label: "Base 主网" },
+              ]}
+              size="sm"
+              w={150}
+            />
+          </Group>
           <Group>
             <Button
               leftSection={<IconRefresh size={16} />}
@@ -244,6 +282,12 @@ export default function PageDotList() {
             </Button>
           </Group>
         </Group>
+
+        {/* 显示当前网络状态 */}
+        <Alert mb="md" color="blue" variant="light">
+          当前网络: {NETWORK_CONFIG[network].name} (
+          {NETWORK_CONFIG[network].rpc})
+        </Alert>
 
         {nodes.length === 0 ? (
           <Alert title="暂无节点">当前没有注册的节点</Alert>
