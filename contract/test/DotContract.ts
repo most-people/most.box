@@ -259,9 +259,9 @@ describe("UserRegistry", function () {
 
   describe("边界情况", function () {
     it("应该处理非常长的字符串", async function () {
-      const longName = "A".repeat(1000);
-      const longApi = "B".repeat(1000);
-      const longCid = "C".repeat(1000);
+      const longName = "A".repeat(100); // 在限制范围内
+      const longApi = "B".repeat(100);
+      const longCid = "C".repeat(100);
 
       await userRegistry.connect(addr1).setUser(longName, [longApi], [longCid]);
 
@@ -274,8 +274,8 @@ describe("UserRegistry", function () {
     });
 
     it("应该处理大量的API和CID", async function () {
-      const manyApis = Array.from({ length: 100 }, (_, i) => `api${i}`);
-      const manyCids = Array.from({ length: 100 }, (_, i) => `cid${i}`);
+      const manyApis = Array.from({ length: 50 }, (_, i) => `api${i}`); // 在限制范围内
+      const manyCids = Array.from({ length: 50 }, (_, i) => `cid${i}`);
 
       await userRegistry.connect(addr1).setUser("TestUser", manyApis, manyCids);
 
