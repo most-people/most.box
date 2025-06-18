@@ -13,6 +13,11 @@ contract UserRegistry {
     address[] public userList;
     mapping(address => bool) public exists;
 
+    // 添加限制常量
+    uint256 public constant MAX_NAME_LENGTH = 100;
+    uint256 public constant MAX_ARRAY_LENGTH = 50;
+    uint256 public constant MAX_STRING_LENGTH = 100;
+
     event UserUpdated(address indexed user, uint256 timestamp);
 
     function setUser(
@@ -20,6 +25,25 @@ contract UserRegistry {
         string[] calldata apis,
         string[] calldata cids
     ) external {
+        // 验证输入长度
+        require(bytes(name).length <= MAX_NAME_LENGTH, "Name too long");
+        require(apis.length <= MAX_ARRAY_LENGTH, "Too many APIs");
+        require(cids.length <= MAX_ARRAY_LENGTH, "Too many CIDs");
+
+        // 验证数组元素长度
+        for (uint i = 0; i < apis.length; i++) {
+            require(
+                bytes(apis[i]).length <= MAX_STRING_LENGTH,
+                "API string too long"
+            );
+        }
+        for (uint i = 0; i < cids.length; i++) {
+            require(
+                bytes(cids[i]).length <= MAX_STRING_LENGTH,
+                "CID string too long"
+            );
+        }
+
         if (!exists[msg.sender]) {
             userList.push(msg.sender);
             exists[msg.sender] = true;

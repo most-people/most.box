@@ -284,4 +284,20 @@ describe("UserRegistry", function () {
       expect(userCids).to.deep.equal(manyCids);
     });
   });
+
+  describe("安全性测试", function () {
+    it("应该拒绝过长的名称", async function () {
+      const longName = "A".repeat(101);
+      await expect(
+        userRegistry.connect(addr1).setUser(longName, [], [])
+      ).to.be.revertedWith("Name too long");
+    });
+
+    it("应该拒绝过多的API", async function () {
+      const manyApis = Array.from({ length: 51 }, (_, i) => `api${i}`);
+      await expect(
+        userRegistry.connect(addr1).setUser("Test", manyApis, [])
+      ).to.be.revertedWith("Too many APIs");
+    });
+  });
 });
