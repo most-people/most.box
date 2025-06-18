@@ -18,7 +18,7 @@ describe("UserRegistry", function () {
   });
 
   describe("setUser", function () {
-    it("Should set user data for new user", async function () {
+    it("应该为新用户设置用户数据", async function () {
       const name = "Alice";
       const apis = ["api1", "api2"];
       const cids = ["cid1", "cid2"];
@@ -33,7 +33,7 @@ describe("UserRegistry", function () {
       expect(updatedAt).to.be.gt(0);
     });
 
-    it("Should update existing user data", async function () {
+    it("应该更新现有用户数据", async function () {
       // 首次设置
       await userRegistry.connect(addr1).setUser("Alice", ["api1"], ["cid1"]);
 
@@ -52,7 +52,7 @@ describe("UserRegistry", function () {
       expect(userCids).to.deep.equal(newCids);
     });
 
-    it("Should handle empty arrays", async function () {
+    it("应该处理空数组", async function () {
       await userRegistry.connect(addr1).setUser("Bob", [], []);
 
       const [userName, userApis, userCids] = await userRegistry.getUser(
@@ -63,14 +63,14 @@ describe("UserRegistry", function () {
       expect(userCids).to.deep.equal([]);
     });
 
-    it("Should handle empty name", async function () {
+    it("应该处理空名称", async function () {
       await userRegistry.connect(addr1).setUser("", ["api1"], ["cid1"]);
 
       const [userName] = await userRegistry.getUser(addr1.address);
       expect(userName).to.equal("");
     });
 
-    it("Should emit UserUpdated event", async function () {
+    it("应该触发UserUpdated事件", async function () {
       await expect(
         userRegistry.connect(addr1).setUser("Alice", ["api1"], ["cid1"])
       )
@@ -81,7 +81,7 @@ describe("UserRegistry", function () {
         );
     });
 
-    it("Should add user to userList only once", async function () {
+    it("应该只将用户添加到userList一次", async function () {
       // 首次设置
       await userRegistry.connect(addr1).setUser("Alice", ["api1"], ["cid1"]);
       expect(await userRegistry.getUserCount()).to.equal(1);
@@ -95,7 +95,7 @@ describe("UserRegistry", function () {
   });
 
   describe("getUser", function () {
-    it("Should return empty data for non-existent user", async function () {
+    it("应该为不存在的用户返回空数据", async function () {
       const [userName, userApis, userCids, updatedAt] =
         await userRegistry.getUser(addr1.address);
       expect(userName).to.equal("");
@@ -104,7 +104,7 @@ describe("UserRegistry", function () {
       expect(updatedAt).to.equal(0);
     });
 
-    it("Should return correct user data", async function () {
+    it("应该返回正确的用户数据", async function () {
       const name = "Charlie";
       const apis = ["api1", "api2", "api3"];
       const cids = ["cid1", "cid2", "cid3", "cid4"];
@@ -121,11 +121,11 @@ describe("UserRegistry", function () {
   });
 
   describe("getUserCount", function () {
-    it("Should return 0 initially", async function () {
+    it("初始时应该返回0", async function () {
       expect(await userRegistry.getUserCount()).to.equal(0);
     });
 
-    it("Should return correct count after adding users", async function () {
+    it("添加用户后应该返回正确的计数", async function () {
       await userRegistry.connect(addr1).setUser("User1", [], []);
       expect(await userRegistry.getUserCount()).to.equal(1);
 
@@ -145,7 +145,7 @@ describe("UserRegistry", function () {
       await userRegistry.connect(addr3).setUser("User3", ["api3"], ["cid3"]);
     });
 
-    it("Should return users with correct pagination", async function () {
+    it("应该返回正确分页的用户", async function () {
       const [addresses, names, timestamps] = await userRegistry.getUsers(0, 2);
 
       expect(addresses.length).to.equal(2);
@@ -158,7 +158,7 @@ describe("UserRegistry", function () {
       expect(names[1]).to.equal("User2");
     });
 
-    it("Should handle start + count exceeding total users", async function () {
+    it("应该处理start + count超过总用户数的情况", async function () {
       const [addresses, names, timestamps] = await userRegistry.getUsers(1, 10);
 
       expect(addresses.length).to.equal(2); // 只有2个用户从索引1开始
@@ -166,7 +166,7 @@ describe("UserRegistry", function () {
       expect(addresses[1]).to.equal(addr3.address);
     });
 
-    it("Should return empty arrays when start equals user count", async function () {
+    it("当start等于用户计数时应该返回空数组", async function () {
       const [addresses, names, timestamps] = await userRegistry.getUsers(3, 1);
 
       expect(addresses.length).to.equal(0);
@@ -174,13 +174,13 @@ describe("UserRegistry", function () {
       expect(timestamps.length).to.equal(0);
     });
 
-    it("Should revert when start is invalid", async function () {
+    it("当start无效时应该回滚", async function () {
       await expect(userRegistry.getUsers(10, 1)).to.be.revertedWith(
         "Invalid start"
       );
     });
 
-    it("Should handle count = 0", async function () {
+    it("应该处理count = 0的情况", async function () {
       const [addresses, names, timestamps] = await userRegistry.getUsers(0, 0);
 
       expect(addresses.length).to.equal(0);
@@ -190,7 +190,7 @@ describe("UserRegistry", function () {
   });
 
   describe("getAllUsers", function () {
-    it("Should return empty arrays when no users", async function () {
+    it("当没有用户时应该返回空数组", async function () {
       const [addresses, names, timestamps] = await userRegistry.getAllUsers();
 
       expect(addresses.length).to.equal(0);
@@ -198,7 +198,7 @@ describe("UserRegistry", function () {
       expect(timestamps.length).to.equal(0);
     });
 
-    it("Should return all users", async function () {
+    it("应该返回所有用户", async function () {
       // 添加测试用户
       await userRegistry.connect(addr1).setUser("Alice", ["api1"], ["cid1"]);
       await userRegistry.connect(addr2).setUser("Bob", ["api2"], ["cid2"]);
@@ -224,19 +224,19 @@ describe("UserRegistry", function () {
     });
   });
 
-  describe("exists mapping", function () {
-    it("Should return false for non-existent user", async function () {
+  describe("exists映射", function () {
+    it("对于不存在的用户应该返回false", async function () {
       expect(await userRegistry.exists(addr1.address)).to.be.false;
     });
 
-    it("Should return true for existing user", async function () {
+    it("对于存在的用户应该返回true", async function () {
       await userRegistry.connect(addr1).setUser("Alice", [], []);
       expect(await userRegistry.exists(addr1.address)).to.be.true;
     });
   });
 
-  describe("userList array", function () {
-    it("Should access userList by index", async function () {
+  describe("userList数组", function () {
+    it("应该通过索引访问userList", async function () {
       await userRegistry.connect(addr1).setUser("User1", [], []);
       await userRegistry.connect(addr2).setUser("User2", [], []);
 
@@ -245,8 +245,8 @@ describe("UserRegistry", function () {
     });
   });
 
-  describe("Gas optimization tests", function () {
-    it("Should use reasonable gas for setUser", async function () {
+  describe("Gas优化测试", function () {
+    it("setUser应该使用合理的gas", async function () {
       const tx = await userRegistry
         .connect(addr1)
         .setUser("TestUser", ["api1", "api2"], ["cid1", "cid2"]);
@@ -257,8 +257,8 @@ describe("UserRegistry", function () {
     });
   });
 
-  describe("Edge cases", function () {
-    it("Should handle very long strings", async function () {
+  describe("边界情况", function () {
+    it("应该处理非常长的字符串", async function () {
       const longName = "A".repeat(1000);
       const longApi = "B".repeat(1000);
       const longCid = "C".repeat(1000);
@@ -273,7 +273,7 @@ describe("UserRegistry", function () {
       expect(userCids[0]).to.equal(longCid);
     });
 
-    it("Should handle many APIs and CIDs", async function () {
+    it("应该处理大量的API和CID", async function () {
       const manyApis = Array.from({ length: 100 }, (_, i) => `api${i}`);
       const manyCids = Array.from({ length: 100 }, (_, i) => `cid${i}`);
 
