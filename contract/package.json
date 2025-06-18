@@ -5,7 +5,7 @@
     "test": "hardhat test",
     "deploy:sepolia": "hardhat run scripts/deploy.ts --network sepolia",
     "clear": "rm -rf ./typechain-types && rm -rf ./artifacts && rm -rf ./cache",
-    "yarn": "yarn"
+    "npm": "npm i"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",

@@ -1,6 +1,0 @@
-{
-  "scripts": {
-    "dot": "cd dot.most.box && npm run dev",
-    "app": "cd app.most.box && npm start"
-  }
-}
