@@ -107,16 +107,29 @@ const postIP = async (RPC) => {
   }
 
   if (arrayEqual(APIs, dot.APIs)) {
-    console.log("节点无变化");
+    console.log(RPC, "节点无变化");
     return;
   }
 
   // 开始更新
   try {
+    // 估算gas费用
+    const gasEstimate = await contract.setDot.estimateGas(dot.name, dot.APIs, dot.CIDs);
+    const gasPrice = await provider.getFeeData();
+    const estimatedCost = gasEstimate * gasPrice.gasPrice;
+    
+    // 检查余额是否足够
+    const balance = await provider.getBalance(wallet.address);
+    
+    if (balance < estimatedCost) {
+      console.error(RPC, `手续费不足: 需要 ${ethers.formatEther(estimatedCost)} ETH，但余额只有 ${ethers.formatEther(balance)} ETH`);
+      return;
+    }
+
     await contract.setDot(dot.name, dot.APIs, dot.CIDs);
-    console.log("节点信息已更新到合约");
+    console.log(RPC, "节点信息已更新到合约");
   } catch (error) {
-    console.error("更新节点信息失败:", error);
+    console.error(RPC, "更新节点信息失败:", error);
   }
 };
 
@@ -131,7 +144,7 @@ const start = async () => {
     console.log(network);
     // 推送 IP 地址
     postIP("https://sepolia.base.org");
-    // postIP('https://mainnet.base.org');
+    postIP('https://mainnet.base.org');
   } catch (error) {
     console.error(error);
     server.log.error(error);
