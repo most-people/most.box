@@ -98,8 +98,8 @@ pm2 startup
 # 安装 PM2
 npm install -g pm2
 
-# 启动应用
-pm2 start src/index.mjs --name "dot"
+# 启动应用（定时重启：每小时执行一次）
+pm2 start src/index.mjs --name "dot" --cron-restart="0 * * * *"
 
 # 保存当前进程列表
 pm2 save
