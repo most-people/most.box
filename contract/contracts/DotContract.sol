@@ -4,9 +4,9 @@ pragma solidity ^0.8.24;
 contract DotRegistry {
     struct Dot {
         string name;
-        string[] apis;
-        string[] cids;
-        uint256 updatedAt;
+        string[] APIs;
+        string[] CIDs;
+        uint256 update;
     }
 
     mapping(address => Dot) public dots;
@@ -22,24 +22,24 @@ contract DotRegistry {
 
     function setDot(
         string calldata name,
-        string[] calldata apis,
-        string[] calldata cids
+        string[] calldata APIs,
+        string[] calldata CIDs
     ) external {
         // 验证输入长度
         require(bytes(name).length <= MAX_NAME_LENGTH, "Name too long");
-        require(apis.length <= MAX_ARRAY_LENGTH, "Too many APIs");
-        require(cids.length <= MAX_ARRAY_LENGTH, "Too many CIDs");
+        require(APIs.length <= MAX_ARRAY_LENGTH, "Too many APIs");
+        require(CIDs.length <= MAX_ARRAY_LENGTH, "Too many CIDs");
 
         // 验证数组元素长度
-        for (uint i = 0; i < apis.length; i++) {
+        for (uint i = 0; i < APIs.length; i++) {
             require(
-                bytes(apis[i]).length <= MAX_STRING_LENGTH,
+                bytes(APIs[i]).length <= MAX_STRING_LENGTH,
                 "API string too long"
             );
         }
-        for (uint i = 0; i < cids.length; i++) {
+        for (uint i = 0; i < CIDs.length; i++) {
             require(
-                bytes(cids[i]).length <= MAX_STRING_LENGTH,
+                bytes(CIDs[i]).length <= MAX_STRING_LENGTH,
                 "CID string too long"
             );
         }
@@ -51,9 +51,9 @@ contract DotRegistry {
 
         dots[msg.sender] = Dot({
             name: name,
-            apis: apis,
-            cids: cids,
-            updatedAt: block.timestamp
+            APIs: APIs,
+            CIDs: CIDs,
+            update: block.timestamp
         });
 
         emit DotUpdated(msg.sender, block.timestamp);
@@ -66,13 +66,13 @@ contract DotRegistry {
         view
         returns (
             string memory name,
-            string[] memory apis,
-            string[] memory cids,
-            uint256 updatedAt
+            string[] memory APIs,
+            string[] memory CIDs,
+            uint256 update
         )
     {
         Dot storage u = dots[dot];
-        return (u.name, u.apis, u.cids, u.updatedAt);
+        return (u.name, u.APIs, u.CIDs, u.update);
     }
 
     function getDotCount() external view returns (uint256) {
@@ -108,7 +108,7 @@ contract DotRegistry {
             Dot storage dot = dots[addr];
             addresses[i] = addr;
             names[i] = dot.name;
-            timestamps[i] = dot.updatedAt;
+            timestamps[i] = dot.update;
         }
     }
 
@@ -131,7 +131,7 @@ contract DotRegistry {
             Dot storage dot = dots[addr];
             addresses[i] = addr;
             names[i] = dot.name;
-            timestamps[i] = dot.updatedAt;
+            timestamps[i] = dot.update;
         }
     }
 }

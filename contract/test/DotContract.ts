@@ -18,50 +18,50 @@ describe("DotRegistry", function () {
   });
 
   describe("setDot", function () {
-    it("应该为新用户设置用户数据", async function () {
+    it("应该为新节点设置节点数据", async function () {
       const name = "Alice";
-      const apis = ["api1", "api2"];
-      const cids = ["cid1", "cid2"];
+      const APIs = ["api1", "api2"];
+      const CIDs = ["cid1", "cid2"];
 
-      await dotRegistry.connect(addr1).setDot(name, apis, cids);
+      await dotRegistry.connect(addr1).setDot(name, APIs, CIDs);
 
-      const [dotName, dotApis, dotCids, updatedAt] = await dotRegistry.getDot(
+      const [dotName, dotAPIs, dotCIDs, updatedAt] = await dotRegistry.getDot(
         addr1.address
       );
       expect(dotName).to.equal(name);
-      expect(dotApis).to.deep.equal(apis);
-      expect(dotCids).to.deep.equal(cids);
+      expect(dotAPIs).to.deep.equal(APIs);
+      expect(dotCIDs).to.deep.equal(CIDs);
       expect(updatedAt).to.be.gt(0);
     });
 
-    it("应该更新现有用户数据", async function () {
+    it("应该更新现有节点数据", async function () {
       // 首次设置
       await dotRegistry.connect(addr1).setDot("Alice", ["api1"], ["cid1"]);
 
       // 更新数据
       const newName = "Alice Updated";
-      const newApis = ["api1", "api2", "api3"];
-      const newCids = ["cid1", "cid2"];
+      const newAPIs = ["api1", "api2", "api3"];
+      const newCIDs = ["cid1", "cid2"];
 
-      await dotRegistry.connect(addr1).setDot(newName, newApis, newCids);
+      await dotRegistry.connect(addr1).setDot(newName, newAPIs, newCIDs);
 
-      const [dotName, dotApis, dotCids] = await dotRegistry.getDot(
+      const [dotName, dotAPIs, dotCIDs] = await dotRegistry.getDot(
         addr1.address
       );
       expect(dotName).to.equal(newName);
-      expect(dotApis).to.deep.equal(newApis);
-      expect(dotCids).to.deep.equal(newCids);
+      expect(dotAPIs).to.deep.equal(newAPIs);
+      expect(dotCIDs).to.deep.equal(newCIDs);
     });
 
     it("应该处理空数组", async function () {
       await dotRegistry.connect(addr1).setDot("Bob", [], []);
 
-      const [dotName, dotApis, dotCids] = await dotRegistry.getDot(
+      const [dotName, dotAPIs, dotCIDs] = await dotRegistry.getDot(
         addr1.address
       );
       expect(dotName).to.equal("Bob");
-      expect(dotApis).to.deep.equal([]);
-      expect(dotCids).to.deep.equal([]);
+      expect(dotAPIs).to.deep.equal([]);
+      expect(dotCIDs).to.deep.equal([]);
     });
 
     it("应该处理空名称", async function () {
@@ -82,12 +82,12 @@ describe("DotRegistry", function () {
         );
     });
 
-    it("应该只将用户添加到dotList一次", async function () {
+    it("应该只将节点添加到dotList一次", async function () {
       // 首次设置
       await dotRegistry.connect(addr1).setDot("Alice", ["api1"], ["cid1"]);
       expect(await dotRegistry.getDotCount()).to.equal(1);
 
-      // 再次设置同一用户
+      // 再次设置同一节点
       await dotRegistry
         .connect(addr1)
         .setDot("Alice Updated", ["api2"], ["cid2"]);
@@ -96,29 +96,29 @@ describe("DotRegistry", function () {
   });
 
   describe("getDot", function () {
-    it("应该为不存在的用户返回空数据", async function () {
-      const [dotName, dotApis, dotCids, updatedAt] = await dotRegistry.getDot(
+    it("应该为不存在的节点返回空数据", async function () {
+      const [dotName, dotAPIs, dotCIDs, updatedAt] = await dotRegistry.getDot(
         addr1.address
       );
       expect(dotName).to.equal("");
-      expect(dotApis).to.deep.equal([]);
-      expect(dotCids).to.deep.equal([]);
+      expect(dotAPIs).to.deep.equal([]);
+      expect(dotCIDs).to.deep.equal([]);
       expect(updatedAt).to.equal(0);
     });
 
-    it("应该返回正确的用户数据", async function () {
+    it("应该返回正确的节点数据", async function () {
       const name = "Charlie";
-      const apis = ["api1", "api2", "api3"];
-      const cids = ["cid1", "cid2", "cid3", "cid4"];
+      const APIs = ["api1", "api2", "api3"];
+      const CIDs = ["cid1", "cid2", "cid3", "cid4"];
 
-      await dotRegistry.connect(addr2).setDot(name, apis, cids);
+      await dotRegistry.connect(addr2).setDot(name, APIs, CIDs);
 
-      const [dotName, dotApis, dotCids, updatedAt] = await dotRegistry.getDot(
+      const [dotName, dotAPIs, dotCIDs, updatedAt] = await dotRegistry.getDot(
         addr2.address
       );
       expect(dotName).to.equal(name);
-      expect(dotApis).to.deep.equal(apis);
-      expect(dotCids).to.deep.equal(cids);
+      expect(dotAPIs).to.deep.equal(APIs);
+      expect(dotCIDs).to.deep.equal(CIDs);
       expect(updatedAt).to.be.gt(0);
     });
   });
@@ -128,7 +128,7 @@ describe("DotRegistry", function () {
       expect(await dotRegistry.getDotCount()).to.equal(0);
     });
 
-    it("添加用户后应该返回正确的计数", async function () {
+    it("添加节点后应该返回正确的计数", async function () {
       await dotRegistry.connect(addr1).setDot("Dot1", [], []);
       expect(await dotRegistry.getDotCount()).to.equal(1);
 
@@ -142,13 +142,13 @@ describe("DotRegistry", function () {
 
   describe("getDots", function () {
     beforeEach(async function () {
-      // 添加测试用户
+      // 添加测试节点
       await dotRegistry.connect(addr1).setDot("Dot1", ["api1"], ["cid1"]);
       await dotRegistry.connect(addr2).setDot("Dot2", ["api2"], ["cid2"]);
       await dotRegistry.connect(addr3).setDot("Dot3", ["api3"], ["cid3"]);
     });
 
-    it("应该返回正确分页的用户", async function () {
+    it("应该返回正确分页的节点", async function () {
       const [addresses, names, timestamps] = await dotRegistry.getDots(0, 2);
 
       expect(addresses.length).to.equal(2);
@@ -161,15 +161,15 @@ describe("DotRegistry", function () {
       expect(names[1]).to.equal("Dot2");
     });
 
-    it("应该处理start + count超过总用户数的情况", async function () {
+    it("应该处理start + count超过总节点数的情况", async function () {
       const [addresses, names, timestamps] = await dotRegistry.getDots(1, 10);
 
-      expect(addresses.length).to.equal(2); // 只有2个用户从索引1开始
+      expect(addresses.length).to.equal(2); // 只有2个节点从索引1开始
       expect(addresses[0]).to.equal(addr2.address);
       expect(addresses[1]).to.equal(addr3.address);
     });
 
-    it("当start等于用户计数时应该返回空数组", async function () {
+    it("当start等于节点计数时应该返回空数组", async function () {
       const [addresses, names, timestamps] = await dotRegistry.getDots(3, 1);
 
       expect(addresses.length).to.equal(0);
@@ -193,7 +193,7 @@ describe("DotRegistry", function () {
   });
 
   describe("getAllDots", function () {
-    it("当没有用户时应该返回空数组", async function () {
+    it("当没有节点时应该返回空数组", async function () {
       const [addresses, names, timestamps] = await dotRegistry.getAllDots();
 
       expect(addresses.length).to.equal(0);
@@ -201,8 +201,8 @@ describe("DotRegistry", function () {
       expect(timestamps.length).to.equal(0);
     });
 
-    it("应该返回所有用户", async function () {
-      // 添加测试用户
+    it("应该返回所有节点", async function () {
+      // 添加测试节点
       await dotRegistry.connect(addr1).setDot("Alice", ["api1"], ["cid1"]);
       await dotRegistry.connect(addr2).setDot("Bob", ["api2"], ["cid2"]);
       await dotRegistry.connect(addr3).setDot("Charlie", ["api3"], ["cid3"]);
@@ -228,11 +228,11 @@ describe("DotRegistry", function () {
   });
 
   describe("exists映射", function () {
-    it("对于不存在的用户应该返回false", async function () {
+    it("对于不存在的节点应该返回false", async function () {
       expect(await dotRegistry.exists(addr1.address)).to.be.false;
     });
 
-    it("对于存在的用户应该返回true", async function () {
+    it("对于存在的节点应该返回true", async function () {
       await dotRegistry.connect(addr1).setDot("Alice", [], []);
       expect(await dotRegistry.exists(addr1.address)).to.be.true;
     });
@@ -268,23 +268,23 @@ describe("DotRegistry", function () {
 
       await dotRegistry.connect(addr1).setDot(longName, [longApi], [longCid]);
 
-      const [dotName, dotApis, dotCids] = await dotRegistry.getDot(
+      const [dotName, dotAPIs, dotCIDs] = await dotRegistry.getDot(
         addr1.address
       );
       expect(dotName).to.equal(longName);
-      expect(dotApis[0]).to.equal(longApi);
-      expect(dotCids[0]).to.equal(longCid);
+      expect(dotAPIs[0]).to.equal(longApi);
+      expect(dotCIDs[0]).to.equal(longCid);
     });
 
     it("应该处理大量的API和CID", async function () {
-      const manyApis = Array.from({ length: 50 }, (_, i) => `api${i}`); // 在限制范围内
-      const manyCids = Array.from({ length: 50 }, (_, i) => `cid${i}`);
+      const manyAPIs = Array.from({ length: 50 }, (_, i) => `api${i}`); // 在限制范围内
+      const manyCIDs = Array.from({ length: 50 }, (_, i) => `cid${i}`);
 
-      await dotRegistry.connect(addr1).setDot("TestDot", manyApis, manyCids);
+      await dotRegistry.connect(addr1).setDot("TestDot", manyAPIs, manyCIDs);
 
-      const [, dotApis, dotCids] = await dotRegistry.getDot(addr1.address);
-      expect(dotApis).to.deep.equal(manyApis);
-      expect(dotCids).to.deep.equal(manyCids);
+      const [, dotAPIs, dotCIDs] = await dotRegistry.getDot(addr1.address);
+      expect(dotAPIs).to.deep.equal(manyAPIs);
+      expect(dotCIDs).to.deep.equal(manyCIDs);
     });
   });
 
@@ -297,9 +297,9 @@ describe("DotRegistry", function () {
     });
 
     it("应该拒绝过多的API", async function () {
-      const manyApis = Array.from({ length: 51 }, (_, i) => `api${i}`);
+      const manyAPIs = Array.from({ length: 51 }, (_, i) => `api${i}`);
       await expect(
-        dotRegistry.connect(addr1).setDot("Test", manyApis, [])
+        dotRegistry.connect(addr1).setDot("Test", manyAPIs, [])
       ).to.be.revertedWith("Too many APIs");
     });
   });
