@@ -3,7 +3,7 @@
   "scripts": {
     "build": "hardhat compile",
     "test": "hardhat test",
-    "deploy:sepolia": "hardhat run scripts/deploy.ts --network sepolia",
+    "deploy:sepolia": "hardhat run scripts/deploy.ts --network BaseTestnetSepolia",
     "clear": "rm -rf ./typechain-types && rm -rf ./artifacts && rm -rf ./cache",
     "npm": "npm i"
   },

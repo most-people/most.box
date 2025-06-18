@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-contract DotRegistry {
+contract DotContract {
     struct Dot {
         string name;
         string[] APIs;

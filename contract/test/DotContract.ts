@@ -1,10 +1,10 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
-import { DotRegistry } from "../typechain-types/DotRegistry";
+import { DotContract } from "../typechain-types/DotContract";
 
-describe("DotRegistry", function () {
-  let dotRegistry: DotRegistry;
+describe("DotContract", function () {
+  let dotContract: DotContract;
   let owner: SignerWithAddress;
   let addr1: SignerWithAddress;
   let addr2: SignerWithAddress;
@@ -13,8 +13,8 @@ describe("DotRegistry", function () {
   beforeEach(async function () {
     [owner, addr1, addr2, addr3] = await ethers.getSigners();
 
-    const DotRegistry = await ethers.getContractFactory("DotRegistry");
-    dotRegistry = await DotRegistry.deploy();
+    const DotContract = await ethers.getContractFactory("DotContract");
+    dotContract = await DotContract.deploy();
   });
 
   describe("setDot", function () {
@@ -23,9 +23,9 @@ describe("DotRegistry", function () {
       const APIs = ["api1", "api2"];
       const CIDs = ["cid1", "cid2"];
 
-      await dotRegistry.connect(addr1).setDot(name, APIs, CIDs);
+      await dotContract.connect(addr1).setDot(name, APIs, CIDs);
 
-      const [dotName, dotAPIs, dotCIDs, updatedAt] = await dotRegistry.getDot(
+      const [dotName, dotAPIs, dotCIDs, updatedAt] = await dotContract.getDot(
         addr1.address
       );
       expect(dotName).to.equal(name);
@@ -36,16 +36,16 @@ describe("DotRegistry", function () {
 
     it("应该更新现有节点数据", async function () {
       // 首次设置
-      await dotRegistry.connect(addr1).setDot("Alice", ["api1"], ["cid1"]);
+      await dotContract.connect(addr1).setDot("Alice", ["api1"], ["cid1"]);
 
       // 更新数据
       const newName = "Alice Updated";
       const newAPIs = ["api1", "api2", "api3"];
       const newCIDs = ["cid1", "cid2"];
 
-      await dotRegistry.connect(addr1).setDot(newName, newAPIs, newCIDs);
+      await dotContract.connect(addr1).setDot(newName, newAPIs, newCIDs);
 
-      const [dotName, dotAPIs, dotCIDs] = await dotRegistry.getDot(
+      const [dotName, dotAPIs, dotCIDs] = await dotContract.getDot(
         addr1.address
       );
       expect(dotName).to.equal(newName);
@@ -54,9 +54,9 @@ describe("DotRegistry", function () {
     });
 
     it("应该处理空数组", async function () {
-      await dotRegistry.connect(addr1).setDot("Bob", [], []);
+      await dotContract.connect(addr1).setDot("Bob", [], []);
 
-      const [dotName, dotAPIs, dotCIDs] = await dotRegistry.getDot(
+      const [dotName, dotAPIs, dotCIDs] = await dotContract.getDot(
         addr1.address
       );
       expect(dotName).to.equal("Bob");
@@ -65,17 +65,17 @@ describe("DotRegistry", function () {
     });
 
     it("应该处理空名称", async function () {
-      await dotRegistry.connect(addr1).setDot("", ["api1"], ["cid1"]);
+      await dotContract.connect(addr1).setDot("", ["api1"], ["cid1"]);
 
-      const [dotName] = await dotRegistry.getDot(addr1.address);
+      const [dotName] = await dotContract.getDot(addr1.address);
       expect(dotName).to.equal("");
     });
 
     it("应该触发DotUpdated事件", async function () {
       await expect(
-        dotRegistry.connect(addr1).setDot("Alice", ["api1"], ["cid1"])
+        dotContract.connect(addr1).setDot("Alice", ["api1"], ["cid1"])
       )
-        .to.emit(dotRegistry, "DotUpdated")
+        .to.emit(dotContract, "DotUpdated")
         .withArgs(
           addr1.address,
           await ethers.provider.getBlock("latest").then((b) => b!.timestamp + 1)
@@ -84,20 +84,20 @@ describe("DotRegistry", function () {
 
     it("应该只将节点添加到dotList一次", async function () {
       // 首次设置
-      await dotRegistry.connect(addr1).setDot("Alice", ["api1"], ["cid1"]);
-      expect(await dotRegistry.getDotCount()).to.equal(1);
+      await dotContract.connect(addr1).setDot("Alice", ["api1"], ["cid1"]);
+      expect(await dotContract.getDotCount()).to.equal(1);
 
       // 再次设置同一节点
-      await dotRegistry
+      await dotContract
         .connect(addr1)
         .setDot("Alice Updated", ["api2"], ["cid2"]);
-      expect(await dotRegistry.getDotCount()).to.equal(1);
+      expect(await dotContract.getDotCount()).to.equal(1);
     });
   });
 
   describe("getDot", function () {
     it("应该为不存在的节点返回空数据", async function () {
-      const [dotName, dotAPIs, dotCIDs, updatedAt] = await dotRegistry.getDot(
+      const [dotName, dotAPIs, dotCIDs, updatedAt] = await dotContract.getDot(
         addr1.address
       );
       expect(dotName).to.equal("");
@@ -111,9 +111,9 @@ describe("DotRegistry", function () {
       const APIs = ["api1", "api2", "api3"];
       const CIDs = ["cid1", "cid2", "cid3", "cid4"];
 
-      await dotRegistry.connect(addr2).setDot(name, APIs, CIDs);
+      await dotContract.connect(addr2).setDot(name, APIs, CIDs);
 
-      const [dotName, dotAPIs, dotCIDs, updatedAt] = await dotRegistry.getDot(
+      const [dotName, dotAPIs, dotCIDs, updatedAt] = await dotContract.getDot(
         addr2.address
       );
       expect(dotName).to.equal(name);
@@ -125,31 +125,31 @@ describe("DotRegistry", function () {
 
   describe("getDotCount", function () {
     it("初始时应该返回0", async function () {
-      expect(await dotRegistry.getDotCount()).to.equal(0);
+      expect(await dotContract.getDotCount()).to.equal(0);
     });
 
     it("添加节点后应该返回正确的计数", async function () {
-      await dotRegistry.connect(addr1).setDot("Dot1", [], []);
-      expect(await dotRegistry.getDotCount()).to.equal(1);
+      await dotContract.connect(addr1).setDot("Dot1", [], []);
+      expect(await dotContract.getDotCount()).to.equal(1);
 
-      await dotRegistry.connect(addr2).setDot("Dot2", [], []);
-      expect(await dotRegistry.getDotCount()).to.equal(2);
+      await dotContract.connect(addr2).setDot("Dot2", [], []);
+      expect(await dotContract.getDotCount()).to.equal(2);
 
-      await dotRegistry.connect(addr3).setDot("Dot3", [], []);
-      expect(await dotRegistry.getDotCount()).to.equal(3);
+      await dotContract.connect(addr3).setDot("Dot3", [], []);
+      expect(await dotContract.getDotCount()).to.equal(3);
     });
   });
 
   describe("getDots", function () {
     beforeEach(async function () {
       // 添加测试节点
-      await dotRegistry.connect(addr1).setDot("Dot1", ["api1"], ["cid1"]);
-      await dotRegistry.connect(addr2).setDot("Dot2", ["api2"], ["cid2"]);
-      await dotRegistry.connect(addr3).setDot("Dot3", ["api3"], ["cid3"]);
+      await dotContract.connect(addr1).setDot("Dot1", ["api1"], ["cid1"]);
+      await dotContract.connect(addr2).setDot("Dot2", ["api2"], ["cid2"]);
+      await dotContract.connect(addr3).setDot("Dot3", ["api3"], ["cid3"]);
     });
 
     it("应该返回正确分页的节点", async function () {
-      const [addresses, names, timestamps] = await dotRegistry.getDots(0, 2);
+      const [addresses, names, timestamps] = await dotContract.getDots(0, 2);
 
       expect(addresses.length).to.equal(2);
       expect(names.length).to.equal(2);
@@ -162,7 +162,7 @@ describe("DotRegistry", function () {
     });
 
     it("应该处理start + count超过总节点数的情况", async function () {
-      const [addresses, names, timestamps] = await dotRegistry.getDots(1, 10);
+      const [addresses, names, timestamps] = await dotContract.getDots(1, 10);
 
       expect(addresses.length).to.equal(2); // 只有2个节点从索引1开始
       expect(addresses[0]).to.equal(addr2.address);
@@ -170,7 +170,7 @@ describe("DotRegistry", function () {
     });
 
     it("当start等于节点计数时应该返回空数组", async function () {
-      const [addresses, names, timestamps] = await dotRegistry.getDots(3, 1);
+      const [addresses, names, timestamps] = await dotContract.getDots(3, 1);
 
       expect(addresses.length).to.equal(0);
       expect(names.length).to.equal(0);
@@ -178,13 +178,13 @@ describe("DotRegistry", function () {
     });
 
     it("当start无效时应该回滚", async function () {
-      await expect(dotRegistry.getDots(10, 1)).to.be.revertedWith(
+      await expect(dotContract.getDots(10, 1)).to.be.revertedWith(
         "Invalid start"
       );
     });
 
     it("应该处理count = 0的情况", async function () {
-      const [addresses, names, timestamps] = await dotRegistry.getDots(0, 0);
+      const [addresses, names, timestamps] = await dotContract.getDots(0, 0);
 
       expect(addresses.length).to.equal(0);
       expect(names.length).to.equal(0);
@@ -194,7 +194,7 @@ describe("DotRegistry", function () {
 
   describe("getAllDots", function () {
     it("当没有节点时应该返回空数组", async function () {
-      const [addresses, names, timestamps] = await dotRegistry.getAllDots();
+      const [addresses, names, timestamps] = await dotContract.getAllDots();
 
       expect(addresses.length).to.equal(0);
       expect(names.length).to.equal(0);
@@ -203,11 +203,11 @@ describe("DotRegistry", function () {
 
     it("应该返回所有节点", async function () {
       // 添加测试节点
-      await dotRegistry.connect(addr1).setDot("Alice", ["api1"], ["cid1"]);
-      await dotRegistry.connect(addr2).setDot("Bob", ["api2"], ["cid2"]);
-      await dotRegistry.connect(addr3).setDot("Charlie", ["api3"], ["cid3"]);
+      await dotContract.connect(addr1).setDot("Alice", ["api1"], ["cid1"]);
+      await dotContract.connect(addr2).setDot("Bob", ["api2"], ["cid2"]);
+      await dotContract.connect(addr3).setDot("Charlie", ["api3"], ["cid3"]);
 
-      const [addresses, names, timestamps] = await dotRegistry.getAllDots();
+      const [addresses, names, timestamps] = await dotContract.getAllDots();
 
       expect(addresses.length).to.equal(3);
       expect(names.length).to.equal(3);
@@ -229,28 +229,28 @@ describe("DotRegistry", function () {
 
   describe("exists映射", function () {
     it("对于不存在的节点应该返回false", async function () {
-      expect(await dotRegistry.exists(addr1.address)).to.be.false;
+      expect(await dotContract.exists(addr1.address)).to.be.false;
     });
 
     it("对于存在的节点应该返回true", async function () {
-      await dotRegistry.connect(addr1).setDot("Alice", [], []);
-      expect(await dotRegistry.exists(addr1.address)).to.be.true;
+      await dotContract.connect(addr1).setDot("Alice", [], []);
+      expect(await dotContract.exists(addr1.address)).to.be.true;
     });
   });
 
   describe("dotList数组", function () {
     it("应该通过索引访问dotList", async function () {
-      await dotRegistry.connect(addr1).setDot("Dot1", [], []);
-      await dotRegistry.connect(addr2).setDot("Dot2", [], []);
+      await dotContract.connect(addr1).setDot("Dot1", [], []);
+      await dotContract.connect(addr2).setDot("Dot2", [], []);
 
-      expect(await dotRegistry.dotList(0)).to.equal(addr1.address);
-      expect(await dotRegistry.dotList(1)).to.equal(addr2.address);
+      expect(await dotContract.dotList(0)).to.equal(addr1.address);
+      expect(await dotContract.dotList(1)).to.equal(addr2.address);
     });
   });
 
   describe("Gas优化测试", function () {
     it("setDot应该使用合理的gas", async function () {
-      const tx = await dotRegistry
+      const tx = await dotContract
         .connect(addr1)
         .setDot("TestDot", ["api1", "api2"], ["cid1", "cid2"]);
       const receipt = await tx.wait();
@@ -266,9 +266,9 @@ describe("DotRegistry", function () {
       const longApi = "B".repeat(100);
       const longCid = "C".repeat(100);
 
-      await dotRegistry.connect(addr1).setDot(longName, [longApi], [longCid]);
+      await dotContract.connect(addr1).setDot(longName, [longApi], [longCid]);
 
-      const [dotName, dotAPIs, dotCIDs] = await dotRegistry.getDot(
+      const [dotName, dotAPIs, dotCIDs] = await dotContract.getDot(
         addr1.address
       );
       expect(dotName).to.equal(longName);
@@ -280,9 +280,9 @@ describe("DotRegistry", function () {
       const manyAPIs = Array.from({ length: 50 }, (_, i) => `api${i}`); // 在限制范围内
       const manyCIDs = Array.from({ length: 50 }, (_, i) => `cid${i}`);
 
-      await dotRegistry.connect(addr1).setDot("TestDot", manyAPIs, manyCIDs);
+      await dotContract.connect(addr1).setDot("TestDot", manyAPIs, manyCIDs);
 
-      const [, dotAPIs, dotCIDs] = await dotRegistry.getDot(addr1.address);
+      const [, dotAPIs, dotCIDs] = await dotContract.getDot(addr1.address);
       expect(dotAPIs).to.deep.equal(manyAPIs);
       expect(dotCIDs).to.deep.equal(manyCIDs);
     });
@@ -292,14 +292,14 @@ describe("DotRegistry", function () {
     it("应该拒绝过长的名称", async function () {
       const longName = "A".repeat(101);
       await expect(
-        dotRegistry.connect(addr1).setDot(longName, [], [])
+        dotContract.connect(addr1).setDot(longName, [], [])
       ).to.be.revertedWith("Name too long");
     });
 
     it("应该拒绝过多的API", async function () {
       const manyAPIs = Array.from({ length: 51 }, (_, i) => `api${i}`);
       await expect(
-        dotRegistry.connect(addr1).setDot("Test", manyAPIs, [])
+        dotContract.connect(addr1).setDot("Test", manyAPIs, [])
       ).to.be.revertedWith("Too many APIs");
     });
   });

@@ -12,7 +12,7 @@ async function main() {
   const address = await dotContract.getAddress();
 
   // 输出合约地址
-  console.log("IPv6Contract deployed to:", address);
+  console.log("Contract deployed to:", address);
 }
 
 main().catch((error) => {
