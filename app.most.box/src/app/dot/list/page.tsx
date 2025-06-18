@@ -8,15 +8,35 @@ import {
   Stack,
   Group,
   Button,
-  Loader,
   Alert,
   Select,
+  Container,
+  Title,
+  Paper,
+  Divider,
+  ActionIcon,
+  Tooltip,
+  Grid,
+  ThemeIcon,
+  Flex,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { ethers } from "ethers";
 import { notifications } from "@mantine/notifications";
-import { IconCheck, IconX, IconRefresh } from "@tabler/icons-react";
+import {
+  IconCheck,
+  IconX,
+  IconRefresh,
+  IconNetwork,
+  IconServer,
+  IconClock,
+  IconDatabase,
+  IconWifi,
+  IconWifiOff,
+} from "@tabler/icons-react";
 import { api } from "@/constants/api";
+import mp from "@/constants/mp";
+import "./list.scss";
 
 // DotContract ABI - 从你的合约中提取的关键方法
 const DotContractABI = [
@@ -62,7 +82,7 @@ export default function PageDotList() {
   const [error, setError] = useState<string | null>(null);
   const [network, setNetwork] = useState<"mainnet" | "testnet">("testnet");
 
-  // 合约配置 - 基于你的代码示例
+  // 合约配置
   const CONTRACT_ADDRESS = "0xdc82cef1a8416210afb87caeec908a4df843f016";
 
   // 网络配置
@@ -70,10 +90,12 @@ export default function PageDotList() {
     mainnet: {
       rpc: "https://mainnet.base.org",
       name: "Base 主网",
+      color: "blue",
     },
     testnet: {
       rpc: "https://sepolia.base.org",
       name: "Base 测试网",
+      color: "orange",
     },
   };
 
@@ -206,23 +228,40 @@ export default function PageDotList() {
       notifications.show({
         title: "网络已切换",
         message: `已切换到 ${NETWORK_CONFIG[value].name}`,
-        color: "blue",
+        color: NETWORK_CONFIG[value].color,
+        icon: <IconNetwork size={16} />,
       });
     }
   };
 
   useEffect(() => {
     fetchNodes();
-  }, [network]); // 当网络切换时重新获取节点列表
+  }, [network]);
 
   if (loading) {
     return (
       <Box id="page-dot-list">
         <AppHeader title="节点列表" />
-        <Box p="md" style={{ textAlign: "center" }}>
-          <Loader size="lg" />
-          <Text mt="md">正在加载节点列表...</Text>
-        </Box>
+        <Container size="lg" py="xl">
+          <Paper p="xl" radius="md" style={{ textAlign: "center" }}>
+            <ThemeIcon
+              size={60}
+              radius="xl"
+              variant="light"
+              color="blue"
+              mb="md"
+            >
+              <IconServer size={30} />
+            </ThemeIcon>
+            {/* <Loader size="lg" mb="md" /> */}
+            <Title order={3} c="dimmed">
+              正在加载节点列表...
+            </Title>
+            <Text size="sm" c="dimmed" mt="xs">
+              请稍候，正在从区块链获取数据
+            </Text>
+          </Paper>
+        </Container>
       </Box>
     );
   }
@@ -231,152 +270,283 @@ export default function PageDotList() {
     return (
       <Box id="page-dot-list">
         <AppHeader title="节点列表" />
-        <Box p="md">
-          <Alert color="red" title="加载失败">
-            {error}
-          </Alert>
-          <Button mt="md" onClick={fetchNodes}>
-            重新加载
-          </Button>
-        </Box>
+        <Container size="lg" py="xl">
+          <Paper shadow="sm" p="xl" radius="md">
+            <Alert color="red" title="加载失败" icon={<IconX size={16} />}>
+              {error}
+            </Alert>
+            <Button
+              mt="md"
+              onClick={fetchNodes}
+              leftSection={<IconRefresh size={16} />}
+              variant="light"
+              color="red"
+            >
+              重新加载
+            </Button>
+          </Paper>
+        </Container>
       </Box>
     );
   }
+
+  const onlineNodes = nodes.filter((node) => node.isOnline);
+  const offlineNodes = nodes.filter((node) => node.isOnline === false);
 
   return (
     <Box id="page-dot-list">
       <AppHeader title="节点列表" />
 
-      <Box p="md">
-        <Group justify="space-between" mb="md">
-          <Group>
-            <Text size="lg" fw={500}>
-              共 {nodes.length} 个节点
-            </Text>
-            <Select
-              value={network}
-              onChange={handleNetworkChange}
-              data={[
-                { value: "testnet", label: "Base 测试网" },
-                { value: "mainnet", label: "Base 主网" },
-              ]}
-              size="sm"
-              w={150}
-            />
-          </Group>
-          <Group>
-            <Button
-              leftSection={<IconRefresh size={16} />}
-              onClick={fetchNodes}
-              variant="light"
-            >
-              刷新列表
-            </Button>
-            <Button
-              leftSection={<IconCheck size={16} />}
-              onClick={checkAllConnectivity}
-              loading={checkingConnectivity}
-              disabled={nodes.length === 0}
-            >
-              检测连通性
-            </Button>
-          </Group>
-        </Group>
+      <Container size="lg" py="md">
+        {/* 顶部统计和控制区域 */}
+        <Paper shadow="sm" p="lg" radius="md" mb="lg">
+          <Flex justify="space-between" align="center" wrap="wrap" gap="md">
+            <Group>
+              <ThemeIcon size={40} radius="md" variant="light" color="blue">
+                <IconServer size={20} />
+              </ThemeIcon>
+              <Box>
+                <Title order={2}>节点监控</Title>
+                <Text size="sm" c="dimmed">
+                  共 {nodes.length} 个节点
+                  {nodes.some((n) => n.isOnline !== undefined) && (
+                    <>
+                      {" "}
+                      • {onlineNodes.length} 在线 • {offlineNodes.length} 离线
+                    </>
+                  )}
+                </Text>
+              </Box>
+            </Group>
 
-        {/* 显示当前网络状态 */}
-        <Alert mb="md" color="blue" variant="light">
-          当前网络: {NETWORK_CONFIG[network].name} (
-          {NETWORK_CONFIG[network].rpc})
+            <Group>
+              <Select
+                value={network}
+                onChange={handleNetworkChange}
+                data={[
+                  {
+                    value: "testnet",
+                    label: "🧪 Base 测试网",
+                  },
+                  {
+                    value: "mainnet",
+                    label: "🌐 Base 主网",
+                  },
+                ]}
+                leftSection={<IconNetwork size={16} />}
+                variant="filled"
+                radius="md"
+                w={180}
+              />
+
+              <Tooltip label="刷新节点列表">
+                <ActionIcon
+                  size="lg"
+                  variant="light"
+                  color="blue"
+                  onClick={fetchNodes}
+                  loading={loading}
+                >
+                  <IconRefresh size={18} />
+                </ActionIcon>
+              </Tooltip>
+
+              <Button
+                leftSection={<IconWifi size={16} />}
+                onClick={checkAllConnectivity}
+                loading={checkingConnectivity}
+                disabled={nodes.length === 0}
+                variant="gradient"
+                gradient={{ from: "blue", to: "cyan" }}
+              >
+                检测连通性
+              </Button>
+            </Group>
+          </Flex>
+        </Paper>
+
+        {/* 网络状态指示器 */}
+        <Alert
+          mb="lg"
+          color={NETWORK_CONFIG[network].color}
+          variant="light"
+          icon={<IconNetwork size={16} />}
+          title={`当前网络: ${NETWORK_CONFIG[network].name}`}
+        >
+          <Text size="sm">
+            RPC 端点:{" "}
+            <Text component="span" ff="monospace" c="dimmed">
+              {NETWORK_CONFIG[network].rpc}
+            </Text>
+          </Text>
         </Alert>
 
         {nodes.length === 0 ? (
-          <Alert title="暂无节点">当前没有注册的节点</Alert>
+          <Paper shadow="sm" p="xl" radius="md" style={{ textAlign: "center" }}>
+            <ThemeIcon
+              size={60}
+              radius="xl"
+              variant="light"
+              color="gray"
+              mb="md"
+            >
+              <IconServer size={30} />
+            </ThemeIcon>
+            <Title order={3} c="dimmed" mb="xs">
+              暂无节点
+            </Title>
+            <Text size="sm" c="dimmed">
+              当前网络没有注册的节点
+            </Text>
+          </Paper>
         ) : (
-          <Stack gap="md">
+          <Grid>
             {nodes.map((node) => (
-              <Card
-                key={node.address}
-                shadow="sm"
-                padding="lg"
-                radius="md"
-                withBorder
-              >
-                <Group justify="space-between" mb="xs">
-                  <Text fw={500} size="lg">
-                    {node.name}
-                  </Text>
-                  {node.isOnline !== undefined && (
-                    <Badge
-                      color={node.isOnline ? "green" : "red"}
-                      leftSection={
-                        node.isOnline ? (
-                          <IconCheck size={12} />
+              <Grid.Col key={node.address} span={{ base: 12, md: 6, lg: 4 }}>
+                <Card
+                  shadow="sm"
+                  padding="lg"
+                  radius="md"
+                  withBorder
+                  h="100%"
+                  style={{
+                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                    cursor: "pointer",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow =
+                      "0 4px 20px rgba(0,0,0,0.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "";
+                  }}
+                >
+                  {/* 节点头部 */}
+                  <Group justify="space-between" mb="md">
+                    <Group>
+                      <ThemeIcon
+                        size={36}
+                        radius="md"
+                        variant="light"
+                        color={
+                          node.isOnline
+                            ? "green"
+                            : node.isOnline === false
+                            ? "red"
+                            : "gray"
+                        }
+                      >
+                        {node.isOnline ? (
+                          <IconWifi size={18} />
+                        ) : node.isOnline === false ? (
+                          <IconWifiOff size={18} />
                         ) : (
-                          <IconX size={12} />
-                        )
-                      }
-                    >
-                      {node.isOnline ? "在线" : "离线"}
-                      {node.responseTime !== undefined &&
-                        ` (${formatResponseTime(node.responseTime)})`}
-                    </Badge>
-                  )}
-                </Group>
-
-                <Text size="sm" c="dimmed" mb="xs">
-                  地址: {node.address}
-                </Text>
-
-                <Text size="sm" c="dimmed" mb="xs">
-                  最后更新: {formatTime(node.lastUpdate)}
-                </Text>
-
-                {node.APIs.length > 0 && (
-                  <Box mb="xs">
-                    <Text size="sm" fw={500} mb={4}>
-                      API 端点:
-                    </Text>
-                    <Stack gap={4}>
-                      {node.APIs.map((api, apiIndex) => (
-                        <Text
-                          key={apiIndex}
-                          size="xs"
-                          c="blue"
-                          component="a"
-                          href={api}
-                          target="_blank"
-                        >
-                          {api}
+                          <IconServer size={18} />
+                        )}
+                      </ThemeIcon>
+                      <Box>
+                        <Text fw={600} size="md" lineClamp={1}>
+                          {node.name}
                         </Text>
-                      ))}
-                    </Stack>
-                  </Box>
-                )}
-
-                {node.CIDs.length > 0 && (
-                  <Box>
-                    <Text size="sm" fw={500} mb={4}>
-                      CID 列表:
-                    </Text>
-                    <Group gap={4}>
-                      {node.CIDs.slice(0, 3).map((cid, cidIndex) => (
-                        <Badge key={cidIndex} variant="light" size="xs">
-                          {cid.length > 10 ? `${cid.slice(0, 10)}...` : cid}
-                        </Badge>
-                      ))}
-                      {node.CIDs.length > 3 && (
-                        <Badge variant="light" size="xs" c="dimmed">
-                          +{node.CIDs.length - 3} 更多
-                        </Badge>
-                      )}
+                        <Text size="xs" c="dimmed">
+                          节点地址
+                        </Text>
+                      </Box>
                     </Group>
-                  </Box>
-                )}
-              </Card>
+
+                    {node.isOnline !== undefined && (
+                      <Badge
+                        color={node.isOnline ? "green" : "red"}
+                        variant="light"
+                        leftSection={
+                          node.isOnline ? (
+                            <IconCheck size={12} />
+                          ) : (
+                            <IconX size={12} />
+                          )
+                        }
+                      >
+                        {node.isOnline ? "在线" : "离线"}
+                        {node.responseTime !== undefined &&
+                          ` (${formatResponseTime(node.responseTime)})`}
+                      </Badge>
+                    )}
+                  </Group>
+
+                  <Divider mb="md" />
+
+                  {/* 节点详细信息 */}
+                  <Stack gap="sm">
+                    <Group gap="xs" wrap="nowrap">
+                      <IconDatabase
+                        size={14}
+                        color="gray"
+                        style={{ flexShrink: 0 }}
+                      />
+                      <Text size="xs" c="dimmed">
+                        {mp.formatAddress(node.address)}
+                      </Text>
+                    </Group>
+
+                    <Group gap="xs">
+                      <IconClock size={14} color="gray" />
+                      <Text size="xs" c="dimmed">
+                        {formatTime(node.lastUpdate)}
+                      </Text>
+                    </Group>
+
+                    {node.APIs.length > 0 && (
+                      <Stack gap={2}>
+                        {node.APIs.map((api, apiIndex) => (
+                          <Text
+                            key={apiIndex}
+                            c="blue"
+                            component="a"
+                            href={api}
+                            target="_blank"
+                            style={{ textDecoration: "none" }}
+                            lineClamp={1}
+                          >
+                            {api}
+                          </Text>
+                        ))}
+                      </Stack>
+                    )}
+
+                    {node.CIDs.length > 0 && (
+                      <Box>
+                        <Text size="xs" fw={500} mb={4} c="grape">
+                          CID 列表 ({node.CIDs.length})
+                        </Text>
+                        <Group gap={4}>
+                          {node.CIDs.slice(0, 2).map((cid, cidIndex) => (
+                            <Badge
+                              key={cidIndex}
+                              variant="light"
+                              size="xs"
+                              color="grape"
+                              style={{ fontFamily: "monospace" }}
+                            >
+                              {cid.length > 8 ? `${cid.slice(0, 8)}...` : cid}
+                            </Badge>
+                          ))}
+                          {node.CIDs.length > 2 && (
+                            <Badge variant="outline" size="xs" c="dimmed">
+                              +{node.CIDs.length - 2}
+                            </Badge>
+                          )}
+                        </Group>
+                      </Box>
+                    )}
+                  </Stack>
+                </Card>
+              </Grid.Col>
             ))}
-          </Stack>
+          </Grid>
         )}
-      </Box>
+      </Container>
     </Box>
   );
 }
