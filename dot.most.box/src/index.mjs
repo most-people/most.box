@@ -9,6 +9,7 @@ import path from "path";
 import os from "os";
 import { fileURLToPath } from "url";
 import { registerFiles } from "./files.mjs";
+import mp from "./mp.mjs";
 import DotContract from "./abi/DotContract.json" with { type: "json" };
 
 // 创建 IPFS 客户端
@@ -75,15 +76,6 @@ const initIP = () => {
   }
 };
 
-const arrayEqual = (arr1, arr2) => {
-  if (arr1.length !== arr2.length) {
-    return false;
-  }
-  const set1 = new Set(arr1);
-  const set2 = new Set(arr2);
-  return set1.size === set2.size && [...set1].every(x => set2.has(x));
-}
-
 const postIP = async (RPC) => {
   const { PRIVATE_KEY, DOT_NAME } = process.env
   if (!(PRIVATE_KEY && DOT_NAME)) {
@@ -106,7 +98,7 @@ const postIP = async (RPC) => {
     CIDs: [],
   }
 
-  if (arrayEqual(APIs, dot.APIs)) {
+  if (mp.arrayEqual(APIs, dot.APIs)) {
     console.log(RPC, "节点无变化");
     return;
   }

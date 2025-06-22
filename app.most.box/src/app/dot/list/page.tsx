@@ -34,7 +34,6 @@ import {
   IconWifi,
   IconWifiOff,
 } from "@tabler/icons-react";
-import { api } from "@/constants/api";
 import mp from "@/constants/mp";
 import "./list.scss";
 
@@ -146,35 +145,68 @@ export default function PageDotList() {
     }
   };
 
-  // 检测节点连通性
-  const checkNodeConnectivity = async (
+  // 通过错误类型判断节点状态
+  const checkNodeConnectivity = (
     node: DotNode
   ): Promise<{ isOnline: boolean; responseTime: number }> => {
-    if (!node.APIs || node.APIs.length === 0) {
-      return { isOnline: false, responseTime: 0 };
-    }
-
-    const startTime = Date.now();
-
-    try {
-      // 使用节点的第一个 API 地址检测连通性
-      const apiUrl = node.APIs[0];
-      const res = await api.get(apiUrl + "/ipv6", {
-        method: "GET",
-        timeout: 5000, // 5秒超时
-      });
-
-      const responseTime = Date.now() - startTime;
-      if (res.data) {
-        return { isOnline: true, responseTime };
-      } else {
-        return { isOnline: false, responseTime };
+    return new Promise((resolve) => {
+      if (!node.APIs || node.APIs.length === 0) {
+        return { isOnline: false, responseTime: 0 };
       }
-    } catch (error) {
-      console.log("连通性检测失败:", error);
-      const responseTime = Date.now() - startTime;
-      return { isOnline: false, responseTime };
-    }
+      const nodeUrl = node.APIs[0];
+
+      const startTime = Date.now();
+      const timeout = 3000; // 3秒超时
+
+      // 使用 fetch 进行检测
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+      fetch(`${nodeUrl}/ipv6`, {
+        method: "GET",
+        signal: controller.signal,
+        mode: "cors", // 明确指定 CORS 模式
+      })
+        .then(() => {
+          // 请求成功 - 节点在线
+          clearTimeout(timeoutId);
+          const responseTime = Date.now() - startTime;
+          resolve({ isOnline: true, responseTime });
+        })
+        .catch((error) => {
+          clearTimeout(timeoutId);
+          const responseTime = Date.now() - startTime;
+
+          // 分析错误类型
+          const errorMessage = error.message.toLowerCase();
+          const errorName = error.name.toLowerCase();
+
+          // 跨域错误或混合内容错误 = 节点在线
+          if (
+            errorMessage.includes("cors") ||
+            errorMessage.includes("mixed content") ||
+            errorMessage.includes("blocked") ||
+            (errorName === "typeerror" &&
+              errorMessage.includes("failed to fetch"))
+          ) {
+            resolve({ isOnline: true, responseTime });
+          }
+          // 网络错误、超时错误 = 节点离线
+          else if (
+            errorMessage.includes("network") ||
+            errorMessage.includes("timeout") ||
+            errorMessage.includes("connection") ||
+            errorName === "aborterror"
+          ) {
+            resolve({ isOnline: false, responseTime });
+          }
+          // 其他未知错误，保守判断为离线
+          else {
+            console.warn(`未知错误类型: ${errorName} - ${errorMessage}`);
+            resolve({ isOnline: false, responseTime });
+          }
+        });
+    });
   };
 
   // 批量检测所有节点连通性

@@ -1,4 +1,4 @@
-import { getAddress } from "./mp.mjs";
+import mp from "./mp.mjs";
 
 /**
  * 注册文件相关的路由
@@ -9,7 +9,7 @@ import { getAddress } from "./mp.mjs";
 export const registerFiles = (server, ipfs) => {
   // 查看文件/目录
   server.post("/files/*", async (request, reply) => {
-    const address = getAddress(request.headers.authorization);
+    const address = mp.getAddress(request.headers.authorization);
     if (!address) {
       return reply.code(400).send("token 无效");
     }
@@ -34,7 +34,7 @@ export const registerFiles = (server, ipfs) => {
 
   // 上传文件
   server.put("/files.upload", async (request, reply) => {
-    const address = getAddress(request.headers.authorization);
+    const address = mp.getAddress(request.headers.authorization);
     if (!address) {
       return reply.code(400).send("token 无效");
     }
@@ -71,7 +71,7 @@ export const registerFiles = (server, ipfs) => {
 
   // 删除文件/目录
   server.delete("/files/*", async (request, reply) => {
-    const address = getAddress(request.headers.authorization);
+    const address = mp.getAddress(request.headers.authorization);
     if (!address) {
       return reply.code(400).send("token 无效");
     }

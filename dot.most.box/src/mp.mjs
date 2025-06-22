@@ -26,3 +26,23 @@ export const getAddress = (token) => {
 
   return null;
 };
+
+/**
+ * 判断数组相等
+ * @param {string[]} a
+ * @param {string[]} b
+ * @returns {boolean}
+ */
+export const arrayEqual = (a, b) => {
+  if (a.length !== b.length) {
+    return false;
+  }
+  const set1 = new Set(a);
+  const set2 = new Set(b);
+  return set1.size === set2.size && [...set1].every((x) => set2.has(x));
+};
+
+export default {
+  getAddress,
+  arrayEqual,
+};
