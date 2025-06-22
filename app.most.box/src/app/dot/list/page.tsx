@@ -269,6 +269,13 @@ export default function PageDotList() {
     }
   };
 
+  const defaultCID = (node: DotNode) => {
+    return node.APIs.find((api) => api.endsWith(":1976"))?.replace(
+      ":1976",
+      ":8080/ipfs"
+    );
+  };
+
   useEffect(() => {
     fetchNodes();
   }, [network]);
@@ -551,31 +558,38 @@ export default function PageDotList() {
                       </Stack>
                     )}
 
-                    {node.CIDs.length > 0 && (
-                      <Box>
-                        <Text size="xs" fw={500} mb={4} c="grape">
-                          CID 列表 ({node.CIDs.length})
-                        </Text>
-                        <Group gap={4}>
-                          {node.CIDs.map((cid, cidIndex) => (
-                            <Badge
-                              key={cidIndex}
-                              variant="light"
-                              size="xs"
-                              color="grape"
-                              style={{ fontFamily: "monospace" }}
-                            >
-                              {cid.length > 8 ? `${cid.slice(0, 8)}...` : cid}
-                            </Badge>
-                          ))}
-                          {node.CIDs.length > 2 && (
-                            <Badge variant="outline" size="xs" c="dimmed">
-                              +{node.CIDs.length - 2}
-                            </Badge>
-                          )}
-                        </Group>
-                      </Box>
-                    )}
+                    <Box>
+                      <Text size="xs" fw={500} mb={4} c="gray">
+                        CID 浏览器
+                      </Text>
+                      <Group gap={2}>
+                        {node.CIDs.map((cid, cidIndex) => (
+                          <Text
+                            key={cidIndex}
+                            c="blue"
+                            component="a"
+                            href={cid + "/ipfs"}
+                            target="_blank"
+                            style={{ textDecoration: "none" }}
+                            lineClamp={1}
+                          >
+                            {cid + "/ipfs"}
+                          </Text>
+                        ))}
+                        {defaultCID(node) && (
+                          <Text
+                            c="blue"
+                            component="a"
+                            href={defaultCID(node)}
+                            target="_blank"
+                            style={{ textDecoration: "none" }}
+                            lineClamp={1}
+                          >
+                            {defaultCID(node)}
+                          </Text>
+                        )}
+                      </Group>
+                    </Box>
                   </Stack>
                 </Card>
               </Grid.Col>
