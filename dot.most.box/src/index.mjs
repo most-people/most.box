@@ -77,8 +77,8 @@ const initIP = () => {
 };
 
 const postIP = async (RPC) => {
-  const { PRIVATE_KEY, DOT_NAME } = process.env
-  if (!(PRIVATE_KEY && DOT_NAME)) {
+  const { PRIVATE_KEY, DOT_NAME, API_URL, CID_URL } = process.env
+  if (!PRIVATE_KEY || !DOT_NAME) {
     console.error('请在 .env 文件设置 PRIVATE_KEY 和 DOT_NAME');
     return;
   }
@@ -97,8 +97,14 @@ const postIP = async (RPC) => {
     APIs: network.ipv6.slice(1),
     CIDs: [],
   }
+  if (API_URL) {
+    dot.APIs.push(API_URL);
+  }
+  if (CID_URL) {
+    dot.APIs.push(API_URL);
+  }
 
-  if (mp.arrayEqual(APIs, dot.APIs)) {
+  if (mp.arrayEqual(APIs, dot.APIs) && mp.arrayEqual(CIDs, dot.CIDs)) {
     console.log(RPC, "节点无变化");
     return;
   }
@@ -109,10 +115,10 @@ const postIP = async (RPC) => {
     const gasEstimate = await contract.setDot.estimateGas(dot.name, dot.APIs, dot.CIDs);
     const gasPrice = await provider.getFeeData();
     const estimatedCost = gasEstimate * gasPrice.gasPrice;
-    
+
     // 检查余额是否足够
     const balance = await provider.getBalance(wallet.address);
-    
+
     if (balance < estimatedCost) {
       console.error(RPC, `手续费不足: 需要 ${ethers.formatEther(estimatedCost)} ETH，但余额只有 ${ethers.formatEther(balance)} ETH`);
       return;

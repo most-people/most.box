@@ -90,15 +90,18 @@ export default function PageDotList() {
       rpc: "https://mainnet.base.org",
       name: "Base 主网",
       color: "blue",
+      explorer: "https://basescan.org",
     },
     testnet: {
       rpc: "https://sepolia.base.org",
       name: "Base 测试网",
       color: "orange",
+      explorer: "https://sepolia.basescan.org",
     },
   };
 
   const RPC = NETWORK_CONFIG[network].rpc;
+  const Explorer = NETWORK_CONFIG[network].explorer;
 
   // 获取节点列表
   const fetchNodes = async () => {
@@ -413,6 +416,7 @@ export default function PageDotList() {
           </Text>
         </Alert>
 
+        {/* 节点列表 */}
         {nodes.length === 0 ? (
           <Paper shadow="sm" p="xl" radius="md" style={{ textAlign: "center" }}>
             <ThemeIcon
@@ -578,6 +582,76 @@ export default function PageDotList() {
             ))}
           </Grid>
         )}
+
+        <Group gap="xs" mt="lg" justify="center">
+          <Text
+            size="sm"
+            c="blue"
+            component="a"
+            href="https://docs.base.org/chain/connecting-to-base"
+            target="_blank"
+            style={{ textDecoration: "none" }}
+          >
+            官方 RPC
+          </Text>
+
+          <Text
+            size="sm"
+            c="blue"
+            component="a"
+            href="https://chainlist.org/chain/8453"
+            target="_blank"
+            style={{ textDecoration: "none" }}
+          >
+            主网 RPC
+          </Text>
+
+          <Text
+            size="sm"
+            c="blue"
+            component="a"
+            href="https://chainlist.org/chain/84532"
+            target="_blank"
+            style={{ textDecoration: "none" }}
+          >
+            测试网 RPC
+          </Text>
+
+          <Text
+            size="sm"
+            c="blue"
+            component="a"
+            href="https://docs.base.org/chain/network-faucets"
+            target="_blank"
+            style={{ textDecoration: "none" }}
+          >
+            水龙头列表
+          </Text>
+
+          <Text
+            size="sm"
+            c="blue"
+            component="a"
+            href="https://portal.cdp.coinbase.com/products/faucet?projectId=0b869244-5000-43dd-8aba-c9feee07f6ab"
+            target="_blank"
+            style={{ textDecoration: "none" }}
+          >
+            注册领水
+          </Text>
+
+          <Text
+            size="sm"
+            c="blue"
+            component="a"
+            href={
+              Explorer + "/address/0xdc82cef1a8416210afb87caeec908a4df843f016"
+            }
+            target="_blank"
+            style={{ textDecoration: "none" }}
+          >
+            合约地址
+          </Text>
+        </Group>
       </Container>
     </Box>
   );
