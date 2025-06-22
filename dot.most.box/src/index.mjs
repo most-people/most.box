@@ -101,7 +101,7 @@ const postIP = async (RPC) => {
     dot.APIs.push(API_URL);
   }
   if (CID_URL) {
-    dot.APIs.push(API_URL);
+    dot.CIDs.push(CID_URL);
   }
 
   if (mp.arrayEqual(APIs, dot.APIs) && mp.arrayEqual(CIDs, dot.CIDs)) {

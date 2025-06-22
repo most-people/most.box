@@ -557,7 +557,7 @@ export default function PageDotList() {
                           CID 列表 ({node.CIDs.length})
                         </Text>
                         <Group gap={4}>
-                          {node.CIDs.slice(0, 2).map((cid, cidIndex) => (
+                          {node.CIDs.map((cid, cidIndex) => (
                             <Badge
                               key={cidIndex}
                               variant="light"
