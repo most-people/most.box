@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Tabs, Text } from "@mantine/core";
 import { Icon } from "@/components/Icon";
 import HomeMine from "@/components/home/mine";
-import HomeChat from "@/components/home/chat";
+import HomeDisk from "@/components/home/disk";
 
 import "./page.scss";
 import HomeNote from "@/components/home/note";
@@ -45,8 +45,8 @@ export default function PageHome() {
       value={homeTab}
       onChange={tabChange}
     >
-      <Tabs.Panel keepMounted value="chat">
-        <HomeChat />
+      <Tabs.Panel keepMounted value="disk">
+        <HomeDisk />
       </Tabs.Panel>
 
       <Tabs.Panel keepMounted value="note">
@@ -62,9 +62,9 @@ export default function PageHome() {
       </Tabs.Panel>
 
       <Tabs.List>
-        <Tabs.Tab value="chat">
-          <Icon name={homeTab === "chat" ? "chat-active" : "chat"} />
-          <Text>聊天</Text>
+        <Tabs.Tab value="disk">
+          <Icon name={homeTab === "disk" ? "chat-active" : "chat"} />
+          <Text>网盘</Text>
         </Tabs.Tab>
         <Tabs.Tab value="note">
           <Icon name={homeTab === "note" ? "note-active" : "note"} />

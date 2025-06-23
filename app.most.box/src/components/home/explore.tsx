@@ -1,6 +1,6 @@
-"use client";
-import "./explore.scss";
+import { Text } from "@mantine/core";
+import "./note.scss";
 
 export default function HomeExplore() {
-  return <>Explore tab content</>;
+  return <Text>Explore tab content</Text>;
 }
