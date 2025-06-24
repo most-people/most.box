@@ -1,14 +1,16 @@
 {
   "cSpell.words": [
+    "inited",
     "IPFS",
     "kubo",
-    "inited",
     "mantine",
     "nacl",
     "tabler",
+    "toastui",
     "turbopack"
   ],
   "search.exclude": {
-    "**/out": true
+    "**/out": true,
+    "**/toast-ui": true
   }
 }

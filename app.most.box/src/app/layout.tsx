@@ -1,6 +1,5 @@
 import AppProvider from "@/components/AppProvider";
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
 import { theme } from "@/constants/theme";
 
 import { MantineProvider } from "@mantine/core";
@@ -10,11 +9,6 @@ import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
 
 import "@/app/global.scss";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
 
 export const metadata: Metadata = {
   title: "Most.Box",
@@ -51,7 +45,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
-      <body className={`${inter.variable}`}>
+      <body>
         <div id="app">
           <MantineProvider defaultColorScheme="auto" theme={theme}>
             <AppProvider />
