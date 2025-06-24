@@ -416,7 +416,7 @@ export default function PageDotList() {
           title={`当前网络: ${NETWORK_CONFIG[network].name}`}
         >
           <Text size="sm">
-            RPC 端点:{" "}
+            RPC 端点:
             <Text component="span" ff="monospace" c="dimmed">
               {NETWORK_CONFIG[network].rpc}
             </Text>
