@@ -15,6 +15,7 @@ import "@/assets/toast-ui/prism.min.css";
 import "@/assets/toast-ui/toastui-editor-plugin-code-syntax-highlight.min.css";
 
 import "./note.scss";
+import "./markdown.scss";
 
 export default function NotePage() {
   const [hash] = useHash();
@@ -54,8 +55,10 @@ export default function NotePage() {
   useEffect(() => {
     if (content) {
       if (viewer) {
+        // viewer.setMarkdown(content);
       }
       if (editor) {
+        editor.setMarkdown(content);
       }
     }
   }, [content, viewer, editor]);
@@ -95,9 +98,9 @@ export default function NotePage() {
           )}
         </Paper> */}
       <Paper shadow="sm" p="md" radius="md">
-        <Box id="viewerElement"></Box>
+        <Box id="viewerElement" className="mp-markdown viewer"></Box>
       </Paper>
-      <Box id="editorElement"></Box>
+      <Box id="editorElement" className="mp-markdown editor"></Box>
 
       {/* https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js */}
       <Script src="/toast-ui/toastui-editor-all.min.js" />
