@@ -64,7 +64,7 @@ export default function HomeNote() {
   };
 
   useEffect(() => {
-    if (wallet) {
+    if (wallet && notes.length === 0) {
       fetchNodes();
     }
   }, [wallet]);
