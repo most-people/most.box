@@ -8,9 +8,10 @@ import {
   Center,
   Button,
   TextInput,
+  ActionIcon,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
-import { IconSearch, IconX } from "@tabler/icons-react";
+import { IconRefresh, IconSearch, IconX } from "@tabler/icons-react";
 import "./note.scss";
 import { api } from "@/constants/api";
 import { useUserStore } from "@/stores/userStore";
@@ -57,19 +58,10 @@ export default function HomeNote() {
   if (!wallet) {
     return (
       <Center>
-        <Button mb="lg" variant="gradient" component={Link} href="/login">
+        <Button variant="gradient" component={Link} href="/login">
           去登录
         </Button>
       </Center>
-    );
-  }
-  if (loading) {
-    return (
-      <Stack align="center" justify="center" h={200}>
-        <Text size="lg" c="dimmed">
-          加载中...
-        </Text>
-      </Stack>
     );
   }
 
@@ -77,14 +69,17 @@ export default function HomeNote() {
     return (
       <Stack align="center" justify="center" h={200}>
         <Text size="lg" c="dimmed">
-          暂无笔记
+          {loading ? "正在加载" : "暂无笔记"}
         </Text>
+        <ActionIcon size="lg" onClick={fetchNodes} mt="md">
+          <IconRefresh size={18} />
+        </ActionIcon>
       </Stack>
     );
   }
 
   return (
-    <Stack gap="md" p="md">
+    <Stack gap="md" p="md" className="note-box">
       {/* 搜索框 */}
       <TextInput
         placeholder="搜索笔记名称..."
