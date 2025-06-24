@@ -9,7 +9,7 @@ interface CustomNode {
 
 const uploadImage = async (
   file: File
-  //   callback: (url: string, altText: string) => void
+  // callback: (url: string, altText: string) => void
 ) => {
   const formData = new FormData();
   formData.append("file", file);
@@ -33,12 +33,7 @@ const uploadImage = async (
 const customPlugin = () => {
   const toHTMLRenderers = {
     mp_mi(node: CustomNode) {
-      const html = `<mp-mi>
-          <a href="/mp/mi" target="_blank">密文自助解析</a>
-          <span>${node.literal}</span>
-          <input placeholder="输入密码" />
-          <p>解密</p>
-        </mp-mi>`;
+      const html = `<mp-mi><a href="/mp/mi" target="_blank">加密明文</a><span>${node.literal}</span><input placeholder="输入密码" /><p>解密</p></mp-mi>`;
       return [
         { type: "openTag", tagName: "div", outerNewLine: true },
         { type: "html", content: html },

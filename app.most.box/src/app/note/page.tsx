@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Loader, Center, Box } from "@mantine/core";
+import { Loader, Center, Box, Button, Group } from "@mantine/core";
 import { useHash } from "@mantine/hooks";
 import Script from "next/script";
 import { AppHeader } from "@/components/AppHeader";
 import { useToastUI } from "@/hooks/useToastUI";
+// import { useUserStore } from "@/stores/userStore";
 
 // https://uicdn.toast.com/editor/latest/toastui-editor.min.css
 import "@/assets/toast-ui/toastui-editor.min.css";
@@ -25,7 +26,10 @@ export default function NotePage() {
   const [editor, setEditor] = useState<any>(null);
   const toastUI = useToastUI();
 
+  // const wallet = useUserStore((state) => state.wallet);
+
   const [content, setContent] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
 
   const initViewer = () => {
     setViewer(toastUI.initViewer());
@@ -44,6 +48,28 @@ export default function NotePage() {
       .catch((error) => {
         console.error("Error:", error);
       });
+  };
+
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
+
+  const handleSave = () => {
+    if (editor) {
+      const newContent = editor.getMarkdown();
+      setContent(newContent);
+      // 这里可以添加保存到服务器的逻辑
+      console.log("保存内容:", newContent);
+    }
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    if (editor) {
+      // 恢复原始内容
+      editor.setMarkdown(content);
+    }
+    setIsEditing(false);
   };
 
   useEffect(() => {
@@ -81,12 +107,39 @@ export default function NotePage() {
     return "笔记";
   }, [content]);
 
+  // 根据编辑状态渲染不同的按钮
+  const renderHeaderButtons = () => {
+    if (isEditing) {
+      return (
+        <Group gap="xs">
+          <Button size="xs" onClick={handleSave}>
+            保存
+          </Button>
+          <Button size="xs" variant="outline" onClick={handleCancel}>
+            取消
+          </Button>
+        </Group>
+      );
+    }
+    return (
+      <Button size="xs" onClick={handleEdit}>
+        编辑
+      </Button>
+    );
+  };
+
   return (
     <>
-      <AppHeader title={title} />
+      <AppHeader title={title} right={renderHeaderButtons()} />
 
-      <Box id="viewerElement" />
-      <Box id="editorElement" />
+      <Box
+        id="viewerElement"
+        style={{ display: isEditing ? "none" : "block" }}
+      />
+      <Box
+        id="editorElement"
+        style={{ display: isEditing ? "block" : "none" }}
+      />
 
       {/* https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js */}
       <Script src="/toast-ui/toastui-editor-all.min.js" />
