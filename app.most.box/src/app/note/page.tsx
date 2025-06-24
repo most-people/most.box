@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Paper, Loader, Center, Box } from "@mantine/core";
+import { Loader, Center, Box } from "@mantine/core";
 import { useHash } from "@mantine/hooks";
 import Script from "next/script";
 import { AppHeader } from "@/components/AppHeader";
@@ -23,13 +23,16 @@ export default function NotePage() {
   const [inited, setInited] = useState(false);
   const [viewer, setViewer] = useState<any>(null);
   const [editor, setEditor] = useState<any>(null);
-  const { initEditor, initViewer } = useToastUI();
+  const toastUI = useToastUI();
 
   const [content, setContent] = useState("");
 
-  const initToastUI = () => {
-    setEditor(initEditor());
-    setViewer(initViewer());
+  const initViewer = () => {
+    setViewer(toastUI.initViewer());
+    setInited(true);
+  };
+  const initEditor = () => {
+    setEditor(toastUI.initEditor());
   };
 
   const fetchNote = () => {
@@ -40,22 +43,17 @@ export default function NotePage() {
       })
       .catch((error) => {
         console.error("Error:", error);
-      })
-      .finally(() => {
-        setInited(true);
       });
   };
 
   useEffect(() => {
-    if (cid) {
-      fetchNote();
-    }
+    if (cid) fetchNote();
   }, [cid]);
 
   useEffect(() => {
     if (content) {
       if (viewer) {
-        // viewer.setMarkdown(content);
+        viewer.setMarkdown(content);
       }
       if (editor) {
         editor.setMarkdown(content);
@@ -63,44 +61,16 @@ export default function NotePage() {
     }
   }, [content, viewer, editor]);
 
-  if (!inited) {
-    return (
-      <Center h={200}>
-        <Loader size="md" />
-      </Center>
-    );
-  }
-
   return (
     <>
       <AppHeader title="笔记" />
-      {/* <Paper shadow="sm" p="md" radius="md">
-          <Title order={1} mb="md">
-            {noteData?.title || "笔记详情"}
-          </Title>
 
-          <Text size="sm" c="dimmed" mb="lg">
-            CID: {cid}
-          </Text>
-
-          <Image
-            src="https://cid.most.red/ipfs/QmYS521g2zomKqvfuZjZhmbcTEn6ZjMYim7yRq6kebhC8Y"
-            alt="笔记图片"
-            mb="lg"
-          />
-
-          <Text>{noteData?.content || "暂无内容"}</Text>
-
-          {noteData?.createdAt && (
-            <Text size="xs" c="dimmed" mt="md">
-              创建时间: {new Date(noteData.createdAt).toLocaleString()}
-            </Text>
-          )}
-        </Paper> */}
-      <Paper shadow="sm" p="md" radius="md">
-        <Box id="viewerElement" className="mp-markdown viewer"></Box>
-      </Paper>
-      <Box id="editorElement" className="mp-markdown editor"></Box>
+      <Box id="viewerElement" className="mp-markdown viewer"></Box>
+      <Box
+        id="editorElement"
+        className="mp-markdown editor"
+        style={{ display: "none" }}
+      />
 
       {/* https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js */}
       <Script src="/toast-ui/toastui-editor-all.min.js" />
@@ -108,10 +78,20 @@ export default function NotePage() {
       <Script
         src="/toast-ui/toastui-editor-plugin-code-syntax-highlight-all.min.js"
         strategy="lazyOnload"
-        onReady={initToastUI}
+        onReady={initViewer}
       />
       {/* https://uicdn.toast.com/editor/latest/i18n/zh-cn.js */}
-      {inited && <Script src="/toast-ui/zh-cn.js" strategy="lazyOnload" />}
+      {inited ? (
+        <Script
+          src="/toast-ui/zh-cn.js"
+          strategy="lazyOnload"
+          onReady={initEditor}
+        />
+      ) : (
+        <Center h={200}>
+          <Loader size="md" />
+        </Center>
+      )}
     </>
   );
 }
