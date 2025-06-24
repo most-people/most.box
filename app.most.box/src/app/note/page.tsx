@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Loader, Center, Box } from "@mantine/core";
 import { useHash } from "@mantine/hooks";
 import Script from "next/script";
@@ -61,16 +61,32 @@ export default function NotePage() {
     }
   }, [content, viewer, editor]);
 
+  // 使用 useMemo 缓存标题提取结果
+  const title = useMemo(() => {
+    if (!content) return "笔记";
+
+    // 只取第一行作为标题
+    const firstLineIndex = content.indexOf("\n");
+    const firstLine =
+      firstLineIndex === -1
+        ? content.trim()
+        : content.substring(0, firstLineIndex).trim();
+
+    const t = firstLine.replace(/^#+\s*/, "").trim();
+    if (t && t.length > 0) {
+      // 限制标题长度，避免过长
+      return t.length > 30 ? t.substring(0, 30) + "..." : t;
+    }
+
+    return "笔记";
+  }, [content]);
+
   return (
     <>
-      <AppHeader title="笔记" />
+      <AppHeader title={title} />
 
-      <Box id="viewerElement" className="mp-markdown viewer"></Box>
-      <Box
-        id="editorElement"
-        className="mp-markdown editor"
-        style={{ display: "none" }}
-      />
+      <Box id="viewerElement" />
+      <Box id="editorElement" />
 
       {/* https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js */}
       <Script src="/toast-ui/toastui-editor-all.min.js" />
