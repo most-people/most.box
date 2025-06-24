@@ -22,6 +22,11 @@ export interface Notify {
   value: NotifyValue;
 }
 
+export interface Note {
+  name: string;
+  cid: string;
+}
+
 interface UserStore {
   wallet?: MostWallet;
   initWallet: () => void;
@@ -30,6 +35,7 @@ interface UserStore {
   firstPath: string;
   dotAPI: string;
   dotCID: string;
+  notes: Note[];
 }
 
 interface State extends UserStore {
@@ -92,4 +98,5 @@ export const useUserStore = create<State>((set) => ({
     localStorage.removeItem("jwt");
     localStorage.removeItem("jwtSecret");
   },
+  notes: [],
 }));

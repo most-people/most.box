@@ -12,27 +12,21 @@ import {
 } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { IconRefresh, IconX } from "@tabler/icons-react";
-import "./note.scss";
 import { api } from "@/constants/api";
 import { useUserStore } from "@/stores/userStore";
 import Link from "next/link";
-
-interface NoteItem {
-  name: string;
-  cid: {
-    "/": string;
-  };
-}
+import "./note.scss";
 
 export default function HomeNote() {
   const wallet = useUserStore((state) => state.wallet);
-  const [noteList, setNoteList] = useState<NoteItem[]>([]);
+  const notes = useUserStore((state) => state.notes);
+  const setItem = useUserStore((state) => state.setItem);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [displayCount, setDisplayCount] = useState(100);
 
   // 过滤笔记列表
-  const filteredNotes = noteList.filter((note) =>
+  const filteredNotes = notes.filter((note) =>
     note.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -54,8 +48,13 @@ export default function HomeNote() {
     try {
       setLoading(true);
       const res = await api.post("/files/.note");
-      if (res.data) {
-        setNoteList(res.data);
+      const list = res.data as { name: string; cid: { "/": string } }[];
+      if (list) {
+        const notes = list.map((item) => ({
+          name: item.name,
+          cid: item.cid["/"],
+        }));
+        setItem("notes", notes);
       }
     } catch (error) {
       console.error(error);
@@ -80,7 +79,7 @@ export default function HomeNote() {
     );
   }
 
-  if (!noteList.length) {
+  if (!notes.length) {
     return (
       <Stack align="center" justify="center" h={200}>
         <Text size="lg" c="dimmed">
@@ -98,8 +97,8 @@ export default function HomeNote() {
       <Group justify="space-between" align="center">
         <Badge variant="light" size="lg">
           {searchQuery
-            ? `显示 ${displayedNotes.length} / ${filteredNotes.length} (总共 ${noteList.length})`
-            : `显示 ${displayedNotes.length} / ${noteList.length}`}{" "}
+            ? `显示 ${displayedNotes.length} / ${filteredNotes.length} (总共 ${notes.length})`
+            : `显示 ${displayedNotes.length} / ${notes.length}`}{" "}
           个笔记
         </Badge>
       </Group>
@@ -154,6 +153,11 @@ export default function HomeNote() {
                   radius="md"
                   withBorder
                   className="note-card"
+                  component={Link}
+                  href={{
+                    pathname: "/note",
+                    hash: note.cid,
+                  }}
                 >
                   <Stack justify="space-between" h="100%">
                     <Text
