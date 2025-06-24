@@ -156,7 +156,11 @@ export default function HomeNote() {
                   component={Link}
                   href={{
                     pathname: "/note",
-                    hash: note.cid,
+                    hash: wallet.address,
+                    query: {
+                      name: note.name,
+                      // cid: note.cid,
+                    },
                   }}
                 >
                   <Stack justify="space-between" h="100%">
