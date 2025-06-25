@@ -14,6 +14,7 @@ import {
   type MostWallet,
   mostWallet,
 } from "@/constants/MostWallet";
+import { match } from "pinyin-pro";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/zh-cn";
@@ -32,10 +33,11 @@ const avatar = (address = "Most") => {
     backgroundType: ["gradientLinear"],
   }).toDataUri();
 };
+
 // 话题生成
-const topic = (address = "Most") => {
+const avatarCID = (cid = "Most") => {
   return createAvatar(icons, {
-    seed: "most.box#" + address,
+    seed: "most.box#" + cid,
     flip: true,
     backgroundType: ["gradientLinear", "solid"],
   }).toDataUri();
@@ -89,17 +91,6 @@ const formatDate = (date: string | number) => {
     // 跨年显示完整日期
     return input.format("YY年M月D日");
   }
-};
-
-const getHash = (message: string) => {
-  // return sha256(toUtf8Bytes(message))
-  let hash = 0;
-  for (let i = 0; i < message.length; i++) {
-    const char = message.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash; // 转换为32位整数
-  }
-  return Math.abs(hash).toString(36); // 转换为36进制并取正数
 };
 
 const formatAddress = (address?: string) => {
@@ -180,32 +171,34 @@ const login = (username: string, password: string): MostWallet | null => {
   return null;
 };
 
-const topicJoin = (name: string, password: string) => {
-  return password ? [name, password].join("➔") : name;
-};
-const topicSplit = (hash: string) => {
-  if (hash.startsWith("#")) {
-    hash = hash.substring(1);
-  }
-  const [name, password] = decodeURIComponent(hash).split("➔");
-  return [name || "", password || ""];
-};
-
 // 播放提示音
-const playSound = async () => {
-  try {
-    const audio = new Audio("/sounds/notification.mp3"); // 替换为你的提示音文件路径
-    await audio.play();
-    navigator.vibrate(200); // 振动 200 毫秒
-  } catch (error) {
-    console.log("播放提示音时出错:", error);
+// const playSound = async () => {
+//   try {
+//     const audio = new Audio("/sounds/notification.mp3"); // 替换为你的提示音文件路径
+//     await audio.play();
+//     navigator.vibrate(200); // 振动 200 毫秒
+//   } catch (error) {
+//     console.log("播放提示音时出错:", error);
+//   }
+// };
+
+const pinyin = (t: string, v: string, jump = 2) => {
+  if (v.length < jump) {
+    return false;
   }
+  if (t.toLowerCase().includes(v.toLowerCase())) {
+    return true;
+  }
+  const pinyin = match(t, v, { continuous: true });
+  if (pinyin && pinyin.length >= jump) {
+    return true;
+  }
+  return false;
 };
 
 const mp = {
-  topic,
   avatar,
-  getHash,
+  avatarCID,
   formatTime,
   formatDate,
   formatAddress,
@@ -215,10 +208,8 @@ const mp = {
   verifyJWT,
   login,
   ZeroAddress,
-  topicJoin,
-  topicSplit,
-  playSound,
   createToken,
+  pinyin,
 };
 
 export default mp;

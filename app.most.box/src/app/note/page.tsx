@@ -111,7 +111,14 @@ export default function NotePage() {
 
   // 使用 useMemo 缓存标题提取结果
   const title = useMemo(() => {
-    if (!content) return "笔记";
+    const name = params.get("name");
+    if (name) {
+      return name;
+    }
+
+    if (!content) {
+      return "笔记";
+    }
 
     // 只取第一行作为标题
     const firstLineIndex = content.indexOf("\n");

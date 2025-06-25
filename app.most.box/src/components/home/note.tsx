@@ -16,6 +16,7 @@ import { api } from "@/constants/api";
 import { useUserStore } from "@/stores/userStore";
 import Link from "next/link";
 import "./note.scss";
+import mp from "@/constants/mp";
 
 export default function HomeNote() {
   const wallet = useUserStore((state) => state.wallet);
@@ -27,7 +28,7 @@ export default function HomeNote() {
 
   // 过滤笔记列表
   const filteredNotes = notes.filter((note) =>
-    note.name.toLowerCase().includes(searchQuery.toLowerCase())
+    mp.pinyin(note.name, searchQuery, 0)
   );
 
   // 获取当前显示的笔记列表
