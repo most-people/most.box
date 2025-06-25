@@ -122,7 +122,7 @@ const createJWT = (wallet: MostWallet) => {
 };
 const verifyJWT = (jwt: string, jwtSecret: string): MostWallet | null => {
   const [time] = jwtSecret.split(".");
-  if (Date.now() - Number(time) > 24 * 60 * 60 * 1000) {
+  if (Date.now() - Number(time) > 8 * 60 * 60 * 1000) {
     console.log("jwt 已过期");
     return null;
   }

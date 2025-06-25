@@ -42,7 +42,7 @@ interface State extends UserStore {
   setItem: <K extends keyof State>(key: K, value: State[K]) => void;
 }
 
-export const useUserStore = create<State>((set) => ({
+export const useUserStore = create<State>((set, get) => ({
   wallet: undefined,
   initWallet() {
     const jwt = localStorage.getItem("jwt");
@@ -52,6 +52,8 @@ export const useUserStore = create<State>((set) => ({
       if (wallet) {
         mp.createToken(wallet);
         set({ wallet });
+      } else {
+        get().exit();
       }
     }
   },

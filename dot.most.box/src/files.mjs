@@ -61,12 +61,23 @@ export const registerFiles = (server, ipfs) => {
       const buffer = await data.toBuffer();
       const path = data.fields.path?.value || "";
       const filename = path || data.filename || "unnamed";
+      console.log("🌊", path);
+      const targetPath = `/${address}/${filename}`;
 
       // 将文件添加到IPFS
       const fileAdded = await ipfs.add(buffer);
 
+      // 检查文件是否已存在，如果存在则先删除
+      try {
+        await ipfs.files.stat(targetPath);
+        // 文件存在，先删除
+        await ipfs.files.rm(targetPath);
+      } catch (error) {
+        // 文件不存在，忽略错误
+      }
+
       // 将文件复制到指定地址目录
-      await ipfs.files.cp(`/ipfs/${fileAdded.cid}`, `/${address}/${filename}`, {
+      await ipfs.files.cp(`/ipfs/${fileAdded.cid}`, targetPath, {
         parents: true,
       });
 

@@ -20,13 +20,13 @@ import "./markdown.scss";
 import { useSearchParams } from "next/navigation";
 import { useUserStore } from "@/stores/userStore";
 import { api } from "@/constants/api";
+import { notifications } from "@mantine/notifications";
 
 export default function NotePage() {
   const [hash, setHash] = useHash();
   const params = useSearchParams();
   const dotCID = useUserStore((state) => state.dotCID);
 
-  const cid = hash.slice(1);
   const [inited, setInited] = useState(false);
   const [viewer, setViewer] = useState<any>(null);
   const [editor, setEditor] = useState<any>(null);
@@ -45,7 +45,7 @@ export default function NotePage() {
     setEditor(toastUI.initEditor());
   };
 
-  const fetchNote = () => {
+  const fetchNote = (cid: string) => {
     fetch(`${dotCID}/ipfs/${cid}/index.md`)
       .then((response) => response.text())
       .then((data) => {
@@ -60,12 +60,47 @@ export default function NotePage() {
     setIsEditing(true);
   };
 
+  const updateNote = async (name: string, newContent: string) => {
+    const formData = new FormData();
+    const blob = new Blob([newContent], { type: "text/markdown" });
+    formData.append("file", blob, "index.md");
+    formData.append("path", `/.note/${name}/index.md`);
+
+    try {
+      const res = await api.put("/files.upload", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      const cid = res.data?.cid;
+      if (cid) {
+        setHash(cid);
+        notifications.show({
+          message: `${name} 保存成功`,
+          color: "green",
+        });
+      }
+    } catch (error: any) {
+      let message = error?.response?.data || "文件上传失败，请重试";
+      if (message.includes("already has")) {
+        message = "文件已存在";
+      }
+      notifications.show({
+        title: "保存失败",
+        message,
+        color: "red",
+      });
+    }
+  };
+
   const handleSave = () => {
     if (editor) {
       const newContent = editor.getMarkdown();
       setContent(newContent);
-      // 这里可以添加保存到服务器的逻辑
-      console.log("保存内容:", newContent);
+      const name = params.get("name");
+      if (name) {
+        updateNote(name, newContent);
+      }
     }
     setIsEditing(false);
   };
@@ -79,21 +114,26 @@ export default function NotePage() {
   };
 
   useEffect(() => {
-    if (cid) {
-      fetchNote();
-    }
-  }, [cid]);
-
-  useEffect(() => {
     if (inited) {
       const uid = params.get("uid");
       const name = params.get("name");
-      if (!cid && uid && name) {
-        api.get(`/find.cid/${uid}/.note/${name}`).then((res) => {
-          if (res.data) {
-            setHash(`#${res.data}`);
-          }
-        });
+      if (uid && name) {
+        api
+          .get(`/find.cid/${uid}/.note/${name}`)
+          .then((res) => {
+            const cid = res.data;
+            if (cid) {
+              setHash(cid);
+              fetchNote(cid);
+            } else if (hash) {
+              fetchNote(hash.slice(1));
+            }
+          })
+          .catch(() => {
+            if (hash) {
+              fetchNote(hash.slice(1));
+            }
+          });
       }
     }
   }, [inited]);
@@ -111,29 +151,12 @@ export default function NotePage() {
 
   // 使用 useMemo 缓存标题提取结果
   const title = useMemo(() => {
+    let t = "笔记";
     const name = params.get("name");
     if (name) {
-      return name;
+      t = name;
     }
-
-    if (!content) {
-      return "笔记";
-    }
-
-    // 只取第一行作为标题
-    const firstLineIndex = content.indexOf("\n");
-    const firstLine =
-      firstLineIndex === -1
-        ? content.trim()
-        : content.substring(0, firstLineIndex).trim();
-
-    const t = firstLine.replace(/^#+\s*/, "").trim();
-    if (t && t.length > 0) {
-      // 限制标题长度，避免过长
-      return t.length > 30 ? t.substring(0, 30) + "..." : t;
-    }
-
-    return "笔记";
+    return t;
   }, [content]);
 
   // 根据编辑状态渲染不同的按钮

@@ -76,17 +76,20 @@ export default function PageDotFiles() {
         formData.append("file", file);
         formData.append("path", file.webkitRelativePath);
 
-        await api.put("/files.upload", formData, {
+        const res = await api.put("/files.upload", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
         });
 
-        notifications.show({
-          title: "上传成功",
-          message: `文件 ${file.name} 上传成功`,
-          color: "green",
-        });
+        const cid = res.data?.cid;
+        if (cid) {
+          notifications.show({
+            title: "上传成功",
+            message: `文件 ${file.name} 上传成功`,
+            color: "green",
+          });
+        }
       }
 
       // 上传完成后刷新文件列表
