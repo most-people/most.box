@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import { Loader, Center, Box, Button, Group } from "@mantine/core";
 import { useHash } from "@mantine/hooks";
 import Script from "next/script";
@@ -17,12 +17,13 @@ import "@/assets/toast-ui/toastui-editor-plugin-code-syntax-highlight.min.css";
 
 import "./note.scss";
 import "./markdown.scss";
+
 import { useSearchParams } from "next/navigation";
 import { useUserStore } from "@/stores/userStore";
 import { api } from "@/constants/api";
 import { notifications } from "@mantine/notifications";
 
-export default function NotePage() {
+const NoteContent = () => {
   const [hash, setHash] = useHash();
   const params = useSearchParams();
   const dotCID = useUserStore((state) => state.dotCID);
@@ -202,17 +203,27 @@ export default function NotePage() {
         onReady={initViewer}
       />
       {/* https://uicdn.toast.com/editor/latest/i18n/zh-cn.js */}
-      {inited ? (
+      {inited && (
         <Script
           src="/toast-ui/zh-cn.js"
           strategy="lazyOnload"
           onReady={initEditor}
         />
-      ) : (
+      )}
+    </>
+  );
+};
+
+export default function NotePage() {
+  return (
+    <Suspense
+      fallback={
         <Center h={200}>
           <Loader size="md" />
         </Center>
-      )}
-    </>
+      }
+    >
+      <NoteContent />
+    </Suspense>
   );
 }
