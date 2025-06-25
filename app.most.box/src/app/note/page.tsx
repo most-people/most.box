@@ -157,7 +157,7 @@ export default function NotePage() {
       t = name;
     }
     return t;
-  }, [content]);
+  }, []);
 
   // 根据编辑状态渲染不同的按钮
   const renderHeaderButtons = () => {

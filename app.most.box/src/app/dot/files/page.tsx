@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { AppHeader } from "@/components/AppHeader";
 import {
   Box,
@@ -55,6 +55,14 @@ export default function PageDotFiles() {
       console.error(error);
     }
   };
+
+  const explorer = useMemo(() => {
+    try {
+      return new URL(dotCID).origin;
+    } catch {
+      return "";
+    }
+  }, [dotCID]);
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 B";
@@ -224,11 +232,11 @@ export default function PageDotFiles() {
         <Group gap={4}>
           <span>IPFS CID 浏览器</span>
           <a
-            href={new URL(dotCID).origin + "/ipfs/"}
+            href={explorer + "/ipfs/"}
             target="_blank"
             rel="noopener noreferrer"
           >
-            {new URL(dotCID).origin + "/ipfs/"}
+            {explorer + "/ipfs/"}
           </a>
         </Group>
         <Group mt="sm" w="100%">
@@ -239,7 +247,9 @@ export default function PageDotFiles() {
             onChange={(event) => setItem("dotCID", event.currentTarget.value)}
             placeholder="输入 CID 地址"
           />
-          <Button onClick={handleCidUrlChange}>更新</Button>
+          <Button onClick={handleCidUrlChange} disabled={!explorer}>
+            更新
+          </Button>
         </Group>
       </Stack>
 
