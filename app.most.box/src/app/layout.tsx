@@ -12,7 +12,8 @@ import "@/app/global.scss";
 
 export const metadata: Metadata = {
   title: "Most.Box",
-  description: "为全人类彻底解放奋斗终身",
+  description: "完全去中心化系统节点",
+  // description: "为全人类彻底解放奋斗终身",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

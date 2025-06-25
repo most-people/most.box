@@ -17,9 +17,15 @@ import "@/assets/toast-ui/toastui-editor-plugin-code-syntax-highlight.min.css";
 
 import "./note.scss";
 import "./markdown.scss";
+import { useSearchParams } from "next/navigation";
+import { useUserStore } from "@/stores/userStore";
+import { api } from "@/constants/api";
 
 export default function NotePage() {
-  const [hash] = useHash();
+  const [hash, setHash] = useHash();
+  const params = useSearchParams();
+  const dotCID = useUserStore((state) => state.dotCID);
+
   const cid = hash.slice(1);
   const [inited, setInited] = useState(false);
   const [viewer, setViewer] = useState<any>(null);
@@ -40,7 +46,7 @@ export default function NotePage() {
   };
 
   const fetchNote = () => {
-    fetch(`https://cid.most.red/ipfs/${cid}/index.md`)
+    fetch(`${dotCID}/ipfs/${cid}/index.md`)
       .then((response) => response.text())
       .then((data) => {
         setContent(data);
@@ -73,8 +79,24 @@ export default function NotePage() {
   };
 
   useEffect(() => {
-    if (cid) fetchNote();
+    if (cid) {
+      fetchNote();
+    }
   }, [cid]);
+
+  useEffect(() => {
+    if (inited) {
+      const uid = params.get("uid");
+      const name = params.get("name");
+      if (!cid && uid && name) {
+        api.get(`/find.cid/${uid}/.note/${name}`).then((res) => {
+          if (res.data) {
+            setHash(`#${res.data}`);
+          }
+        });
+      }
+    }
+  }, [inited]);
 
   useEffect(() => {
     if (content) {

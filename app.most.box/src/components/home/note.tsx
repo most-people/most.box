@@ -156,10 +156,10 @@ export default function HomeNote() {
                   component={Link}
                   href={{
                     pathname: "/note",
-                    hash: wallet.address,
+                    hash: note.cid,
                     query: {
+                      uid: wallet.address,
                       name: note.name,
-                      // cid: note.cid,
                     },
                   }}
                 >

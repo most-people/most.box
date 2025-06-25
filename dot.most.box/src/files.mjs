@@ -7,6 +7,19 @@ import mp from "./mp.mjs";
  * @param {import('kubo-rpc-client').KuboRPCClient} ipfs - IPFS 客户端实例
  */
 export const registerFiles = (server, ipfs) => {
+  // 查找文件 CID
+  server.get("/find.cid/:uid/*", async (request) => {
+    const address = request.params["uid"] || "";
+    const path = request.params["*"] || "";
+    const fullPath = "/" + address.toLowerCase() + "/" + path;
+    try {
+      const stat = await ipfs.files.stat(fullPath);
+      return stat.cid.toString();
+    } catch (error) {
+      return "";
+    }
+  });
+
   // 查看文件/目录
   server.post("/files/*", async (request, reply) => {
     const address = mp.getAddress(request.headers.authorization);
