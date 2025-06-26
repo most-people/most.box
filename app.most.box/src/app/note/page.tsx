@@ -68,11 +68,7 @@ const NoteContent = () => {
     formData.append("path", `/.note/${name}/index.md`);
 
     try {
-      const res = await api.put("/files.upload", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const res = await api.put("/files.upload", formData);
       const cid = res.data?.cid;
       if (cid) {
         setHash(cid);

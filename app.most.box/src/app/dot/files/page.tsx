@@ -84,11 +84,7 @@ export default function PageDotFiles() {
         formData.append("file", file);
         formData.append("path", file.webkitRelativePath);
 
-        const res = await api.put("/files.upload", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
+        const res = await api.put("/files.upload", formData);
 
         const cid = res.data?.cid;
         if (cid) {

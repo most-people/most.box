@@ -18,14 +18,10 @@ const uploadImage = async (
   formData.append("file", file);
   formData.append("path", `/.note/${name}/${file.name}`);
 
-  const res = await api.put("/files.upload", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
-
-  if (res.data.filename) {
-    callback(`${dotCID}/${res.data.filename}`, file.name);
+  const res = await api.put("/files.upload", formData);
+  const cid = res.data.cid;
+  if (cid) {
+    callback(`${dotCID}/ipfs/${cid}`, file.name);
   } else {
     callback("", file.name);
   }
