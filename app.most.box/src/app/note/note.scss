@@ -8,5 +8,12 @@
 }
 #viewerElement {
   min-width: 61.8%;
+
   padding: 64px 20px 0;
+}
+
+@media screen and (min-width: 1440px) {
+  #viewerElement {
+    max-width: 61.8%;
+  }
 }

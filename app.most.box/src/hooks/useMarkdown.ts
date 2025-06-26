@@ -75,7 +75,6 @@ const initEditor = () => {
   if (!editorElement) {
     return;
   }
-  // 添加dark主题类名到容器元素
   return new Editor({
     el: editorElement,
     height: "100%",
