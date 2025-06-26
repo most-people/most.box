@@ -13,6 +13,7 @@ const uploadImage = async (
 ) => {
   const formData = new FormData();
   formData.append("file", file);
+  console.log("🌊", formData);
   // const res = await api({
   //   method: 'PUT',
   //   url: '/file/upload',

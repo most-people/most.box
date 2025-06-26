@@ -25,22 +25,22 @@ sudo systemctl status caddy
 
 Windows 安装
 
-下载 caddy.exe 放在 D:\caddy\caddy.exe
+下载 caddy.exe 放在 C:\caddy\caddy.exe
 
-添加环境变量 D:\caddy
+添加环境变量 C:\caddy
 
 ```cmd
 # 查看版本
 caddy --version
 
 # 验证
-caddy validate --config D:\caddy\Caddyfile
+caddy validate --config C:\caddy\Caddyfile
 
 # 格式化
-caddy fmt --overwrite D:\caddy\Caddyfile
+caddy fmt --overwrite C:\caddy\Caddyfile
 
 # 启动
-caddy start --config D:\caddy\Caddyfile
+caddy start --config C:\caddy\Caddyfile
 
 caddy status
 ```

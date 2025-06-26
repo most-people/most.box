@@ -78,6 +78,11 @@ export const useUserStore = create<State>((set, get) => ({
         const dotCID = dotAPI.slice(0, -4) + "8080";
         set({ dotCID });
         localStorage.dotCID = dotCID;
+      } else {
+        const dotCID = localStorage.dotCID;
+        if (dotCID) {
+          set({ dotCID });
+        }
       }
       return Array.from(ipv6Set);
     } catch (error) {

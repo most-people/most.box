@@ -3,13 +3,11 @@ import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { useAccountStore } from "@/stores/accountStore";
 import { useUserStore } from "@/stores/userStore";
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 
 export default function AppProvider() {
   const initWallet = useUserStore((state) => state.initWallet);
   const updateDot = useUserStore((state) => state.updateDot);
   const initAccount = useAccountStore((state) => state.initAccount);
-  const router = useRouter();
 
   const initFinger = async () => {
     try {
@@ -27,12 +25,8 @@ export default function AppProvider() {
   const initDot = async () => {
     const dotAPI = localStorage.dotAPI;
     if (dotAPI) {
-      const list = await updateDot(dotAPI, true);
-      if (list) {
-        return;
-      }
+      updateDot(dotAPI, true);
     }
-    router.push("/dot");
   };
 
   useEffect(() => {
