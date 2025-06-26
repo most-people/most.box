@@ -1,4 +1,4 @@
-// import { api } from "@/constants/api";
+import { api } from "@/constants/api";
 
 interface CustomNode {
   info: string;
@@ -8,27 +8,27 @@ interface CustomNode {
 }
 
 const uploadImage = async (
-  file: File
-  // callback: (url: string, altText: string) => void
+  file: File,
+  callback: (url: string, altText: string) => void
 ) => {
+  const dotCID = localStorage.getItem("dotCID");
   const formData = new FormData();
+  const params = new URLSearchParams(location.search);
+  const name = params.get("name");
   formData.append("file", file);
-  console.log("🌊", formData);
-  // const res = await api({
-  //   method: 'PUT',
-  //   url: '/file/upload',
-  //   data: formData,
-  //   headers: {
-  //     'Content-Type': 'multipart/form-data',
-  //     Size: file.size,
-  //     Name: `${uploadPrefix}/${Date.now()}_${file.name}`,
-  //   },
-  // })
-  // if (res.data.filename) {
-  //   callback(`${VITE_MP_File}/${res.data.filename}`, file.name)
-  // } else {
-  //   callback('', file.name)
-  // }
+  formData.append("path", `/.note/${name}/${file.name}`);
+
+  const res = await api.put("/files.upload", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  if (res.data.filename) {
+    callback(`${dotCID}/${res.data.filename}`, file.name);
+  } else {
+    callback("", file.name);
+  }
 };
 
 const customPlugin = () => {
