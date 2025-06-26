@@ -37,13 +37,13 @@ const customPlugin = () => {
         { type: "closeTag", tagName: "div", outerNewLine: true },
       ];
     },
-    style(node: CustomNode) {
-      return [
-        { type: "openTag", tagName: "style", outerNewLine: true },
-        { type: "html", content: node.literal },
-        { type: "closeTag", tagName: "style", outerNewLine: true },
-      ];
-    },
+    // style(node: CustomNode) {
+    //   return [
+    //     { type: "openTag", tagName: "style", outerNewLine: true },
+    //     { type: "html", content: node.literal },
+    //     { type: "closeTag", tagName: "style", outerNewLine: true },
+    //   ];
+    // },
   };
 
   return { toHTMLRenderers };
@@ -53,6 +53,7 @@ const getEditorCore = (Editor: any) => {
   // https://nhn.github.io/tui.editor/latest/ToastUIEditorCore
   const { codeSyntaxHighlight } = Editor.plugin;
   return {
+    theme: "light",
     language: "zh-CN",
     // 使用 google analytics
     usageStatistics: false,
@@ -74,6 +75,7 @@ const initEditor = () => {
   if (!editorElement) {
     return;
   }
+  // 添加dark主题类名到容器元素
   return new Editor({
     el: editorElement,
     height: "100%",
@@ -102,7 +104,7 @@ const initViewer = () => {
   });
 };
 
-export const useToastUI = () => {
+export const useMarkdown = () => {
   return {
     initEditor,
     initViewer,

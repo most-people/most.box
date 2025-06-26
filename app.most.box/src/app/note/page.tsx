@@ -1,17 +1,27 @@
 "use client";
 
 import { useEffect, useMemo, useState, Suspense } from "react";
-import { Loader, Center, Box, Button, Group } from "@mantine/core";
+import {
+  Loader,
+  Center,
+  Box,
+  Button,
+  Group,
+  useMantineColorScheme,
+  useComputedColorScheme,
+} from "@mantine/core";
 import { useHash } from "@mantine/hooks";
 import Script from "next/script";
 import { AppHeader } from "@/components/AppHeader";
-import { useToastUI } from "@/hooks/useToastUI";
+import { useMarkdown } from "@/hooks/useMarkdown";
 // import { useUserStore } from "@/stores/userStore";
 
 // https://uicdn.toast.com/editor/latest/toastui-editor.min.css
 import "@/assets/toast-ui/toastui-editor.min.css";
 // https://www.jsdelivr.com/package/npm/prismjs
 import "@/assets/toast-ui/prism.min.css";
+// https://uicdn.toast.com/editor/latest/theme/toastui-editor-dark.css
+import "@/assets/toast-ui/toastui-editor-dark.css";
 // https://uicdn.toast.com/editor-plugin-code-syntax-highlight/latest/toastui-editor-plugin-code-syntax-highlight.min.css
 import "@/assets/toast-ui/toastui-editor-plugin-code-syntax-highlight.min.css";
 
@@ -31,7 +41,7 @@ const NoteContent = () => {
   const [inited, setInited] = useState(false);
   const [viewer, setViewer] = useState<any>(null);
   const [editor, setEditor] = useState<any>(null);
-  const toastUI = useToastUI();
+  const markdown = useMarkdown();
 
   // const wallet = useUserStore((state) => state.wallet);
 
@@ -39,11 +49,11 @@ const NoteContent = () => {
   const [isEditing, setIsEditing] = useState(false);
 
   const initViewer = () => {
-    setViewer(toastUI.initViewer());
+    setViewer(markdown.initViewer());
     setInited(true);
   };
   const initEditor = () => {
-    setEditor(toastUI.initEditor());
+    setEditor(markdown.initEditor());
   };
 
   const fetchNote = (cid: string) => {
@@ -176,6 +186,28 @@ const NoteContent = () => {
       </Button>
     );
   };
+
+  const { colorScheme } = useMantineColorScheme();
+  const computedColorScheme = useComputedColorScheme();
+
+  useEffect(() => {
+    const theme = colorScheme === "auto" ? computedColorScheme : colorScheme;
+    const isDark = theme === "dark";
+    if (viewer) {
+      if (isDark) {
+        viewer.options.el.classList.add("toastui-editor-dark");
+      } else {
+        viewer.options.el.classList.remove("toastui-editor-dark");
+      }
+    }
+    if (editor) {
+      if (isDark) {
+        editor.options.el.classList.add("toastui-editor-dark");
+      } else {
+        editor.options.el.classList.remove("toastui-editor-dark");
+      }
+    }
+  }, [colorScheme, computedColorScheme, viewer, editor]);
 
   return (
     <>
