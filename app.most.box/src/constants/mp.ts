@@ -112,8 +112,9 @@ const createJWT = (wallet: MostWallet) => {
   const uuid = encodeBase64(crypto.getRandomValues(new Uint8Array(32)));
   // 获取设备指纹ID
   const fingerprint = sessionStorage.getItem("fingerprint") || "";
+  const key = [location.origin, fingerprint].join("/");
   const jwtSecret = [time, uuid].join(".");
-  const { public_key, private_key } = mostWallet(fingerprint, jwtSecret);
+  const { public_key, private_key } = mostWallet(key, jwtSecret);
   const jwt = mostEncode(JSON.stringify(wallet), public_key, private_key);
   return {
     jwt,
@@ -129,7 +130,8 @@ const verifyJWT = (jwt: string, jwtSecret: string): MostWallet | null => {
   try {
     // 获取设备指纹ID
     const fingerprint = sessionStorage.getItem("fingerprint") || "";
-    const { public_key, private_key } = mostWallet(fingerprint, jwtSecret);
+    const key = [location.origin, fingerprint].join("/");
+    const { public_key, private_key } = mostWallet(key, jwtSecret);
     const json = mostDecode(jwt, public_key, private_key);
     if (json) {
       const wallet = JSON.parse(json);
