@@ -5,6 +5,7 @@
     "kubo",
     "mantine",
     "nacl",
+    "supabase",
     "tabler",
     "toastui",
     "turbopack"

@@ -23,6 +23,7 @@ import { useUserStore } from "@/stores/userStore";
 import { useAccountStore } from "@/stores/accountStore";
 import { notifications } from "@mantine/notifications";
 import { useBack } from "@/hooks/useBack";
+import { supabase } from "@/constants/supabase";
 
 export default function PageLogin() {
   const back = useBack();
@@ -69,6 +70,33 @@ export default function PageLogin() {
     back();
   };
 
+  const bindGoogleLogin = async () => {
+    try {
+      setConnectLoading(true);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      notifications.show({
+        color: "red",
+        message: error instanceof Error ? error.message : "登录失败，请重试",
+      });
+    } finally {
+      setConnectLoading(false);
+    }
+  };
+
   return (
     <Box id="page-login">
       <Stack gap="md">
@@ -106,19 +134,25 @@ export default function PageLogin() {
             {username ? "登录" : "游客"}
           </Button>
 
+          <Divider label="Or" labelPosition="center" />
           {ethereum && (
-            <>
-              <Divider label="Or" labelPosition="center" />
-              <Button
-                variant="default"
-                loading={connectLoading}
-                loaderProps={{ type: "dots" }}
-                onClick={connectWallet}
-              >
-                连接钱包
-              </Button>
-            </>
+            <Button
+              variant="default"
+              loading={connectLoading}
+              loaderProps={{ type: "dots" }}
+              onClick={connectWallet}
+            >
+              连接钱包
+            </Button>
           )}
+          <Button
+            variant="default"
+            loading={connectLoading}
+            loaderProps={{ type: "dots" }}
+            onClick={bindGoogleLogin}
+          >
+            使用 Google 登录
+          </Button>
           <Anchor
             component={Link}
             href="/about"
