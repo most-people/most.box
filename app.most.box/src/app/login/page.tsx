@@ -74,13 +74,7 @@ export default function PageLogin() {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "twitter",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-          // queryParams: {
-          //   access_type: "offline",
-          //   prompt: "consent",
-          // },
-        },
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
       });
 
       if (error) {
@@ -97,13 +91,7 @@ export default function PageLogin() {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-          queryParams: {
-            access_type: "offline",
-            prompt: "consent",
-          },
-        },
+        options: { redirectTo: `${window.location.origin}/auth/callback` },
       });
 
       if (error) {
