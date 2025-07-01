@@ -51,9 +51,10 @@ export default function PageLogin() {
         login(address.slice(-4), sig);
       }
     } catch (error) {
-      setConnectLoading(false);
       console.log("钱包连接失败", error);
       notifications.show({ title: "提示", message: "连接失败" });
+    } finally {
+      setConnectLoading(false);
     }
   };
 
@@ -66,13 +67,11 @@ export default function PageLogin() {
         }, 0);
       }
     }
-    setConnectLoading(true);
     back();
   };
 
   const bindGoogleLogin = async () => {
     try {
-      setConnectLoading(true);
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -92,8 +91,6 @@ export default function PageLogin() {
         color: "red",
         message: error instanceof Error ? error.message : "登录失败，请重试",
       });
-    } finally {
-      setConnectLoading(false);
     }
   };
 
@@ -145,12 +142,7 @@ export default function PageLogin() {
               连接钱包
             </Button>
           )}
-          <Button
-            variant="default"
-            loading={connectLoading}
-            loaderProps={{ type: "dots" }}
-            onClick={bindGoogleLogin}
-          >
+          <Button variant="default" onClick={bindGoogleLogin}>
             使用 Google 登录
           </Button>
           <Anchor
