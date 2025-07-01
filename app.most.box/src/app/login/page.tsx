@@ -70,7 +70,30 @@ export default function PageLogin() {
     back();
   };
 
-  const bindGoogleLogin = async () => {
+  const loginX = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "twitter",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          // queryParams: {
+          //   access_type: "offline",
+          //   prompt: "consent",
+          // },
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      notifications.show({
+        color: "red",
+        message: error instanceof Error ? error.message : "登录失败，请重试",
+      });
+    }
+  };
+  const loginGoogle = async () => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -142,8 +165,11 @@ export default function PageLogin() {
               连接钱包
             </Button>
           )}
-          <Button variant="default" onClick={bindGoogleLogin}>
+          <Button variant="default" onClick={loginGoogle}>
             使用 Google 登录
+          </Button>
+          <Button variant="default" onClick={loginX}>
+            使用 X 登录
           </Button>
           <Anchor
             component={Link}
