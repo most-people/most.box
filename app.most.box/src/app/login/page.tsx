@@ -24,6 +24,7 @@ import { useAccountStore } from "@/stores/accountStore";
 import { notifications } from "@mantine/notifications";
 import { useBack } from "@/hooks/useBack";
 import { supabase } from "@/constants/supabase";
+import { Provider } from "@supabase/supabase-js";
 
 export default function PageLogin() {
   const back = useBack();
@@ -70,27 +71,10 @@ export default function PageLogin() {
     back();
   };
 
-  const loginX = async () => {
+  const loginWith = async (provider: Provider) => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: "twitter",
-        options: { redirectTo: `${window.location.origin}/auth/callback` },
-      });
-
-      if (error) {
-        throw error;
-      }
-    } catch (error) {
-      notifications.show({
-        color: "red",
-        message: error instanceof Error ? error.message : "登录失败，请重试",
-      });
-    }
-  };
-  const loginGoogle = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
+        provider,
         options: { redirectTo: `${window.location.origin}/auth/callback` },
       });
 
@@ -153,10 +137,10 @@ export default function PageLogin() {
               连接钱包
             </Button>
           )}
-          <Button variant="default" onClick={loginGoogle}>
+          <Button variant="default" onClick={() => loginWith("google")}>
             使用 Google 登录
           </Button>
-          <Button variant="default" onClick={loginX}>
+          <Button variant="default" onClick={() => loginWith("twitter")}>
             使用 X 登录
           </Button>
           <Anchor
