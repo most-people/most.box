@@ -1,7 +1,7 @@
 {
   "name": "Most.Box",
   "short_name": "Most.Box",
-  "description": "Most.Box Application",
+  "description": "完全去中心化节点",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
