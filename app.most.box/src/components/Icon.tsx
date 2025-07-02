@@ -30,6 +30,12 @@ import Setting from "@/assets/icons/setting.svg";
 // https://www.flaticon.com/free-icon-font/cloud-download-alt_7434817?page=1&position=2&term=download&origin=search&related_id=7434817
 import Download from "@/assets/icons/download.svg";
 
+// https://supabase.com/dashboard/project/vibeseycqiisftkweeat/auth/providers
+import Google from "@/assets/icons/google.svg";
+import X from "@/assets/icons/x.svg";
+import Discord from "@/assets/icons/discord.svg";
+import Github from "@/assets/icons/github.svg";
+
 const icons = {
   chat: Chat,
   "chat-active": ChatActive,
@@ -52,6 +58,10 @@ const icons = {
   join: Join,
   setting: Setting,
   download: Download,
+  google: Google,
+  x: X,
+  discord: Discord,
+  github: Github,
 } as const;
 
 export type IconName = keyof typeof icons;

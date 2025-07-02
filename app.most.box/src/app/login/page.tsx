@@ -12,6 +12,9 @@ import {
   Anchor,
   Box,
   Space,
+  Group,
+  ActionIcon,
+  Tooltip,
 } from "@mantine/core";
 
 import "./login.scss";
@@ -25,6 +28,7 @@ import { notifications } from "@mantine/notifications";
 import { useBack } from "@/hooks/useBack";
 import { supabase } from "@/constants/supabase";
 import { Provider } from "@supabase/supabase-js";
+import { Icon } from "@/components/Icon";
 
 export default function PageLogin() {
   const back = useBack();
@@ -137,18 +141,49 @@ export default function PageLogin() {
               连接钱包
             </Button>
           )}
-          <Button variant="default" onClick={() => loginWith("google")}>
-            使用 Google 登录
-          </Button>
-          <Button variant="default" onClick={() => loginWith("twitter")}>
-            使用 X 登录
-          </Button>
-          <Button variant="default" onClick={() => loginWith("discord")}>
-            使用 Discord 登录
-          </Button>
-          <Button variant="default" onClick={() => loginWith("github")}>
-            使用 Github 登录
-          </Button>
+
+          <Group justify="center" gap="md">
+            <Tooltip label="使用 Google 登录">
+              <ActionIcon
+                size="lg"
+                variant="default"
+                onClick={() => loginWith("google")}
+              >
+                <Icon name="google" />
+              </ActionIcon>
+            </Tooltip>
+
+            <Tooltip label="使用 X 登录">
+              <ActionIcon
+                size="lg"
+                variant="default"
+                onClick={() => loginWith("twitter")}
+              >
+                <Icon name="x" />
+              </ActionIcon>
+            </Tooltip>
+
+            <Tooltip label="使用 Discord 登录">
+              <ActionIcon
+                size="lg"
+                variant="default"
+                onClick={() => loginWith("discord")}
+              >
+                <Icon name="discord" />
+              </ActionIcon>
+            </Tooltip>
+
+            <Tooltip label="使用 Github 登录">
+              <ActionIcon
+                size="lg"
+                variant="default"
+                onClick={() => loginWith("github")}
+              >
+                <Icon name="github" />
+              </ActionIcon>
+            </Tooltip>
+          </Group>
+
           <Anchor
             component={Link}
             href="/about"
