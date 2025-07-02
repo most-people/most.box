@@ -143,6 +143,12 @@ export default function PageLogin() {
           <Button variant="default" onClick={() => loginWith("twitter")}>
             使用 X 登录
           </Button>
+          <Button variant="default" onClick={() => loginWith("discord")}>
+            使用 Discord 登录
+          </Button>
+          <Button variant="default" onClick={() => loginWith("github")}>
+            使用 Github 登录
+          </Button>
           <Anchor
             component={Link}
             href="/about"

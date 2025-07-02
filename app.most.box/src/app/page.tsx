@@ -8,12 +8,12 @@ import HomeDisk from "@/components/home/disk";
 import "./page.scss";
 import HomeNote from "@/components/home/note";
 import HomeExplore from "@/components/home/explore";
-import { useHash } from "@mantine/hooks";
-import { useRouter } from "next/navigation";
+// import { useHash } from "@mantine/hooks";
+// import { useRouter } from "next/navigation";
 
 export default function PageHome() {
-  const router = useRouter();
-  const [hash] = useHash();
+  // const router = useRouter();
+  // const [hash] = useHash();
   const [homeTab, setHomeTab] = useState<string | null>(null);
 
   const tabChange = (value: string | null) => {
@@ -22,20 +22,14 @@ export default function PageHome() {
   };
 
   useEffect(() => {
-    const query = new URLSearchParams(window.location.search);
     const activeTab = localStorage.getItem("homeTab");
     setHomeTab(activeTab || "chat");
-    const keyword = Array.from(query.keys());
-    if (keyword.length > 0) {
-      router.replace("/search?q=" + keyword[0]);
-    }
+    // const query = new URLSearchParams(window.location.search);
+    // const keyword = Array.from(query.keys());
+    // if (keyword.length > 0) {
+    //   router.replace("/search?q=" + keyword[0]);
+    // }
   }, []);
-
-  useEffect(() => {
-    if (hash) {
-      router.replace("/topic" + hash);
-    }
-  }, [hash]);
 
   return (
     <Tabs
