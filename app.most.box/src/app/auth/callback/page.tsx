@@ -17,11 +17,13 @@ import { supabase } from "@/constants/supabase";
 import mp from "@/constants/mp";
 import { useUserStore } from "@/stores/userStore";
 import { type Session } from "@supabase/supabase-js";
-import { useDisclosure } from "@mantine/hooks";
+import { useDisclosure, useHash } from "@mantine/hooks";
+import { notifications } from "@mantine/notifications";
 
 export default function AuthCallback() {
   const router = useRouter();
   const setItem = useUserStore((state) => state.setItem);
+  const [hash] = useHash();
 
   const [visible, { toggle }] = useDisclosure(true);
   const [fundPassword, setFundPassword] = useState("");
@@ -97,6 +99,19 @@ export default function AuthCallback() {
   useEffect(() => {
     authCallback();
   }, []);
+
+  useEffect(() => {
+    if (hash) {
+      const params = new URLSearchParams(hash);
+      if (params.get("error")) {
+        notifications.show({
+          color: "red",
+          title: params.get("error"),
+          message: params.get("error_description"),
+        });
+      }
+    }
+  }, [hash]);
 
   return (
     <Container>

@@ -29,6 +29,7 @@ import { useBack } from "@/hooks/useBack";
 import { supabase } from "@/constants/supabase";
 import { Provider } from "@supabase/supabase-js";
 import { Icon } from "@/components/Icon";
+import { SupabaseURL } from "@/constants/api";
 
 export default function PageLogin() {
   const back = useBack();
@@ -79,7 +80,25 @@ export default function PageLogin() {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
-        options: { redirectTo: `${window.location.origin}/auth/callback` },
+        options: { redirectTo: SupabaseURL },
+      });
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      notifications.show({
+        color: "red",
+        message: error instanceof Error ? error.message : "登录失败，请重试",
+      });
+    }
+  };
+
+  const loginEmail = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: "iwangyang@qq.com",
+        options: { emailRedirectTo: SupabaseURL },
       });
 
       if (error) {
@@ -133,6 +152,12 @@ export default function PageLogin() {
           <Divider label="Or" labelPosition="center" />
 
           <Group justify="center" gap="md">
+            <Tooltip label="使用邮箱登录">
+              <ActionIcon size="lg" variant="default" onClick={loginEmail}>
+                <Icon name="mail" />
+              </ActionIcon>
+            </Tooltip>
+
             <Tooltip label="使用 X 登录">
               <ActionIcon
                 size="lg"

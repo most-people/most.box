@@ -35,6 +35,7 @@ import Google from "@/assets/icons/google.svg";
 import X from "@/assets/icons/x.svg";
 import Discord from "@/assets/icons/discord.svg";
 import Github from "@/assets/icons/github.svg";
+import Mail from "@/assets/icons/mail.svg";
 
 const icons = {
   chat: Chat,
@@ -62,6 +63,7 @@ const icons = {
   x: X,
   discord: Discord,
   github: Github,
+  mail: Mail,
 } as const;
 
 export type IconName = keyof typeof icons;
