@@ -15,6 +15,8 @@ import {
   Group,
   ActionIcon,
   Tooltip,
+  Modal,
+  TextInput,
 } from "@mantine/core";
 
 import "./login.scss";
@@ -34,11 +36,22 @@ import { SupabaseURL } from "@/constants/api";
 export default function PageLogin() {
   const back = useBack();
   const [visible, { toggle }] = useDisclosure(true);
+  const [emailModalOpened, { open: openEmailModal, close: closeEmailModal }] =
+    useDisclosure(false);
 
   const setItem = useUserStore((state) => state.setItem);
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [emailLoading, setEmailLoading] = useState(false);
+
+  // 邮箱格式验证函数
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
 
   const connectOKX = useAccountStore((state) => state.connectOKX);
   const ethereum = useAccountStore((state) => state.ethereum);
@@ -95,20 +108,43 @@ export default function PageLogin() {
   };
 
   const loginEmail = async () => {
+    // 提交前验证邮箱格式
+    if (!email) {
+      setEmailError("请输入邮箱地址");
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      setEmailError("请输入有效的邮箱地址");
+      return;
+    }
+
     try {
+      setEmailLoading(true);
       const { error } = await supabase.auth.signInWithOtp({
-        email: "iwangyang@qq.com",
+        email: email,
         options: { emailRedirectTo: SupabaseURL },
       });
 
       if (error) {
         throw error;
       }
+
+      notifications.show({
+        color: "green",
+        message: "验证邮件已发送，请检查您的邮箱",
+      });
+
+      closeEmailModal();
+      setEmail(""); // 清空邮箱输入
+      setEmailError(""); // 清空错误信息
     } catch (error) {
       notifications.show({
         color: "red",
         message: error instanceof Error ? error.message : "登录失败，请重试",
       });
+    } finally {
+      setEmailLoading(false);
     }
   };
 
@@ -153,7 +189,7 @@ export default function PageLogin() {
 
           <Group justify="center" gap="md">
             <Tooltip label="使用邮箱登录">
-              <ActionIcon size="lg" variant="default" onClick={loginEmail}>
+              <ActionIcon size="lg" variant="default" onClick={openEmailModal}>
                 <Icon name="mail" />
               </ActionIcon>
             </Tooltip>
@@ -219,6 +255,34 @@ export default function PageLogin() {
           </Anchor>
         </Stack>
       </Stack>
+
+      {/* 邮箱登录弹窗 */}
+      <Modal
+        opened={emailModalOpened}
+        onClose={closeEmailModal}
+        title="邮箱登录"
+        centered
+      >
+        <Stack gap="md">
+          <TextInput
+            type="email"
+            value={email}
+            onChange={(event) => {
+              setEmail(event.currentTarget.value);
+              setEmailError("");
+            }}
+            error={emailError}
+          />
+          <Group justify="flex-end">
+            <Button variant="default" onClick={closeEmailModal}>
+              取消
+            </Button>
+            <Button loading={emailLoading} onClick={loginEmail}>
+              发送邮件
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Box>
   );
 }

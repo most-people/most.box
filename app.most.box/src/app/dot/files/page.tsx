@@ -297,6 +297,7 @@ export default function PageDotFiles() {
             onClose={handleCancelUpload}
             title="文件预览"
             size="lg"
+            centered
           >
             <Stack gap="md">
               <Group justify="space-between">

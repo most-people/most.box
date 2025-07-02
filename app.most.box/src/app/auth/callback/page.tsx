@@ -126,6 +126,7 @@ export default function AuthCallback() {
         closeOnClickOutside={false}
         closeOnEscape={false}
         withCloseButton={false}
+        centered
       >
         <Stack>
           <Alert>为了确保资金安全，即使社交账户被盗也能保护您的资产。</Alert>
