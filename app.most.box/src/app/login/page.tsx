@@ -131,28 +131,8 @@ export default function PageLogin() {
           </Button>
 
           <Divider label="Or" labelPosition="center" />
-          {ethereum && (
-            <Button
-              variant="default"
-              loading={connectLoading}
-              loaderProps={{ type: "dots" }}
-              onClick={connectWallet}
-            >
-              连接钱包
-            </Button>
-          )}
 
           <Group justify="center" gap="md">
-            <Tooltip label="使用 Google 登录">
-              <ActionIcon
-                size="lg"
-                variant="default"
-                onClick={() => loginWith("google")}
-              >
-                <Icon name="google" />
-              </ActionIcon>
-            </Tooltip>
-
             <Tooltip label="使用 X 登录">
               <ActionIcon
                 size="lg"
@@ -163,13 +143,13 @@ export default function PageLogin() {
               </ActionIcon>
             </Tooltip>
 
-            <Tooltip label="使用 Discord 登录">
+            <Tooltip label="使用 Google 登录">
               <ActionIcon
                 size="lg"
                 variant="default"
-                onClick={() => loginWith("discord")}
+                onClick={() => loginWith("google")}
               >
-                <Icon name="discord" />
+                <Icon name="google" />
               </ActionIcon>
             </Tooltip>
 
@@ -182,7 +162,28 @@ export default function PageLogin() {
                 <Icon name="github" />
               </ActionIcon>
             </Tooltip>
+
+            <Tooltip label="使用 Discord 登录">
+              <ActionIcon
+                size="lg"
+                variant="default"
+                onClick={() => loginWith("discord")}
+              >
+                <Icon name="discord" />
+              </ActionIcon>
+            </Tooltip>
           </Group>
+
+          {ethereum && (
+            <Button
+              variant="default"
+              loading={connectLoading}
+              loaderProps={{ type: "dots" }}
+              onClick={connectWallet}
+            >
+              连接钱包
+            </Button>
+          )}
 
           <Anchor
             component={Link}
