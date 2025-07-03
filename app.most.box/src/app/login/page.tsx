@@ -90,7 +90,24 @@ export default function PageLogin() {
     back();
   };
 
-  const loginTelegram = async () => {};
+  const loginTelegram = async () => {
+    const Telegram = (window as any).Telegram;
+    if (!Telegram) {
+      notifications.show({ title: "提示", message: "Telegram 不存在" });
+      return;
+    }
+    Telegram.Login.auth(
+      {
+        bot_id: "7848968061:AAFOgwQrMdkP3tsyyKBhfPLFLbPrSe_ht7Q",
+        request_access: "write",
+        embed: 1,
+      },
+      (data: any) => {
+        console.log("🌊", data);
+      }
+    );
+  };
+
   const loginWith = async (provider: Provider) => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
