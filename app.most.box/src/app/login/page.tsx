@@ -34,6 +34,16 @@ import { Icon } from "@/components/Icon";
 import { SupabaseURL } from "@/constants/api";
 import Script from "next/script";
 
+interface TelegramAuthData {
+  id: number;
+  first_name?: string;
+  last_name?: string;
+  username?: string;
+  photo_url?: string;
+  auth_date: number;
+  hash: string;
+}
+
 export default function PageLogin() {
   const back = useBack();
   const [visible, { toggle }] = useDisclosure(true);
@@ -90,7 +100,7 @@ export default function PageLogin() {
     back();
   };
 
-  const loginTelegram = async () => {
+  const loginTelegram = () => {
     const Telegram = (window as any).Telegram;
     if (!Telegram) {
       notifications.show({ title: "提示", message: "Telegram 不存在" });
@@ -98,14 +108,42 @@ export default function PageLogin() {
     }
     Telegram.Login.auth(
       {
-        bot_id: "7848968061:AAFOgwQrMdkP3tsyyKBhfPLFLbPrSe_ht7Q",
+        bot_id: "7848968061",
         request_access: "write",
         embed: 1,
       },
-      (data: any) => {
-        console.log("🌊", data);
+      (authData: TelegramAuthData) => {
+        console.log("🌊", authData);
+        postTelegram(authData);
       }
     );
+  };
+
+  const postTelegram = async (authData: TelegramAuthData) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("telegram-auth", {
+        body: { authData },
+      });
+      console.log("🌊", data, error);
+      if (data.success && data.redirect_url) {
+        notifications.show({
+          color: "green",
+          title: "登录成功",
+          message: "正在跳转...",
+        });
+        // 重定向到认证链接
+        window.location.href = data.redirect_url;
+      } else {
+        throw new Error(data.error || "登录失败");
+      }
+    } catch (error) {
+      console.error("Telegram login error:", error);
+      notifications.show({
+        color: "red",
+        title: "登录失败",
+        message: error instanceof Error ? error.message : "未知错误",
+      });
+    }
   };
 
   const loginWith = async (provider: Provider) => {

@@ -104,6 +104,7 @@ export const useUserStore = create<State>((set, get) => ({
     set({ wallet: undefined });
     localStorage.removeItem("jwt");
     localStorage.removeItem("jwtSecret");
+    localStorage.removeItem("token");
   },
   notes: [],
 }));
