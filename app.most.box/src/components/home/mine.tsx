@@ -50,22 +50,22 @@ export default function HomeMine() {
               notifications.show({ title: "二维码", message: "开发中" })
             }
           >
-            <Icon name="qr-code" size={18} />
+            <Icon name="QRCode" size={18} />
           </ActionIcon>
         </Group>
       </Box>
       <Stack className="menu-list" mb="xs" gap={0}>
-        <MenuItem icon="web3" label="Web3" link="/web3" />
-        <MenuItem icon="download" label="节点" link="/dot" />
+        <MenuItem icon="Web3" label="Web3" link="/web3" />
+        <MenuItem icon="Download" label="节点" link="/dot" />
       </Stack>
       <Stack className="menu-list" gap={0}>
-        <MenuItem icon="about" label="关于" link="/about" />
-        <MenuItem icon="setting" label="设置" link="/setting" />
-        <MenuItem icon="join" label="志同道合" link="/join" />
+        <MenuItem icon="About" label="关于" link="/about" />
+        <MenuItem icon="Setting" label="设置" link="/setting" />
+        <MenuItem icon="Join" label="志同道合" link="/join" />
       </Stack>
       <Stack className="menu-list" mt="xs">
         <MenuItem
-          icon="exit"
+          icon="Exit"
           label={wallet ? "退出账户" : "去登录"}
           link="/login"
           onClick={quit}
@@ -89,7 +89,7 @@ function MenuItem({ icon, label, link, onClick }: MenuItemProps) {
         <Icon name={icon} size={32} />
         <Text>{label}</Text>
       </Group>
-      <Icon name="arrow" size={18} />
+      <Icon name="Arrow" size={18} />
     </Box>
   );
 }

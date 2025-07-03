@@ -13,7 +13,7 @@ export const AppHeader = ({ title, right }: AppHeaderProps) => {
   return (
     <Group className="app-header">
       <ActionIcon variant="transparent" onClick={back} color="--text-color">
-        <Icon name="back" size={24} />
+        <Icon name="Back" size={24} />
       </ActionIcon>
       <Text lineClamp={2} variant="gradient">
         {title}
@@ -22,7 +22,7 @@ export const AppHeader = ({ title, right }: AppHeaderProps) => {
         right
       ) : (
         <ActionIcon variant="transparent" color="--text-color">
-          <Icon name="more" size={24} />
+          <Icon name="More" size={24} />
         </ActionIcon>
       )}
     </Group>

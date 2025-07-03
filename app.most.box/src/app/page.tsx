@@ -57,19 +57,19 @@ export default function PageHome() {
 
       <Tabs.List>
         <Tabs.Tab value="disk">
-          <Icon name={homeTab === "disk" ? "chat-active" : "chat"} />
+          <Icon name={homeTab === "disk" ? "ChatActive" : "Chat"} />
           <Text>网盘</Text>
         </Tabs.Tab>
         <Tabs.Tab value="note">
-          <Icon name={homeTab === "note" ? "note-active" : "note"} />
+          <Icon name={homeTab === "note" ? "NoteActive" : "Note"} />
           <Text>笔记</Text>
         </Tabs.Tab>
         <Tabs.Tab value="explore">
-          <Icon name={homeTab === "explore" ? "explore-active" : "explore"} />
+          <Icon name={homeTab === "explore" ? "ExploreActive" : "Explore"} />
           <Text>探索</Text>
         </Tabs.Tab>
         <Tabs.Tab value="mine">
-          <Icon name={homeTab === "mine" ? "mine-active" : "mine"} />
+          <Icon name={homeTab === "mine" ? "MineActive" : "Mine"} />
           <Text>我的</Text>
         </Tabs.Tab>
       </Tabs.List>

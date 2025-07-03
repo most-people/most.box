@@ -190,7 +190,7 @@ export default function PageLogin() {
           <Group justify="center" gap="md">
             <Tooltip label="使用邮箱登录">
               <ActionIcon size="lg" variant="default" onClick={openEmailModal}>
-                <Icon name="mail" />
+                <Icon name="Mail" />
               </ActionIcon>
             </Tooltip>
 
@@ -200,7 +200,7 @@ export default function PageLogin() {
                 variant="default"
                 onClick={() => loginWith("twitter")}
               >
-                <Icon name="x" />
+                <Icon name="X" />
               </ActionIcon>
             </Tooltip>
 
@@ -210,7 +210,7 @@ export default function PageLogin() {
                 variant="default"
                 onClick={() => loginWith("google")}
               >
-                <Icon name="google" />
+                <Icon name="Google" />
               </ActionIcon>
             </Tooltip>
 
@@ -220,7 +220,7 @@ export default function PageLogin() {
                 variant="default"
                 onClick={() => loginWith("github")}
               >
-                <Icon name="github" />
+                <Icon name="Github" />
               </ActionIcon>
             </Tooltip>
 
@@ -230,7 +230,17 @@ export default function PageLogin() {
                 variant="default"
                 onClick={() => loginWith("discord")}
               >
-                <Icon name="discord" />
+                <Icon name="Discord" />
+              </ActionIcon>
+            </Tooltip>
+
+            <Tooltip label="使用 Telegram 登录">
+              <ActionIcon
+                size="lg"
+                variant="default"
+                onClick={() => loginWith("discord")}
+              >
+                <Icon name="Telegram" />
               </ActionIcon>
             </Tooltip>
           </Group>
