@@ -102,8 +102,9 @@ export default function AuthCallback() {
 
   useEffect(() => {
     if (hash) {
-      const params = new URLSearchParams(hash);
+      const params = new URLSearchParams(hash.slice(1));
       if (params.get("error")) {
+        console.error("Auth callback error:", hash);
         notifications.show({
           color: "red",
           title: params.get("error"),
