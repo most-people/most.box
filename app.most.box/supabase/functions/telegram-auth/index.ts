@@ -19,7 +19,7 @@ interface RequestBody {
 
 // CORS配置
 const corsHeaders: Record<string, string> = {
-  "Access-Control-Allow-Origin": "https://most.box",
+  "Access-Control-Allow-Origin": Deno.env.get("SITE_URL"),
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -58,14 +58,15 @@ serve(async (req: Request): Promise<Response> => {
     );
 
     const telegramId: string = authData.id.toString();
-    const email: string = `telegram_${telegramId}@telegram.local`;
+    const email: string = `${telegramId}@telegram.org`;
 
-    // 检查用户是否已存在 - 使用更高效的查询方式
+    // 检查用户是否已存在
     const { data: existingUser } = await supabase.auth.admin.listUsers({
       filter: `email.eq.${email}`,
       page: 1,
       perPage: 1,
     });
+
     let user: any = existingUser?.users?.[0];
     if (user?.id) {
       // 用户已存在，更新 metadata

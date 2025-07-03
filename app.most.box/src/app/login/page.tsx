@@ -113,7 +113,6 @@ export default function PageLogin() {
         embed: 1,
       },
       (authData: TelegramAuthData) => {
-        console.log("🌊", authData);
         postTelegram(authData);
       }
     );
@@ -124,10 +123,13 @@ export default function PageLogin() {
       const { data, error } = await supabase.functions.invoke("telegram-auth", {
         body: { authData },
       });
-      console.log("🌊", data, error);
+
+      if (error) {
+        throw error;
+      }
+
       if (data.success && data.redirect_url) {
         notifications.show({
-          color: "green",
           title: "登录成功",
           message: "正在跳转...",
         });
