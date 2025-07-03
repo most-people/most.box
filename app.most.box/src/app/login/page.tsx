@@ -32,6 +32,7 @@ import { supabase } from "@/constants/supabase";
 import { Provider } from "@supabase/supabase-js";
 import { Icon } from "@/components/Icon";
 import { SupabaseURL } from "@/constants/api";
+import Script from "next/script";
 
 export default function PageLogin() {
   const back = useBack();
@@ -89,6 +90,7 @@ export default function PageLogin() {
     back();
   };
 
+  const loginTelegram = async () => {};
   const loginWith = async (provider: Provider) => {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -235,11 +237,7 @@ export default function PageLogin() {
             </Tooltip>
 
             <Tooltip label="使用 Telegram 登录">
-              <ActionIcon
-                size="lg"
-                variant="default"
-                onClick={() => loginWith("discord")}
-              >
+              <ActionIcon size="lg" variant="default" onClick={loginTelegram}>
                 <Icon name="Telegram" />
               </ActionIcon>
             </Tooltip>
@@ -293,6 +291,7 @@ export default function PageLogin() {
           </Group>
         </Stack>
       </Modal>
+      <Script src="https://telegram.org/js/telegram-widget.js"></Script>
     </Box>
   );
 }
