@@ -57,6 +57,9 @@ server.get("/ipv6", async () => {
 });
 
 const initIP = () => {
+  // 重置
+  network.ipv4 = [`http://localhost:${port}`]
+  network.ipv6 = [`http://[::1]:${port}`]
   const interfaces = os.networkInterfaces();
   for (const name of Object.keys(interfaces)) {
     for (const iface of interfaces[name]) {
@@ -74,6 +77,9 @@ const initIP = () => {
       }
     }
   }
+  // 推送 IP 地址
+  postIP("https://sepolia.base.org");
+  postIP('https://mainnet.base.org');
 };
 
 const postIP = async (RPC) => {
@@ -132,17 +138,21 @@ const postIP = async (RPC) => {
 };
 
 const start = async () => {
-  // 获取 IP 地址
-  initIP();
   // 运行 DOT.MOST.BOX
   try {
     const peer = await ipfs.id();
     console.log("IPFS", peer.id);
     await server.listen({ port, host: "::" });
+
+    // 获取 IP 地址
+    initIP();
     console.log(network);
-    // 推送 IP 地址
-    postIP("https://sepolia.base.org");
-    postIP('https://mainnet.base.org');
+
+    // 更新 IP 地址
+    setInterval(() => {
+      console.log('定时更新IP地址...');
+      initIP();
+    }, 1 * 60 * 60 * 1000); // 每1小时执行一次
   } catch (error) {
     console.error(error);
     server.log.error(error);

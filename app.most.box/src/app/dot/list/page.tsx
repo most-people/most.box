@@ -188,9 +188,7 @@ export default function PageDotList() {
           if (
             errorMessage.includes("cors") ||
             errorMessage.includes("mixed content") ||
-            errorMessage.includes("blocked") ||
-            (errorName === "typeerror" &&
-              errorMessage.includes("failed to fetch"))
+            errorMessage.includes("blocked")
           ) {
             resolve({ isOnline: true, responseTime });
           }
@@ -445,13 +443,14 @@ export default function PageDotList() {
         ) : (
           <Grid>
             {nodes.map((node) => (
-              <Grid.Col key={node.address} span={{ base: 12, md: 6, lg: 4 }}>
+              <Grid.Col key={node.address} span="auto">
                 <Card
                   shadow="sm"
                   padding="lg"
                   radius="md"
                   withBorder
                   h="100%"
+                  w={343}
                   style={{
                     transition: "transform 0.2s ease, box-shadow 0.2s ease",
                     cursor: "pointer",
