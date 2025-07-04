@@ -465,7 +465,7 @@ export default function PageDot() {
           title={`当前网络: ${NETWORK_CONFIG[network].name}`}
         >
           <Text size="sm">
-            RPC 端点:
+            RPC：
             <Text component="span" ff="monospace" c="dimmed">
               {NETWORK_CONFIG[network].rpc}
             </Text>
@@ -537,7 +537,6 @@ export default function PageDot() {
                   w={343}
                   style={{
                     transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                    cursor: "pointer",
                     border: isCurrentNode(node)
                       ? "2px solid #228be6"
                       : undefined,
@@ -634,7 +633,7 @@ export default function PageDot() {
                     </Group>
 
                     {node.APIs.length > 0 && (
-                      <Stack gap={2}>
+                      <Stack gap={2} align="flex-start">
                         {node.APIs.map((api, apiIndex) => (
                           <Text
                             key={apiIndex}
@@ -655,7 +654,7 @@ export default function PageDot() {
                       <Text size="xs" fw={500} mb={4} c="gray">
                         CID 浏览器
                       </Text>
-                      <Group gap={2}>
+                      <Group gap={2} align="flex-start">
                         {node.CIDs.map((cid, cidIndex) => (
                           <Text
                             key={cidIndex}

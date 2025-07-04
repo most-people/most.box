@@ -18,12 +18,12 @@ export default function PageHome() {
 
   const tabChange = (value: string | null) => {
     setHomeTab(value);
-    localStorage.setItem("homeTab", value || "chat");
+    localStorage.setItem("homeTab", value || "disk");
   };
 
   useEffect(() => {
     const activeTab = localStorage.getItem("homeTab");
-    setHomeTab(activeTab || "chat");
+    setHomeTab(activeTab || "disk");
     // const query = new URLSearchParams(window.location.search);
     // const keyword = Array.from(query.keys());
     // if (keyword.length > 0) {
