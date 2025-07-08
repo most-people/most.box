@@ -21,7 +21,7 @@ import {
 
 import "./login.scss";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import mp from "@/constants/mp";
 import { mostWallet } from "@/constants/MostWallet";
 import { useUserStore } from "@/stores/userStore";
@@ -29,10 +29,11 @@ import { useAccountStore } from "@/stores/accountStore";
 import { notifications } from "@mantine/notifications";
 import { useBack } from "@/hooks/useBack";
 import { supabase } from "@/constants/supabase";
-import { Provider } from "@supabase/supabase-js";
+import { type Provider } from "@supabase/supabase-js";
 import { Icon } from "@/components/Icon";
 import { SupabaseURL } from "@/constants/api";
 import Script from "next/script";
+import { useRouter } from "next/navigation";
 
 interface TelegramAuthData {
   id: number;
@@ -45,6 +46,7 @@ interface TelegramAuthData {
 }
 
 export default function PageLogin() {
+  const router = useRouter();
   const back = useBack();
   const [visible, { toggle }] = useDisclosure(true);
   const [emailModalOpened, { open: openEmailModal, close: closeEmailModal }] =
@@ -57,6 +59,22 @@ export default function PageLogin() {
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
   const [emailLoading, setEmailLoading] = useState(false);
+
+  // 新增验证码相关状态
+  const [verificationCode, setVerificationCode] = useState("");
+  const [codeError, setCodeError] = useState("");
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [countdown, setCountdown] = useState(0);
+
+  // 倒计时效果
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (countdown > 0) {
+      timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [countdown]);
 
   // 邮箱格式验证函数
   const validateEmail = (email: string) => {
@@ -194,8 +212,8 @@ export default function PageLogin() {
         message: "验证邮件已发送，请检查您的邮箱",
       });
 
-      closeEmailModal();
-      setEmail(""); // 清空邮箱输入
+      setEmailSent(true);
+      setCountdown(60); // 开始60秒倒计时
       setEmailError(""); // 清空错误信息
     } catch (error) {
       notifications.show({
@@ -205,6 +223,56 @@ export default function PageLogin() {
     } finally {
       setEmailLoading(false);
     }
+  };
+
+  // 新增验证码验证函数
+  const verifyCode = async () => {
+    if (!verificationCode) {
+      setCodeError("请输入验证码");
+      return;
+    }
+
+    try {
+      setVerifyLoading(true);
+      const { error } = await supabase.auth.verifyOtp({
+        email: email,
+        token: verificationCode,
+        type: "email",
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      notifications.show({
+        color: "green",
+        message: "验证成功，正在登录...",
+      });
+
+      router.replace("/auth/callback");
+    } catch (error) {
+      setCodeError(error instanceof Error ? error.message : "验证失败，请重试");
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
+
+  // 重置邮箱模态框状态
+  const closeModal = () => {
+    setEmail("");
+    setEmailError("");
+    setVerificationCode("");
+    setCodeError("");
+    setEmailSent(false);
+    setCountdown(0);
+    // 关闭模态框
+    closeEmailModal();
+  };
+
+  // 重新发送邮件
+  const resendEmail = () => {
+    if (countdown > 0) return;
+    loginEmail();
   };
 
   return (
@@ -324,7 +392,7 @@ export default function PageLogin() {
       {/* 邮箱登录弹窗 */}
       <Modal
         opened={emailModalOpened}
-        onClose={closeEmailModal}
+        onClose={closeModal}
         title="邮箱登录"
         centered
       >
@@ -337,14 +405,45 @@ export default function PageLogin() {
               setEmailError("");
             }}
             error={emailError}
+            disabled={emailSent}
           />
+
+          {emailSent && (
+            <Group align="flex-end" gap="xs">
+              <TextInput
+                placeholder="请输入验证码"
+                value={verificationCode}
+                onChange={(event) => {
+                  setVerificationCode(event.currentTarget.value);
+                  setCodeError("");
+                }}
+                error={codeError}
+                style={{ flex: 1 }}
+              />
+              <Button
+                variant="light"
+                onClick={resendEmail}
+                disabled={countdown > 0}
+              >
+                {countdown > 0 ? `再次发送 ${countdown}s` : "再次发送"}
+              </Button>
+            </Group>
+          )}
+
           <Group justify="flex-end">
-            <Button variant="default" onClick={closeEmailModal}>
+            <Button variant="default" onClick={closeModal}>
               取消
             </Button>
-            <Button loading={emailLoading} onClick={loginEmail}>
-              发送邮件
-            </Button>
+
+            {!emailSent ? (
+              <Button loading={emailLoading} onClick={loginEmail}>
+                发送邮件
+              </Button>
+            ) : (
+              <Button loading={verifyLoading} onClick={verifyCode}>
+                验证
+              </Button>
+            )}
           </Group>
         </Stack>
       </Modal>
