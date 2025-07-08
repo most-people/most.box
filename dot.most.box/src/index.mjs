@@ -48,18 +48,21 @@ registerFiles(server, ipfs);
 
 const network = {
   ipv4: [`http://localhost:${port}`],
-  ipv6: [`http://[::1]:${port}`],
+  ipv6: [],
 };
 
 // 获取 IPv6
 server.get("/ipv6", async () => {
-  return network.ipv6.slice(1);
+  return network.ipv6;
+});
+server.get("/dot", async () => {
+  return getIP();
 });
 
 const initIP = () => {
   // 重置
   network.ipv4 = [`http://localhost:${port}`]
-  network.ipv6 = [`http://[::1]:${port}`]
+  network.ipv6 = []
   const interfaces = os.networkInterfaces();
   for (const name of Object.keys(interfaces)) {
     for (const iface of interfaces[name]) {
@@ -82,8 +85,24 @@ const initIP = () => {
   postIP('https://mainnet.base.org');
 };
 
+const getIP = () => {
+  const { DOT_NAME, API_URL, CID_URL } = process.env
+  const dot = {
+    name: DOT_NAME,
+    APIs: network.ipv6,
+    CIDs: [],
+  }
+  if (API_URL) {
+    dot.APIs.push(API_URL);
+  }
+  if (CID_URL) {
+    dot.CIDs.push(CID_URL);
+  }
+  return dot
+}
+
 const postIP = async (RPC) => {
-  const { PRIVATE_KEY, DOT_NAME, API_URL, CID_URL } = process.env
+  const { PRIVATE_KEY, DOT_NAME } = process.env
   if (!PRIVATE_KEY || !DOT_NAME) {
     console.error('请在 .env 文件设置 PRIVATE_KEY 和 DOT_NAME');
     return;
@@ -97,18 +116,7 @@ const postIP = async (RPC) => {
 
   // 开始获取
   const [name, APIs, CIDs, update] = await contract.getDot(wallet.address);
-
-  const dot = {
-    name: DOT_NAME,
-    APIs: network.ipv6.slice(1),
-    CIDs: [],
-  }
-  if (API_URL) {
-    dot.APIs.push(API_URL);
-  }
-  if (CID_URL) {
-    dot.CIDs.push(CID_URL);
-  }
+  const dot = getIP()
 
   if (mp.arrayEqual(APIs, dot.APIs) && mp.arrayEqual(CIDs, dot.CIDs)) {
     console.log(RPC, "节点无变化");
