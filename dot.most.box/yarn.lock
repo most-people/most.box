@@ -1001,6 +1001,11 @@ json-schema-traverse@^1.0.0:
   resolved "https://registry.npmjs.org/json-schema-traverse/-/json-schema-traverse-1.0.0.tgz"
   integrity sha512-NM8/P9n3XjXhIZn1lLhkFaACTOURQXjWhV4BA/RnOv8xvgqtqpAX9IO4mRQxSx1Rlo4tqzeqb0sOlruaOy3dug==
 
+koffi@^2.10.1:
+  version "2.12.1"
+  resolved "https://registry.yarnpkg.com/koffi/-/koffi-2.12.1.tgz#a37cb84244176ec889f4bc043fde3d72760750b3"
+  integrity sha512-l0+ujtJtiXicQurXu8hpe5KAb5vn3uHkn9fsQFBev6d5zG5ERTJp60O/PC8K8zlwcd2jOeneNCkzCiIGQbgLIw==
+
 kubo-rpc-client@^5.2.0:
   version "5.2.0"
   resolved "https://registry.yarnpkg.com/kubo-rpc-client/-/kubo-rpc-client-5.2.0.tgz#b8dfe823305ee7bc957f98a01532479b2c7005b7"
@@ -1269,6 +1274,13 @@ quick-format-unescaped@^4.0.3:
   version "4.0.4"
   resolved "https://registry.npmjs.org/quick-format-unescaped/-/quick-format-unescaped-4.0.4.tgz"
   integrity sha512-tYC1Q1hgyRuHgloV/YXs2w15unPVh8qfu/qCTfhTYamaw7fyhumKa2yGpdSo87vY32rIclj+4fWYQXUMs9EHvg==
+
+rdrand-lite@^1.4.12:
+  version "1.4.12"
+  resolved "https://registry.yarnpkg.com/rdrand-lite/-/rdrand-lite-1.4.12.tgz#ec24311f8bf5c4981c35947e3110acb4a4417c46"
+  integrity sha512-PMH5UiKh8/749c/BPEz4DlHp0cgjdttRSs93BvzjZSLDyYW0A0P9Y6IhGwcySkaxyNcqEVoyVeb5yMLqdg2kdA==
+  dependencies:
+    koffi "^2.10.1"
 
 react-native-fetch-api@^3.0.0:
   version "3.0.0"

@@ -1,11 +1,15 @@
-import { verifyMessage } from "ethers";
+import { ethers } from "ethers";
+import os from "os";
+import DotContract from "./abi/DotContract.json" with { type: "json" };
+
+const port = 1976;
 
 /**
  * 验证 token 并返回地址
  * @param {string} token - 格式为 "address.message.signature" 的 token
  * @returns {string | null} - 验证成功返回地址，失败返回空字符串
  */
-export const getAddress = (token) => {
+const getAddress = (token) => {
   if (token && typeof token === "string") {
     try {
       const [address, t, sig] = token.split(".");
@@ -14,7 +18,7 @@ export const getAddress = (token) => {
         return null;
       }
       if (address && t && sig) {
-        const ethAddress = verifyMessage(t, sig).toLowerCase();
+        const ethAddress = ethers.verifyMessage(t, sig).toLowerCase();
         if (address.toLowerCase() === ethAddress) {
           return ethAddress;
         }
@@ -33,7 +37,7 @@ export const getAddress = (token) => {
  * @param {string[]} b
  * @returns {boolean}
  */
-export const arrayEqual = (a, b) => {
+const arrayEqual = (a, b) => {
   if (a.length !== b.length) {
     return false;
   }
@@ -42,7 +46,109 @@ export const arrayEqual = (a, b) => {
   return set1.size === set2.size && [...set1].every((x) => set2.has(x));
 };
 
+const network = {
+  ipv4: [`http://localhost:${port}`],
+  ipv6: [],
+};
+
+const initIP = () => {
+  // 重置
+  network.ipv4 = [`http://localhost:${port}`]
+  network.ipv6 = []
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      // 获取 IPv4 地址
+      if (iface.family === "IPv4" && !iface.internal) {
+        network.ipv4.push(`http://${iface.address}:${port}`);
+      }
+      // 获取 IPv6 地址
+      if (
+        iface.family === "IPv6" &&
+        !iface.internal &&
+        !iface.address.startsWith("fe80")
+      ) {
+        network.ipv6.push(`http://[${iface.address}]:${port}`);
+      }
+    }
+  }
+  // 推送 IP 地址
+  postIP("https://sepolia.base.org");
+  postIP('https://mainnet.base.org');
+};
+
+const getIP = () => {
+  const { DOT_NAME, API_URL, CID_URL } = process.env
+  const dot = {
+    name: DOT_NAME || '',
+    APIs: [],
+    CIDs: [],
+  }
+  if (API_URL) {
+    dot.APIs.push(API_URL);
+  }
+  if (CID_URL) {
+    dot.CIDs.push(CID_URL);
+  }
+  for (const api of network.ipv6) {
+    dot.APIs.push(api);
+    if (api.endsWith(':1976')) {
+      dot.CIDs.push(api.slice(0, -5) + ':8080/ipfs/')
+    }
+  }
+  return dot
+}
+
+const postIP = async (RPC) => {
+  const { PRIVATE_KEY, DOT_NAME } = process.env
+  if (!PRIVATE_KEY || !DOT_NAME) {
+    console.error('请在 .env 文件设置 PRIVATE_KEY 和 DOT_NAME');
+    return;
+  }
+  const CONTRACT_ADDRESS = "0xdc82cef1a8416210afb87caeec908a4df843f016";
+  const provider = new ethers.JsonRpcProvider(RPC);
+  const dotContract = new ethers.Contract(CONTRACT_ADDRESS, DotContract.abi, provider);
+  const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
+  const contract = dotContract.connect(wallet);
+
+
+  // 开始获取
+  const [name, APIs, CIDs, update] = await contract.getDot(wallet.address);
+  const dot = getIP()
+
+  if (arrayEqual(APIs, dot.APIs) && arrayEqual(CIDs, dot.CIDs)) {
+    console.log(RPC, "节点无变化");
+    return;
+  }
+
+  // 开始更新
+  try {
+    // 估算gas费用
+    const gasEstimate = await contract.setDot.estimateGas(dot.name, dot.APIs, dot.CIDs);
+    const gasPrice = await provider.getFeeData();
+    const estimatedCost = gasEstimate * gasPrice.gasPrice;
+
+    // 检查余额是否足够
+    const balance = await provider.getBalance(wallet.address);
+
+    if (balance < estimatedCost) {
+      console.error(RPC, `手续费不足: 需要 ${ethers.formatEther(estimatedCost)} ETH，但余额只有 ${ethers.formatEther(balance)} ETH`);
+      return;
+    }
+
+    await contract.setDot(dot.name, dot.APIs, dot.CIDs);
+    console.log(RPC, "节点信息已更新到合约");
+  } catch (error) {
+    console.error(RPC, "更新节点信息失败:", error);
+  }
+};
+
 export default {
+  port,
+  network,
+  getIP,
+  postIP,
+  initIP,
   getAddress,
   arrayEqual,
 };

@@ -5,6 +5,7 @@
     "kubo",
     "mantine",
     "nacl",
+    "rdrand",
     "supabase",
     "tabler",
     "toastui",
