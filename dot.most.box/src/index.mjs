@@ -6,8 +6,11 @@ import fastifyCors from "@fastify/cors";
 import { create } from "kubo-rpc-client";
 import path from "path";
 import { fileURLToPath } from "url";
+import rng from "rdrand-lite";
 import { registerFiles } from "./files.mjs";
 import mp from "./mp.mjs";
+
+const isRdrandSupported = rng.isRrdrandSupported();
 
 
 // 创建 IPFS 客户端
@@ -50,6 +53,20 @@ server.get("/dot", async () => {
 });
 
 
+server.get("/TRNG", async () => {
+  if (isRdrandSupported) {
+    const n = rng.rdSeed64()
+    if (n) {
+      return n.toString(16);
+    } else {
+      return ''
+    }
+  } else {
+    return 'not support'
+  }
+});
+
+
 const start = async () => {
   // 运行 DOT.MOST.BOX
   try {
@@ -65,7 +82,7 @@ const start = async () => {
     setInterval(() => {
       console.log('定时更新IP地址...');
       mp.initIP();
-    }, 1 * 60 * 60 * 1000); // 每1小时执行一次
+    }, 60 * 60 * 1000); // 每1小时执行一次
   } catch (error) {
     console.error(error);
     server.log.error(error);

@@ -147,7 +147,6 @@ export default {
   port,
   network,
   getIP,
-  postIP,
   initIP,
   getAddress,
   arrayEqual,
