@@ -55,7 +55,7 @@ server.get("/dot", async () => {
 
 server.get("/TRNG", async () => {
   if (isRdrandSupported) {
-    return rng.rdSeed64().toString();
+    return rng.rdSeed64().toString(16);
   } else {
     return 'not support'
   }

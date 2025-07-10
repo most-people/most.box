@@ -4,12 +4,12 @@ Confirm signup
 <h2
   style="color:#333;font-family:Arial,sans-serif;font-size:24px;margin:0 0 20px 0;text-align:center"
 >
-  确认注册
+  验证码 {{ .Token }}
 </h2>
 <p
   style="color:#666;font-family:Arial,sans-serif;font-size:16px;line-height:1.5;margin:0 0 20px 0;text-align:center"
 >
-  请使用下方链接完成账户激活
+  或使用下方链接完成账户激活
 </p>
 <div
   class="url-box"
@@ -24,9 +24,8 @@ Confirm signup
     href="{{ .ConfirmationURL }}"
     target="_blank"
     style="background-color:#007bff;color:#fff;padding:8px 16px;text-decoration:none;border-radius:5px;font-family:Arial,sans-serif;font-size:16px;display:inline-block"
+    >直接打开</a
   >
-    直接打开
-  </a>
 </div>
 ```
 

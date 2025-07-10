@@ -222,7 +222,7 @@ export default function PageDot() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-      fetch(`${nodeUrl}/ipv6`, {
+      fetch(`${nodeUrl}/dot`, {
         method: "GET",
         signal: controller.signal,
         mode: "cors",
@@ -232,30 +232,10 @@ export default function PageDot() {
           const responseTime = Date.now() - startTime;
           resolve({ isOnline: true, responseTime });
         })
-        .catch((error) => {
+        .catch(() => {
           clearTimeout(timeoutId);
           const responseTime = Date.now() - startTime;
-
-          const errorMessage = error.message.toLowerCase();
-          const errorName = error.name.toLowerCase();
-
-          if (
-            errorMessage.includes("cors") ||
-            errorMessage.includes("mixed content") ||
-            errorMessage.includes("blocked")
-          ) {
-            resolve({ isOnline: true, responseTime });
-          } else if (
-            errorMessage.includes("network") ||
-            errorMessage.includes("timeout") ||
-            errorMessage.includes("connection") ||
-            errorName === "aborterror"
-          ) {
-            resolve({ isOnline: false, responseTime });
-          } else {
-            console.warn(`未知错误类型: ${errorName} - ${errorMessage}`);
-            resolve({ isOnline: false, responseTime });
-          }
+          resolve({ isOnline: false, responseTime });
         });
     });
   };

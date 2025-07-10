@@ -4,22 +4,10 @@ import { create } from "zustand";
 import { api, DotAPI, DotCID } from "@/constants/api";
 import { notifications } from "@mantine/notifications";
 
-export interface People {
-  value: string;
-  timestamp: number;
-}
-
-export interface NotifyValue {
-  type: "friend" | "topic";
-  username: string;
-  public_key: string;
-  text: string;
-}
-
-export interface Notify {
-  sig: string;
-  timestamp: number;
-  value: NotifyValue;
+export interface Dot {
+  name: string;
+  APIs: string[];
+  CIDs: string[];
 }
 
 export interface Note {
@@ -60,12 +48,12 @@ export const useUserStore = create<State>((set, get) => ({
   async updateDot(url, first) {
     const dotAPI = new URL(url).origin;
     try {
-      const res = await api(dotAPI + "/ipv6");
-      const ipv6Set: Set<string> = new Set(res.data);
-      ipv6Set.add(dotAPI);
+      const res = await api(dotAPI + "/dot");
+      const dot: Dot = res.data;
       api.defaults.baseURL = dotAPI;
+
       set({ dotAPI });
-      localStorage.dotAPI = dotAPI;
+      localStorage.setItem("dotAPI", dotAPI);
 
       if (!first) {
         notifications.show({
@@ -74,17 +62,12 @@ export const useUserStore = create<State>((set, get) => ({
           color: "green",
         });
       }
-      if (dotAPI.endsWith("1976")) {
-        const dotCID = dotAPI.slice(0, -4) + "8080";
+
+      const dotCID = dot.CIDs[0];
+      if (dotCID) {
         set({ dotCID });
-        localStorage.dotCID = dotCID;
-      } else {
-        const dotCID = localStorage.dotCID;
-        if (dotCID) {
-          set({ dotCID });
-        }
+        localStorage.setItem("dotCID", dotCID);
       }
-      return Array.from(ipv6Set);
     } catch (error) {
       notifications.show({
         title: "节点未切换",
