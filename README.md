@@ -1,4 +1,18 @@
-[Ubuntu 安装 Caddy](https://caddyserver.com/docs/install#debian-ubuntu-raspbian)
+## Caddy
+
+### Caddyfile
+
+```caddy
+cid.most.box {
+    reverse_proxy 127.0.0.1:8080
+}
+
+dot.most.box {
+    reverse_proxy 127.0.0.1:1976
+}
+```
+
+### [Ubuntu 安装](https://caddyserver.com/docs/install#debian-ubuntu-raspbian)
 
 ```bash
 # 安装
@@ -23,7 +37,7 @@ sudo systemctl reload caddy
 sudo systemctl status caddy
 ```
 
-Windows 安装
+### Windows 安装
 
 下载 caddy.exe 放在 C:\caddy\caddy.exe
 
