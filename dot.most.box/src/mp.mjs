@@ -48,13 +48,13 @@ const arrayEqual = (a, b) => {
 
 const network = {
   ipv4: [`http://localhost:${port}`],
-  ipv6: [],
+  ipv6: [`http://[::1]:${port}`],
 };
 
 const initIP = () => {
   // 重置
   network.ipv4 = [`http://localhost:${port}`]
-  network.ipv6 = []
+  network.ipv6 = [`http://[::1]:${port}`]
   const interfaces = os.networkInterfaces();
   for (const name of Object.keys(interfaces)) {
     for (const iface of interfaces[name]) {
@@ -81,20 +81,14 @@ const getIP = () => {
   const { DOT_NAME, API_URL, CID_URL } = process.env
   const dot = {
     name: DOT_NAME || '',
-    APIs: [],
+    APIs: network.ipv6.slice(1),
     CIDs: [],
   }
   if (API_URL) {
-    dot.APIs.push(API_URL);
+    dot.APIs.unshift(API_URL);
   }
   if (CID_URL) {
-    dot.CIDs.push(CID_URL);
-  }
-  for (const api of network.ipv6) {
-    dot.APIs.push(api);
-    if (api.endsWith(':1976')) {
-      dot.CIDs.push(api.slice(0, -5) + ':8080/ipfs/')
-    }
+    dot.CIDs.unshift(CID_URL);
   }
   return dot
 }

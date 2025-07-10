@@ -82,7 +82,7 @@ interface DotNode {
 export default function PageDot() {
   // 当前节点状态
   const [apiLoading, setApiLoading] = useState(false);
-  const [IPv6List, setIPv6List] = useState<string[]>([]);
+  const [ApiList, setApiList] = useState<string[]>([]);
   const dotAPI = useUserStore((state) => state.dotAPI);
   const setItem = useUserStore((state) => state.setItem);
   const updateDot = useUserStore((state) => state.updateDot);
@@ -122,7 +122,7 @@ export default function PageDot() {
     setApiLoading(true);
     const list = await updateDot(dotAPI);
     if (list) {
-      setIPv6List(list);
+      setApiList(list);
     }
     setApiLoading(false);
   };
@@ -143,7 +143,7 @@ export default function PageDot() {
       const nodeAPI = node.APIs[0];
       const list = await updateDot(nodeAPI);
       if (list) {
-        setIPv6List(list);
+        setApiList(list);
         notifications.show({
           title: "节点切换成功",
           message: `已切换到 ${node.name}`,
@@ -332,11 +332,11 @@ export default function PageDot() {
           <Stack className="container" align="center" gap={0}>
             <div className="emoji">🎉</div>
             <h1>DOT.MOST.BOX</h1>
-            {IPv6List.length > 0 && (
+            {ApiList.length > 0 && (
               <>
                 <p>节点已成功运行</p>
                 <Stack justify="center">
-                  {IPv6List.map((url, index) => (
+                  {ApiList.map((url, index) => (
                     <a
                       key={index}
                       href={url}

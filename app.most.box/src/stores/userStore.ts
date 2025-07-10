@@ -63,11 +63,16 @@ export const useUserStore = create<State>((set, get) => ({
         });
       }
 
-      const dotCID = dot.CIDs[0];
+      let dotCID = dot.CIDs[0];
+      if (dotAPI.endsWith(":1976")) {
+        dotCID = dotAPI.substring(0, -5) + ":8080";
+      }
       if (dotCID) {
         set({ dotCID });
         localStorage.setItem("dotCID", dotCID);
       }
+
+      return dot.APIs;
     } catch (error) {
       notifications.show({
         title: "节点未切换",
