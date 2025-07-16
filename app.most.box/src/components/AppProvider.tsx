@@ -25,7 +25,7 @@ export default function AppProvider() {
   const initDot = async () => {
     const dotAPI = localStorage.dotAPI;
     if (dotAPI) {
-      updateDot(dotAPI, true);
+      updateDot(dotAPI);
     }
   };
 

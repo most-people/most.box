@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef } from "react";
 import { AppHeader } from "@/components/AppHeader";
 import {
   Box,
@@ -11,7 +11,6 @@ import {
   Button,
   Modal,
   ScrollArea,
-  TextInput,
   Center,
 } from "@mantine/core";
 import { api } from "@/constants/api";
@@ -37,7 +36,6 @@ interface PreviewFile {
 }
 
 export default function PageDotFiles() {
-  const setItem = useUserStore((state) => state.setItem);
   const wallet = useUserStore((state) => state.wallet);
   const dotCID = useUserStore((state) => state.dotCID);
   const [fileList, setFileList] = useState<FileItem[]>([]);
@@ -55,14 +53,6 @@ export default function PageDotFiles() {
       console.error(error);
     }
   };
-
-  const explorer = useMemo(() => {
-    try {
-      return new URL(dotCID).origin;
-    } catch {
-      return "";
-    }
-  }, [dotCID]);
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 B";
@@ -203,17 +193,6 @@ export default function PageDotFiles() {
     }
   };
 
-  const handleCidUrlChange = async () => {
-    const baseUrl = new URL(dotCID).origin;
-    localStorage.dotCID = baseUrl;
-    setItem("dotCID", baseUrl);
-    notifications.show({
-      title: "CID 地址已更新",
-      message: baseUrl,
-      color: "green",
-    });
-  };
-
   useEffect(() => {
     if (wallet) {
       fetchFiles();
@@ -227,25 +206,9 @@ export default function PageDotFiles() {
       <Stack align="center" gap={0} p="md">
         <Group gap={4}>
           <span>IPFS CID 浏览器</span>
-          <a
-            href={explorer + "/ipfs/"}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {explorer + "/ipfs/"}
+          <a href={dotCID + "/ipfs/"} target="_blank" rel="noopener noreferrer">
+            {dotCID + "/ipfs/"}
           </a>
-        </Group>
-        <Group mt="sm" w="100%">
-          <TextInput
-            flex={1}
-            leftSection="CID"
-            value={dotCID}
-            onChange={(event) => setItem("dotCID", event.currentTarget.value)}
-            placeholder="输入 CID 地址"
-          />
-          <Button onClick={handleCidUrlChange} disabled={!explorer}>
-            更新
-          </Button>
         </Group>
       </Stack>
 

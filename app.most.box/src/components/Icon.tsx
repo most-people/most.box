@@ -27,8 +27,8 @@ import About from "@/assets/icons/about.svg";
 import Join from "@/assets/icons/join.svg";
 import Setting from "@/assets/icons/setting.svg";
 
-// https://www.flaticon.com/free-icon-font/cloud-download-alt_7434817?page=1&position=2&term=download&origin=search&related_id=7434817
-import Download from "@/assets/icons/download.svg";
+// https://www.flaticon.com/free-icon-font/earth-americas_9585915?page=1&position=2&term=earth&origin=search&related_id=9585915
+import Earth from "@/assets/icons/earth.svg";
 
 // https://supabase.com/dashboard/project/vibeseycqiisftkweeat/auth/providers
 import Google from "@/assets/icons/google.svg";
@@ -59,7 +59,7 @@ const icons = {
   About,
   Join,
   Setting,
-  Download,
+  Earth,
   Google,
   X,
   Discord,

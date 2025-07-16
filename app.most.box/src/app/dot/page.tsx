@@ -83,8 +83,8 @@ export default function PageDot() {
   // 当前节点状态
   const [apiLoading, setApiLoading] = useState(false);
   const [ApiList, setApiList] = useState<string[]>([]);
+  const [apiURL, setApiURL] = useState("");
   const dotAPI = useUserStore((state) => state.dotAPI);
-  const setItem = useUserStore((state) => state.setItem);
   const updateDot = useUserStore((state) => state.updateDot);
 
   // 节点列表状态
@@ -118,9 +118,9 @@ export default function PageDot() {
   const Explorer = NETWORK_CONFIG[network].explorer;
 
   // 更新当前节点
-  const handleApiUrlChange = async () => {
+  const apiUrlChange = async () => {
     setApiLoading(true);
-    const list = await updateDot(dotAPI);
+    const list = await updateDot(apiURL);
     if (list) {
       setApiList(list);
     }
@@ -356,13 +356,11 @@ export default function PageDot() {
             <Group mt="lg">
               <TextInput
                 leftSection={<IconWorldWww />}
-                value={dotAPI}
-                onChange={(event) =>
-                  setItem("dotAPI", event.currentTarget.value)
-                }
-                placeholder="输入节点地址"
+                value={apiURL}
+                onChange={(event) => setApiURL(event.currentTarget.value)}
+                placeholder="输入自定义节点地址"
               />
-              <Button onClick={handleApiUrlChange} loading={apiLoading}>
+              <Button onClick={apiUrlChange} loading={apiLoading}>
                 自定义
               </Button>
             </Group>

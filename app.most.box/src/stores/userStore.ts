@@ -45,27 +45,21 @@ export const useUserStore = create<State>((set, get) => ({
       }
     }
   },
-  async updateDot(url, first) {
+  async updateDot(url) {
     const dotAPI = new URL(url).origin;
     try {
-      const res = await api(dotAPI + "/dot");
+      const res = await api.get(dotAPI + "/dot", {
+        timeout: 3000,
+      });
       const dot: Dot = res.data;
       api.defaults.baseURL = dotAPI;
 
       set({ dotAPI });
       localStorage.setItem("dotAPI", dotAPI);
 
-      if (!first) {
-        notifications.show({
-          title: "节点已切换",
-          message: dotAPI,
-          color: "green",
-        });
-      }
-
       let dotCID = dot.CIDs[0];
       if (dotAPI.endsWith(":1976")) {
-        dotCID = dotAPI.substring(0, -5) + ":8080";
+        dotCID = dotAPI.slice(0, -5) + ":8080";
       }
       if (dotCID) {
         set({ dotCID });
@@ -75,7 +69,7 @@ export const useUserStore = create<State>((set, get) => ({
       return dot.APIs;
     } catch (error) {
       notifications.show({
-        title: "节点未切换",
+        title: "节点切换失败",
         message: dotAPI,
         color: "red",
       });
