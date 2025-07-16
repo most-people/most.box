@@ -1,4 +1,6 @@
 import mp from "./mp.mjs";
+// 压缩 zip
+import archiver from "archiver";
 
 /**
  * 注册文件相关的路由
@@ -7,7 +9,7 @@ import mp from "./mp.mjs";
  * @param {import('kubo-rpc-client').KuboRPCClient} ipfs - IPFS 客户端实例
  */
 export const registerFiles = (server, ipfs) => {
-  // 查找文件 CID
+  // 查找 MFS 文件路径 CID
   server.get("/find.cid/:uid/*", async (request) => {
     const address = request.params["uid"] || "";
     const path = request.params["*"] || "";
@@ -114,6 +116,71 @@ export const registerFiles = (server, ipfs) => {
       };
     } catch (error) {
       return reply.code(500).send("文件删除失败 " + error.message);
+    }
+  });
+
+  // 下载 CID
+  server.get("/files/download/directory/:cid", async (request, reply) => {
+    const cid = request.params.cid;
+
+    if (!cid) {
+      return reply.code(400).send("缺少目录 CID 参数");
+    }
+
+    try {
+      const ipfsPath = `/ipfs/${cid}`;
+
+      // 检查是否为目录
+      let stat;
+      try {
+        stat = await ipfs.files.stat(ipfsPath);
+      } catch (error) {
+        return reply.code(400).send("无法获取 CID 信息");
+      }
+
+      if (!stat.type === "directory") {
+        return reply.code(400).send("CID 不是目录");
+      }
+
+      // 如果是目录，打包成 zip 下载
+      const archive = archiver("zip", {
+        zlib: { level: 9 }, // 压缩级别
+      });
+
+      // 设置响应头
+      reply.header("Content-Type", "application/zip");
+      reply.header("Content-Disposition", `attachment; filename="${cid}.zip"`);
+
+      // 将 archive 流发送给客户端
+      reply.send(archive);
+
+      // 递归添加目录中的所有文件到 zip
+      const addToArchive = async (path, archivePath = "") => {
+        for await (const file of ipfs.ls(path)) {
+          const filePath = `${path}/${file.name}`;
+          const fileArchivePath = archivePath
+            ? `${archivePath}/${file.name}`
+            : file.name;
+
+          if (file.type === "dir") {
+            // 如果是目录，递归处理
+            await addToArchive(filePath, fileArchivePath);
+          } else {
+            // 如果是文件，添加到 zip
+            const chunks = [];
+            for await (const chunk of ipfs.cat(filePath)) {
+              chunks.push(chunk);
+            }
+            const content = Buffer.concat(chunks);
+            archive.append(content, { name: fileArchivePath });
+          }
+        }
+      };
+
+      await addToArchive(ipfsPath);
+      archive.finalize();
+    } catch (error) {
+      return reply.code(500).send("下载失败: " + error.message);
     }
   });
 };

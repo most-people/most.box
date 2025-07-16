@@ -13,8 +13,8 @@ const getAddress = (token) => {
   if (token && typeof token === "string") {
     try {
       const [address, t, sig] = token.split(".");
-      // token 有效期为 24 小时
-      if (Date.now() - parseInt(t) > 1000 * 60 * 60 * 24) {
+      // token 有效期为 4 小时
+      if (Date.now() - parseInt(t) > 1000 * 60 * 60 * 4) {
         return null;
       }
       if (address && t && sig) {
