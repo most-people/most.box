@@ -85,7 +85,7 @@ journalctl -u ipfs.service --since today
 
 ```json
 {
-  "Gateway": ["/ip4/127.0.0.1/tcp/8080", "/ip6/::/tcp/8080"]
+  "Gateway": ["/ip4/0.0.0.0/tcp/8080", "/ip6/::/tcp/8080"]
 }
 ```
 
@@ -99,7 +99,7 @@ pm2 startup
 npm install -g pm2
 
 # 启动应用（定时重启：每小时执行一次）
-pm2 start src/index.mjs --name "dot" --cron-restart="0 * * * *"
+pm2 start src/index.mjs --name "dot"
 
 # 保存当前进程列表
 pm2 save
@@ -115,5 +115,9 @@ pm2-startup install
 
 ```bash
 DOT_NAME=Test
+# 节点钱包私钥
 PRIVATE_KEY=0x0000000000000000000000000000000000000000000000000000000000000000
+# custom
+API_URL=http://xxx.xxx.xxx.xxx:1976
+CID_URL=
 ```
