@@ -39,7 +39,7 @@ import {
 } from "@tabler/icons-react";
 import mp from "@/constants/mp";
 import Link from "next/link";
-import { useUserStore } from "@/stores/userStore";
+import { DotNode, useUserStore } from "@/stores/userStore";
 import "./dot.scss";
 
 // DotContract ABI
@@ -69,26 +69,17 @@ const DotContractABI = [
   },
 ];
 
-interface DotNode {
-  address: string;
-  name: string;
-  APIs: string[];
-  CIDs: string[];
-  lastUpdate: number;
-  isOnline?: boolean;
-  responseTime?: number;
-}
-
 export default function PageDot() {
   // 当前节点状态
   const [apiLoading, setApiLoading] = useState(false);
   const [ApiList, setApiList] = useState<string[]>([]);
   const [apiURL, setApiURL] = useState("");
+  const setItem = useUserStore((state) => state.setItem);
   const dotAPI = useUserStore((state) => state.dotAPI);
+  const dotNodes = useUserStore((state) => state.dotNodes);
   const updateDot = useUserStore((state) => state.updateDot);
 
   // 节点列表状态
-  const [nodes, setNodes] = useState<DotNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [checkingConnectivity, setCheckingConnectivity] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -191,7 +182,7 @@ export default function PageDot() {
       );
 
       const nodeList = await Promise.all(nodePromises);
-      setNodes(nodeList);
+      setItem("dotNodes", nodeList);
     } catch (err) {
       console.error("获取节点列表失败:", err);
       setError("获取节点列表失败，请检查网络连接");
@@ -246,13 +237,13 @@ export default function PageDot() {
 
     try {
       const updatedNodes = await Promise.all(
-        nodes.map(async (node) => {
+        dotNodes.map(async (node) => {
           const { isOnline, responseTime } = await checkNodeConnectivity(node);
           return { ...node, isOnline, responseTime };
         })
       );
 
-      setNodes(updatedNodes);
+      setItem("dotNodes", updatedNodes);
 
       const onlineCount = updatedNodes.filter((node) => node.isOnline).length;
       notifications.show({
@@ -288,6 +279,7 @@ export default function PageDot() {
   const handleNetworkChange = (value: string | null) => {
     if (value && (value === "mainnet" || value === "testnet")) {
       setNetwork(value);
+      fetchNodes();
       notifications.show({
         title: "网络已切换",
         message: `已切换到 ${NETWORK_CONFIG[value].name}`,
@@ -316,11 +308,15 @@ export default function PageDot() {
   };
 
   useEffect(() => {
-    fetchNodes();
-  }, [network]);
+    if (dotNodes.length === 0) {
+      fetchNodes();
+    } else {
+      setLoading(false);
+    }
+  }, []);
 
-  const onlineNodes = nodes.filter((node) => node.isOnline);
-  const offlineNodes = nodes.filter((node) => node.isOnline === false);
+  const onlineNodes = dotNodes.filter((node) => node.isOnline);
+  const offlineNodes = dotNodes.filter((node) => node.isOnline === false);
 
   return (
     <Box id="page-dot">
@@ -330,11 +326,10 @@ export default function PageDot() {
         {/* 当前节点信息区域 */}
         <Paper shadow="sm" p="lg" radius="md" mb="lg">
           <Stack className="container" align="center" gap={0}>
-            <div className="emoji">🎉</div>
             <h1>DOT.MOST.BOX</h1>
-            {ApiList.length > 0 && (
+            {ApiList.length > 0 ? (
               <>
-                <p>节点已成功运行</p>
+                <p>已成功接入节点</p>
                 <Stack justify="center">
                   {ApiList.map((url, index) => (
                     <a
@@ -348,6 +343,13 @@ export default function PageDot() {
                   ))}
                 </Stack>
               </>
+            ) : (
+              <>
+                <p>当前节点</p>
+                <a href={dotAPI} target="_blank" rel="noopener noreferrer">
+                  {dotAPI}
+                </a>
+              </>
             )}
             <p>為 全 人 類 徹 底 解 放 奮 鬥 終 身</p>
 
@@ -358,7 +360,7 @@ export default function PageDot() {
                 leftSection={<IconWorldWww />}
                 value={apiURL}
                 onChange={(event) => setApiURL(event.currentTarget.value)}
-                placeholder="输入自定义节点地址"
+                placeholder="自定义节点地址"
               />
               <Button onClick={apiUrlChange} loading={apiLoading}>
                 自定义
@@ -377,8 +379,8 @@ export default function PageDot() {
               <Box>
                 <Title order={2}>节点列表</Title>
                 <Text size="sm" c="dimmed">
-                  共 {nodes.length} 个节点
-                  {nodes.some((n) => n.isOnline !== undefined) && (
+                  共 {dotNodes.length} 个节点
+                  {dotNodes.some((n) => n.isOnline !== undefined) && (
                     <>
                       {" "}
                       • {onlineNodes.length} 在线 • {offlineNodes.length} 离线
@@ -424,7 +426,7 @@ export default function PageDot() {
                 leftSection={<IconWifi size={16} />}
                 onClick={checkAllConnectivity}
                 loading={checkingConnectivity}
-                disabled={nodes.length === 0}
+                disabled={dotNodes.length === 0}
                 variant="gradient"
                 gradient={{ from: "blue", to: "cyan" }}
               >
@@ -433,22 +435,6 @@ export default function PageDot() {
             </Group>
           </Flex>
         </Paper>
-
-        {/* 网络状态指示器 */}
-        <Alert
-          mb="lg"
-          color={NETWORK_CONFIG[network].color}
-          variant="light"
-          icon={<IconNetwork size={16} />}
-          title={`当前网络: ${NETWORK_CONFIG[network].name}`}
-        >
-          <Text size="sm">
-            RPC：
-            <Text component="span" ff="monospace" c="dimmed">
-              {NETWORK_CONFIG[network].rpc}
-            </Text>
-          </Text>
-        </Alert>
 
         {/* 节点列表 */}
         {loading ? (
@@ -484,7 +470,7 @@ export default function PageDot() {
               重新加载
             </Button>
           </Paper>
-        ) : nodes.length === 0 ? (
+        ) : dotNodes.length === 0 ? (
           <Paper shadow="sm" p="xl" radius="md" style={{ textAlign: "center" }}>
             <ThemeIcon
               size={60}
@@ -504,7 +490,7 @@ export default function PageDot() {
           </Paper>
         ) : (
           <Grid>
-            {nodes.map((node) => (
+            {dotNodes.map((node) => (
               <Grid.Col key={node.address} span="auto">
                 <Card
                   shadow="sm"
@@ -661,7 +647,6 @@ export default function PageDot() {
                       </Group>
                     </Box>
 
-                    {/* 切换节点按钮 */}
                     <Button
                       fullWidth
                       variant={isCurrentNode(node) ? "filled" : "light"}

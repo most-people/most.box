@@ -10,6 +10,13 @@ export interface Dot {
   CIDs: string[];
 }
 
+export interface DotNode extends Dot {
+  address: string;
+  lastUpdate: number;
+  isOnline?: boolean;
+  responseTime?: number;
+}
+
 export interface Note {
   name: string;
   cid: string;
@@ -23,6 +30,7 @@ interface UserStore {
   firstPath: string;
   dotAPI: string;
   dotCID: string;
+  dotNodes: DotNode[];
   notes: Note[];
 }
 
@@ -82,6 +90,7 @@ export const useUserStore = create<State>((set, get) => ({
   firstPath: "",
   dotAPI: DotAPI,
   dotCID: DotCID,
+  dotNodes: [],
   exit() {
     set({ wallet: undefined });
     localStorage.removeItem("jwt");

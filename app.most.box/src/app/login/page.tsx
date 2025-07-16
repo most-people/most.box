@@ -25,7 +25,6 @@ import { useState, useEffect } from "react";
 import mp from "@/constants/mp";
 import { mostWallet } from "@/constants/MostWallet";
 import { useUserStore } from "@/stores/userStore";
-import { useAccountStore } from "@/stores/accountStore";
 import { notifications } from "@mantine/notifications";
 import { useBack } from "@/hooks/useBack";
 import { supabase } from "@/constants/supabase";
@@ -82,30 +81,6 @@ export default function PageLogin() {
     return emailRegex.test(email);
   };
 
-  const connectOKX = useAccountStore((state) => state.connectOKX);
-  const ethereum = useAccountStore((state) => state.ethereum);
-
-  const [connectLoading, setConnectLoading] = useState(false);
-
-  const connectWallet = async () => {
-    try {
-      setConnectLoading(true);
-      const signer = await connectOKX();
-      if (signer) {
-        const address = await signer.getAddress();
-        const sig = await signer.signMessage(
-          "Connect wallet " + address + " by dot.most.box"
-        );
-        login(address.slice(-4), sig);
-      }
-    } catch (error) {
-      console.log("钱包连接失败", error);
-      notifications.show({ title: "提示", message: "连接失败" });
-    } finally {
-      setConnectLoading(false);
-    }
-  };
-
   const login = (username: string, password: string) => {
     if (username) {
       const wallet = mp.login(username, password);
@@ -131,7 +106,9 @@ export default function PageLogin() {
         embed: 1,
       },
       (authData: TelegramAuthData) => {
-        postTelegram(authData);
+        if (authData) {
+          postTelegram(authData);
+        }
       }
     );
   };
@@ -367,17 +344,6 @@ export default function PageLogin() {
               </ActionIcon>
             </Tooltip>
           </Group>
-
-          {ethereum && (
-            <Button
-              variant="default"
-              loading={connectLoading}
-              loaderProps={{ type: "dots" }}
-              onClick={connectWallet}
-            >
-              连接钱包
-            </Button>
-          )}
 
           <Anchor
             component={Link}
