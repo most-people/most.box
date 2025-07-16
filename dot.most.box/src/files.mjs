@@ -65,7 +65,10 @@ export const registerFiles = (server, ipfs) => {
       const targetPath = `/${address}/${filename}`;
 
       // 将文件添加到IPFS
-      const fileAdded = await ipfs.add(buffer);
+      const fileAdded = await ipfs.add(buffer, {
+        cidVersion: 1,
+        rawLeaves: true,
+      });
 
       // 检查文件是否已存在，如果存在则先删除
       try {
