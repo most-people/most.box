@@ -319,7 +319,7 @@ export default function PageDot() {
   const offlineNodes = dotNodes.filter((node) => node.isOnline === false);
 
   return (
-    <Box id="page-dot">
+    <Box id="page-dot" py={64}>
       <AppHeader title="节点管理" />
 
       <Container size="lg" py="md">

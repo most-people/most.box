@@ -181,7 +181,7 @@ export default function Web3MegaPage() {
   };
 
   return (
-    <Box id="page-mega">
+    <Box id="page-mega" py={64} px={20}>
       <AppHeader title={`${networkConfig[network].name} 测试网`} />
 
       {!wallet ? (

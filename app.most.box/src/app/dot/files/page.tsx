@@ -200,7 +200,7 @@ export default function PageDotFiles() {
   }, [wallet]);
 
   return (
-    <Box id="page-dot-files">
+    <Box id="page-dot-files" py={64}>
       <AppHeader title="文件列表" />
 
       <Stack align="center" gap={0} p="md">

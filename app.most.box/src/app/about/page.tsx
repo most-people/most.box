@@ -1,5 +1,6 @@
 import { AppHeader } from "@/components/AppHeader";
-import { Box, Title, Text, Stack, Divider } from "@mantine/core";
+import { Box, Text, Stack } from "@mantine/core";
+import Link from "next/link";
 
 export default function PageAbout() {
   return (
@@ -7,7 +8,7 @@ export default function PageAbout() {
       <AppHeader title="关于" />
       <Stack gap="xl" p="md">
         <Box>
-          <Text size="lg" fw={500} mb="xs">
+          <Text size="lg" fw="bold" mb="xs">
             去中心化
           </Text>
           <Text>
@@ -16,7 +17,7 @@ export default function PageAbout() {
         </Box>
 
         <Box>
-          <Text size="lg" fw={500} mb="xs">
+          <Text size="lg" fw="bold" mb="xs">
             密码朋克
           </Text>
           <Text>
@@ -25,14 +26,16 @@ export default function PageAbout() {
         </Box>
 
         <Box>
-          <Text size="lg" fw={500} mb="xs">
+          <Text size="lg" fw="bold" mb="xs">
             论文
           </Text>
-          <Text c="dimmed">IPFS + Fastify + Smart Contracts = Fully DApp</Text>
+          <Link href="/about/thesis">
+            IPFS + Fastify + Smart Contracts = Fully DApp
+          </Link>
         </Box>
 
         <Box>
-          <Text size="lg" fw={500} mb="xs">
+          <Text size="lg" fw="bold" mb="xs">
             最后更新
           </Text>
           <Text c="dimmed">2025-07-17 00:39:11</Text>
