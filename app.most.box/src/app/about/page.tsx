@@ -1,11 +1,43 @@
 import { AppHeader } from "@/components/AppHeader";
-import { Box } from "@mantine/core";
+import { Box, Title, Text, Stack, Divider } from "@mantine/core";
 
 export default function PageAbout() {
   return (
-    <Box>
+    <Box py={64}>
       <AppHeader title="关于" />
-      <h1>About</h1>
+      <Stack gap="xl" p="md">
+        <Box>
+          <Text size="lg" fw={500} mb="xs">
+            去中心化
+          </Text>
+          <Text>
+            通俗地讲，就是每个人都是中心，每个人都可以连接并影响其他节点，这种扁平化、开源化、平等化的现象或结构。
+          </Text>
+        </Box>
+
+        <Box>
+          <Text size="lg" fw={500} mb="xs">
+            密码朋克
+          </Text>
+          <Text>
+            热衷于使用加密技术保护隐私的人们，他们相信通过技术而不是法律，才能真正保障个人信息的安全和自由。
+          </Text>
+        </Box>
+
+        <Box>
+          <Text size="lg" fw={500} mb="xs">
+            论文
+          </Text>
+          <Text c="dimmed">IPFS + Fastify + Smart Contracts = Fully DApp</Text>
+        </Box>
+
+        <Box>
+          <Text size="lg" fw={500} mb="xs">
+            最后更新
+          </Text>
+          <Text c="dimmed">2025-07-17 00:39:11</Text>
+        </Box>
+      </Stack>
     </Box>
   );
 }
