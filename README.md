@@ -1,3 +1,5 @@
+[Ubuntu 教程](/dot.most.box/readme.md) Windows 教程
+
 ## IPFS Desktop
 
 https://docs.ipfs.tech/install/ipfs-desktop/
@@ -30,6 +32,9 @@ https://docs.ipfs.tech/install/ipfs-desktop/
 Git
 https://git-scm.com/downloads
 
+Github Desktop
+https://desktop.github.com/download
+
 Node.js
 https://nodejs.org/en/download
 
@@ -45,18 +50,35 @@ git clone https://gitee.com/most-people/most.box.git
 # 安装 PM2
 npm install -g pm2
 
+# 进入目录
+cd ./dot.most.box/
+
+# 安装依赖
+npm install
+
 # 启动应用
 pm2 start src/index.mjs --name "dot"
 
 # 保存当前进程列表
 pm2 save
 
-# Windows
+# Windows 设置开机启动
 npm install pm2-windows-startup -g
 
-# 设置开机启动
+# 初始化
 pm2-startup install
 
-# Ubuntu
+# Ubuntu 设置开机启动
 pm2 startup
+```
+
+## 配置文件 .env
+
+```bash
+DOT_NAME=Test
+# 节点钱包私钥
+PRIVATE_KEY=0x0000000000000000000000000000000000000000000000000000000000000000
+# custom
+API_URL=http://xxx.xxx.xxx.xxx:1976
+CID_URL=
 ```

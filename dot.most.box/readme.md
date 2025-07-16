@@ -81,17 +81,6 @@ journalctl -u ipfs.service -n 100
 journalctl -u ipfs.service --since today
 ```
 
-配置文件 .env
-
-```bash
-DOT_NAME=Test
-# 节点钱包私钥
-PRIVATE_KEY=0x0000000000000000000000000000000000000000000000000000000000000000
-# custom
-API_URL=http://xxx.xxx.xxx.xxx:1976
-CID_URL=
-```
-
 ## Caddy 域名配置
 
 ### Caddyfile

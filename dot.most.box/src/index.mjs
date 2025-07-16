@@ -57,7 +57,7 @@ server.get("/TRNG", async () => {
   if (isRdrandSupported) {
     return rng.rdSeed64().toString(16);
   } else {
-    return 'not support'
+    return 'not support rdSeed'
   }
 });
 
@@ -75,7 +75,6 @@ const start = async () => {
 
     // 更新 IP 地址
     setInterval(() => {
-      console.log('定时更新IP地址...');
       mp.initIP();
     }, 60 * 60 * 1000); // 每1小时执行一次
   } catch (error) {
