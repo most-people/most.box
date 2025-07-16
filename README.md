@@ -1,3 +1,13 @@
+## 克隆
+
+```bash
+# Github
+git clone https://github.com/most-people/most.box.git
+
+# Gitee
+git clone https://gitee.com/most-people/most.box.git
+```
+
 ## IPFS Desktop
 
 https://docs.ipfs.tech/install/ipfs-desktop/
@@ -9,10 +19,12 @@ https://docs.ipfs.tech/install/ipfs-desktop/
 ```json
 {
   "Addresses": {
-    "Gateway": "/ip4/0.0.0.0/tcp/8080"
+    "Gateway": ["/ip4/0.0.0.0/tcp/8080", "/ip6/::/tcp/8080"]
   }
 }
 ```
+
+重启 - 任务栏 IPFS Desktop 右键 Restart
 
 ### 打开防火墙 1976,8080
 
@@ -22,63 +34,29 @@ C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup
 
 放入 IFPS Desktop 快捷方式
 
-## Caddy
-
-### Caddyfile
-
-```caddy
-cid.most.box {
-    reverse_proxy 127.0.0.1:8080
-}
-
-dot.most.box {
-    reverse_proxy 127.0.0.1:1976
-}
-```
-
-### [Windows 安装](https://caddyserver.com/download)
-
-下载 caddy_windows_amd64.exe 放在 C:\caddy\caddy.exe
-
-添加环境变量 C:\caddy
-
-```cmd
-# 查看版本
-caddy --version
-
-# 验证
-caddy validate --config C:\caddy\Caddyfile
-
-# 格式化
-caddy fmt --overwrite C:\caddy\Caddyfile
-
-# 启动
-caddy start --config C:\caddy\Caddyfile
-
-caddy status
-```
-
-### [Ubuntu 安装](https://caddyserver.com/docs/install#debian-ubuntu-raspbian)
+## PM2
 
 ```bash
-# 安装
-sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
-sudo apt update
-sudo apt install caddy
+# 安装 PM2
+npm install -g pm2
 
-# 查看版本
-caddy --version
+# 启动应用
+pm2 start src/index.mjs --name "dot"
 
-# 编辑
-sudo nano /etc/caddy/Caddyfile
-# 验证
-sudo caddy validate --config /etc/caddy/Caddyfile
-# 格式化
-sudo caddy fmt --overwrite /etc/caddy/Caddyfile
-# 重启
-sudo systemctl reload caddy
-# 查看
-sudo systemctl status caddy
+# 保存当前进程列表
+pm2 save
+
+# Windows
+npm install pm2-windows-startup -g
+
+# 设置开机启动
+pm2-startup install
+
+# Ubuntu
+pm2 startup
 ```
+
+Github Desktop
+https://desktop.github.com/download
+Node.js
+https://nodejs.org/en/download

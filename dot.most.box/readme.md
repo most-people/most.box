@@ -81,36 +81,6 @@ journalctl -u ipfs.service -n 100
 journalctl -u ipfs.service --since today
 ```
 
-公网 IPv6 访问
-
-```json
-{
-  "Gateway": ["/ip4/0.0.0.0/tcp/8080", "/ip6/::/tcp/8080"]
-}
-```
-
-PM2 开机自动启动
-
-```bash
-# Ubuntu
-pm2 startup
-
-# 安装 PM2
-npm install -g pm2
-
-# 启动应用（定时重启：每小时执行一次）
-pm2 start src/index.mjs --name "dot"
-
-# 保存当前进程列表
-pm2 save
-
-# Windows
-npm install pm2-windows-startup -g
-
-# 设置开机启动
-pm2-startup install
-```
-
 配置文件 .env
 
 ```bash
@@ -120,4 +90,65 @@ PRIVATE_KEY=0x0000000000000000000000000000000000000000000000000000000000000000
 # custom
 API_URL=http://xxx.xxx.xxx.xxx:1976
 CID_URL=
+```
+
+## Caddy 域名配置
+
+### Caddyfile
+
+```caddy
+cid.most.box {
+    reverse_proxy 127.0.0.1:8080
+}
+
+dot.most.box {
+    reverse_proxy 127.0.0.1:1976
+}
+```
+
+### [Windows 安装](https://caddyserver.com/download)
+
+下载 caddy_windows_amd64.exe 放在 C:\caddy\caddy.exe
+
+添加环境变量 C:\caddy
+
+```cmd
+# 查看版本
+caddy --version
+
+# 验证
+caddy validate --config C:\caddy\Caddyfile
+
+# 格式化
+caddy fmt --overwrite C:\caddy\Caddyfile
+
+# 启动
+caddy start --config C:\caddy\Caddyfile
+
+caddy status
+```
+
+### [Ubuntu 安装](https://caddyserver.com/docs/install#debian-ubuntu-raspbian)
+
+```bash
+# 安装
+sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+sudo apt update
+sudo apt install caddy
+
+# 查看版本
+caddy --version
+
+# 编辑
+sudo nano /etc/caddy/Caddyfile
+# 验证
+sudo caddy validate --config /etc/caddy/Caddyfile
+# 格式化
+sudo caddy fmt --overwrite /etc/caddy/Caddyfile
+# 重启
+sudo systemctl reload caddy
+# 查看
+sudo systemctl status caddy
 ```
