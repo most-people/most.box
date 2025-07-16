@@ -1,13 +1,3 @@
-## 克隆
-
-```bash
-# Github
-git clone https://github.com/most-people/most.box.git
-
-# Gitee
-git clone https://gitee.com/most-people/most.box.git
-```
-
 ## IPFS Desktop
 
 https://docs.ipfs.tech/install/ipfs-desktop/
@@ -30,9 +20,24 @@ https://docs.ipfs.tech/install/ipfs-desktop/
 
 ### 开机启动
 
-C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup
+1. C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup
+2. 放入 IFPS Desktop 快捷方式
 
-放入 IFPS Desktop 快捷方式
+## 克隆
+
+先安装
+
+Git
+https://git-scm.com/downloads
+
+Node.js
+https://nodejs.org/en/download
+
+```bash
+# 二选一
+git clone https://github.com/most-people/most.box.git
+git clone https://gitee.com/most-people/most.box.git
+```
 
 ## PM2
 
@@ -55,8 +60,3 @@ pm2-startup install
 # Ubuntu
 pm2 startup
 ```
-
-Github Desktop
-https://desktop.github.com/download
-Node.js
-https://nodejs.org/en/download
