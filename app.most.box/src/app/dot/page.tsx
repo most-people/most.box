@@ -21,6 +21,7 @@ import {
   ThemeIcon,
   Flex,
   TextInput,
+  Anchor,
 } from "@mantine/core";
 import { ethers } from "ethers";
 import { notifications } from "@mantine/notifications";
@@ -332,28 +333,30 @@ export default function PageDot() {
                 <p>已成功接入节点</p>
                 <Stack justify="center">
                   {ApiList.map((url, index) => (
-                    <a
+                    <Anchor
                       key={index}
+                      component={Link}
                       href={url}
                       target="_blank"
-                      rel="noopener noreferrer"
                     >
                       {url}
-                    </a>
+                    </Anchor>
                   ))}
                 </Stack>
               </>
             ) : (
               <>
                 <p>当前节点</p>
-                <a href={dotAPI} target="_blank" rel="noopener noreferrer">
+                <Anchor component={Link} href={dotAPI} target="_blank">
                   {dotAPI}
-                </a>
+                </Anchor>
               </>
             )}
             <p>為 全 人 類 徹 底 解 放 奮 鬥 終 身</p>
 
-            <Link href="/dot/files">查看我的文件</Link>
+            <Anchor component={Link} href="/dot/files">
+              查看我的文件
+            </Anchor>
 
             <Group mt="lg">
               <TextInput
@@ -599,17 +602,16 @@ export default function PageDot() {
                     {node.APIs.length > 0 && (
                       <Stack gap={2} align="flex-start">
                         {node.APIs.map((api, apiIndex) => (
-                          <Text
+                          <Anchor
                             key={apiIndex}
                             c="blue"
-                            component="a"
+                            component={Link}
                             href={api}
                             target="_blank"
-                            style={{ textDecoration: "none" }}
                             lineClamp={1}
                           >
                             {api}
-                          </Text>
+                          </Anchor>
                         ))}
                       </Stack>
                     )}
@@ -620,29 +622,27 @@ export default function PageDot() {
                       </Text>
                       <Group gap={2} align="flex-start">
                         {node.CIDs.map((cid, cidIndex) => (
-                          <Text
+                          <Anchor
                             key={cidIndex}
+                            component={Link}
                             c="blue"
-                            component="a"
                             href={cid + "/ipfs"}
                             target="_blank"
-                            style={{ textDecoration: "none" }}
                             lineClamp={1}
                           >
                             {cid + "/ipfs"}
-                          </Text>
+                          </Anchor>
                         ))}
                         {defaultCID(node) && (
-                          <Text
+                          <Anchor
                             c="blue"
-                            component="a"
-                            href={defaultCID(node)}
+                            component={Link}
+                            href={defaultCID(node) || ""}
                             target="_blank"
-                            style={{ textDecoration: "none" }}
                             lineClamp={1}
                           >
                             {defaultCID(node)}
-                          </Text>
+                          </Anchor>
                         )}
                       </Group>
                     </Box>
@@ -667,73 +667,67 @@ export default function PageDot() {
         )}
 
         <Group gap="xs" mt="lg" justify="center">
-          <Text
+          <Anchor
             size="sm"
             c="blue"
-            component="a"
+            component={Link}
             href="https://docs.base.org/chain/connecting-to-base"
             target="_blank"
-            style={{ textDecoration: "none" }}
           >
             官方 RPC
-          </Text>
+          </Anchor>
 
-          <Text
+          <Anchor
             size="sm"
             c="blue"
-            component="a"
+            component={Link}
             href="https://chainlist.org/chain/8453"
             target="_blank"
-            style={{ textDecoration: "none" }}
           >
             主网 RPC
-          </Text>
+          </Anchor>
 
-          <Text
+          <Anchor
             size="sm"
             c="blue"
-            component="a"
+            component={Link}
             href="https://chainlist.org/chain/84532"
             target="_blank"
-            style={{ textDecoration: "none" }}
           >
             测试网 RPC
-          </Text>
+          </Anchor>
 
-          <Text
+          <Anchor
             size="sm"
             c="blue"
-            component="a"
+            component={Link}
             href="https://docs.base.org/chain/network-faucets"
             target="_blank"
-            style={{ textDecoration: "none" }}
           >
             水龙头列表
-          </Text>
+          </Anchor>
 
-          <Text
+          <Anchor
             size="sm"
             c="blue"
-            component="a"
+            component={Link}
             href="https://portal.cdp.coinbase.com/products/faucet?projectId=0b869244-5000-43dd-8aba-c9feee07f6ab"
             target="_blank"
-            style={{ textDecoration: "none" }}
           >
             注册领水
-          </Text>
+          </Anchor>
 
-          <Text
+          <Anchor
             size="sm"
             c="blue"
-            component="a"
+            component={Link}
             href={
               Explorer + "/address/0xdc82cef1a8416210afb87caeec908a4df843f016"
             }
             target="_blank"
-            style={{ textDecoration: "none" }}
           >
             合约地址
-          </Text>
+          </Anchor>
         </Group>
       </Container>
     </Box>

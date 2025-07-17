@@ -12,6 +12,7 @@ import {
   Modal,
   ScrollArea,
   Center,
+  Anchor,
 } from "@mantine/core";
 import { api } from "@/constants/api";
 import "./files.scss";
@@ -206,9 +207,9 @@ export default function PageDotFiles() {
       <Stack align="center" gap={0} p="md">
         <Group gap={4}>
           <span>IPFS CID 浏览器</span>
-          <a href={dotCID + "/ipfs/"} target="_blank" rel="noopener noreferrer">
+          <Anchor component={Link} href={dotCID + "/ipfs/"} target="_blank">
             {dotCID + "/ipfs/"}
-          </a>
+          </Anchor>
         </Group>
       </Stack>
 

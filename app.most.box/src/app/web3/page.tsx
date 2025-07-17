@@ -29,9 +29,9 @@ export default function Web3Page() {
           旨在重塑互联网生态，将用户的控制权和数据所有权还给个人，推动更加公平和透明的人类社会发展。
         </Text>
 
-        <Link href="/web3/tools">
+        <Anchor component={Link} href="/web3/tools">
           <Text>工具集</Text>
-        </Link>
+        </Anchor>
 
         <Text size="lg" fw={500}>
           ETH 地址
@@ -60,13 +60,13 @@ export default function Web3Page() {
 
         <Divider my="md" />
 
-        <Link href="/web3/mega">
+        <Anchor component={Link} href="/web3/mega">
           <Text>Mega ETH</Text>
-        </Link>
-        <Anchor href="/trader">
+        </Anchor>
+        <Anchor component={Link} href="/trader">
           <Text>Trader</Text>
         </Anchor>
-        <Anchor href="/web3/ethers">
+        <Anchor component={Link} href="/web3/ethers">
           <Text>Ethers</Text>
         </Anchor>
       </Stack>
