@@ -138,11 +138,12 @@ const postIP = async (RPC) => {
 };
 
 const isOwner = (token) => {
-  const { PRIVATE_KEY } = process.env
+  const { PRIVATE_KEY } = process.env;
+  if (!PRIVATE_KEY) return false;
   const address = getAddress(token);
-  if (!address) return false 
+  if (!address) return false ;
   const wallet = new ethers.Wallet(PRIVATE_KEY);
-  return wallet.address === address
+  return wallet.address === address;
 }
 
 export default {

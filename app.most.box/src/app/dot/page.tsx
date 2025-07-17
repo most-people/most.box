@@ -588,7 +588,17 @@ export default function PageDot() {
                         style={{ flexShrink: 0 }}
                       />
                       <Text size="xs" c="dimmed">
-                        {mp.formatAddress(node.address)}
+                        {mp.formatAddress(node.address)}{" "}
+                        <Anchor
+                          component={Link}
+                          href={{
+                            pathname: "/dot/deploy",
+                            query: { address: node.address, api: node.APIs[0] },
+                          }}
+                          c="dimmed"
+                        >
+                          Deploy
+                        </Anchor>
                       </Text>
                     </Group>
 
