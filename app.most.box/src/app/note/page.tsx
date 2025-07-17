@@ -126,7 +126,7 @@ const NoteContent = () => {
       const name = params.get("name");
       if (uid && name) {
         api
-          .get(`/find.cid/${uid}/.note/${name}`)
+          .get(`/files.find.cid/${uid}/.note/${name}`)
           .then((res) => {
             const cid = res.data;
             if (cid) {

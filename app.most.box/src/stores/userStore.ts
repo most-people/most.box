@@ -56,7 +56,7 @@ export const useUserStore = create<State>((set, get) => ({
   async updateDot(url) {
     const dotAPI = new URL(url).origin;
     try {
-      const res = await api.get(dotAPI + "/dot", {
+      const res = await api.get(dotAPI + "/api.dot", {
         timeout: 3000,
       });
       const dot: Dot = res.data;

@@ -10,7 +10,7 @@ import archiver from "archiver";
  */
 export const registerFiles = (server, ipfs) => {
   // 查找 MFS 文件路径 CID
-  server.get("/find.cid/:uid/*", async (request) => {
+  server.get("/files.find.cid/:uid/*", async (request) => {
     const address = request.params["uid"] || "";
     const path = request.params["*"] || "";
     const fullPath = "/" + address.toLowerCase() + "/" + path;
@@ -120,7 +120,7 @@ export const registerFiles = (server, ipfs) => {
   });
 
   // 下载 CID
-  server.get("/files/download/directory/:cid", async (request, reply) => {
+  server.get("/files.download.directory/:cid", async (request, reply) => {
     const cid = request.params.cid;
 
     if (!cid) {
