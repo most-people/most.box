@@ -4,21 +4,24 @@ import { AppHeader } from "@/components/AppHeader";
 import { Blockquote, Button, Stack } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { BrowserProvider, getAddress } from "ethers";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { IconInfoCircle } from "@tabler/icons-react";
 import axios from "axios";
 
-const SignMessage = () => {
+interface Params {
+  address: string;
+  api: string;
+}
+
+const SignMessage = (params: Params) => {
   const router = useRouter();
-  const params = useSearchParams();
-  const api = params.get("api");
   const [signLoading, setSignLoading] = useState(false);
 
   const deploy = async (token: string) => {
     try {
       const res = await axios({
         method: "put",
-        url: api + "/api.deploy",
+        url: params.api + "/api.deploy",
         headers: {
           Authorization: token,
         },
@@ -79,11 +82,25 @@ const SignMessage = () => {
 };
 
 export default function PageDeploy() {
+  const router = useRouter();
   const [connectLoading, setConnectLoading] = useState(false);
   const [address, setAddress] = useState("");
-  const params = useSearchParams();
-  const dotAddress = params.get("address");
-  const api = params.get("api");
+  const params: Params = {
+    address: "",
+    api: "",
+  };
+
+  useEffect(() => {
+    const query = new URLSearchParams(window.location.search);
+    const address = query.get("address");
+    const api = query.get("api");
+    if (address && api) {
+      params.address = address;
+      params.api = api;
+    } else {
+      router.back();
+    }
+  }, []);
 
   const disconnect = () => {
     notifications.show({
@@ -143,7 +160,7 @@ export default function PageDeploy() {
     <Stack>
       <AppHeader title="更新节点代码" />
       <Blockquote icon={<IconInfoCircle />} mt="xl">
-        节点地址：{api}
+        节点地址：{params.api}
       </Blockquote>
 
       {address ? (
@@ -162,8 +179,8 @@ export default function PageDeploy() {
       )}
       {address && (
         <>
-          {dotAddress === address ? (
-            <SignMessage />
+          {params.api && params.address === address ? (
+            <SignMessage {...params} />
           ) : (
             <Blockquote
               color="gray"
@@ -171,7 +188,7 @@ export default function PageDeploy() {
               icon={<IconInfoCircle />}
               mt="xl"
             >
-              请连接钱包：{dotAddress}
+              请连接钱包：{params.address}
             </Blockquote>
           )}
         </>
