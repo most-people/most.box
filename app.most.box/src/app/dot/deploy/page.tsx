@@ -8,12 +8,7 @@ import { useRouter } from "next/navigation";
 import { IconInfoCircle } from "@tabler/icons-react";
 import axios from "axios";
 
-interface Params {
-  address: string;
-  api: string;
-}
-
-const SignMessage = (params: Params) => {
+const SignMessage = ({ dotApi }: { dotApi: string }) => {
   const router = useRouter();
   const [signLoading, setSignLoading] = useState(false);
 
@@ -21,7 +16,7 @@ const SignMessage = (params: Params) => {
     try {
       const res = await axios({
         method: "put",
-        url: params.api + "/api.deploy",
+        url: dotApi + "/api.deploy",
         headers: {
           Authorization: token,
         },
@@ -85,18 +80,16 @@ export default function PageDeploy() {
   const router = useRouter();
   const [connectLoading, setConnectLoading] = useState(false);
   const [address, setAddress] = useState("");
-  const params: Params = {
-    address: "",
-    api: "",
-  };
+  const [dotAddress, setDotAddress] = useState("");
+  const [dotApi, setDotApi] = useState("");
 
   useEffect(() => {
     const query = new URLSearchParams(window.location.search);
     const address = query.get("address");
     const api = query.get("api");
     if (address && api) {
-      params.address = address;
-      params.api = api;
+      setDotAddress(address);
+      setDotApi(api);
     } else {
       router.back();
     }
@@ -160,7 +153,7 @@ export default function PageDeploy() {
     <Stack>
       <AppHeader title="更新节点代码" />
       <Blockquote icon={<IconInfoCircle />} mt="xl">
-        节点地址：{params.api}
+        节点地址：{dotApi}
       </Blockquote>
 
       {address ? (
@@ -179,8 +172,8 @@ export default function PageDeploy() {
       )}
       {address && (
         <>
-          {params.api && params.address === address ? (
-            <SignMessage {...params} />
+          {dotApi && dotAddress === address ? (
+            <SignMessage dotApi={dotApi} />
           ) : (
             <Blockquote
               color="gray"
@@ -188,7 +181,7 @@ export default function PageDeploy() {
               icon={<IconInfoCircle />}
               mt="xl"
             >
-              请连接钱包：{params.address}
+              请连接钱包：{dotAddress}
             </Blockquote>
           )}
         </>
