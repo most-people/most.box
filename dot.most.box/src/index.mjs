@@ -7,8 +7,12 @@ import { create } from "kubo-rpc-client";
 import path from "path";
 import { fileURLToPath } from "url";
 import rng from "rdrand-lite";
+import { exec } from "child_process";
+import { promisify } from "util";
 import { registerFiles } from "./files.mjs";
 import mp from "./mp.mjs";
+
+const execAsync = promisify(exec);
 
 const isRdrandSupported = rng.isRrdrandSupported();
 
@@ -61,8 +65,7 @@ server.put("/api.deploy", async (request, reply) => {
   const log = [];
 
   try {
-    const projectRoot = path.join(__dirname, "../../..");
-
+    const projectRoot = path.join(__dirname, "../");
     // 1. Git Pull
     log.push("执行 git pull...");
     const { stdout: gitOut, stderr: gitErr } = await execAsync("git pull", {
