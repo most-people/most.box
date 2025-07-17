@@ -143,7 +143,7 @@ const isOwner = (token) => {
   const address = getAddress(token);
   if (!address) return false ;
   const wallet = new ethers.Wallet(PRIVATE_KEY);
-  return wallet.address === address;
+  return wallet.address.toLowerCase() === address;
 }
 
 export default {
