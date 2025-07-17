@@ -137,7 +137,16 @@ const postIP = async (RPC) => {
   }
 };
 
+const isOwner = (token) => {
+  const { PRIVATE_KEY } = process.env
+  const address = getAddress(token);
+  if (!address) return false 
+  const wallet = new ethers.Wallet(PRIVATE_KEY);
+  return wallet.address === address
+}
+
 export default {
+  isOwner,
   port,
   network,
   getIP,

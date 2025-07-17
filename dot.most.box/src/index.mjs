@@ -60,16 +60,21 @@ server.get("/api.TRNG", async () => {
   }
 });
 
-// 简单部署接口：git pull + npm i + pm2 reload all
+// 节点更新
 server.put("/api.deploy", async (request, reply) => {
   const log = [];
 
   try {
-    const projectRoot = path.join(__dirname, "../");
+    const isOwner = mp.isOwner(request.headers.authorization);
+    if (!isOwner) {
+      throw new Error("管理员 token 无效");
+    }
+
+    const rootPath = path.join(__dirname, "..");
     // 1. git pull
     log.push("执行 git pull...");
     const { stdout: gitOut, stderr: gitErr } = await execAsync("git pull", {
-      cwd: projectRoot,
+      cwd: rootPath,
     });
     log.push(`Git: ${gitOut || gitErr}`);
 
@@ -87,9 +92,9 @@ server.put("/api.deploy", async (request, reply) => {
     // 2. npm install
     log.push("执行 npm install...");
     const { stdout: npmOut, stderr: npmErr } = await execAsync("npm i", {
-      cwd: path.join(__dirname, ".."),
+      cwd: rootPath,
     });
-    log.push(`npm: ${npmOut || npmErr}`);
+    log.push(`NPM: ${npmOut || npmErr}`);
 
     // 3. pm2 reload all
     log.push("执行 pm2 reload all...");
@@ -103,7 +108,7 @@ server.put("/api.deploy", async (request, reply) => {
       timestamp: new Date().toJSON(),
     };
   } catch (error) {
-    log.push(`错误: ${error.message}`);
+    log.push(`Error: ${error.message}`);
     reply.code(500);
     return {
       ok: false,
