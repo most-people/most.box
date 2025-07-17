@@ -57,7 +57,7 @@ server.get("/api.TRNG", async () => {
 });
 
 // 简单部署接口：git pull + npm i + pm2 reload all
-server.post("/deploy", async (request, reply) => {
+server.put("/api.deploy", async (request, reply) => {
   const log = [];
 
   try {
