@@ -66,21 +66,32 @@ server.put("/api.deploy", async (request, reply) => {
 
   try {
     const projectRoot = path.join(__dirname, "../");
-    // 1. Git Pull
+    // 1. git pull
     log.push("执行 git pull...");
     const { stdout: gitOut, stderr: gitErr } = await execAsync("git pull", {
       cwd: projectRoot,
     });
     log.push(`Git: ${gitOut || gitErr}`);
 
-    // 2. npm Install
+    // 检查是否有更新
+    if (gitOut.includes("Already up")) {
+      log.push("代码已是最新版本，无需部署");
+      return {
+        ok: true,
+        message: "无需部署",
+        log,
+        timestamp: new Date().toJSON(),
+      };
+    }
+
+    // 2. npm install
     log.push("执行 npm install...");
     const { stdout: npmOut, stderr: npmErr } = await execAsync("npm i", {
       cwd: path.join(__dirname, ".."),
     });
     log.push(`npm: ${npmOut || npmErr}`);
 
-    // 3. PM2 Reload All
+    // 3. pm2 reload all
     log.push("执行 pm2 reload all...");
     const { stdout: pm2Out, stderr: pm2Err } = execAsync("pm2 reload all");
     log.push(`PM2: ${pm2Out || pm2Err}`);
