@@ -82,9 +82,7 @@ server.put("/api.deploy", async (request, reply) => {
 
     // 3. PM2 Reload All
     log.push("执行 pm2 reload all...");
-    const { stdout: pm2Out, stderr: pm2Err } = await execAsync(
-      "pm2 reload all"
-    );
+    const { stdout: pm2Out, stderr: pm2Err } = execAsync("pm2 reload all");
     log.push(`PM2: ${pm2Out || pm2Err}`);
     log.push("部署完成！");
     return {
