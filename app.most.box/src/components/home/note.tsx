@@ -12,7 +12,12 @@ import {
   Modal,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
-import { IconPlus, IconRefresh } from "@tabler/icons-react";
+import {
+  IconDotsVertical,
+  IconPlus,
+  IconRefresh,
+  IconX,
+} from "@tabler/icons-react";
 import { api } from "@/constants/api";
 import { useUserStore } from "@/stores/userStore";
 import Link from "next/link";
@@ -199,22 +204,27 @@ export default function HomeNote() {
                     key={note.name}
                     span={{ base: 12, xs: 6, sm: 4, md: 3, lg: 3, xl: 2 }}
                   >
-                    <Card
-                      radius="md"
-                      withBorder
-                      component={Link}
-                      href={{
-                        pathname: "/note",
-                        hash: note.cid,
-                        query: {
-                          uid: wallet.address,
-                          name: note.name,
-                        },
-                      }}
-                    >
-                      <Text fw={500} lineClamp={1}>
-                        {note.name}
-                      </Text>
+                    <Card radius="md" withBorder>
+                      <Group justify="space-between" wrap="nowrap" gap={2}>
+                        <Text
+                          fw={500}
+                          lineClamp={1}
+                          component={Link}
+                          href={{
+                            pathname: "/note",
+                            hash: note.cid,
+                            query: {
+                              uid: wallet.address,
+                              name: note.name,
+                            },
+                          }}
+                        >
+                          {note.name}
+                        </Text>
+                        <ActionIcon variant="subtle" color="gary">
+                          <IconDotsVertical size={14} />
+                        </ActionIcon>
+                      </Group>
                     </Card>
                   </Grid.Col>
                 ))}
