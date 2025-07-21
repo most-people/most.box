@@ -11,6 +11,7 @@ import {
   Card,
   Modal,
   Menu,
+  Tooltip,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { IconDotsVertical, IconPlus, IconRefresh } from "@tabler/icons-react";
@@ -289,9 +290,11 @@ export default function HomeNote() {
               个笔记
             </Badge>
             <Group>
-              <ActionIcon size="lg" onClick={openNoteModal} color="green">
-                <IconPlus size={18} />
-              </ActionIcon>
+              <Tooltip label="新笔记">
+                <ActionIcon size="lg" onClick={openNoteModal} color="green">
+                  <IconPlus size={18} />
+                </ActionIcon>
+              </Tooltip>
             </Group>
           </Group>
           {/* 搜索框 */}
@@ -396,12 +399,17 @@ export default function HomeNote() {
             {loading ? "正在加载" : "暂无笔记"}
           </Text>
           <Group>
-            <ActionIcon size="lg" onClick={fetchNotes} color="blue">
-              <IconRefresh size={18} />
-            </ActionIcon>
-            <ActionIcon size="lg" onClick={openNoteModal} color="green">
-              <IconPlus size={18} />
-            </ActionIcon>
+            <Tooltip label="刷新">
+              <ActionIcon size="lg" onClick={fetchNotes} color="blue">
+                <IconRefresh size={18} />
+              </ActionIcon>
+            </Tooltip>
+
+            <Tooltip label="新笔记">
+              <ActionIcon size="lg" onClick={openNoteModal} color="green">
+                <IconPlus size={18} />
+              </ActionIcon>
+            </Tooltip>
           </Group>
         </Stack>
       )}

@@ -12,11 +12,17 @@ import {
   Center,
   Anchor,
   Box,
+  Tooltip,
 } from "@mantine/core";
 import { api } from "@/constants/api";
 import "./disk.scss";
 import Link from "next/link";
-import { IconUpload, IconFolderPlus, IconX } from "@tabler/icons-react";
+import {
+  IconUpload,
+  IconFolderPlus,
+  IconX,
+  IconRefresh,
+} from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { FileItem, useUserStore } from "@/stores/userStore";
 
@@ -232,25 +238,36 @@ export default function HomeDisk() {
           onChange={handleFileChange}
         />
 
-        <Group mb="md" gap="sm">
-          <ActionIcon
-            variant="filled"
-            color="blue"
-            size="lg"
-            onClick={handleFolderUpload}
-            disabled={uploading}
-          >
-            <IconFolderPlus />
-          </ActionIcon>
-          <ActionIcon
-            variant="filled"
-            color="green"
-            size="lg"
-            onClick={handleFileUpload}
-            disabled={uploading}
-          >
-            <IconUpload />
-          </ActionIcon>
+        <Group mb="md" justify="space-between">
+          <Group gap="sm">
+            <Tooltip label="刷新">
+              <ActionIcon color="blue" size="lg" onClick={fetchFiles}>
+                <IconRefresh />
+              </ActionIcon>
+            </Tooltip>
+
+            <Tooltip label="上传文件">
+              <ActionIcon
+                color="green"
+                size="lg"
+                onClick={handleFileUpload}
+                disabled={uploading}
+              >
+                <IconUpload />
+              </ActionIcon>
+            </Tooltip>
+          </Group>
+
+          <Tooltip label="上传文件夹">
+            <ActionIcon
+              color="yellow"
+              size="lg"
+              onClick={handleFolderUpload}
+              disabled={uploading}
+            >
+              <IconFolderPlus />
+            </ActionIcon>
+          </Tooltip>
         </Group>
 
         {/* 文件预览模态框 */}
@@ -355,7 +372,7 @@ export default function HomeDisk() {
           </Paper>
         ))}
         {files?.length === 0 && (
-          <Text ta="center" c="dimmed">
+          <Text ta="center" size="lg" c="dimmed">
             暂无文件
           </Text>
         )}
