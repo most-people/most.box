@@ -12,7 +12,7 @@ import {
   Modal,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
-import { IconPlus, IconRefresh, IconX } from "@tabler/icons-react";
+import { IconPlus, IconRefresh, IconSearch, IconX } from "@tabler/icons-react";
 import { api } from "@/constants/api";
 import { useUserStore } from "@/stores/userStore";
 import Link from "next/link";
@@ -140,130 +140,118 @@ export default function HomeNote() {
     );
   }
 
-  if (!notes.length) {
-    return (
-      <Stack align="center" justify="center" h={200}>
-        <Text size="lg" c="dimmed">
-          {loading ? "正在加载" : "暂无笔记"}
-        </Text>
-        <Group>
-          <ActionIcon size="lg" onClick={fetchNotes}>
-            <IconRefresh size={18} />
-          </ActionIcon>
-          <ActionIcon
-            size="lg"
-            onClick={openNoteModal}
-            variant="filled"
-            color="blue"
-          >
-            <IconPlus size={18} />
-          </ActionIcon>
-        </Group>
-      </Stack>
-    );
-  }
-
   return (
-    <Stack gap="md" p="md" className="note-box">
-      <Group justify="space-between" align="center">
-        <Badge variant="light" size="lg">
-          {searchQuery
-            ? `显示 ${displayedNotes.length} / ${filteredNotes.length} (总共 ${notes.length})`
-            : `显示 ${displayedNotes.length} / ${notes.length}`}{" "}
-          个笔记
-        </Badge>
-      </Group>
-      {/* 搜索框 */}
-      <Center>
-        <TextInput
-          placeholder="搜索笔记名称..."
-          value={searchQuery}
-          onChange={(event) => setSearchQuery(event.currentTarget.value)}
-          // leftSection={<IconSearch size={16} />}
-          rightSection={
-            searchQuery ? (
-              <IconX
-                size={16}
-                style={{ cursor: "pointer" }}
-                onClick={() => setSearchQuery("")}
-              />
-            ) : null
-          }
-          size="md"
-          radius="md"
-          w={400}
-          styles={{
-            input: {
-              textAlign: "center",
-            },
-          }}
-        />
-      </Center>
+    <>
+      {notes.length ? (
+        <Stack gap="md" p="md" className="note-box">
+          <Group justify="space-between" align="center">
+            <Badge variant="light" size="lg">
+              {searchQuery
+                ? `显示 ${displayedNotes.length} / ${filteredNotes.length} (总共 ${notes.length})`
+                : `显示 ${displayedNotes.length} / ${notes.length}`}{" "}
+              个笔记
+            </Badge>
+          </Group>
+          {/* 搜索框 */}
+          <Center>
+            <TextInput
+              placeholder="搜索笔记名称"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.currentTarget.value)}
+              size="md"
+              radius="md"
+              w={400}
+              styles={{
+                input: {
+                  textAlign: "center",
+                },
+              }}
+            />
+          </Center>
 
-      {/* 搜索结果为空时的提示 */}
-      {searchQuery && filteredNotes.length === 0 ? (
-        <Stack align="center" justify="center" h={200}>
-          <Text size="lg" c="dimmed">
-            未找到笔记
-          </Text>
-          <Text size="sm" c="dimmed">
-            尝试用其他关键词搜索
-          </Text>
-        </Stack>
-      ) : (
-        <>
-          <Grid gutter="md">
-            {displayedNotes.map((note) => (
-              <Grid.Col
-                key={note.name}
-                span={{ base: 12, xs: 6, sm: 4, md: 3, lg: 3, xl: 2 }}
-              >
-                <Card
-                  shadow="sm"
-                  padding="lg"
-                  radius="md"
-                  withBorder
-                  className="note-card"
-                  component={Link}
-                  href={{
-                    pathname: "/note",
-                    hash: note.cid,
-                    query: {
-                      uid: wallet.address,
-                      name: note.name,
-                    },
-                  }}
-                >
-                  <Stack justify="space-between" h="100%">
-                    <Text
-                      fw={500}
-                      size="sm"
-                      lineClamp={1}
-                      title={note.name}
-                      style={{
-                        wordBreak: "break-word",
-                        lineHeight: 1.4,
+          {/* 搜索结果为空时的提示 */}
+          {searchQuery && filteredNotes.length === 0 ? (
+            <Stack align="center" justify="center" h={200}>
+              <Text size="lg" c="dimmed">
+                未找到笔记
+              </Text>
+              <Text size="sm" c="dimmed">
+                尝试用其他关键词搜索
+              </Text>
+            </Stack>
+          ) : (
+            <>
+              <Grid gutter="md">
+                {displayedNotes.map((note) => (
+                  <Grid.Col
+                    key={note.name}
+                    span={{ base: 12, xs: 6, sm: 4, md: 3, lg: 3, xl: 2 }}
+                  >
+                    <Card
+                      shadow="sm"
+                      padding="lg"
+                      radius="md"
+                      withBorder
+                      className="note-card"
+                      component={Link}
+                      href={{
+                        pathname: "/note",
+                        hash: note.cid,
+                        query: {
+                          uid: wallet.address,
+                          name: note.name,
+                        },
                       }}
                     >
-                      {note.name}
-                    </Text>
-                  </Stack>
-                </Card>
-              </Grid.Col>
-            ))}
-          </Grid>
+                      <Stack justify="space-between" h="100%">
+                        <Text
+                          fw={500}
+                          size="sm"
+                          lineClamp={1}
+                          title={note.name}
+                          style={{
+                            wordBreak: "break-word",
+                            lineHeight: 1.4,
+                          }}
+                        >
+                          {note.name}
+                        </Text>
+                      </Stack>
+                    </Card>
+                  </Grid.Col>
+                ))}
+              </Grid>
 
-          {hasMore && (
-            <Center mt="lg">
-              <Button variant="light" onClick={loadMore} size="md">
-                继续加载 ({filteredNotes.length - displayCount} 个剩余)
-              </Button>
-            </Center>
+              {hasMore && (
+                <Center mt="lg">
+                  <Button variant="light" onClick={loadMore} size="md">
+                    继续加载 ({filteredNotes.length - displayCount} 个剩余)
+                  </Button>
+                </Center>
+              )}
+            </>
           )}
-        </>
+        </Stack>
+      ) : (
+        <Stack align="center" justify="center" h={200}>
+          <Text size="lg" c="dimmed">
+            {loading ? "正在加载" : "暂无笔记"}
+          </Text>
+          <Group>
+            <ActionIcon size="lg" onClick={fetchNotes}>
+              <IconRefresh size={18} />
+            </ActionIcon>
+            <ActionIcon
+              size="lg"
+              onClick={openNoteModal}
+              variant="filled"
+              color="blue"
+            >
+              <IconPlus size={18} />
+            </ActionIcon>
+          </Group>
+        </Stack>
       )}
-
-      {/* 添加笔记弹窗 */}
       <Modal
         opened={noteModalOpened}
         onClose={closeModal}
@@ -292,6 +280,6 @@ export default function HomeNote() {
           </Group>
         </Stack>
       </Modal>
-    </Stack>
+    </>
   );
 }
