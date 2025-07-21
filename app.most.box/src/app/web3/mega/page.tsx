@@ -190,22 +190,20 @@ export default function Web3MegaPage() {
         </Button>
       ) : (
         <>
-          <div style={{ marginBottom: "15px" }}>
-            <Button.Group>
-              <Button
-                variant={network === "mega" ? "filled" : "outline"}
-                onClick={() => setNetwork("mega")}
-              >
-                Mega ETH
-              </Button>
-              <Button
-                variant={network === "monad" ? "filled" : "outline"}
-                onClick={() => setNetwork("monad")}
-              >
-                Monad
-              </Button>
-            </Button.Group>
-          </div>
+          <Button.Group mt={20}>
+            <Button
+              variant={network === "mega" ? "filled" : "outline"}
+              onClick={() => setNetwork("mega")}
+            >
+              Mega ETH
+            </Button>
+            <Button
+              variant={network === "monad" ? "filled" : "outline"}
+              onClick={() => setNetwork("monad")}
+            >
+              Monad
+            </Button>
+          </Button.Group>
 
           {getCurrentSigner() && (
             <p>

@@ -325,7 +325,7 @@ export default function PageDot() {
 
       <Container size="lg" py="md">
         {/* 当前节点信息区域 */}
-        <Paper shadow="sm" p="lg" radius="md" mb="lg">
+        <Box mb="lg">
           <Stack className="container" align="center" gap={0}>
             <h1>DOT.MOST.BOX</h1>
             {ApiList.length > 0 ? (
@@ -338,6 +338,7 @@ export default function PageDot() {
                       component={Link}
                       href={url}
                       target="_blank"
+                      lineClamp={1}
                     >
                       {url}
                     </Anchor>
@@ -354,8 +355,9 @@ export default function PageDot() {
             )}
             <p>為 全 人 類 徹 底 解 放 奮 鬥 終 身</p>
 
-            <Group mt="lg">
+            <Group mt="lg" justify="space-between">
               <TextInput
+                flex={1}
                 leftSection={<IconWorldWww />}
                 value={apiURL}
                 onChange={(event) => setApiURL(event.currentTarget.value)}
@@ -366,10 +368,10 @@ export default function PageDot() {
               </Button>
             </Group>
           </Stack>
-        </Paper>
+        </Box>
 
         {/* 节点列表控制区域 */}
-        <Paper shadow="sm" p="lg" radius="md" mb="lg">
+        <Box mb="lg">
           <Flex justify="space-between" align="center" wrap="wrap" gap="md">
             <Group>
               <ThemeIcon size={40} radius="md" variant="light" color="blue">
@@ -433,7 +435,7 @@ export default function PageDot() {
               </Button>
             </Group>
           </Flex>
-        </Paper>
+        </Box>
 
         {/* 节点列表 */}
         {loading ? (

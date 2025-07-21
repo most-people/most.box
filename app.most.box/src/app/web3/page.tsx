@@ -19,7 +19,7 @@ export default function Web3Page() {
   const [showX25519, setShowX25519] = useState(false);
 
   return (
-    <Container>
+    <Container pt={64}>
       <AppHeader title="Web3" />
       <Stack gap="md">
         <Text size="lg" fw={500}>
