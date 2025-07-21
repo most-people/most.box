@@ -38,9 +38,9 @@ export default function HomeNote() {
   const [createLoading, setCreateLoading] = useState(false);
 
   // 过滤笔记列表
-  const filteredNotes = notes.filter((note) =>
-    mp.pinyin(note.name, searchQuery, 0)
-  );
+  const filteredNotes = notes
+    ? notes.filter((note) => mp.pinyin(note.name, searchQuery, 0))
+    : [];
 
   // 获取当前显示的笔记列表
   const displayedNotes = filteredNotes.slice(0, displayCount);
@@ -88,7 +88,7 @@ export default function HomeNote() {
     }
 
     // 检查是否已存在同名笔记
-    if (notes.some((note) => note.name === name)) {
+    if (notes?.some((note) => note.name === name)) {
       setNoteNameError("笔记名称已存在");
       return;
     }
@@ -132,10 +132,10 @@ export default function HomeNote() {
   };
 
   useEffect(() => {
-    if (wallet) {
+    if (wallet && !notes) {
       fetchNotes();
     }
-  }, [wallet]);
+  }, [wallet, notes]);
 
   if (!wallet) {
     return (
@@ -149,7 +149,7 @@ export default function HomeNote() {
 
   return (
     <>
-      {notes.length ? (
+      {notes?.length ? (
         <Stack gap="md" p="md" className="note-box">
           <Group justify="space-between" align="center">
             <Badge variant="light" size="lg">

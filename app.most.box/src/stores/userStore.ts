@@ -39,8 +39,8 @@ interface UserStore {
   dotAPI: string;
   dotCID: string;
   dotNodes: DotNode[];
-  notes: Note[];
-  files: FileItem[];
+  notes?: Note[];
+  files?: FileItem[];
 }
 
 interface State extends UserStore {
@@ -58,7 +58,7 @@ export const useUserStore = create<State>((set, get) => ({
         mp.createToken(wallet);
         set({ wallet });
       } else {
-        // get().exit();
+        get().exit();
       }
     }
   },
@@ -100,13 +100,13 @@ export const useUserStore = create<State>((set, get) => ({
   dotAPI: DotAPI,
   dotCID: DotCID,
   dotNodes: [],
-  notes: [],
-  files: [],
+  notes: undefined,
+  files: undefined,
   exit() {
     set({
       wallet: undefined,
-      notes: [],
-      files: [],
+      notes: undefined,
+      files: undefined,
     });
     localStorage.removeItem("jwt");
     localStorage.removeItem("jwtSecret");

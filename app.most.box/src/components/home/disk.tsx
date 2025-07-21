@@ -187,10 +187,10 @@ export default function HomeDisk() {
   };
 
   useEffect(() => {
-    if (wallet) {
+    if (wallet && !files) {
       fetchFiles();
     }
-  }, [wallet]);
+  }, [wallet, files]);
 
   if (!wallet) {
     return (
@@ -317,7 +317,7 @@ export default function HomeDisk() {
           </Stack>
         </Modal>
 
-        {files.map((item, index) => (
+        {files?.map((item, index) => (
           <Paper key={index} p="md" withBorder radius="md">
             <Group justify="space-between" align="center">
               <Group align="center">
@@ -353,7 +353,7 @@ export default function HomeDisk() {
             </Group>
           </Paper>
         ))}
-        {files.length === 0 && (
+        {files?.length === 0 && (
           <Text ta="center" c="dimmed">
             暂无文件
           </Text>

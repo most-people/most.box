@@ -15,9 +15,9 @@ export default function HomeMine() {
   const exit = useUserStore((state) => state.exit);
 
   const quit = () => {
-    setTimeout(() => {
+    if (wallet) {
       exit();
-    }, 1000);
+    }
   };
   return (
     <>
