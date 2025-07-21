@@ -1,8 +1,6 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
-import { AppHeader } from "@/components/AppHeader";
 import {
-  Box,
   Text,
   Group,
   Stack,

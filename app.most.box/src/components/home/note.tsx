@@ -12,7 +12,7 @@ import {
   Modal,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
-import { IconPlus, IconRefresh, IconSearch, IconX } from "@tabler/icons-react";
+import { IconPlus, IconRefresh } from "@tabler/icons-react";
 import { api } from "@/constants/api";
 import { useUserStore } from "@/stores/userStore";
 import Link from "next/link";
@@ -158,9 +158,11 @@ export default function HomeNote() {
                 : `显示 ${displayedNotes.length} / ${notes.length}`}{" "}
               个笔记
             </Badge>
-            <ActionIcon size="lg" onClick={openNoteModal}>
-              <IconPlus size={18} />
-            </ActionIcon>
+            <Group>
+              <ActionIcon size="lg" onClick={openNoteModal} color="green">
+                <IconPlus size={18} />
+              </ActionIcon>
+            </Group>
           </Group>
           {/* 搜索框 */}
           <Center>
@@ -198,11 +200,8 @@ export default function HomeNote() {
                     span={{ base: 12, xs: 6, sm: 4, md: 3, lg: 3, xl: 2 }}
                   >
                     <Card
-                      shadow="sm"
-                      padding="lg"
                       radius="md"
                       withBorder
-                      className="note-card"
                       component={Link}
                       href={{
                         pathname: "/note",
@@ -213,20 +212,9 @@ export default function HomeNote() {
                         },
                       }}
                     >
-                      <Stack justify="space-between" h="100%">
-                        <Text
-                          fw={500}
-                          size="sm"
-                          lineClamp={1}
-                          title={note.name}
-                          style={{
-                            wordBreak: "break-word",
-                            lineHeight: 1.4,
-                          }}
-                        >
-                          {note.name}
-                        </Text>
-                      </Stack>
+                      <Text fw={500} lineClamp={1}>
+                        {note.name}
+                      </Text>
                     </Card>
                   </Grid.Col>
                 ))}
@@ -248,15 +236,10 @@ export default function HomeNote() {
             {loading ? "正在加载" : "暂无笔记"}
           </Text>
           <Group>
-            <ActionIcon size="lg" onClick={fetchNotes}>
+            <ActionIcon size="lg" onClick={fetchNotes} color="blue">
               <IconRefresh size={18} />
             </ActionIcon>
-            <ActionIcon
-              size="lg"
-              onClick={openNoteModal}
-              variant="filled"
-              color="blue"
-            >
+            <ActionIcon size="lg" onClick={openNoteModal} color="green">
               <IconPlus size={18} />
             </ActionIcon>
           </Group>
