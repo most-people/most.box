@@ -10,16 +10,12 @@ import {
   Grid,
   Card,
   Modal,
+  Menu,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
-import {
-  IconDotsVertical,
-  IconPlus,
-  IconRefresh,
-  IconX,
-} from "@tabler/icons-react";
+import { IconDotsVertical, IconPlus, IconRefresh } from "@tabler/icons-react";
 import { api } from "@/constants/api";
-import { useUserStore } from "@/stores/userStore";
+import { Note, useUserStore } from "@/stores/userStore";
 import Link from "next/link";
 import "./note.scss";
 import mp from "@/constants/mp";
@@ -41,6 +37,28 @@ export default function HomeNote() {
   const [noteName, setNoteName] = useState("");
   const [noteNameError, setNoteNameError] = useState("");
   const [createLoading, setCreateLoading] = useState(false);
+
+  // 添加重命名相关状态
+  const [
+    renameModalOpened,
+    { open: openRenameModal, close: closeRenameModal },
+  ] = useDisclosure(false);
+  const [currentNote, setCurrentNote] = useState<{
+    name: string;
+    cid: string;
+  } | null>(null);
+  const [newNoteName, setNewNoteName] = useState("");
+  const [renameError, setRenameError] = useState("");
+  const [renameLoading, setRenameLoading] = useState(false);
+
+  const shareUrl = (note: Note) => {
+    const shareUrl = new URL(window.location.origin);
+    shareUrl.pathname = "/note";
+    shareUrl.searchParams.set("uid", wallet?.address || "");
+    shareUrl.searchParams.set("name", note.name);
+    shareUrl.hash = note.cid;
+    return shareUrl.href;
+  };
 
   // 过滤笔记列表
   const filteredNotes = notes
@@ -129,11 +147,114 @@ export default function HomeNote() {
     }
   };
 
+  // 重命名笔记函数
+  const handleRename = (note: Note) => {
+    setCurrentNote(note);
+    setNewNoteName(note.name);
+    setRenameError("");
+    openRenameModal();
+  };
+  const handleOpen = (note: Note) => {
+    const url = shareUrl(note);
+    window.open(url);
+  };
+
+  // 执行重命名
+  const executeRename = async () => {
+    if (!currentNote) return;
+
+    const name = newNoteName.trim();
+    if (!name) {
+      setRenameError("请输入笔记名称");
+      return;
+    }
+
+    if (name === currentNote.name) {
+      closeRenameModal();
+      return;
+    }
+
+    if (notes?.some((note) => note.name === name)) {
+      setRenameError("笔记名称已存在");
+      return;
+    }
+
+    try {
+      setRenameLoading(true);
+      // 这里添加重命名的API调用
+      // await api.post("/files/rename", { oldName: currentNote.name, newName: name });
+
+      notifications.show({
+        color: "green",
+        message: "重命名成功",
+      });
+
+      await fetchNotes();
+      closeRenameModal();
+    } catch (error) {
+      notifications.show({
+        color: "red",
+        message: error instanceof Error ? error.message : "重命名失败",
+      });
+    } finally {
+      setRenameLoading(false);
+    }
+  };
+
+  // 删除笔记函数
+  const handleDelete = async (note: Note) => {
+    if (confirm(`确定要删除笔记"${note.name}"吗？此操作不可撤销。`)) {
+      try {
+        // 这里添加删除的API调用
+        await api.delete(`/files/.note/${note.name}`);
+
+        notifications.show({
+          color: "green",
+          message: "删除成功",
+        });
+
+        await fetchNotes();
+      } catch (error) {
+        notifications.show({
+          color: "red",
+          message: error instanceof Error ? error.message : "删除失败",
+        });
+      }
+    }
+  };
+
+  // 分享笔记函数
+  const handleShare = (note: Note) => {
+    const url = shareUrl(note);
+
+    if (navigator.share) {
+      navigator.share({
+        title: `笔记: ${note.name}`,
+        url,
+      });
+    } else {
+      navigator.clipboard.writeText(url).then(() => {
+        notifications.show({
+          color: "green",
+          message: "分享链接已复制到剪贴板",
+        });
+      });
+    }
+  };
+
   // 重置弹窗状态
   const closeModal = () => {
     setNoteName("");
     setNoteNameError("");
     closeNoteModal();
+  };
+
+  // 重置重命名弹窗状态
+  const closeRenameModalAndReset = () => {
+    setCurrentNote(null);
+    setNewNoteName("");
+    setRenameError("");
+    closeRenameModal();
   };
 
   useEffect(() => {
@@ -210,20 +331,45 @@ export default function HomeNote() {
                           fw={500}
                           lineClamp={1}
                           component={Link}
-                          href={{
-                            pathname: "/note",
-                            hash: note.cid,
-                            query: {
-                              uid: wallet.address,
-                              name: note.name,
-                            },
-                          }}
+                          href={shareUrl(note)}
                         >
                           {note.name}
                         </Text>
-                        <ActionIcon variant="subtle" color="gary">
-                          <IconDotsVertical size={14} />
-                        </ActionIcon>
+                        <Menu shadow="md" width={120}>
+                          <Menu.Target>
+                            <ActionIcon variant="subtle" color="gary">
+                              <IconDotsVertical size={14} />
+                            </ActionIcon>
+                          </Menu.Target>
+
+                          <Menu.Dropdown>
+                            <Menu.Item
+                              leftSection={<span>📖</span>}
+                              onClick={() => handleOpen(note)}
+                            >
+                              打开
+                            </Menu.Item>
+                            <Menu.Item
+                              leftSection={<span>✏️</span>}
+                              onClick={() => handleRename(note)}
+                            >
+                              重命名
+                            </Menu.Item>
+                            <Menu.Item
+                              leftSection={<span>📤</span>}
+                              onClick={() => handleShare(note)}
+                            >
+                              分享
+                            </Menu.Item>
+                            <Menu.Divider />
+                            <Menu.Item
+                              leftSection={<span>🗑️</span>}
+                              onClick={() => handleDelete(note)}
+                            >
+                              删除
+                            </Menu.Item>
+                          </Menu.Dropdown>
+                        </Menu>
                       </Group>
                     </Card>
                   </Grid.Col>
@@ -231,7 +377,7 @@ export default function HomeNote() {
               </Grid>
 
               {hasMore && (
-                <Center mt="lg">
+                <Center>
                   <Button variant="light" onClick={loadMore} size="md">
                     继续加载 ({filteredNotes.length - displayCount} 个剩余)
                   </Button>
@@ -255,6 +401,8 @@ export default function HomeNote() {
           </Group>
         </Stack>
       )}
+
+      {/* 创建笔记弹窗 */}
       <Modal
         opened={noteModalOpened}
         onClose={closeModal}
@@ -279,6 +427,36 @@ export default function HomeNote() {
             </Button>
             <Button loading={createLoading} onClick={createNote}>
               创建
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      {/* 重命名弹窗 */}
+      <Modal
+        opened={renameModalOpened}
+        onClose={closeRenameModalAndReset}
+        title="重命名笔记"
+        centered
+      >
+        <Stack gap="md">
+          <TextInput
+            placeholder="请输入新的笔记名称"
+            value={newNoteName}
+            onChange={(event) => {
+              setNewNoteName(event.currentTarget.value);
+              setRenameError("");
+            }}
+            error={renameError}
+            autoFocus
+          />
+
+          <Group justify="flex-end">
+            <Button variant="default" onClick={closeRenameModalAndReset}>
+              取消
+            </Button>
+            <Button loading={renameLoading} onClick={executeRename}>
+              确认
             </Button>
           </Group>
         </Stack>
