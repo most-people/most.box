@@ -208,7 +208,7 @@ export const registerFiles = (server, ipfs) => {
       // 检查原文件是否存在
       try {
         await ipfs.files.stat(oldPath);
-      } catch (error) {
+      } catch {
         return reply.code(404).send("原文件不存在");
       }
 
@@ -216,7 +216,7 @@ export const registerFiles = (server, ipfs) => {
       try {
         await ipfs.files.stat(newPath);
         return reply.code(409).send("新文件名已存在");
-      } catch (error) {
+      } catch {
         // 文件不存在，可以继续重命名
       }
 
