@@ -53,7 +53,7 @@ export default function HomeNote() {
 
   const shareUrl = (note: Note) => {
     const shareUrl = new URL(window.location.origin);
-    shareUrl.pathname = "/note";
+    shareUrl.pathname = "/note/";
     shareUrl.searchParams.set("uid", wallet?.address || "");
     shareUrl.searchParams.set("name", note.name);
     shareUrl.hash = note.cid;
@@ -154,6 +154,7 @@ export default function HomeNote() {
     setRenameError("");
     openRenameModal();
   };
+
   const handleOpen = (note: Note) => {
     const url = shareUrl(note);
     window.open(url);
@@ -182,7 +183,10 @@ export default function HomeNote() {
     try {
       setRenameLoading(true);
       // 这里添加重命名的API调用
-      // await api.post("/files/rename", { oldName: currentNote.name, newName: name });
+      await api.post("/files/rename", {
+        oldName: currentNote.name,
+        newName: name,
+      });
 
       notifications.show({
         color: "green",

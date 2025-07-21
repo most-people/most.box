@@ -183,4 +183,54 @@ export const registerFiles = (server, ipfs) => {
       return reply.code(500).send("下载失败: " + error.message);
     }
   });
+
+  // 重命名
+  server.post("/files/rename", async (request, reply) => {
+    const address = mp.getAddress(request.headers.authorization);
+    if (!address) {
+      return reply.code(400).send("token 无效");
+    }
+
+    const { oldName, newName } = request.body;
+
+    if (!oldName || !newName) {
+      return reply.code(400).send("缺少文件名参数");
+    }
+
+    if (oldName === newName) {
+      return reply.code(400).send("新文件名与原文件名相同");
+    }
+
+    try {
+      const oldPath = `/${address}/${oldName}`;
+      const newPath = `/${address}/${newName}`;
+
+      // 检查原文件是否存在
+      try {
+        await ipfs.files.stat(oldPath);
+      } catch (error) {
+        return reply.code(404).send("原文件不存在");
+      }
+
+      // 检查新文件名是否已存在
+      try {
+        await ipfs.files.stat(newPath);
+        return reply.code(409).send("新文件名已存在");
+      } catch (error) {
+        // 文件不存在，可以继续重命名
+      }
+
+      // 执行重命名操作
+      await ipfs.files.mv(oldPath, newPath);
+
+      return {
+        ok: true,
+        message: "重命名成功",
+        oldName: oldName,
+        newName: newName,
+      };
+    } catch (error) {
+      return reply.code(500).send("重命名失败 " + error.message);
+    }
+  });
 };

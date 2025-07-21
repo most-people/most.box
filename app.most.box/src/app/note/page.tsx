@@ -10,7 +10,6 @@ import {
   useMantineColorScheme,
   useComputedColorScheme,
 } from "@mantine/core";
-import { useHash } from "@mantine/hooks";
 import Script from "next/script";
 import { AppHeader } from "@/components/AppHeader";
 import { useMarkdown } from "@/hooks/useMarkdown";
@@ -34,7 +33,6 @@ import { api } from "@/constants/api";
 import { notifications } from "@mantine/notifications";
 
 const NoteContent = () => {
-  const [hash, setHash] = useHash();
   const params = useSearchParams();
   const dotCID = useUserStore((state) => state.dotCID);
 
@@ -47,6 +45,11 @@ const NoteContent = () => {
 
   const [content, setContent] = useState("");
   const [isEditing, setIsEditing] = useState(false);
+
+  const setHash = (cid: string) => {
+    const newUrl = `${window.location.pathname}${window.location.search}#${cid}`;
+    window.history.replaceState(null, "", newUrl);
+  };
 
   const initViewer = () => {
     setViewer(markdown.initViewer());
@@ -122,6 +125,7 @@ const NoteContent = () => {
 
   useEffect(() => {
     if (inited) {
+      const hash = location.hash;
       const uid = params.get("uid");
       const name = params.get("name");
       if (uid && name) {
