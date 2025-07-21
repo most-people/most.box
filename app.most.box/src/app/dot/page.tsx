@@ -354,10 +354,6 @@ export default function PageDot() {
             )}
             <p>為 全 人 類 徹 底 解 放 奮 鬥 終 身</p>
 
-            <Anchor component={Link} href="/dot/files">
-              查看我的文件
-            </Anchor>
-
             <Group mt="lg">
               <TextInput
                 leftSection={<IconWorldWww />}
