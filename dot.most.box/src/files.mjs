@@ -202,9 +202,8 @@ export const registerFiles = (server, ipfs) => {
     }
 
     try {
-      const oldPath = `/${address}/${oldName}`;
-      const newPath = `/${address}/${newName}`;
-
+      const oldPath = `/${address}${oldName}`;
+      const newPath = `/${address}${newName}`;
       // 检查原文件是否存在
       try {
         await ipfs.files.stat(oldPath);

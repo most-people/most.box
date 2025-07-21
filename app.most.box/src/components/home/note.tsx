@@ -184,8 +184,8 @@ export default function HomeNote() {
       setRenameLoading(true);
       // 这里添加重命名的API调用
       await api.post("/files/rename", {
-        oldName: currentNote.name,
-        newName: name,
+        oldName: `/.note/${currentNote.name}`,
+        newName: `/.note/${name}`,
       });
 
       notifications.show({
@@ -354,16 +354,16 @@ export default function HomeNote() {
                               打开
                             </Menu.Item>
                             <Menu.Item
-                              leftSection={<span>✏️</span>}
-                              onClick={() => handleRename(note)}
-                            >
-                              重命名
-                            </Menu.Item>
-                            <Menu.Item
                               leftSection={<span>📤</span>}
                               onClick={() => handleShare(note)}
                             >
                               分享
+                            </Menu.Item>
+                            <Menu.Item
+                              leftSection={<span>✏️</span>}
+                              onClick={() => handleRename(note)}
+                            >
+                              重命名
                             </Menu.Item>
                             <Menu.Divider />
                             <Menu.Item

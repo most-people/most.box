@@ -11,6 +11,7 @@ import {
   ScrollArea,
   Center,
   Anchor,
+  Box,
 } from "@mantine/core";
 import { api } from "@/constants/api";
 import "./disk.scss";
@@ -201,7 +202,7 @@ export default function HomeDisk() {
   }
 
   return (
-    <>
+    <Box py={64}>
       <Stack align="center" gap={0} p="md">
         <Group gap={4}>
           <span>当前节点</span>
@@ -340,13 +341,15 @@ export default function HomeDisk() {
                 >
                   🔍
                 </ActionIcon>
-                <ActionIcon
-                  variant="subtle"
-                  color="gray"
-                  onClick={() => handleDeleteFile(item)}
-                >
-                  🗑️
-                </ActionIcon>
+                {!(item.type === "directory" && item.name.startsWith(".")) && (
+                  <ActionIcon
+                    variant="subtle"
+                    color="gray"
+                    onClick={() => handleDeleteFile(item)}
+                  >
+                    🗑️
+                  </ActionIcon>
+                )}
               </Group>
             </Group>
           </Paper>
@@ -357,6 +360,6 @@ export default function HomeDisk() {
           </Text>
         )}
       </Stack>
-    </>
+    </Box>
   );
 }

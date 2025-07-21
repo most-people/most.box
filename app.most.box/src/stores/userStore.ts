@@ -34,13 +34,13 @@ interface UserStore {
   wallet?: MostWallet;
   initWallet: () => void;
   updateDot: (url: string, first?: boolean) => Promise<string[] | null>;
-  exit: () => void;
   firstPath: string;
   dotAPI: string;
   dotCID: string;
   dotNodes: DotNode[];
   notes?: Note[];
   files?: FileItem[];
+  exit: () => void;
 }
 
 interface State extends UserStore {
@@ -82,7 +82,7 @@ export const useUserStore = create<State>((set, get) => ({
         set({ dotCID });
         localStorage.setItem("dotCID", dotCID);
       }
-
+      set({ notes: undefined, files: undefined });
       return dot.APIs;
     } catch (error) {
       notifications.show({
@@ -103,11 +103,7 @@ export const useUserStore = create<State>((set, get) => ({
   notes: undefined,
   files: undefined,
   exit() {
-    set({
-      wallet: undefined,
-      notes: undefined,
-      files: undefined,
-    });
+    set({ wallet: undefined, notes: undefined, files: undefined });
     localStorage.removeItem("jwt");
     localStorage.removeItem("jwtSecret");
     localStorage.removeItem("token");
