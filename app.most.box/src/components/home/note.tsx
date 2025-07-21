@@ -1,22 +1,25 @@
 import {
+  Stack,
   Text,
+  Button,
+  Center,
+  Group,
+  ActionIcon,
+  Badge,
+  TextInput,
   Grid,
   Card,
-  Group,
-  Badge,
-  Stack,
-  Center,
-  Button,
-  TextInput,
-  ActionIcon,
+  Modal,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
-import { IconRefresh, IconX } from "@tabler/icons-react";
+import { IconPlus, IconRefresh, IconX } from "@tabler/icons-react";
 import { api } from "@/constants/api";
 import { useUserStore } from "@/stores/userStore";
 import Link from "next/link";
 import "./note.scss";
 import mp from "@/constants/mp";
+import { notifications } from "@mantine/notifications";
+import { useDisclosure } from "@mantine/hooks";
 
 export default function HomeNote() {
   const wallet = useUserStore((state) => state.wallet);
@@ -25,6 +28,14 @@ export default function HomeNote() {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [displayCount, setDisplayCount] = useState(100);
+
+  // 添加弹窗相关状态
+  const [noteModalOpened, { open: openNoteModal, close: closeNoteModal }] =
+    useDisclosure(false);
+
+  const [noteName, setNoteName] = useState("");
+  const [noteNameError, setNoteNameError] = useState("");
+  const [createLoading, setCreateLoading] = useState(false);
 
   // 过滤笔记列表
   const filteredNotes = notes.filter((note) =>
@@ -45,7 +56,7 @@ export default function HomeNote() {
     setDisplayCount(100);
   }, [searchQuery]);
 
-  const fetchNodes = async () => {
+  const fetchNotes = async () => {
     try {
       setLoading(true);
       const res = await api.post("/files/.note");
@@ -58,15 +69,64 @@ export default function HomeNote() {
         setItem("notes", notes);
       }
     } catch (error) {
-      console.error(error);
+      notifications.show({
+        message: (error as Error).message,
+        color: "red",
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  // 创建笔记函数
+  const createNote = async () => {
+    // 验证笔记名称
+    if (!noteName.trim()) {
+      setNoteNameError("请输入笔记名称");
+      return;
+    }
+
+    // 检查是否已存在同名笔记
+    if (notes.some((note) => note.name === noteName.trim())) {
+      setNoteNameError("笔记名称已存在");
+      return;
+    }
+
+    try {
+      setCreateLoading(true);
+      // 这里添加创建笔记的API调用
+      // const res = await api.post("/files/.note/create", { name: noteName.trim() });
+
+      notifications.show({
+        color: "green",
+        message: "笔记创建成功",
+      });
+
+      // 重新获取笔记列表
+      await fetchNotes();
+
+      // 关闭弹窗并重置状态
+      closeNoteModal();
+    } catch (error) {
+      notifications.show({
+        color: "red",
+        message: error instanceof Error ? error.message : "创建失败，请重试",
+      });
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  // 重置弹窗状态
+  const closeModal = () => {
+    setNoteName("");
+    setNoteNameError("");
+    closeNoteModal();
+  };
+
   useEffect(() => {
     if (wallet && notes.length === 0) {
-      fetchNodes();
+      fetchNotes();
     }
   }, [wallet]);
 
@@ -86,9 +146,19 @@ export default function HomeNote() {
         <Text size="lg" c="dimmed">
           {loading ? "正在加载" : "暂无笔记"}
         </Text>
-        <ActionIcon size="lg" onClick={fetchNodes} mt="md">
-          <IconRefresh size={18} />
-        </ActionIcon>
+        <Group>
+          <ActionIcon size="lg" onClick={fetchNotes}>
+            <IconRefresh size={18} />
+          </ActionIcon>
+          <ActionIcon
+            size="lg"
+            onClick={openNoteModal}
+            variant="filled"
+            color="blue"
+          >
+            <IconPlus size={18} />
+          </ActionIcon>
+        </Group>
       </Stack>
     );
   }
@@ -192,6 +262,36 @@ export default function HomeNote() {
           )}
         </>
       )}
+
+      {/* 添加笔记弹窗 */}
+      <Modal
+        opened={noteModalOpened}
+        onClose={closeModal}
+        title="创建新笔记"
+        centered
+      >
+        <Stack gap="md">
+          <TextInput
+            placeholder="请输入笔记名称"
+            value={noteName}
+            onChange={(event) => {
+              setNoteName(event.currentTarget.value);
+              setNoteNameError("");
+            }}
+            error={noteNameError}
+            autoFocus
+          />
+
+          <Group justify="flex-end">
+            <Button variant="default" onClick={closeModal}>
+              取消
+            </Button>
+            <Button loading={createLoading} onClick={createNote}>
+              创建
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Stack>
   );
 }

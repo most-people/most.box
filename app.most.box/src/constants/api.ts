@@ -26,3 +26,17 @@ api.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+// 添加响应拦截器，自动处理 token 失效
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    // 网络错误
+    if (error.code === "ERR_NETWORK") {
+      window.location.href = "/dot";
+    }
+    return Promise.reject(error);
+  }
+);

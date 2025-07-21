@@ -2,10 +2,11 @@
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { useUserStore } from "@/stores/userStore";
 import { useEffect } from "react";
+import { api } from "@/constants/api";
 
 export default function AppProvider() {
   const initWallet = useUserStore((state) => state.initWallet);
-  const updateDot = useUserStore((state) => state.updateDot);
+  const setItem = useUserStore((state) => state.setItem);
   const initFinger = async () => {
     try {
       const fp = await FingerprintJS.load();
@@ -19,16 +20,21 @@ export default function AppProvider() {
     }
   };
 
-  const initDot = async () => {
-    const dotAPI = localStorage.dotAPI;
+  const initDot = () => {
+    const dotAPI = localStorage.getItem("dotAPI");
     if (dotAPI) {
-      updateDot(dotAPI);
+      api.defaults.baseURL = dotAPI;
+      setItem("dotAPI", dotAPI);
+      const dotCID = localStorage.getItem("dotCID");
+      if (dotCID) {
+        setItem("dotCID", dotCID);
+      }
     }
   };
 
   useEffect(() => {
-    initFinger();
     initDot();
+    initFinger();
     sessionStorage.firstPath = window.location.pathname;
   }, []);
 
