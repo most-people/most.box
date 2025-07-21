@@ -80,33 +80,40 @@ export default function HomeNote() {
 
   // 创建笔记函数
   const createNote = async () => {
+    const name = noteName.trim();
     // 验证笔记名称
-    if (!noteName.trim()) {
+    if (!name) {
       setNoteNameError("请输入笔记名称");
       return;
     }
 
     // 检查是否已存在同名笔记
-    if (notes.some((note) => note.name === noteName.trim())) {
+    if (notes.some((note) => note.name === name)) {
       setNoteNameError("笔记名称已存在");
       return;
     }
 
     try {
       setCreateLoading(true);
-      // 这里添加创建笔记的API调用
-      // const res = await api.post("/files/.note/create", { name: noteName.trim() });
 
-      notifications.show({
-        color: "green",
-        message: "笔记创建成功",
+      const formData = new FormData();
+      const blob = new Blob(["# 新笔记\n\n✍️ 点击右上角编辑，记录你的灵感"], {
+        type: "text/markdown",
       });
+      formData.append("file", blob, "index.md");
+      formData.append("path", `/.note/${name}/index.md`);
+      const res = await api.put("/files.upload", formData);
+      const cid = res.data?.cid;
+      if (cid) {
+        notifications.show({
+          color: "green",
+          message: "笔记创建成功",
+        });
 
-      // 重新获取笔记列表
-      await fetchNotes();
-
-      // 关闭弹窗并重置状态
-      closeNoteModal();
+        // 重新获取笔记列表
+        await fetchNotes();
+        closeNoteModal();
+      }
     } catch (error) {
       notifications.show({
         color: "red",
@@ -125,7 +132,7 @@ export default function HomeNote() {
   };
 
   useEffect(() => {
-    if (wallet && notes.length === 0) {
+    if (wallet) {
       fetchNotes();
     }
   }, [wallet]);
@@ -151,6 +158,9 @@ export default function HomeNote() {
                 : `显示 ${displayedNotes.length} / ${notes.length}`}{" "}
               个笔记
             </Badge>
+            <ActionIcon size="lg" onClick={openNoteModal}>
+              <IconPlus size={18} />
+            </ActionIcon>
           </Group>
           {/* 搜索框 */}
           <Center>

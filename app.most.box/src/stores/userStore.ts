@@ -4,6 +4,14 @@ import { create } from "zustand";
 import { api, DotAPI, DotCID } from "@/constants/api";
 import { notifications } from "@mantine/notifications";
 
+export interface FileItem {
+  name: string;
+  type: "file" | "directory";
+  size: number;
+  cid: {
+    "/": string;
+  };
+}
 export interface Dot {
   name: string;
   APIs: string[];
@@ -32,6 +40,7 @@ interface UserStore {
   dotCID: string;
   dotNodes: DotNode[];
   notes: Note[];
+  files: FileItem[];
 }
 
 interface State extends UserStore {
@@ -49,7 +58,7 @@ export const useUserStore = create<State>((set, get) => ({
         mp.createToken(wallet);
         set({ wallet });
       } else {
-        get().exit();
+        // get().exit();
       }
     }
   },
@@ -91,11 +100,16 @@ export const useUserStore = create<State>((set, get) => ({
   dotAPI: DotAPI,
   dotCID: DotCID,
   dotNodes: [],
+  notes: [],
+  files: [],
   exit() {
-    set({ wallet: undefined });
+    set({
+      wallet: undefined,
+      notes: [],
+      files: [],
+    });
     localStorage.removeItem("jwt");
     localStorage.removeItem("jwtSecret");
     localStorage.removeItem("token");
   },
-  notes: [],
 }));

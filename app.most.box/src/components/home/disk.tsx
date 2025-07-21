@@ -19,16 +19,7 @@ import "./disk.scss";
 import Link from "next/link";
 import { IconUpload, IconFolderPlus, IconX } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
-import { useUserStore } from "@/stores/userStore";
-
-interface FileItem {
-  name: string;
-  type: "file" | "directory";
-  size: number;
-  cid: {
-    "/": string;
-  };
-}
+import { FileItem, useUserStore } from "@/stores/userStore";
 
 interface PreviewFile {
   file: File;
@@ -39,7 +30,8 @@ interface PreviewFile {
 export default function HomeDisk() {
   const wallet = useUserStore((state) => state.wallet);
   const dotCID = useUserStore((state) => state.dotCID);
-  const [fileList, setFileList] = useState<FileItem[]>([]);
+  const files = useUserStore((state) => state.files);
+  const setItem = useUserStore((state) => state.setItem);
   const [uploading, setUploading] = useState(false);
   const [previewFiles, setPreviewFiles] = useState<PreviewFile[]>([]);
   const [showPreview, setShowPreview] = useState(false);
@@ -49,7 +41,7 @@ export default function HomeDisk() {
   const fetchFiles = async () => {
     try {
       const res = await api.post("/files/");
-      setFileList(res.data);
+      setItem("files", res.data);
     } catch (error) {
       console.error(error);
     }
@@ -325,7 +317,7 @@ export default function HomeDisk() {
           </Stack>
         </Modal>
 
-        {fileList.map((item, index) => (
+        {files.map((item, index) => (
           <Paper key={index} p="md" withBorder radius="md">
             <Group justify="space-between" align="center">
               <Group align="center">
@@ -361,7 +353,7 @@ export default function HomeDisk() {
             </Group>
           </Paper>
         ))}
-        {fileList.length === 0 && (
+        {files.length === 0 && (
           <Text ta="center" c="dimmed">
             暂无文件
           </Text>
