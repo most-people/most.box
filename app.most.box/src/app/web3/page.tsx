@@ -63,9 +63,6 @@ export default function Web3Page() {
         <Anchor component={Link} href="/web3/mega">
           <Text>Mega ETH</Text>
         </Anchor>
-        <Anchor component={Link} href="/trader">
-          <Text>Trader</Text>
-        </Anchor>
         <Anchor component={Link} href="/web3/ethers">
           <Text>Ethers</Text>
         </Anchor>

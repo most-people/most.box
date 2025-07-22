@@ -100,7 +100,7 @@ const initEditor = () => {
     initialValue: "",
     initialEditType: "wysiwyg",
     previewStyle: "vertical",
-    // placeholder: "\n\n✍️ 开始记录你的灵感",
+    placeholder: "\n✍️ 开始记录你的灵感",
     // events: {
     //   change() {
     //     console.log(editor.getMarkdown());
@@ -121,6 +121,7 @@ const initEditor = () => {
       [
         "codeblock",
         {
+          name: "mp",
           tooltip: "加密模块",
           command: "mp",
           text: "🔐",
@@ -128,6 +129,7 @@ const initEditor = () => {
           style: { backgroundImage: "none", fontSize: "18px" },
         },
         {
+          name: "math",
           tooltip: "LaTeX公式",
           command: "math",
           text: "🔢",

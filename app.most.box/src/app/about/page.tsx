@@ -38,7 +38,7 @@ export default function PageAbout() {
           <Text size="lg" fw="bold" mb="xs">
             最后更新
           </Text>
-          <Text c="dimmed">2025-07-17 00:39:11</Text>
+          <Text c="dimmed">2025-07-22 18:42:11</Text>
         </Box>
       </Stack>
     </Box>

@@ -1,6 +1,7 @@
 "use client";
 
-import { Anchor, Stack, Text } from "@mantine/core";
+import { AppHeader } from "@/components/AppHeader";
+import { Anchor, Container, Stack, Text } from "@mantine/core";
 import dayjs from "dayjs";
 import { ethers } from "ethers";
 import Link from "next/link";
@@ -12,23 +13,26 @@ export default function Web3EthersPage() {
     (window as any).dayjs = dayjs;
   }, []);
   return (
-    <Stack>
-      <Anchor
-        component={Link}
-        href="https://docs.ethers.org/v6/migrating/"
-        target="_blank"
-      >
-        <Text>Ethers v6</Text>
-      </Anchor>
-      <Text>window.ethers</Text>
-      <Anchor
-        component={Link}
-        href="https://day.js.org/docs/zh-CN/display/format"
-        target="_blank"
-      >
-        <Text>Day.js</Text>
-      </Anchor>
-      <Text>window.dayjs</Text>
-    </Stack>
+    <Container py={20}>
+      <AppHeader title="Ethers" />
+      <Stack>
+        <Anchor
+          component={Link}
+          href="https://docs.ethers.org/v6/migrating/"
+          target="_blank"
+        >
+          <Text>Ethers v6</Text>
+        </Anchor>
+        <Text>window.ethers</Text>
+        <Anchor
+          component={Link}
+          href="https://day.js.org/docs/zh-CN/display/format"
+          target="_blank"
+        >
+          <Text>Day.js</Text>
+        </Anchor>
+        <Text>window.dayjs</Text>
+      </Stack>
+    </Container>
   );
 }
