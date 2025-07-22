@@ -63,8 +63,8 @@ export const useUserStore = create<State>((set, get) => ({
     }
   },
   async updateDot(url) {
-    const dotAPI = new URL(url).origin;
     try {
+      const dotAPI = new URL(url).origin;
       const res = await api.get(dotAPI + "/api.dot", {
         timeout: 3000,
       });
@@ -87,10 +87,10 @@ export const useUserStore = create<State>((set, get) => ({
     } catch (error) {
       notifications.show({
         title: "节点切换失败",
-        message: dotAPI,
+        message: url,
         color: "red",
       });
-      console.error(error);
+      console.info(error);
       set({ dotAPI: api.defaults.baseURL || "" });
     }
     return null;

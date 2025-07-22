@@ -214,8 +214,7 @@ export default function PageDot() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-      fetch(`${nodeUrl}/dot`, {
-        method: "GET",
+      fetch(`${nodeUrl}/api.dot`, {
         signal: controller.signal,
         mode: "cors",
       })
@@ -320,10 +319,10 @@ export default function PageDot() {
   const offlineNodes = dotNodes.filter((node) => node.isOnline === false);
 
   return (
-    <Box id="page-dot" py={64}>
+    <Box id="page-dot">
       <AppHeader title="节点管理" />
 
-      <Container size="lg" py="md">
+      <Container size="lg">
         {/* 当前节点信息区域 */}
         <Box mb="lg">
           <Stack className="container" align="center" gap={0}>
