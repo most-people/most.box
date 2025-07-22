@@ -30,10 +30,8 @@
     position: relative;
 
     > a {
+      margin-top: 10px;
       text-align: center;
-      &:hover {
-        border-bottom-color: transparent;
-      }
     }
 
     > div {
@@ -47,7 +45,7 @@
     > span {
       width: auto;
       padding: 16px;
-      background-color: white;
+      background-color: #999;
       border-radius: 20px;
       font-size: 16px;
       line-height: 24px;
@@ -59,18 +57,18 @@
       border-radius: 20px;
       outline: 0;
       border: 0;
-      font-size: 20px;
       margin: 10px 0;
+      background-color: var(--tab-background);
     }
     > p {
       cursor: pointer;
       margin: 0;
       position: absolute;
       right: 16px;
-      bottom: 20px;
+      bottom: 23px;
       display: inline-flex;
       align-items: center;
-      height: 36px;
+      height: 30px;
       background-color: rgb(29, 155, 240);
       color: white;
       margin-left: 16px;
@@ -94,16 +92,23 @@
 
   a:hover {
     color: #8fbbfe;
-    border-bottom-color: #8fbbfe;
+    text-decoration: underline;
   }
 
   img {
     vertical-align: top;
     border-radius: 4px;
   }
-
+  .language-css .token.string,
+  .style .token.string,
+  .token.entity,
+  .token.operator,
+  .token.url {
+    background-color: transparent;
+  }
   pre,
   code {
+    text-shadow: none;
     font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
       "Liberation Mono", monospace;
   }
@@ -291,7 +296,7 @@
 .toastui-editor-dropdown-toolbar {
   display: flex;
   flex-wrap: wrap;
-  max-width: 94%;
+  max-width: 95%;
   height: auto;
 }
 .toastui-editor-defaultUI {

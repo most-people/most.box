@@ -121,7 +121,6 @@ export default function HomeNote() {
       setCreateLoading(true);
 
       const formData = new FormData();
-      // # 新笔记\n\n✍️ 点击右上角编辑，记录你的灵感
       const blob = new Blob([""], {
         type: "text/markdown",
       });

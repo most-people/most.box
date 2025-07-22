@@ -1,6 +1,6 @@
 import { api } from "@/constants/api";
 
-interface CustomNode {
+interface CodeBlockMdNode {
   info: string;
   literal: string;
   type: string;
@@ -29,9 +29,9 @@ const uploadImage = async (
 
 // https://www.latexlive.com
 // https://nhn.github.io/tui.editor/latest/tutorial-example13-creating-plugin
-const latexPlugin = () => {
+const mathPlugin = () => {
   const toHTMLRenderers = {
-    latex(node: CustomNode) {
+    math(node: CodeBlockMdNode) {
       const literal =
         "\\documentclass{article}\n\\begin{document}\n$" +
         node.literal +
@@ -55,8 +55,8 @@ const latexPlugin = () => {
 
 const mostPlugin = () => {
   const toHTMLRenderers = {
-    mp_mi(node: CustomNode) {
-      const html = `<mp-mi><a href="/mp/mi" target="_blank">加密明文</a><span>${node.literal}</span><input placeholder="输入密码" /><p>解密</p></mp-mi>`;
+    mp(node: CodeBlockMdNode) {
+      const html = `<mp-mi><a href="/mp/mi" target="_blank">加密模块</a><span>${node.literal}</span><input placeholder="输入密码" /><p>解密</p></mp-mi>`;
       return [
         { type: "openTag", tagName: "div", outerNewLine: true },
         { type: "html", content: html },
@@ -81,7 +81,7 @@ const getEditorCore = (Editor: any) => {
     linkAttributes: {
       target: "_blank",
     },
-    plugins: [mostPlugin, codeSyntaxHighlight, latexPlugin],
+    plugins: [mostPlugin, codeSyntaxHighlight, mathPlugin],
     customHTMLSanitizer(html: string) {
       return html;
     },
@@ -94,19 +94,69 @@ const initEditor = () => {
   if (!editorElement) {
     return;
   }
-  return new Editor({
+  const editor = new Editor({
     el: editorElement,
     height: "100%",
     initialValue: "",
     initialEditType: "wysiwyg",
     previewStyle: "vertical",
+    // placeholder: "\n\n✍️ 开始记录你的灵感",
+    // events: {
+    //   change() {
+    //     console.log(editor.getMarkdown());
+    //   },
+    // },
     // 隐藏切换到 markdown
     // hideModeSwitch: false,
     ...getEditorCore(Editor),
     hooks: {
       addImageBlobHook: uploadImage,
     },
+    // https://github.com/nhn/tui.editor/blob/master/docs/en/toolbar.md
+    toolbarItems: [
+      ["heading", "bold", "italic", "strike"],
+      ["hr", "quote"],
+      ["ul", "ol", "task", "indent", "outdent"],
+      ["table", "image", "link"],
+      [
+        "codeblock",
+        {
+          tooltip: "加密模块",
+          command: "mp",
+          text: "🔐",
+          className: "toastui-editor-toolbar-icons",
+          style: { backgroundImage: "none", fontSize: "18px" },
+        },
+        {
+          tooltip: "LaTeX公式",
+          command: "math",
+          text: "🔢",
+          className: "toastui-editor-toolbar-icons",
+          style: { backgroundImage: "none", fontSize: "18px" },
+        },
+      ],
+      ["scrollSync"],
+    ],
   });
+
+  const $mp = () => {
+    const mi = editor.getSelectedText() || "mp://2.xxx.xxx";
+    editor.replaceSelection("\n$$mp\n" + mi + "\n$$\n\n");
+    if (editor.mode === "wysiwyg") editor.setMarkdown(editor.getMarkdown());
+  };
+  editor.addCommand("wysiwyg", "mp", $mp);
+  editor.addCommand("markdown", "mp", $mp);
+
+  const $math = () => {
+    const latex = "a^{2}+b^{2}=c^{2}";
+    editor.replaceSelection(
+      "\n$$math\n" + latex + "\n$$\n" + "LaTeX公式编辑 www.latexlive.com\n\n"
+    );
+    if (editor.mode === "wysiwyg") editor.setMarkdown(editor.getMarkdown());
+  };
+  editor.addCommand("wysiwyg", "math", $math);
+  editor.addCommand("markdown", "math", $math);
+  return editor;
 };
 
 const initViewer = () => {
