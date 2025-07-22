@@ -1,4 +1,5 @@
 import { api } from "@/constants/api";
+import { parse, HtmlGenerator } from "latex.js";
 
 interface CodeBlockMdNode {
   info: string;
@@ -36,11 +37,12 @@ const mathPlugin = () => {
         "\\documentclass{article}\n\\begin{document}\n$" +
         node.literal +
         "$\n\\end{document}";
-      const latexjs = (window as any).latexjs;
-      const generator = new latexjs.HtmlGenerator({
+
+      const generator = new HtmlGenerator({
         hyphenate: false,
       });
-      const { body } = latexjs.parse(literal, { generator }).htmlDocument();
+
+      const { body } = parse(literal, { generator }).htmlDocument();
 
       return [
         { type: "openTag", tagName: "div", outerNewLine: true },
