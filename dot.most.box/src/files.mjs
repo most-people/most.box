@@ -185,7 +185,7 @@ export const registerFiles = (server, ipfs) => {
   });
 
   // 重命名
-  server.post("/files/rename", async (request, reply) => {
+  server.put("/files.rename", async (request, reply) => {
     const address = mp.getAddress(request.headers.authorization);
     if (!address) {
       return reply.code(400).send("token 无效");

@@ -3,7 +3,7 @@ import { Box, Image } from "@mantine/core";
 
 export default function PageAbout() {
   return (
-    <Box py={64} px={20} maw={1280}>
+    <Box px={20} maw={1280}>
       <AppHeader title="论文" />
 
       <h2>

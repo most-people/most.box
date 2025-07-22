@@ -60,7 +60,9 @@ a {
   justify-content: center;
   align-items: center;
   flex-direction: column;
-  min-height: 100vh;
+  min-height: 100%;
+  padding-top: 64px;
+  padding-bottom: 64px;
 }
 
 .app-header {

@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default function PageAbout() {
   return (
-    <Box py={64}>
+    <Box>
       <AppHeader title="关于" />
       <Stack gap="xl" p="md">
         <Box>

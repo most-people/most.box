@@ -27,7 +27,33 @@ const uploadImage = async (
   }
 };
 
-const customPlugin = () => {
+// https://www.latexlive.com
+// https://nhn.github.io/tui.editor/latest/tutorial-example13-creating-plugin
+const latexPlugin = () => {
+  const toHTMLRenderers = {
+    latex(node: CustomNode) {
+      const literal =
+        "\\documentclass{article}\n\\begin{document}\n$" +
+        node.literal +
+        "$\n\\end{document}";
+      const latexjs = (window as any).latexjs;
+      const generator = new latexjs.HtmlGenerator({
+        hyphenate: false,
+      });
+      const { body } = latexjs.parse(literal, { generator }).htmlDocument();
+
+      return [
+        { type: "openTag", tagName: "div", outerNewLine: true },
+        { type: "html", content: body.innerHTML },
+        { type: "closeTag", tagName: "div", outerNewLine: true },
+      ];
+    },
+  };
+
+  return { toHTMLRenderers };
+};
+
+const mostPlugin = () => {
   const toHTMLRenderers = {
     mp_mi(node: CustomNode) {
       const html = `<mp-mi><a href="/mp/mi" target="_blank">加密明文</a><span>${node.literal}</span><input placeholder="输入密码" /><p>解密</p></mp-mi>`;
@@ -37,13 +63,6 @@ const customPlugin = () => {
         { type: "closeTag", tagName: "div", outerNewLine: true },
       ];
     },
-    // style(node: CustomNode) {
-    //   return [
-    //     { type: "openTag", tagName: "style", outerNewLine: true },
-    //     { type: "html", content: node.literal },
-    //     { type: "closeTag", tagName: "style", outerNewLine: true },
-    //   ];
-    // },
   };
 
   return { toHTMLRenderers };
@@ -62,7 +81,7 @@ const getEditorCore = (Editor: any) => {
     linkAttributes: {
       target: "_blank",
     },
-    plugins: [customPlugin, codeSyntaxHighlight],
+    plugins: [mostPlugin, codeSyntaxHighlight, latexPlugin],
     customHTMLSanitizer(html: string) {
       return html;
     },

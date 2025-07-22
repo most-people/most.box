@@ -208,7 +208,7 @@ export default function HomeDisk() {
   }
 
   return (
-    <Box py={64}>
+    <Box>
       <Stack align="center" gap={0} p="md">
         <Group gap={4}>
           <span>当前节点</span>

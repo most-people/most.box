@@ -5,7 +5,7 @@ import "./setting.scss";
 
 export default function PageSetting() {
   return (
-    <Box id="page-setting" py={64} px={20}>
+    <Box id="page-setting" px={20}>
       <AppHeader title="设置" />
 
       <Text>主题</Text>

@@ -4,6 +4,12 @@
   width: 100%;
   word-break: break-word;
 
+  .katex {
+    .katex-html {
+      display: none;
+    }
+  }
+
   // fix toastui
   .task-list-item:before {
     top: 10px;
@@ -289,7 +295,16 @@
   height: auto;
 }
 .toastui-editor-defaultUI {
+  font-family: initial;
   border: 0;
+  .toastui-editor-popup-add-image .toastui-editor-file-select-button {
+    width: auto;
+  }
+  .toastui-editor-toolbar {
+    .toastui-editor-popup {
+      margin-left: 0;
+    }
+  }
 }
 
 .ProseMirror {

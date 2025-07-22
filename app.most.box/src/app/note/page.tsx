@@ -44,7 +44,7 @@ const NoteContent = () => {
   // const wallet = useUserStore((state) => state.wallet);
 
   const [content, setContent] = useState("");
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(true);
 
   const setHash = (cid: string) => {
     const newUrl = `${window.location.pathname}${window.location.search}#${cid}`;
@@ -174,7 +174,7 @@ const NoteContent = () => {
   const renderHeaderButtons = () => {
     if (isEditing) {
       return (
-        <Group gap="xs">
+        <Group gap="xs" wrap="nowrap">
           <Button size="xs" onClick={handleSave}>
             保存
           </Button>
@@ -242,6 +242,8 @@ const NoteContent = () => {
           onReady={initEditor}
         />
       )}
+      {/* https://cdn.jsdelivr.net/npm/latex.js/dist/latex.js */}
+      <Script src="/toast-ui/latex.js" strategy="beforeInteractive" />
     </>
   );
 };

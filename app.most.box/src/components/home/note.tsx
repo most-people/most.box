@@ -121,7 +121,8 @@ export default function HomeNote() {
       setCreateLoading(true);
 
       const formData = new FormData();
-      const blob = new Blob(["# 新笔记\n\n✍️ 点击右上角编辑，记录你的灵感"], {
+      // # 新笔记\n\n✍️ 点击右上角编辑，记录你的灵感
+      const blob = new Blob([""], {
         type: "text/markdown",
       });
       formData.append("file", blob, "index.md");
@@ -137,6 +138,7 @@ export default function HomeNote() {
         // 重新获取笔记列表
         await fetchNotes();
         closeNoteModal();
+        setNoteName("");
       }
     } catch (error) {
       notifications.show({
@@ -184,7 +186,7 @@ export default function HomeNote() {
     try {
       setRenameLoading(true);
       // 这里添加重命名的API调用
-      await api.post("/files/rename", {
+      await api.put("/files.rename", {
         oldName: `/.note/${currentNote.name}`,
         newName: `/.note/${name}`,
       });
@@ -282,21 +284,6 @@ export default function HomeNote() {
     <>
       {notes?.length ? (
         <Stack gap="md" p="md" className="note-box">
-          <Group justify="space-between" align="center">
-            <Badge variant="light" size="lg">
-              {searchQuery
-                ? `显示 ${displayedNotes.length} / ${filteredNotes.length} (总共 ${notes.length})`
-                : `显示 ${displayedNotes.length} / ${notes.length}`}{" "}
-              个笔记
-            </Badge>
-            <Group>
-              <Tooltip label="新笔记">
-                <ActionIcon size="lg" onClick={openNoteModal} color="green">
-                  <IconPlus size={18} />
-                </ActionIcon>
-              </Tooltip>
-            </Group>
-          </Group>
           {/* 搜索框 */}
           <Center>
             <TextInput
@@ -313,6 +300,22 @@ export default function HomeNote() {
               }}
             />
           </Center>
+
+          <Group justify="space-between" align="center">
+            <Badge variant="light" size="lg">
+              {searchQuery
+                ? `显示 ${displayedNotes.length} / ${filteredNotes.length} (总共 ${notes.length})`
+                : `显示 ${displayedNotes.length} / ${notes.length}`}{" "}
+              个笔记
+            </Badge>
+            <Group>
+              <Tooltip label="新笔记">
+                <ActionIcon size="lg" onClick={openNoteModal} color="green">
+                  <IconPlus size={18} />
+                </ActionIcon>
+              </Tooltip>
+            </Group>
+          </Group>
 
           {/* 搜索结果为空时的提示 */}
           {searchQuery && filteredNotes.length === 0 ? (
@@ -333,8 +336,9 @@ export default function HomeNote() {
                     span={{ base: 12, xs: 6, sm: 4, md: 3, lg: 3, xl: 2 }}
                   >
                     <Card radius="md" withBorder>
-                      <Group justify="space-between" wrap="nowrap" gap={2}>
+                      <Group justify="space-between" wrap="nowrap" gap={4}>
                         <Text
+                          flex={1}
                           fw={500}
                           lineClamp={1}
                           component={Link}

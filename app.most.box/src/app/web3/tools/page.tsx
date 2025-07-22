@@ -128,7 +128,7 @@ export default function Web3ToolPage() {
     : username;
 
   return (
-    <Container maw={1200} w="100%" mt={64} p={20}>
+    <Container maw={1200} w="100%" p={20}>
       <AppHeader title="工具集" />
       <Stack gap="md">
         <Avatar
