@@ -242,8 +242,6 @@ const NoteContent = () => {
           onReady={initEditor}
         />
       )}
-      {/* https://cdn.jsdelivr.net/npm/latex.js/dist/latex.js */}
-      <Script src="/toast-ui/latex.js" strategy="beforeInteractive" />
     </>
   );
 };

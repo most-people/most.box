@@ -154,7 +154,7 @@ const initEditor = () => {
   const $math = () => {
     const latex = "a^{2}+b^{2}=c^{2}";
     editor.replaceSelection(
-      "\n$$math\n" + latex + "\n$$\n\n" + "> LaTeX公式编辑 www.latexlive.com\n"
+      "\n$$math\n" + latex + "\n$$\n\n" + "LaTeX公式编辑 latexlive.com\n"
     );
     if (editor.mode === "wysiwyg") editor.setMarkdown(editor.getMarkdown());
   };

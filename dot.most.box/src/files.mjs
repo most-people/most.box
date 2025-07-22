@@ -16,7 +16,7 @@ export const registerFiles = (server, ipfs) => {
     const fullPath = "/" + address.toLowerCase() + "/" + path;
     try {
       const stat = await ipfs.files.stat(fullPath);
-      return stat.cid.toString();
+      return stat.cid.toV1().toString();
     } catch (error) {
       return "";
     }
@@ -36,6 +36,7 @@ export const registerFiles = (server, ipfs) => {
       const result = ipfs.files.ls(fullPath, { long: true });
       const entries = [];
       for await (const file of result) {
+        file.cid = file.cid.toV1();
         entries.push(file);
       }
       return entries;
