@@ -1,4 +1,4 @@
-[Ubuntu 教程](/dot.most.box/readme.md) Windows 教程
+[Ubuntu 教程](/dot.most.box/readme.md) [Windows 教程](/README.md)
 
 ## IPFS Desktop
 
@@ -81,4 +81,42 @@ PRIVATE_KEY=0x0000000000000000000000000000000000000000000000000000000000000000
 # custom
 API_URL=http://xxx.xxx.xxx.xxx:1976
 CID_URL=
+```
+
+## Caddy 域名配置
+
+### [Windows 安装 Caddy](https://caddyserver.com/download)
+
+1. 下载 caddy_windows_amd64.exe 放在 C:\caddy\caddy.exe
+2. 添加环境变量 C:\caddy
+3. 配置 C:\caddy\Caddyfile
+
+### Caddyfile
+
+```
+cid.most.box {
+    reverse_proxy 127.0.0.1:8080
+}
+
+dot.most.box {
+    reverse_proxy 127.0.0.1:1976
+}
+```
+
+打开 Windows PowerShell (管理员)
+
+```bash
+# 查看版本
+caddy --version
+
+# 验证
+caddy validate --config C:\caddy\Caddyfile
+
+# 格式化
+caddy fmt --overwrite C:\caddy\Caddyfile
+
+# 启动
+caddy start --config C:\caddy\Caddyfile
+
+caddy status
 ```

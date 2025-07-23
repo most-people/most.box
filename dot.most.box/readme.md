@@ -1,4 +1,6 @@
-Ubuntu 安装 Node.js
+[Ubuntu 教程](/dot.most.box/readme.md) [Windows 教程](/README.md)
+
+## Ubuntu 安装 Node.js
 
 ```bash
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
@@ -12,7 +14,7 @@ npm -v
 npm i -g pm2
 ```
 
-[Ubuntu 安装 IPFS](https://docs.ipfs.tech/install/command-line/#install-official-binary-distributions)
+## [Ubuntu 安装 IPFS](https://docs.ipfs.tech/install/command-line/#install-official-binary-distributions)
 
 ```bash
 # 更新系统
@@ -50,7 +52,7 @@ ps aux | grep ipfs
 kill 进程号
 ```
 
-使用 systemd 服务
+### 使用 systemd 服务
 
 ```bash
 # 创建一个systemd服务文件
@@ -95,43 +97,7 @@ journalctl -u ipfs.service -n 100
 journalctl -u ipfs.service --since today
 ```
 
-## Caddy 域名配置
-
-#### Caddyfile
-
-```js
-cid.most.box {
-    reverse_proxy 127.0.0.1:8080
-}
-
-dot.most.box {
-    reverse_proxy 127.0.0.1:1976
-}
-```
-
-### [Windows 安装 Caddy](https://caddyserver.com/download)
-
-下载 caddy_windows_amd64.exe 放在 C:\caddy\caddy.exe
-
-添加环境变量 C:\caddy
-
-```bash
-# 查看版本
-caddy --version
-
-# 验证
-caddy validate --config C:\caddy\Caddyfile
-
-# 格式化
-caddy fmt --overwrite C:\caddy\Caddyfile
-
-# 启动
-caddy start --config C:\caddy\Caddyfile
-
-caddy status
-```
-
-### [Ubuntu 安装 Caddy](https://caddyserver.com/docs/install#debian-ubuntu-raspbian)
+## [Ubuntu 安装 Caddy](https://caddyserver.com/docs/install#debian-ubuntu-raspbian)
 
 ```bash
 # 安装
