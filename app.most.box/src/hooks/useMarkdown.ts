@@ -55,21 +55,6 @@ const mathPlugin = () => {
   return { toHTMLRenderers };
 };
 
-const mostPlugin = () => {
-  const toHTMLRenderers = {
-    mp(node: CodeBlockMdNode) {
-      const html = `<mp-mi><a href="/mp/mi" target="_blank">加密模块</a><span>${node.literal}</span><input placeholder="输入密码" /><p>解密</p></mp-mi>`;
-      return [
-        { type: "openTag", tagName: "div", outerNewLine: true },
-        { type: "html", content: html },
-        { type: "closeTag", tagName: "div", outerNewLine: true },
-      ];
-    },
-  };
-
-  return { toHTMLRenderers };
-};
-
 const getEditorCore = (Editor: any) => {
   // https://nhn.github.io/tui.editor/latest/ToastUIEditorCore
   const { codeSyntaxHighlight } = Editor.plugin;
@@ -83,7 +68,7 @@ const getEditorCore = (Editor: any) => {
     linkAttributes: {
       target: "_blank",
     },
-    plugins: [mostPlugin, codeSyntaxHighlight, mathPlugin],
+    plugins: [codeSyntaxHighlight, mathPlugin],
     customHTMLSanitizer(html: string) {
       return html;
     },
@@ -103,11 +88,6 @@ const initEditor = () => {
     initialEditType: "wysiwyg",
     previewStyle: "vertical",
     placeholder: "\n✍️ 开始记录你的灵感",
-    // events: {
-    //   change() {
-    //     console.log(editor.getMarkdown());
-    //   },
-    // },
     // 隐藏切换到 markdown
     // hideModeSwitch: false,
     ...getEditorCore(Editor),
@@ -123,14 +103,6 @@ const initEditor = () => {
       [
         "codeblock",
         {
-          name: "mp",
-          tooltip: "加密模块",
-          command: "mp",
-          text: "🔐",
-          className: "toastui-editor-toolbar-icons",
-          style: { backgroundImage: "none", fontSize: "18px" },
-        },
-        {
           name: "math",
           tooltip: "LaTeX公式",
           command: "math",
@@ -143,18 +115,10 @@ const initEditor = () => {
     ],
   });
 
-  const $mp = () => {
-    const mi = editor.getSelectedText() || "mp://2.xxx.xxx";
-    editor.replaceSelection("\n$$mp\n" + mi + "\n$$\n\n");
-    if (editor.mode === "wysiwyg") editor.setMarkdown(editor.getMarkdown());
-  };
-  editor.addCommand("wysiwyg", "mp", $mp);
-  editor.addCommand("markdown", "mp", $mp);
-
   const $math = () => {
     const latex = "a^{2}+b^{2}=c^{2}";
     editor.replaceSelection(
-      "\n$$math\n" + latex + "\n$$\n\n" + "LaTeX公式编辑 latexlive.com\n"
+      "\n$$math\n" + latex + "\n$$\n\n" + "LaTeX公式编辑 www.latexlive.com\n"
     );
     if (editor.mode === "wysiwyg") editor.setMarkdown(editor.getMarkdown());
   };

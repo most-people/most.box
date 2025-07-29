@@ -31,20 +31,21 @@ import { useSearchParams } from "next/navigation";
 import { useUserStore } from "@/stores/userStore";
 import { api } from "@/constants/api";
 import { notifications } from "@mantine/notifications";
+import { mostDecode, mostEncode } from "@/constants/MostWallet";
 
 const NoteContent = () => {
   const params = useSearchParams();
   const dotCID = useUserStore((state) => state.dotCID);
+  const wallet = useUserStore((state) => state.wallet);
 
   const [inited, setInited] = useState(false);
   const [viewer, setViewer] = useState<any>(null);
   const [editor, setEditor] = useState<any>(null);
   const markdown = useMarkdown();
 
-  // const wallet = useUserStore((state) => state.wallet);
-
   const [content, setContent] = useState("");
   const [isEditing, setIsEditing] = useState(true);
+  const [isSecret, setIsSecret] = useState(false);
 
   const setHash = (cid: string) => {
     const newUrl = `${window.location.pathname}${window.location.search}#${cid}`;
@@ -62,19 +63,36 @@ const NoteContent = () => {
   const fetchNote = (cid: string) => {
     fetch(`${dotCID}/ipfs/${cid}/index.md`)
       .then((response) => response.text())
-      .then((data) => {
-        setContent(data);
+      .then((content) => {
+        if (wallet && content.startsWith("mp://2")) {
+          // 解密
+          const decrypted = mostDecode(
+            content,
+            wallet.public_key,
+            wallet.private_key
+          );
+          setIsSecret(true);
+          setContent(decrypted);
+        } else {
+          setIsSecret(false);
+          setContent(content);
+        }
       })
       .catch((error) => {
         console.error("Error:", error);
       });
   };
 
-  const handleEdit = () => {
-    setIsEditing(true);
-  };
-
   const updateNote = async (name: string, newContent: string) => {
+    // 加密
+    if (wallet && isSecret) {
+      newContent = mostEncode(
+        newContent,
+        wallet.public_key,
+        wallet.private_key
+      );
+    }
+
     const formData = new FormData();
     const blob = new Blob([newContent], { type: "text/markdown" });
     formData.append("file", blob, "index.md");
@@ -185,7 +203,7 @@ const NoteContent = () => {
       );
     }
     return (
-      <Button size="xs" onClick={handleEdit}>
+      <Button size="xs" onClick={() => setIsEditing(true)}>
         编辑
       </Button>
     );
