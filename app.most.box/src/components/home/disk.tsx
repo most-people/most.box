@@ -369,19 +369,18 @@ export default function HomeDisk() {
             </Stack>
           ) : (
             <>
-              {/* 后退目录项 */}
-              {filesPath && (
-                <Card
-                  radius="md"
-                  withBorder
-                  style={{ cursor: "pointer" }}
-                  onClick={handleGoBack}
-                >
-                  <Group justify="space-between" align="center">
-                    <Text fw={500}>📁 ..</Text>
-                  </Group>
-                </Card>
-              )}
+              <Card
+                radius="md"
+                withBorder
+                style={{
+                  cursor: filesPath ? "pointer" : "auto",
+                }}
+                onClick={filesPath ? handleGoBack : undefined}
+              >
+                <Group justify="space-between" align="center">
+                  <Text fw={500}>📁 {filesPath ? ".." : "根目录"}</Text>
+                </Group>
+              </Card>
 
               <Grid gutter="md">
                 {displayedFiles.map((item, index) => (
@@ -408,11 +407,11 @@ export default function HomeDisk() {
                             {item.type === "directory" ? "📁" : "📄"}{" "}
                             {item.name}
                           </Text>
-                          {item.size > 0 && (
+                          {/* {item.size > 0 && (
                             <Text size="xs" c="dimmed">
                               {formatFileSize(item.size)}
                             </Text>
-                          )}
+                          )} */}
                         </Stack>
                         <Menu shadow="md" width={120}>
                           <Menu.Target>
