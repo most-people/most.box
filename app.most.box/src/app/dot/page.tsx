@@ -183,6 +183,7 @@ export default function PageDot() {
       );
 
       const nodeList = await Promise.all(nodePromises);
+      localStorage.setItem("dotNodes", JSON.stringify(nodeList));
       setItem("dotNodes", nodeList);
     } catch (err) {
       console.error("获取节点列表失败:", err);
@@ -308,11 +309,23 @@ export default function PageDot() {
   };
 
   useEffect(() => {
-    if (dotNodes.length === 0) {
-      fetchNodes();
-    } else {
+    if (dotNodes.length > 0) {
       setLoading(false);
+      return;
     }
+
+    // 尝试从缓存加载
+    const nodes = localStorage.getItem("dotNodes");
+    if (nodes) {
+      try {
+        setItem("dotNodes", JSON.parse(nodes));
+        setLoading(false);
+        return;
+      } catch {}
+    }
+
+    // 从区块链获取最新数据
+    fetchNodes();
   }, []);
 
   const onlineNodes = dotNodes.filter((node) => node.isOnline);
@@ -352,7 +365,6 @@ export default function PageDot() {
                 </Anchor>
               </>
             )}
-            <p>為 全 人 類 徹 底 解 放 奮 鬥 終 身</p>
 
             <Group mt="lg" justify="space-between">
               <TextInput

@@ -104,7 +104,7 @@ const initEditor = () => {
         "codeblock",
         {
           name: "math",
-          tooltip: "LaTeX公式",
+          tooltip: "插入LaTeX公式",
           command: "math",
           text: "🔢",
           className: "toastui-editor-toolbar-icons",
