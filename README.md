@@ -117,6 +117,9 @@ caddy fmt --overwrite C:\caddy\Caddyfile
 
 # 启动
 caddy start --config C:\caddy\Caddyfile
-
-caddy status
 ```
+
+查看当前配置
+http://localhost:2019/config/
+
+> 注：每次开机都需要启动 caddy start
