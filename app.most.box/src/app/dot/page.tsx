@@ -41,7 +41,6 @@ import {
 import mp from "@/constants/mp";
 import Link from "next/link";
 import { DotNode, useUserStore } from "@/stores/userStore";
-import "./dot.scss";
 
 // DotContract ABI
 const DotContractABI = [
@@ -107,6 +106,7 @@ export default function PageDot() {
   };
 
   const RPC = NETWORK_CONFIG[network].rpc;
+  const [customRPC, setCustomRPC] = useState(RPC);
   const Explorer = NETWORK_CONFIG[network].explorer;
 
   // 更新当前节点
@@ -115,6 +115,11 @@ export default function PageDot() {
     const list = await updateDot(apiURL);
     if (list) {
       setApiList(list);
+      notifications.show({
+        title: "节点切换成功",
+        message: list[0],
+        color: "green",
+      });
     }
     setApiLoading(false);
   };
@@ -155,12 +160,12 @@ export default function PageDot() {
   };
 
   // 获取节点列表
-  const fetchNodes = async () => {
+  const fetchNodes = async (rpc?: string) => {
     try {
       setLoading(true);
       setError(null);
 
-      const provider = new ethers.JsonRpcProvider(RPC);
+      const provider = new ethers.JsonRpcProvider(rpc || customRPC || RPC);
       const contract = new ethers.Contract(
         CONTRACT_ADDRESS,
         DotContractABI,
@@ -187,7 +192,7 @@ export default function PageDot() {
       setItem("dotNodes", nodeList);
     } catch (err) {
       console.error("获取节点列表失败:", err);
-      setError("获取节点列表失败，请检查网络连接");
+      setError("获取节点列表失败，请检查 RPC 连接");
       notifications.show({
         title: "获取失败",
         message: "无法获取节点列表",
@@ -277,10 +282,12 @@ export default function PageDot() {
   };
 
   // 网络切换处理
-  const handleNetworkChange = (value: string | null) => {
+  const changeNetwork = (value: string | null) => {
     if (value && (value === "mainnet" || value === "testnet")) {
+      const rpc = NETWORK_CONFIG[value].rpc;
+      setCustomRPC(rpc);
       setNetwork(value);
-      fetchNodes();
+      fetchNodes(rpc);
       notifications.show({
         title: "网络已切换",
         message: `已切换到 ${NETWORK_CONFIG[value].name}`,
@@ -332,423 +339,420 @@ export default function PageDot() {
   const offlineNodes = dotNodes.filter((node) => node.isOnline === false);
 
   return (
-    <Box id="page-dot">
-      <AppHeader title="节点管理" />
+    <Container size="lg" w="100%">
+      <AppHeader title="节点选择" />
+      {/* 当前节点信息区域 */}
+      <Box mb="lg">
+        <Stack align="center">
+          <Title>DOT.MOST.BOX</Title>
+          {ApiList.length > 0 ? (
+            <>
+              <Text>已成功接入</Text>
+              <Stack justify="center">
+                {ApiList.map((url, index) => (
+                  <Anchor
+                    key={index}
+                    component={Link}
+                    href={url}
+                    target="_blank"
+                    lineClamp={1}
+                  >
+                    {url}
+                  </Anchor>
+                ))}
+              </Stack>
+            </>
+          ) : (
+            <>
+              <Text>当前节点</Text>
+              <Anchor component={Link} href={dotAPI} target="_blank">
+                {dotAPI}
+              </Anchor>
+            </>
+          )}
 
-      <Container size="lg">
-        {/* 当前节点信息区域 */}
-        <Box mb="lg">
-          <Stack className="container" align="center" gap={0}>
-            <h1>DOT.MOST.BOX</h1>
-            {ApiList.length > 0 ? (
-              <>
-                <p>已成功接入节点</p>
-                <Stack justify="center">
-                  {ApiList.map((url, index) => (
-                    <Anchor
-                      key={index}
-                      component={Link}
-                      href={url}
-                      target="_blank"
-                      lineClamp={1}
-                    >
-                      {url}
-                    </Anchor>
-                  ))}
-                </Stack>
-              </>
-            ) : (
-              <>
-                <p>当前节点</p>
-                <Anchor component={Link} href={dotAPI} target="_blank">
-                  {dotAPI}
-                </Anchor>
-              </>
-            )}
-
-            <Group mt="lg" justify="space-between">
-              <TextInput
-                flex={1}
-                leftSection={<IconWorldWww />}
-                value={apiURL}
-                onChange={(event) => setApiURL(event.currentTarget.value)}
-                placeholder="自定义节点地址"
-              />
-              <Button onClick={apiUrlChange} loading={apiLoading}>
-                自定义
-              </Button>
-            </Group>
-          </Stack>
-        </Box>
-
-        {/* 节点列表控制区域 */}
-        <Box mb="lg">
-          <Flex justify="space-between" align="center" wrap="wrap" gap="md">
-            <Group>
-              <ThemeIcon size={40} radius="md" variant="light" color="blue">
-                <IconServer size={20} />
-              </ThemeIcon>
-              <Box>
-                <Title order={2}>节点列表</Title>
-                <Text size="sm" c="dimmed">
-                  共 {dotNodes.length} 个节点
-                  {dotNodes.some((n) => n.isOnline !== undefined) && (
-                    <>
-                      {" "}
-                      • {onlineNodes.length} 在线 • {offlineNodes.length} 离线
-                    </>
-                  )}
-                </Text>
-              </Box>
-            </Group>
-
-            <Group>
-              <Select
-                value={network}
-                onChange={handleNetworkChange}
-                data={[
-                  {
-                    value: "testnet",
-                    label: "🧪 Base 测试网",
-                  },
-                  {
-                    value: "mainnet",
-                    label: "🌐 Base 主网",
-                  },
-                ]}
-                leftSection={<IconNetwork size={16} />}
-                variant="filled"
-                radius="md"
-                w={180}
-              />
-
-              <Tooltip label="刷新节点列表">
-                <ActionIcon
-                  size="lg"
-                  variant="light"
-                  color="blue"
-                  onClick={fetchNodes}
-                  loading={loading}
-                >
-                  <IconRefresh size={18} />
-                </ActionIcon>
-              </Tooltip>
-
-              <Button
-                leftSection={<IconWifi size={16} />}
-                onClick={checkAllConnectivity}
-                loading={checkingConnectivity}
-                disabled={dotNodes.length === 0}
-                variant="gradient"
-                gradient={{ from: "blue", to: "cyan" }}
-              >
-                检测连通性
-              </Button>
-            </Group>
-          </Flex>
-        </Box>
-
-        {/* 节点列表 */}
-        {loading ? (
-          <Paper p="xl" radius="md" style={{ textAlign: "center" }}>
-            <ThemeIcon
-              size={60}
-              radius="xl"
-              variant="light"
-              color="blue"
-              mb="md"
-            >
-              <IconServer size={30} />
-            </ThemeIcon>
-            <Title order={3} c="dimmed">
-              正在加载节点列表...
-            </Title>
-            <Text size="sm" c="dimmed" mt="xs">
-              请稍候，正在从区块链获取数据
-            </Text>
-          </Paper>
-        ) : error ? (
-          <Paper shadow="sm" p="xl" radius="md">
-            <Alert color="red" title="加载失败" icon={<IconX size={16} />}>
-              {error}
-            </Alert>
-            <Button
-              mt="md"
-              onClick={fetchNodes}
-              leftSection={<IconRefresh size={16} />}
-              variant="light"
-              color="red"
-            >
-              重新加载
+          <Group mt="lg" w="100%" justify="space-between">
+            <TextInput
+              flex={1}
+              leftSection={<IconWorldWww />}
+              value={apiURL}
+              onChange={(event) => setApiURL(event.currentTarget.value)}
+              placeholder="自定义节点地址"
+            />
+            <Button onClick={apiUrlChange} loading={apiLoading}>
+              自定义
             </Button>
-          </Paper>
-        ) : dotNodes.length === 0 ? (
-          <Paper shadow="sm" p="xl" radius="md" style={{ textAlign: "center" }}>
-            <ThemeIcon
-              size={60}
-              radius="xl"
-              variant="light"
-              color="gray"
-              mb="md"
-            >
-              <IconServer size={30} />
+          </Group>
+        </Stack>
+      </Box>
+
+      {/* 节点列表控制区域 */}
+      <Box mb="lg">
+        <Flex justify="space-between" align="center" wrap="wrap" gap="md">
+          <Group>
+            <ThemeIcon size={40} radius="md" variant="light" color="blue">
+              <IconServer size={20} />
             </ThemeIcon>
-            <Title order={3} c="dimmed" mb="xs">
-              暂无节点
-            </Title>
-            <Text size="sm" c="dimmed">
-              当前网络没有注册的节点
-            </Text>
-          </Paper>
-        ) : (
-          <Grid>
-            {dotNodes.map((node) => (
-              <Grid.Col key={node.address} span="auto">
-                <Card
-                  shadow="sm"
-                  padding="lg"
-                  radius="md"
-                  withBorder
-                  h="100%"
-                  w={343}
-                  style={{
-                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                    border: isCurrentNode(node)
-                      ? "2px solid #228be6"
-                      : undefined,
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow =
-                      "0 4px 20px rgba(0,0,0,0.1)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "";
-                  }}
-                >
-                  {/* 节点头部 */}
-                  <Group justify="space-between" mb="md">
-                    <Group>
-                      <ThemeIcon
-                        size={36}
-                        radius="md"
-                        variant="light"
-                        color={
-                          node.isOnline
-                            ? "green"
-                            : node.isOnline === false
-                            ? "red"
-                            : "gray"
-                        }
-                      >
-                        {node.isOnline ? (
-                          <IconWifi size={18} />
-                        ) : node.isOnline === false ? (
-                          <IconWifiOff size={18} />
-                        ) : (
-                          <IconServer size={18} />
-                        )}
-                      </ThemeIcon>
-                      <Box>
-                        <Group gap="xs">
-                          <Text fw={600} size="md" lineClamp={1}>
-                            {node.name}
-                          </Text>
-                          {isCurrentNode(node) && (
-                            <Badge size="xs" color="blue" variant="filled">
-                              当前
-                            </Badge>
-                          )}
-                        </Group>
-                        <Text size="xs" c="dimmed">
-                          节点地址
-                        </Text>
-                      </Box>
-                    </Group>
+            <Box>
+              <Title order={2}>节点列表</Title>
+              <Text size="sm" c="dimmed">
+                共 {dotNodes.length} 个节点
+                {dotNodes.some((n) => n.isOnline !== undefined) && (
+                  <>
+                    {" "}
+                    • {onlineNodes.length} 在线 • {offlineNodes.length} 离线
+                  </>
+                )}
+              </Text>
+            </Box>
+          </Group>
 
-                    {node.isOnline !== undefined && (
-                      <Badge
-                        color={node.isOnline ? "green" : "red"}
-                        variant="light"
-                        leftSection={
-                          node.isOnline ? (
-                            <IconCheck size={12} />
-                          ) : (
-                            <IconX size={12} />
-                          )
-                        }
-                      >
-                        {node.isOnline ? "在线" : "离线"}
-                        {node.responseTime !== undefined &&
-                          ` (${formatResponseTime(node.responseTime)})`}
-                      </Badge>
-                    )}
-                  </Group>
+          <Group>
+            <Select
+              value={network}
+              onChange={changeNetwork}
+              data={[
+                {
+                  value: "testnet",
+                  label: "🧪 Base 测试网",
+                },
+                {
+                  value: "mainnet",
+                  label: "🌐 Base 主网",
+                },
+              ]}
+              leftSection={<IconNetwork size={16} />}
+              variant="filled"
+              radius="md"
+              w={180}
+            />
 
-                  <Divider mb="md" />
+            <Tooltip label="刷新节点列表">
+              <ActionIcon
+                size="lg"
+                variant="light"
+                color="blue"
+                onClick={() => fetchNodes()}
+                loading={loading}
+              >
+                <IconRefresh size={18} />
+              </ActionIcon>
+            </Tooltip>
 
-                  {/* 节点详细信息 */}
-                  <Stack gap="sm">
-                    <Group gap="xs" wrap="nowrap">
-                      <IconDatabase
-                        size={14}
-                        color="gray"
-                        style={{ flexShrink: 0 }}
-                      />
-                      <Text size="xs" c="dimmed">
-                        {mp.formatAddress(node.address)}{" "}
-                        <Anchor
-                          component={Link}
-                          href={{
-                            pathname: "/dot/deploy",
-                            query: { address: node.address, api: node.APIs[0] },
-                          }}
-                          c="dimmed"
-                        >
-                          Deploy
-                        </Anchor>
-                      </Text>
-                    </Group>
+            <Button
+              leftSection={<IconWifi size={16} />}
+              onClick={checkAllConnectivity}
+              loading={checkingConnectivity}
+              disabled={dotNodes.length === 0}
+              variant="gradient"
+              gradient={{ from: "blue", to: "cyan" }}
+            >
+              检测连通性
+            </Button>
+          </Group>
+        </Flex>
+      </Box>
 
-                    <Group gap="xs">
-                      <IconClock size={14} color="gray" />
-                      <Text size="xs" c="dimmed">
-                        {formatTime(node.lastUpdate)}
-                      </Text>
-                    </Group>
-
-                    {node.APIs.length > 0 && (
-                      <Stack gap={2} align="flex-start">
-                        {node.APIs.map((api, apiIndex) => (
-                          <Anchor
-                            key={apiIndex}
-                            c="blue"
-                            component={Link}
-                            href={api}
-                            target="_blank"
-                            lineClamp={1}
-                          >
-                            {api}
-                          </Anchor>
-                        ))}
-                      </Stack>
-                    )}
-
+      {/* 节点列表 */}
+      {loading ? (
+        <Paper p="xl" radius="md" style={{ textAlign: "center" }}>
+          <ThemeIcon size={60} radius="xl" variant="light" color="blue" mb="md">
+            <IconServer size={30} />
+          </ThemeIcon>
+          <Title order={3} c="dimmed">
+            正在加载节点列表...
+          </Title>
+          <Text size="sm" c="dimmed" mt="xs">
+            请稍候，正在从区块链获取数据
+          </Text>
+        </Paper>
+      ) : error ? (
+        <Paper shadow="sm" p="xl" radius="md">
+          <Alert color="red" title="加载失败" icon={<IconX size={16} />}>
+            {error}
+          </Alert>
+        </Paper>
+      ) : dotNodes.length === 0 ? (
+        <Paper shadow="sm" p="xl" radius="md" style={{ textAlign: "center" }}>
+          <ThemeIcon size={60} radius="xl" variant="light" color="gray" mb="md">
+            <IconServer size={30} />
+          </ThemeIcon>
+          <Title order={3} c="dimmed" mb="xs">
+            暂无节点
+          </Title>
+          <Text size="sm" c="dimmed">
+            当前网络没有注册的节点
+          </Text>
+        </Paper>
+      ) : (
+        <Grid>
+          {dotNodes.map((node) => (
+            <Grid.Col key={node.address} span="auto">
+              <Card
+                shadow="sm"
+                padding="lg"
+                radius="md"
+                withBorder
+                h="100%"
+                w={343}
+                style={{
+                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                  border: isCurrentNode(node) ? "2px solid #228be6" : undefined,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow =
+                    "0 4px 20px rgba(0,0,0,0.1)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "";
+                }}
+              >
+                {/* 节点头部 */}
+                <Group justify="space-between" mb="md">
+                  <Group>
+                    <ThemeIcon
+                      size={36}
+                      radius="md"
+                      variant="light"
+                      color={
+                        node.isOnline
+                          ? "green"
+                          : node.isOnline === false
+                          ? "red"
+                          : "gray"
+                      }
+                    >
+                      {node.isOnline ? (
+                        <IconWifi size={18} />
+                      ) : node.isOnline === false ? (
+                        <IconWifiOff size={18} />
+                      ) : (
+                        <IconServer size={18} />
+                      )}
+                    </ThemeIcon>
                     <Box>
-                      <Text size="xs" fw={500} mb={4} c="gray">
-                        CID 浏览器
-                      </Text>
-                      <Group gap={2} align="flex-start">
-                        {node.CIDs.map((cid, cidIndex) => (
-                          <Anchor
-                            key={cidIndex}
-                            component={Link}
-                            c="blue"
-                            href={cid + "/ipfs"}
-                            target="_blank"
-                            lineClamp={1}
-                          >
-                            {cid + "/ipfs"}
-                          </Anchor>
-                        ))}
-                        {defaultCID(node) && (
-                          <Anchor
-                            c="blue"
-                            component={Link}
-                            href={defaultCID(node) || ""}
-                            target="_blank"
-                            lineClamp={1}
-                          >
-                            {defaultCID(node)}
-                          </Anchor>
+                      <Group gap="xs">
+                        <Text fw={600} size="md" lineClamp={1}>
+                          {node.name}
+                        </Text>
+                        {isCurrentNode(node) && (
+                          <Badge size="xs" color="blue" variant="filled">
+                            当前
+                          </Badge>
                         )}
                       </Group>
+                      <Text size="xs" c="dimmed">
+                        节点地址
+                      </Text>
                     </Box>
+                  </Group>
 
-                    <Button
-                      fullWidth
-                      variant={isCurrentNode(node) ? "filled" : "light"}
-                      color={isCurrentNode(node) ? "green" : "blue"}
-                      leftSection={<IconSwitchHorizontal size={16} />}
-                      onClick={() => handleSwitchNode(node)}
-                      loading={switchingNode === node.address}
-                      disabled={isCurrentNode(node) || !node.APIs.length}
-                      mt="sm"
+                  {node.isOnline !== undefined && (
+                    <Badge
+                      color={node.isOnline ? "green" : "red"}
+                      variant="light"
+                      leftSection={
+                        node.isOnline ? (
+                          <IconCheck size={12} />
+                        ) : (
+                          <IconX size={12} />
+                        )
+                      }
                     >
-                      {isCurrentNode(node) ? "当前节点" : "切换到此节点"}
-                    </Button>
-                  </Stack>
-                </Card>
-              </Grid.Col>
-            ))}
-          </Grid>
-        )}
+                      {node.isOnline ? "在线" : "离线"}
+                      {node.responseTime !== undefined &&
+                        ` (${formatResponseTime(node.responseTime)})`}
+                    </Badge>
+                  )}
+                </Group>
 
-        <Group gap="xs" mt="lg" justify="center">
-          <Anchor
-            size="sm"
-            c="blue"
-            component={Link}
-            href="https://docs.base.org/chain/connecting-to-base"
-            target="_blank"
-          >
-            官方 RPC
-          </Anchor>
+                <Divider mb="md" />
 
-          <Anchor
-            size="sm"
-            c="blue"
-            component={Link}
-            href="https://chainlist.org/chain/8453"
-            target="_blank"
-          >
-            主网 RPC
-          </Anchor>
+                {/* 节点详细信息 */}
+                <Stack gap="sm">
+                  <Group gap="xs" wrap="nowrap">
+                    <IconDatabase
+                      size={14}
+                      color="gray"
+                      style={{ flexShrink: 0 }}
+                    />
+                    <Text size="xs" c="dimmed">
+                      {mp.formatAddress(node.address)}{" "}
+                      <Anchor
+                        component={Link}
+                        href={{
+                          pathname: "/dot/deploy",
+                          query: { address: node.address, api: node.APIs[0] },
+                        }}
+                        c="dimmed"
+                      >
+                        Deploy
+                      </Anchor>
+                    </Text>
+                  </Group>
 
-          <Anchor
-            size="sm"
-            c="blue"
-            component={Link}
-            href="https://chainlist.org/chain/84532"
-            target="_blank"
-          >
-            测试网 RPC
-          </Anchor>
+                  <Group gap="xs">
+                    <IconClock size={14} color="gray" />
+                    <Text size="xs" c="dimmed">
+                      {formatTime(node.lastUpdate)}
+                    </Text>
+                  </Group>
 
-          <Anchor
-            size="sm"
-            c="blue"
-            component={Link}
-            href="https://docs.base.org/chain/network-faucets"
-            target="_blank"
-          >
-            水龙头列表
-          </Anchor>
+                  {node.APIs.length > 0 && (
+                    <Stack gap={2} align="flex-start">
+                      {node.APIs.map((api, apiIndex) => (
+                        <Anchor
+                          key={apiIndex}
+                          c="blue"
+                          component={Link}
+                          href={api}
+                          target="_blank"
+                          lineClamp={1}
+                        >
+                          {api}
+                        </Anchor>
+                      ))}
+                    </Stack>
+                  )}
 
-          <Anchor
-            size="sm"
-            c="blue"
-            component={Link}
-            href="https://portal.cdp.coinbase.com/products/faucet?projectId=0b869244-5000-43dd-8aba-c9feee07f6ab"
-            target="_blank"
-          >
-            注册领水
-          </Anchor>
+                  <Box>
+                    <Text size="xs" fw={500} mb={4} c="gray">
+                      CID 浏览器
+                    </Text>
+                    <Group gap={2} align="flex-start">
+                      {node.CIDs.map((cid, cidIndex) => (
+                        <Anchor
+                          key={cidIndex}
+                          component={Link}
+                          c="blue"
+                          href={cid + "/ipfs"}
+                          target="_blank"
+                          lineClamp={1}
+                        >
+                          {cid + "/ipfs"}
+                        </Anchor>
+                      ))}
+                      {defaultCID(node) && (
+                        <Anchor
+                          c="blue"
+                          component={Link}
+                          href={defaultCID(node) || ""}
+                          target="_blank"
+                          lineClamp={1}
+                        >
+                          {defaultCID(node)}
+                        </Anchor>
+                      )}
+                    </Group>
+                  </Box>
 
-          <Anchor
-            size="sm"
-            c="blue"
-            component={Link}
-            href={
-              Explorer + "/address/0xdc82cef1a8416210afb87caeec908a4df843f016"
-            }
-            target="_blank"
+                  <Button
+                    fullWidth
+                    variant={isCurrentNode(node) ? "filled" : "light"}
+                    color={isCurrentNode(node) ? "green" : "blue"}
+                    leftSection={<IconSwitchHorizontal size={16} />}
+                    onClick={() => handleSwitchNode(node)}
+                    loading={switchingNode === node.address}
+                    disabled={isCurrentNode(node) || !node.APIs.length}
+                    mt="sm"
+                  >
+                    {isCurrentNode(node) ? "当前节点" : "切换到此节点"}
+                  </Button>
+                </Stack>
+              </Card>
+            </Grid.Col>
+          ))}
+        </Grid>
+      )}
+
+      <Group mt="lg" justify="space-between">
+        <TextInput
+          size="sm"
+          flex={1}
+          leftSection={<IconServer size={16} />}
+          value={customRPC}
+          onChange={(event) => setCustomRPC(event.currentTarget.value)}
+          placeholder="自定义 RPC"
+        />
+
+        <Tooltip label="刷新节点列表">
+          <ActionIcon
+            size="lg"
+            variant="light"
+            color="blue"
+            onClick={() => fetchNodes()}
+            loading={loading}
           >
-            合约地址
-          </Anchor>
-        </Group>
-      </Container>
-    </Box>
+            <IconRefresh size={18} />
+          </ActionIcon>
+        </Tooltip>
+      </Group>
+
+      <Group gap="xs" mt="lg" justify="center">
+        <Anchor
+          size="sm"
+          c="blue"
+          component={Link}
+          href="https://docs.base.org/chain/connecting-to-base"
+          target="_blank"
+        >
+          官方 RPC
+        </Anchor>
+
+        <Anchor
+          size="sm"
+          c="blue"
+          component={Link}
+          href="https://chainlist.org/chain/8453"
+          target="_blank"
+        >
+          主网 RPC
+        </Anchor>
+
+        {/* <Anchor
+          size="sm"
+          c="blue"
+          component={Link}
+          href="https://chainlist.org/chain/84532"
+          target="_blank"
+        >
+          测试网 RPC
+        </Anchor> */}
+
+        <Anchor
+          size="sm"
+          c="blue"
+          component={Link}
+          href="https://docs.base.org/chain/network-faucets"
+          target="_blank"
+        >
+          水龙头列表
+        </Anchor>
+
+        <Anchor
+          size="sm"
+          c="blue"
+          component={Link}
+          href="https://portal.cdp.coinbase.com/products/faucet?projectId=0b869244-5000-43dd-8aba-c9feee07f6ab"
+          target="_blank"
+        >
+          注册领水
+        </Anchor>
+
+        <Anchor
+          size="sm"
+          c="blue"
+          component={Link}
+          href={
+            Explorer + "/address/0xdc82cef1a8416210afb87caeec908a4df843f016"
+          }
+          target="_blank"
+        >
+          合约地址
+        </Anchor>
+      </Group>
+    </Container>
   );
 }
