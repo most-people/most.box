@@ -4,15 +4,18 @@ import {
   Text,
   Group,
   Stack,
-  Paper,
   ActionIcon,
   Button,
   Modal,
   ScrollArea,
   Center,
   Anchor,
-  Box,
   Tooltip,
+  TextInput,
+  Grid,
+  Card,
+  Menu,
+  Badge,
 } from "@mantine/core";
 import { api } from "@/constants/api";
 import "./disk.scss";
@@ -22,9 +25,11 @@ import {
   IconFolderPlus,
   IconX,
   IconRefresh,
+  IconDotsVertical,
 } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { FileItem, useUserStore } from "@/stores/userStore";
+import mp from "@/constants/mp";
 
 interface PreviewFile {
   file: File;
@@ -38,18 +43,28 @@ export default function HomeDisk() {
   const files = useUserStore((state) => state.files);
   const filesPath = useUserStore((state) => state.filesPath);
   const setItem = useUserStore((state) => state.setItem);
+  const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [previewFiles, setPreviewFiles] = useState<PreviewFile[]>([]);
   const [showPreview, setShowPreview] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [displayCount, setDisplayCount] = useState(100);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
 
   const fetchFiles = async (path: string = "") => {
     try {
+      setLoading(true);
       const res = await api.post(`/files/${path}`);
       setItem("files", res.data);
     } catch (error) {
       console.error(error);
+      notifications.show({
+        message: (error as Error).message,
+        color: "red",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -60,6 +75,25 @@ export default function HomeDisk() {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
+
+  // 过滤文件列表
+  const filteredFiles = files
+    ? files.filter((file) => mp.pinyin(file.name, searchQuery, 0))
+    : [];
+
+  // 获取当前显示的文件列表
+  const displayedFiles = filteredFiles.slice(0, displayCount);
+  const hasMore = filteredFiles.length > displayCount;
+
+  // 加载更多函数
+  const loadMore = () => {
+    setDisplayCount((prev) => prev + 100);
+  };
+
+  // 重置显示数量（搜索时使用）
+  useEffect(() => {
+    setDisplayCount(100);
+  }, [searchQuery]);
 
   const uploadFiles = async (files: File[]) => {
     if (!files || files.length === 0) return;
@@ -163,7 +197,7 @@ export default function HomeDisk() {
     return formatFileSize(totalBytes);
   };
 
-  // 在组件中添加删除函数
+  // 删除文件函数
   const deleteFile = async (fileName: string) => {
     try {
       // 构建完整的文件路径
@@ -188,7 +222,7 @@ export default function HomeDisk() {
     }
   };
 
-  // 添加确认删除的函数
+  // 确认删除的函数
   const handleDeleteFile = (item: FileItem) => {
     const confirmed = window.confirm(`确定要删除文件 "${item.name}" 吗？`);
     if (confirmed) {
@@ -212,6 +246,31 @@ export default function HomeDisk() {
     fetchFiles(newPath);
   };
 
+  // 打开文件
+  const handleOpenFile = (item: FileItem) => {
+    const url = `${dotCID}/ipfs/${item.cid["/"]}?filename=${item.name}`;
+    window.open(url, "_blank");
+  };
+
+  // 分享文件
+  const handleShareFile = (item: FileItem) => {
+    const url = `${dotCID}/ipfs/${item.cid["/"]}?filename=${item.name}`;
+
+    if (navigator.share) {
+      navigator.share({
+        title: `文件: ${item.name}`,
+        url,
+      });
+    } else {
+      navigator.clipboard.writeText(url).then(() => {
+        notifications.show({
+          color: "green",
+          message: "分享链接已复制到剪贴板",
+        });
+      });
+    }
+  };
+
   useEffect(() => {
     if (wallet && !files) {
       fetchFiles(filesPath);
@@ -229,7 +288,7 @@ export default function HomeDisk() {
   }
 
   return (
-    <Box>
+    <>
       <Stack align="center" gap={0} p="md">
         <Group gap={4}>
           <span>当前节点</span>
@@ -239,206 +298,306 @@ export default function HomeDisk() {
         </Group>
       </Stack>
 
-      <Stack gap="md" p="md">
-        {/* 隐藏的文件输入框 */}
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          style={{ display: "none" }}
-          onChange={handleFileChange}
-        />
-        <input
-          ref={folderInputRef}
-          type="file"
-          // eslint-disable-next-line
-          // @ts-ignore
-          webkitdirectory=""
-          multiple
-          style={{ display: "none" }}
-          onChange={handleFileChange}
-        />
+      {files?.length ? (
+        <Stack gap="md" p="md" className="disk-box">
+          {/* 搜索框 */}
+          <Center>
+            <TextInput
+              placeholder="搜索文件名称"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.currentTarget.value)}
+              size="md"
+              radius="md"
+              w={400}
+              styles={{
+                input: {
+                  textAlign: "center",
+                },
+              }}
+            />
+          </Center>
 
-        <Group mb="md" justify="space-between">
-          <Group gap="sm">
+          <Group justify="space-between" align="center">
+            <Badge variant="light" size="lg">
+              {searchQuery
+                ? `显示 ${displayedFiles.length} / ${filteredFiles.length} (总共 ${files.length})`
+                : `显示 ${displayedFiles.length} / ${files.length}`}{" "}
+              个文件
+            </Badge>
+            <Group>
+              <Tooltip label="刷新">
+                <ActionIcon
+                  size="lg"
+                  onClick={() => fetchFiles(filesPath)}
+                  color="blue"
+                >
+                  <IconRefresh size={18} />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label="上传文件">
+                <ActionIcon
+                  size="lg"
+                  onClick={handleFileUpload}
+                  color="green"
+                  disabled={uploading}
+                >
+                  <IconUpload size={18} />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label="上传文件夹">
+                <ActionIcon
+                  size="lg"
+                  onClick={handleFolderUpload}
+                  color="yellow"
+                  disabled={uploading}
+                >
+                  <IconFolderPlus size={18} />
+                </ActionIcon>
+              </Tooltip>
+            </Group>
+          </Group>
+
+          {/* 搜索结果为空时的提示 */}
+          {searchQuery && filteredFiles.length === 0 ? (
+            <Stack align="center" justify="center" h={200}>
+              <Text size="lg" c="dimmed">
+                未找到文件
+              </Text>
+              <Text size="sm" c="dimmed">
+                尝试用其他关键词搜索
+              </Text>
+            </Stack>
+          ) : (
+            <>
+              {/* 后退目录项 */}
+              {filesPath && (
+                <Card
+                  radius="md"
+                  withBorder
+                  style={{ cursor: "pointer" }}
+                  onClick={handleGoBack}
+                >
+                  <Group justify="space-between" align="center">
+                    <Text fw={500}>📁 ..</Text>
+                  </Group>
+                </Card>
+              )}
+
+              <Grid gutter="md">
+                {displayedFiles.map((item, index) => (
+                  <Grid.Col
+                    key={index}
+                    span={{ base: 12, xs: 6, sm: 4, md: 3, lg: 3, xl: 2 }}
+                  >
+                    <Card
+                      radius="md"
+                      withBorder
+                      style={{
+                        cursor:
+                          item.type === "directory" ? "pointer" : "default",
+                      }}
+                      onClick={() => {
+                        if (item.type === "directory") {
+                          handleFolderClick(item.name);
+                        }
+                      }}
+                    >
+                      <Group justify="space-between" wrap="nowrap" gap={4}>
+                        <Stack gap={4} flex={1}>
+                          <Text fw={500} lineClamp={1}>
+                            {item.type === "directory" ? "📁" : "📄"}{" "}
+                            {item.name}
+                          </Text>
+                          {item.size > 0 && (
+                            <Text size="xs" c="dimmed">
+                              {formatFileSize(item.size)}
+                            </Text>
+                          )}
+                        </Stack>
+                        <Menu shadow="md" width={120}>
+                          <Menu.Target>
+                            <ActionIcon variant="subtle" color="gray">
+                              <IconDotsVertical size={14} />
+                            </ActionIcon>
+                          </Menu.Target>
+
+                          <Menu.Dropdown>
+                            <Menu.Item
+                              leftSection={<span>📖</span>}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (item.type === "directory") {
+                                  handleFolderClick(item.name);
+                                } else {
+                                  handleOpenFile(item);
+                                }
+                              }}
+                            >
+                              {item.type === "directory" ? "打开" : "查看"}
+                            </Menu.Item>
+                            {item.type !== "directory" && (
+                              <Menu.Item
+                                leftSection={<span>📤</span>}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleShareFile(item);
+                                }}
+                              >
+                                分享
+                              </Menu.Item>
+                            )}
+                            <Menu.Divider />
+                            {!(
+                              item.type === "directory" && item.name === ".note"
+                            ) && (
+                              <Menu.Item
+                                leftSection={<span>🗑️</span>}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteFile(item);
+                                }}
+                              >
+                                删除
+                              </Menu.Item>
+                            )}
+                          </Menu.Dropdown>
+                        </Menu>
+                      </Group>
+                    </Card>
+                  </Grid.Col>
+                ))}
+              </Grid>
+
+              {hasMore && (
+                <Center>
+                  <Button variant="light" onClick={loadMore} size="md">
+                    继续加载 ({filteredFiles.length - displayCount} 个剩余)
+                  </Button>
+                </Center>
+              )}
+            </>
+          )}
+        </Stack>
+      ) : (
+        <Stack align="center" justify="center" h={200}>
+          <Text size="lg" c="dimmed">
+            {loading ? "正在加载" : "暂无文件"}
+          </Text>
+          <Group>
             <Tooltip label="刷新">
               <ActionIcon
-                color="blue"
                 size="lg"
                 onClick={() => fetchFiles(filesPath)}
+                color="blue"
               >
-                <IconRefresh />
+                <IconRefresh size={18} />
               </ActionIcon>
             </Tooltip>
-
             <Tooltip label="上传文件">
               <ActionIcon
-                color="green"
                 size="lg"
                 onClick={handleFileUpload}
+                color="green"
                 disabled={uploading}
               >
-                <IconUpload />
+                <IconUpload size={18} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label="上传文件夹">
+              <ActionIcon
+                size="lg"
+                onClick={handleFolderUpload}
+                color="yellow"
+                disabled={uploading}
+              >
+                <IconFolderPlus size={18} />
               </ActionIcon>
             </Tooltip>
           </Group>
+        </Stack>
+      )}
 
-          <Tooltip label="上传文件夹">
-            <ActionIcon
-              color="yellow"
-              size="lg"
-              onClick={handleFolderUpload}
-              disabled={uploading}
-            >
-              <IconFolderPlus />
-            </ActionIcon>
-          </Tooltip>
-        </Group>
+      {/* 隐藏的文件输入框 */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        style={{ display: "none" }}
+        onChange={handleFileChange}
+      />
+      <input
+        ref={folderInputRef}
+        type="file"
+        // eslint-disable-next-line
+        // @ts-ignore
+        webkitdirectory=""
+        multiple
+        style={{ display: "none" }}
+        onChange={handleFileChange}
+      />
 
-        <Stack>
-          {/* 后退目录项 */}
-          {filesPath && (
-            <Paper
-              p="md"
-              withBorder
-              radius="md"
-              style={{ cursor: "pointer" }}
-              onClick={handleGoBack}
-            >
-              <Group justify="space-between" align="center">
-                <Group align="center">
-                  <Text fw={500}>📁 ..</Text>
-                </Group>
-              </Group>
-            </Paper>
-          )}
+      {/* 文件预览模态框 */}
+      <Modal
+        opened={showPreview}
+        onClose={handleCancelUpload}
+        title="文件预览"
+        size="lg"
+        centered
+      >
+        <Stack gap="md">
+          <Group justify="space-between">
+            <Text size="sm" c="dimmed">
+              共 {previewFiles.length} 个文件，总大小: {getTotalSize()}
+            </Text>
+          </Group>
 
-          {files?.map((item, index) => (
-            <Paper
-              key={index}
-              p="md"
-              withBorder
-              radius="md"
-              style={{
-                cursor: item.type === "directory" ? "pointer" : "default",
-              }}
-              onClick={() => {
-                if (item.type === "directory") {
-                  handleFolderClick(item.name);
-                }
-              }}
-            >
-              <Group justify="space-between" align="center">
-                <Group align="center">
-                  <Text fw={500}>
-                    {item.type === "directory" ? "📁" : "📄"} {item.name}
-                  </Text>
-                </Group>
-                <Group align="center">
-                  <Stack gap={4} align="flex-end">
-                    {item.size > 0 && (
-                      <Text size="sm" c="dimmed">
-                        {formatFileSize(item.size)}
-                      </Text>
-                    )}
-                  </Stack>
-                  <ActionIcon
-                    variant="subtle"
-                    color="gray"
-                    component={Link}
-                    href={`${dotCID}/ipfs/${item.cid["/"]}?filename=${item.name}`}
-                    target="_blank"
-                    onClick={(e) => e.stopPropagation()} // 阻止事件冒泡
-                  >
-                    🔍
-                  </ActionIcon>
-                  {!(item.type === "directory" && item.name === ".note") && (
+          <ScrollArea h={300}>
+            <Stack gap="xs">
+              {previewFiles.map((item, index) => (
+                <Card key={index} p="sm" withBorder>
+                  <Group justify="space-between" align="center" wrap="nowrap">
+                    <Group align="center">
+                      <Text size="sm">📄</Text>
+                      <Stack gap={2}>
+                        <Text size="sm" fw={500}>
+                          {item.path}
+                        </Text>
+                        <Text size="xs" c="dimmed">
+                          {item.size}
+                        </Text>
+                      </Stack>
+                    </Group>
                     <ActionIcon
                       variant="subtle"
                       color="gray"
-                      onClick={(e) => {
-                        e.stopPropagation(); // 阻止事件冒泡
-                        handleDeleteFile(item);
-                      }}
+                      onClick={() => removePreviewFile(index)}
                     >
-                      🗑️
+                      <IconX />
                     </ActionIcon>
-                  )}
-                </Group>
-              </Group>
-            </Paper>
-          ))}
+                  </Group>
+                </Card>
+              ))}
+            </Stack>
+          </ScrollArea>
 
-          {files?.length === 0 && (
-            <Text ta="center" size="lg" c="dimmed">
-              暂无文件
-            </Text>
-          )}
+          <Group justify="flex-end" gap="sm">
+            <Button
+              variant="outline"
+              onClick={handleCancelUpload}
+              disabled={uploading}
+            >
+              取消
+            </Button>
+            <Button
+              onClick={handleConfirmUpload}
+              loading={uploading}
+              disabled={previewFiles.length === 0}
+            >
+              确认上传
+            </Button>
+          </Group>
         </Stack>
-
-        {/* 文件预览模态框 */}
-        <Modal
-          opened={showPreview}
-          onClose={handleCancelUpload}
-          title="文件预览"
-          size="lg"
-          centered
-        >
-          <Stack gap="md">
-            <Group justify="space-between">
-              <Text size="sm" c="dimmed">
-                共 {previewFiles.length} 个文件，总大小: {getTotalSize()}
-              </Text>
-            </Group>
-
-            <ScrollArea h={300}>
-              <Stack gap="xs">
-                {previewFiles.map((item, index) => (
-                  <Paper key={index} p="sm" withBorder>
-                    <Group justify="space-between" align="center" wrap="nowrap">
-                      <Group align="center">
-                        <Text size="sm">📄</Text>
-                        <Stack gap={2}>
-                          <Text size="sm" fw={500}>
-                            {item.path}
-                          </Text>
-                          <Text size="xs" c="dimmed">
-                            {item.size}
-                          </Text>
-                        </Stack>
-                      </Group>
-                      <ActionIcon
-                        variant="subtle"
-                        color="gray"
-                        onClick={() => removePreviewFile(index)}
-                      >
-                        <IconX />
-                      </ActionIcon>
-                    </Group>
-                  </Paper>
-                ))}
-              </Stack>
-            </ScrollArea>
-
-            <Group justify="flex-end" gap="sm">
-              <Button
-                variant="outline"
-                onClick={handleCancelUpload}
-                disabled={uploading}
-              >
-                取消
-              </Button>
-              <Button
-                onClick={handleConfirmUpload}
-                loading={uploading}
-                disabled={previewFiles.length === 0}
-              >
-                确认上传
-              </Button>
-            </Group>
-          </Stack>
-        </Modal>
-      </Stack>
-    </Box>
+      </Modal>
+    </>
   );
 }
