@@ -40,12 +40,13 @@ export default function HomeDisk() {
   const [uploading, setUploading] = useState(false);
   const [previewFiles, setPreviewFiles] = useState<PreviewFile[]>([]);
   const [showPreview, setShowPreview] = useState(false);
+  const [currentPath, setCurrentPath] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
 
-  const fetchFiles = async () => {
+  const fetchFiles = async (path: string = "") => {
     try {
-      const res = await api.post("/files/");
+      const res = await api.post(`/files/${path}`);
       setItem("files", res.data);
     } catch (error) {
       console.error(error);
@@ -70,7 +71,10 @@ export default function HomeDisk() {
         const file = files[i];
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("path", file.webkitRelativePath);
+        // 如果在子目录中，需要包含当前路径
+        const path = file.webkitRelativePath;
+        const filePath = currentPath ? `${currentPath}/${path}` : path;
+        formData.append("path", filePath);
 
         const res = await api.put("/files.upload", formData);
 
@@ -85,7 +89,7 @@ export default function HomeDisk() {
       }
 
       // 上传完成后刷新文件列表
-      await fetchFiles();
+      await fetchFiles(currentPath);
       setShowPreview(false);
       setPreviewFiles([]);
     } catch (error: any) {
@@ -162,8 +166,9 @@ export default function HomeDisk() {
   // 在组件中添加删除函数
   const deleteFile = async (fileName: string) => {
     try {
-      // 使用文件名构建删除URL
-      await api.delete(`/files/${fileName}`);
+      // 构建完整的文件路径
+      const filePath = currentPath ? `${currentPath}/${fileName}` : fileName;
+      await api.delete(`/files/${filePath}`);
 
       notifications.show({
         title: "删除成功",
@@ -172,7 +177,7 @@ export default function HomeDisk() {
       });
 
       // 删除成功后刷新文件列表
-      await fetchFiles();
+      await fetchFiles(currentPath);
     } catch (error) {
       console.error("删除失败:", error);
       notifications.show({
@@ -191,9 +196,25 @@ export default function HomeDisk() {
     }
   };
 
+  // 处理文件夹点击
+  const handleFolderClick = (folderName: string) => {
+    const newPath = currentPath ? `${currentPath}/${folderName}` : folderName;
+    setCurrentPath(newPath);
+    fetchFiles(newPath);
+  };
+
+  // 处理后退
+  const handleGoBack = () => {
+    const pathParts = currentPath.split("/");
+    pathParts.pop(); // 移除最后一个路径部分
+    const newPath = pathParts.join("/");
+    setCurrentPath(newPath);
+    fetchFiles(newPath);
+  };
+
   useEffect(() => {
     if (wallet && !files) {
-      fetchFiles();
+      fetchFiles(currentPath);
     }
   }, [wallet, files]);
 
@@ -241,7 +262,11 @@ export default function HomeDisk() {
         <Group mb="md" justify="space-between">
           <Group gap="sm">
             <Tooltip label="刷新">
-              <ActionIcon color="blue" size="lg" onClick={fetchFiles}>
+              <ActionIcon
+                color="blue"
+                size="lg"
+                onClick={() => fetchFiles(currentPath)}
+              >
                 <IconRefresh />
               </ActionIcon>
             </Tooltip>
@@ -269,6 +294,87 @@ export default function HomeDisk() {
             </ActionIcon>
           </Tooltip>
         </Group>
+
+        <Stack>
+          {/* 后退目录项 */}
+          {currentPath && (
+            <Paper
+              p="md"
+              withBorder
+              radius="md"
+              style={{ cursor: "pointer" }}
+              onClick={handleGoBack}
+            >
+              <Group justify="space-between" align="center">
+                <Group align="center">
+                  <Text fw={500}>📁 ..</Text>
+                </Group>
+              </Group>
+            </Paper>
+          )}
+
+          {files?.map((item, index) => (
+            <Paper
+              key={index}
+              p="md"
+              withBorder
+              radius="md"
+              style={{
+                cursor: item.type === "directory" ? "pointer" : "default",
+              }}
+              onClick={() => {
+                if (item.type === "directory") {
+                  handleFolderClick(item.name);
+                }
+              }}
+            >
+              <Group justify="space-between" align="center">
+                <Group align="center">
+                  <Text fw={500}>
+                    {item.type === "directory" ? "📁" : "📄"} {item.name}
+                  </Text>
+                </Group>
+                <Group align="center">
+                  <Stack gap={4} align="flex-end">
+                    {item.size > 0 && (
+                      <Text size="sm" c="dimmed">
+                        {formatFileSize(item.size)}
+                      </Text>
+                    )}
+                  </Stack>
+                  <ActionIcon
+                    variant="subtle"
+                    color="gray"
+                    component={Link}
+                    href={`${dotCID}/ipfs/${item.cid["/"]}?filename=${item.name}`}
+                    target="_blank"
+                    onClick={(e) => e.stopPropagation()} // 阻止事件冒泡
+                  >
+                    🔍
+                  </ActionIcon>
+                  {!(item.type === "directory" && item.name === ".note") && (
+                    <ActionIcon
+                      variant="subtle"
+                      color="gray"
+                      onClick={(e) => {
+                        e.stopPropagation(); // 阻止事件冒泡
+                        handleDeleteFile(item);
+                      }}
+                    >
+                      🗑️
+                    </ActionIcon>
+                  )}
+                </Group>
+              </Group>
+            </Paper>
+          ))}
+
+          {files?.length === 0 && (
+            <Text ta="center" size="lg" c="dimmed">
+              暂无文件
+            </Text>
+          )}
+        </Stack>
 
         {/* 文件预览模态框 */}
         <Modal
@@ -332,50 +438,6 @@ export default function HomeDisk() {
             </Group>
           </Stack>
         </Modal>
-
-        {files?.map((item, index) => (
-          <Paper key={index} p="md" withBorder radius="md">
-            <Group justify="space-between" align="center">
-              <Group align="center">
-                <Text fw={500}>
-                  {item.type === "directory" ? "📁" : "📄"} {item.name}
-                </Text>
-              </Group>
-              <Group align="center">
-                <Stack gap={4} align="flex-end">
-                  {item.size > 0 && (
-                    <Text size="sm" c="dimmed">
-                      {formatFileSize(item.size)}
-                    </Text>
-                  )}
-                </Stack>
-                <ActionIcon
-                  variant="subtle"
-                  color="gray"
-                  component={Link}
-                  href={`${dotCID}/ipfs/${item.cid["/"]}?filename=${item.name}`}
-                  target="_blank"
-                >
-                  🔍
-                </ActionIcon>
-                {!(item.type === "directory" && item.name.startsWith(".")) && (
-                  <ActionIcon
-                    variant="subtle"
-                    color="gray"
-                    onClick={() => handleDeleteFile(item)}
-                  >
-                    🗑️
-                  </ActionIcon>
-                )}
-              </Group>
-            </Group>
-          </Paper>
-        ))}
-        {files?.length === 0 && (
-          <Text ta="center" size="lg" c="dimmed">
-            暂无文件
-          </Text>
-        )}
       </Stack>
     </Box>
   );
