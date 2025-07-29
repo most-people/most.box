@@ -36,11 +36,11 @@ export default function HomeDisk() {
   const wallet = useUserStore((state) => state.wallet);
   const dotCID = useUserStore((state) => state.dotCID);
   const files = useUserStore((state) => state.files);
+  const filesPath = useUserStore((state) => state.filesPath);
   const setItem = useUserStore((state) => state.setItem);
   const [uploading, setUploading] = useState(false);
   const [previewFiles, setPreviewFiles] = useState<PreviewFile[]>([]);
   const [showPreview, setShowPreview] = useState(false);
-  const [currentPath, setCurrentPath] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
 
@@ -73,7 +73,7 @@ export default function HomeDisk() {
         formData.append("file", file);
         // 如果在子目录中，需要包含当前路径
         const path = file.webkitRelativePath;
-        const filePath = currentPath ? `${currentPath}/${path}` : path;
+        const filePath = filesPath ? `${filesPath}/${path}` : path;
         formData.append("path", filePath);
 
         const res = await api.put("/files.upload", formData);
@@ -89,7 +89,7 @@ export default function HomeDisk() {
       }
 
       // 上传完成后刷新文件列表
-      await fetchFiles(currentPath);
+      await fetchFiles(filesPath);
       setShowPreview(false);
       setPreviewFiles([]);
     } catch (error: any) {
@@ -167,7 +167,7 @@ export default function HomeDisk() {
   const deleteFile = async (fileName: string) => {
     try {
       // 构建完整的文件路径
-      const filePath = currentPath ? `${currentPath}/${fileName}` : fileName;
+      const filePath = filesPath ? `${filesPath}/${fileName}` : fileName;
       await api.delete(`/files/${filePath}`);
 
       notifications.show({
@@ -177,7 +177,7 @@ export default function HomeDisk() {
       });
 
       // 删除成功后刷新文件列表
-      await fetchFiles(currentPath);
+      await fetchFiles(filesPath);
     } catch (error) {
       console.error("删除失败:", error);
       notifications.show({
@@ -198,23 +198,23 @@ export default function HomeDisk() {
 
   // 处理文件夹点击
   const handleFolderClick = (folderName: string) => {
-    const newPath = currentPath ? `${currentPath}/${folderName}` : folderName;
-    setCurrentPath(newPath);
+    const newPath = filesPath ? `${filesPath}/${folderName}` : folderName;
+    setItem("filesPath", newPath);
     fetchFiles(newPath);
   };
 
   // 处理后退
   const handleGoBack = () => {
-    const pathParts = currentPath.split("/");
+    const pathParts = filesPath.split("/");
     pathParts.pop(); // 移除最后一个路径部分
     const newPath = pathParts.join("/");
-    setCurrentPath(newPath);
+    setItem("filesPath", newPath);
     fetchFiles(newPath);
   };
 
   useEffect(() => {
     if (wallet && !files) {
-      fetchFiles(currentPath);
+      fetchFiles(filesPath);
     }
   }, [wallet, files]);
 
@@ -265,7 +265,7 @@ export default function HomeDisk() {
               <ActionIcon
                 color="blue"
                 size="lg"
-                onClick={() => fetchFiles(currentPath)}
+                onClick={() => fetchFiles(filesPath)}
               >
                 <IconRefresh />
               </ActionIcon>
@@ -297,7 +297,7 @@ export default function HomeDisk() {
 
         <Stack>
           {/* 后退目录项 */}
-          {currentPath && (
+          {filesPath && (
             <Paper
               p="md"
               withBorder

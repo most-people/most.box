@@ -40,6 +40,7 @@ interface UserStore {
   dotNodes: DotNode[];
   notes?: Note[];
   files?: FileItem[];
+  filesPath: string;
   exit: () => void;
 }
 
@@ -108,6 +109,7 @@ export const useUserStore = create<State>((set, get) => ({
   dotNodes: [],
   notes: undefined,
   files: undefined,
+  filesPath: "",
   exit() {
     set({ wallet: undefined, notes: undefined, files: undefined });
     localStorage.removeItem("jwt");
