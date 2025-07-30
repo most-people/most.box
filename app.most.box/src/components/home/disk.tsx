@@ -26,6 +26,7 @@ import {
   IconX,
   IconRefresh,
   IconDotsVertical,
+  IconPlus,
 } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { FileItem, useUserStore } from "@/stores/userStore";
@@ -289,15 +290,6 @@ export default function HomeDisk() {
 
   return (
     <>
-      <Stack align="center" gap={0} p="md">
-        <Group gap={4}>
-          <span>当前节点</span>
-          <Anchor component={Link} href={dotCID + "/ipfs/"} target="_blank">
-            {dotCID + "/ipfs/"}
-          </Anchor>
-        </Group>
-      </Stack>
-
       {files?.length ? (
         <Stack gap="md" p="md" className="disk-box">
           {/* 搜索框 */}
@@ -341,7 +333,7 @@ export default function HomeDisk() {
                   color="green"
                   disabled={uploading}
                 >
-                  <IconUpload size={18} />
+                  <IconPlus size={18} />
                 </ActionIcon>
               </Tooltip>
               <Tooltip label="上传文件夹">

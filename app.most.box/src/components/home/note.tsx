@@ -308,6 +308,11 @@ export default function HomeNote() {
               个笔记
             </Badge>
             <Group>
+              <Tooltip label="刷新">
+                <ActionIcon size="lg" onClick={fetchNotes} color="blue">
+                  <IconRefresh size={18} />
+                </ActionIcon>
+              </Tooltip>
               <Tooltip label="新笔记">
                 <ActionIcon size="lg" onClick={openNoteModal} color="green">
                   <IconPlus size={18} />
