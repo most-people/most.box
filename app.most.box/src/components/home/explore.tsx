@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import wordsData from "@/assets/json/in-a-word.json";
-import { Text } from "@mantine/core";
+import { Text, Container } from "@mantine/core";
 import "./explore.scss";
 
 export default function HomeExplore() {
@@ -12,5 +12,9 @@ export default function HomeExplore() {
     setRandomWord(wordsData[randomIndex]);
   }, []);
 
-  return <Text>{randomWord}</Text>;
+  return (
+    <Container>
+      <Text mt={20}>{randomWord}</Text>
+    </Container>
+  );
 }

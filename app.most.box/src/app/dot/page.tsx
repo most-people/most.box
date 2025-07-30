@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { AppHeader } from "@/components/AppHeader";
 import {
   Box,
@@ -338,9 +338,17 @@ export default function PageDot() {
   const onlineNodes = dotNodes.filter((node) => node.isOnline);
   const offlineNodes = dotNodes.filter((node) => node.isOnline === false);
 
+  const title = useMemo(() => {
+    try {
+      return new URL(dotAPI).hostname.toUpperCase();
+    } catch {
+      return "节点选择";
+    }
+  }, [dotAPI]);
+
   return (
     <Container size="lg" w="100%">
-      <AppHeader title="节点选择" />
+      <AppHeader title={title} />
       {/* 当前节点信息区域 */}
       <Box mb="lg">
         <Stack align="center">

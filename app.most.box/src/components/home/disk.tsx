@@ -9,7 +9,6 @@ import {
   Modal,
   ScrollArea,
   Center,
-  Anchor,
   Tooltip,
   TextInput,
   Grid,
@@ -281,7 +280,7 @@ export default function HomeDisk() {
   if (!wallet) {
     return (
       <Center>
-        <Button variant="gradient" component={Link} href="/login">
+        <Button mt={20} variant="gradient" component={Link} href="/login">
           去登录
         </Button>
       </Center>
