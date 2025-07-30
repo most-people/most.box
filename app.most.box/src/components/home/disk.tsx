@@ -369,15 +369,13 @@ export default function HomeDisk() {
             </Stack>
           ) : (
             <>
-              <Card
-                radius="md"
-                withBorder
-                style={{
-                  cursor: filesPath ? "pointer" : "auto",
-                }}
-                onClick={filesPath ? handleGoBack : undefined}
-              >
-                <Group justify="space-between" align="center">
+              <Card radius="md" withBorder>
+                <Group
+                  style={{
+                    cursor: filesPath ? "pointer" : "auto",
+                  }}
+                  onClick={filesPath ? handleGoBack : undefined}
+                >
                   <Text fw={500}>📁 {filesPath ? ".." : "根目录"}</Text>
                 </Group>
               </Card>
@@ -388,30 +386,25 @@ export default function HomeDisk() {
                     key={index}
                     span={{ base: 12, xs: 6, sm: 4, md: 3, lg: 3, xl: 2 }}
                   >
-                    <Card
-                      radius="md"
-                      withBorder
-                      style={{
-                        cursor:
-                          item.type === "directory" ? "pointer" : "default",
-                      }}
-                      onClick={() => {
-                        if (item.type === "directory") {
-                          handleFolderClick(item.name);
-                        }
-                      }}
-                    >
+                    <Card radius="md" withBorder>
                       <Group justify="space-between" wrap="nowrap" gap={4}>
-                        <Stack gap={4} flex={1}>
+                        <Stack
+                          gap={4}
+                          flex={1}
+                          style={{
+                            cursor:
+                              item.type === "directory" ? "pointer" : "default",
+                          }}
+                          onClick={() => {
+                            if (item.type === "directory") {
+                              handleFolderClick(item.name);
+                            }
+                          }}
+                        >
                           <Text fw={500} lineClamp={1}>
                             {item.type === "directory" ? "📁" : "📄"}{" "}
                             {item.name}
                           </Text>
-                          {/* {item.size > 0 && (
-                            <Text size="xs" c="dimmed">
-                              {formatFileSize(item.size)}
-                            </Text>
-                          )} */}
                         </Stack>
                         <Menu shadow="md" width={120}>
                           <Menu.Target>
@@ -434,30 +427,41 @@ export default function HomeDisk() {
                             >
                               {item.type === "directory" ? "打开" : "查看"}
                             </Menu.Item>
-                            {item.type !== "directory" && (
-                              <Menu.Item
-                                leftSection={<span>📤</span>}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleShareFile(item);
-                                }}
-                              >
-                                分享
-                              </Menu.Item>
-                            )}
+
+                            <Menu.Item
+                              leftSection={<span>📤</span>}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleShareFile(item);
+                              }}
+                            >
+                              分享
+                            </Menu.Item>
+
                             <Menu.Divider />
-                            {!(
-                              item.type === "directory" && item.name === ".note"
-                            ) && (
-                              <Menu.Item
-                                leftSection={<span>🗑️</span>}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteFile(item);
-                                }}
-                              >
-                                删除
-                              </Menu.Item>
+
+                            <Menu.Item
+                              disabled={
+                                item.type === "directory" &&
+                                item.name === ".note"
+                              }
+                              leftSection={<span>🗑️</span>}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteFile(item);
+                              }}
+                            >
+                              删除
+                            </Menu.Item>
+
+                            {item.size > 0 && (
+                              <Menu.Label>
+                                <Center>
+                                  <Text size="xs" c="dimmed">
+                                    {formatFileSize(item.size)}
+                                  </Text>
+                                </Center>
+                              </Menu.Label>
                             )}
                           </Menu.Dropdown>
                         </Menu>

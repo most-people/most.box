@@ -83,7 +83,7 @@ export default function PageDot() {
   const [loading, setLoading] = useState(true);
   const [checkingConnectivity, setCheckingConnectivity] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [network, setNetwork] = useState<"mainnet" | "testnet">("testnet");
+  const [network, setNetwork] = useState<"mainnet" | "testnet">("mainnet");
   const [switchingNode, setSwitchingNode] = useState<string | null>(null);
 
   // 合约配置
