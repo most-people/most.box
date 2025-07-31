@@ -14,7 +14,7 @@ export default function HomeExplore() {
 
   return (
     <Container>
-      <Text mt={20}>{randomWord}</Text>
+      <Text mt={200}>{randomWord}</Text>
     </Container>
   );
 }

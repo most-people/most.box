@@ -12,7 +12,6 @@ const uploadImage = async (
   file: File,
   callback: (url: string, altText: string) => void
 ) => {
-  const dotCID = localStorage.getItem("dotCID");
   const formData = new FormData();
   const params = new URLSearchParams(location.search);
   const name = params.get("name");
@@ -22,7 +21,7 @@ const uploadImage = async (
   const res = await api.put("/files.upload", formData);
   const cid = res.data.cid;
   if (cid) {
-    callback(`${dotCID}/ipfs/${cid}`, file.name);
+    callback(`/ipfs/${cid}?filename=${file.name}`, file.name);
   } else {
     callback("", file.name);
   }
@@ -69,6 +68,25 @@ const getEditorCore = (Editor: any) => {
       target: "_blank",
     },
     plugins: [codeSyntaxHighlight, mathPlugin],
+    customHTMLRenderer: {
+      // https://github.com/nhn/tui.editor/blob/master/docs/en/custom-html-renderer.md#skipchildren
+      image(node: any, context: any) {
+        context.skipChildren();
+        const src = node.destination;
+        const alt = node.firstChild?.literal || "";
+        const dotCID = localStorage.getItem("dotCID");
+        return {
+          type: "openTag",
+          tagName: "img",
+          attributes: {
+            src: src.startsWith("/ipfs/") ? dotCID + src : src,
+            alt,
+            loading: "lazy",
+          },
+          selfClose: true,
+        };
+      },
+    },
     customHTMLSanitizer(html: string) {
       return html;
     },

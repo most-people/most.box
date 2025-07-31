@@ -280,7 +280,7 @@ export default function HomeDisk() {
   if (!wallet) {
     return (
       <Center>
-        <Button mt={20} variant="gradient" component={Link} href="/login">
+        <Button mt={200} variant="gradient" component={Link} href="/login">
           去登录
         </Button>
       </Center>
