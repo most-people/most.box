@@ -58,18 +58,7 @@ export const mostEncode = (
   private_key: string
 ) => {
   const bytes = new TextEncoder().encode(text);
-
-  // 生成包含时间戳的 nonce
-  const timestamp = Date.now();
-  const timestampBytes = new Uint8Array(8);
-  const view = new DataView(timestampBytes.buffer);
-  view.setBigUint64(0, BigInt(timestamp));
-
-  const randomBytes = nacl.randomBytes(nacl.box.nonceLength - 8);
-  const nonce = new Uint8Array(nacl.box.nonceLength);
-  nonce.set(timestampBytes, 0);
-  nonce.set(randomBytes, 8);
-
+  const nonce = nacl.randomBytes(nacl.box.nonceLength);
   const encrypted = nacl.box(
     bytes,
     nonce,
@@ -83,30 +72,19 @@ export const mostEncode = (
   return ["mp://2", encodeBase64(nonce), encodeBase64(encrypted)].join(".");
 };
 
-export const mostTimestamp = (data: string): number => {
-  const [prefix, nonce64] = data.split(".");
-  if (prefix !== "mp://2") {
-    console.info("无效的密文");
-    return 0;
-  }
-  const nonce = decodeBase64(nonce64);
-  const view = new DataView(nonce.buffer, nonce.byteOffset, 8);
-  return Number(view.getBigUint64(0));
-};
-
 export const mostDecode = (
   data: string,
   public_key: string,
   private_key: string
 ) => {
-  const [prefix, nonce, encrypted] = data.split(".");
+  const [prefix, nonce64, encrypted64] = data.split(".");
   if (prefix !== "mp://2") {
     console.info("无效的密文");
     return "";
   }
   const decrypted = nacl.box.open(
-    decodeBase64(encrypted),
-    decodeBase64(nonce),
+    decodeBase64(encrypted64),
+    decodeBase64(nonce64),
     new Uint8Array(getBytes(public_key)),
     new Uint8Array(getBytes(private_key))
   );
