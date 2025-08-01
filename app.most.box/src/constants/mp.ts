@@ -107,9 +107,9 @@ const enBase64 = (str: string) => encodeBase64(toUtf8Bytes(str));
 // Base64 解码
 const deBase64 = (str: string) => toUtf8String(decodeBase64(str));
 
-const createJWT = (wallet: MostWallet) => {
+const createJWT = (wallet: MostWallet, template = "YYMMDD") => {
   // 当天有效
-  const time = dayjs().format("YYMMDD");
+  const time = dayjs().format(template);
   const fingerprint = sessionStorage.getItem("fingerprint") || "";
   const key = [location.origin, fingerprint].join("/");
   const { public_key, private_key } = mostWallet(time, key);
@@ -117,9 +117,9 @@ const createJWT = (wallet: MostWallet) => {
   return jwt;
 };
 
-const verifyJWT = (jwt: string) => {
+const verifyJWT = (jwt: string, template = "YYMMDD") => {
   // 当天有效
-  const time = dayjs().format("YYMMDD");
+  const time = dayjs().format(template);
   const fingerprint = sessionStorage.getItem("fingerprint") || "";
   const key = [location.origin, fingerprint].join("/");
   // 获取设备指纹ID

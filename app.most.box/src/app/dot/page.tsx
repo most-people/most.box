@@ -37,10 +37,13 @@ import {
   IconWifiOff,
   IconWorldWww,
   IconSwitchHorizontal,
+  IconExternalLink,
 } from "@tabler/icons-react";
 import mp from "@/constants/mp";
 import Link from "next/link";
 import { DotNode, useUserStore } from "@/stores/userStore";
+import { mostEncode, mostWallet } from "@/constants/MostWallet";
+import dayjs from "dayjs";
 
 // DotContract ABI
 const DotContractABI = [
@@ -125,16 +128,28 @@ export default function PageDot() {
   };
 
   // 切换到指定节点
-  const handleSwitchNode = async (node: DotNode) => {
-    if (!node.APIs || node.APIs.length === 0) {
-      notifications.show({
-        title: "切换失败",
-        message: "该节点没有可用的API地址",
-        color: "red",
-      });
-      return;
+  const openNode = async (node: DotNode) => {
+    const nodeAPI = node.APIs[0];
+    const jwt = localStorage.getItem("jwt");
+    if (jwt) {
+      const wallet = mp.verifyJWT(jwt);
+      if (wallet) {
+        // 当前分钟有效
+        const key = dayjs().format("YY/M/D HH:mm");
+        const { public_key, private_key } = mostWallet("auth/jwt", key);
+        const token = mostEncode(
+          JSON.stringify(wallet),
+          public_key,
+          private_key
+        );
+        const url = new URL("/auth/jwt/", nodeAPI);
+        url.searchParams.set("token", token);
+        window.open(url.href);
+      }
     }
+  };
 
+  const switchNode = async (node: DotNode) => {
     setSwitchingNode(node.address);
     try {
       const nodeAPI = node.APIs[0];
@@ -657,17 +672,28 @@ export default function PageDot() {
                       </Group>
                     </Box>
                   </Stack>
-                  <Button
-                    fullWidth
-                    variant={isCurrentNode(node) ? "filled" : "light"}
-                    color={isCurrentNode(node) ? "green" : "blue"}
-                    leftSection={<IconSwitchHorizontal size={16} />}
-                    onClick={() => handleSwitchNode(node)}
-                    loading={switchingNode === node.address}
-                    disabled={isCurrentNode(node) || !node.APIs.length}
-                  >
-                    {isCurrentNode(node) ? "当前节点" : "切换到此节点"}
-                  </Button>
+                  <Group>
+                    <Button
+                      flex={1}
+                      variant="light"
+                      color="blue"
+                      leftSection={<IconExternalLink size={16} />}
+                      onClick={() => openNode(node)}
+                    >
+                      打开节点
+                    </Button>
+                    <Button
+                      flex={1}
+                      variant={isCurrentNode(node) ? "filled" : "light"}
+                      color={isCurrentNode(node) ? "green" : "blue"}
+                      leftSection={<IconSwitchHorizontal size={16} />}
+                      onClick={() => switchNode(node)}
+                      loading={switchingNode === node.address}
+                      disabled={isCurrentNode(node) || !node.APIs.length}
+                    >
+                      {isCurrentNode(node) ? "当前节点" : "切换节点"}
+                    </Button>
+                  </Group>
                 </Stack>
               </Card>
             </Grid.Col>
