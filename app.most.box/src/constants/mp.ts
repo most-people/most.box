@@ -108,37 +108,28 @@ const enBase64 = (str: string) => encodeBase64(toUtf8Bytes(str));
 const deBase64 = (str: string) => toUtf8String(decodeBase64(str));
 
 const createJWT = (wallet: MostWallet) => {
-  const time = String(Date.now());
-  const uuid = encodeBase64(crypto.getRandomValues(new Uint8Array(32)));
-  // 获取设备指纹ID
+  const time = dayjs().format("YYMMDD");
   const fingerprint = sessionStorage.getItem("fingerprint") || "";
-  const key = [location.origin, fingerprint].join("/");
-  const jwtSecret = [time, uuid].join(".");
-  const { public_key, private_key } = mostWallet(key, jwtSecret);
+  const { public_key, private_key } = mostWallet(time, fingerprint);
   const jwt = mostEncode(JSON.stringify(wallet), public_key, private_key);
-  return {
-    jwt,
-    jwtSecret,
-  };
+  return jwt;
 };
-const verifyJWT = (jwt: string, jwtSecret: string): MostWallet | null => {
-  const [time] = jwtSecret.split(".");
-  if (Date.now() - Number(time) > 8 * 60 * 60 * 1000) {
-    console.log("jwt 已过期");
-    return null;
-  }
-  try {
-    // 获取设备指纹ID
-    const fingerprint = sessionStorage.getItem("fingerprint") || "";
-    const key = [location.origin, fingerprint].join("/");
-    const { public_key, private_key } = mostWallet(key, jwtSecret);
-    const json = mostDecode(jwt, public_key, private_key);
-    if (json) {
-      const wallet = JSON.parse(json);
-      return wallet;
+
+const verifyJWT = (jwt: string) => {
+  const time = dayjs().format("YYMMDD");
+  const fingerprint = sessionStorage.getItem("fingerprint") || "";
+  // 获取设备指纹ID
+  const { public_key, private_key } = mostWallet(time, fingerprint);
+  const json = mostDecode(jwt, public_key, private_key);
+  if (json) {
+    try {
+      const wallet = JSON.parse(json) as MostWallet;
+      if (wallet.address) {
+        return wallet;
+      }
+    } catch {
+      console.log("jwt 过期");
     }
-  } catch (error) {
-    console.log("验证失败:", error);
   }
   return null;
 };
@@ -158,12 +149,11 @@ const login = (username: string, password: string): MostWallet | null => {
       password,
       "I know loss mnemonic will lose my wallet."
     );
-    const { jwt, jwtSecret } = createJWT(wallet); // 24小时有效期
+    const jwt = createJWT(wallet); // 24小时有效期
 
     // 验证并存储
-    if (verifyJWT(jwt, jwtSecret)?.address === wallet.address) {
+    if (verifyJWT(jwt)?.address === wallet.address) {
       localStorage.setItem("jwt", jwt);
-      localStorage.setItem("jwtSecret", jwtSecret);
       createToken(wallet);
       return wallet;
     }

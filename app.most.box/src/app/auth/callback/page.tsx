@@ -25,7 +25,7 @@ export default function AuthCallback() {
   const setItem = useUserStore((state) => state.setItem);
   const [hash] = useHash();
 
-  const [visible, { toggle }] = useDisclosure(true);
+  const [visible, { toggle }] = useDisclosure(false);
   const [fundPassword, setFundPassword] = useState("");
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");

@@ -52,9 +52,8 @@ export const useUserStore = create<State>((set, get) => ({
   wallet: undefined,
   initWallet() {
     const jwt = localStorage.getItem("jwt");
-    const jwtSecret = localStorage.getItem("jwtSecret");
-    if (jwt && jwtSecret) {
-      const wallet = mp.verifyJWT(jwt, jwtSecret);
+    if (jwt) {
+      const wallet = mp.verifyJWT(jwt);
       if (wallet) {
         mp.createToken(wallet);
         set({ wallet });
