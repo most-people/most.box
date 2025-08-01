@@ -33,9 +33,9 @@ export default function AuthJWT() {
         console.error(error);
       } finally {
         await updateDot(location.origin);
-        window.location.replace("/dot");
       }
     }
+    window.location.replace("/dot");
   };
 
   useEffect(() => {

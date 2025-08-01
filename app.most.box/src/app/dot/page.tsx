@@ -130,6 +130,7 @@ export default function PageDot() {
   // 切换到指定节点
   const openNode = async (node: DotNode) => {
     const nodeAPI = node.APIs[0];
+    const url = new URL("/auth/jwt/", nodeAPI);
     const jwt = localStorage.getItem("jwt");
     if (jwt) {
       const wallet = mp.verifyJWT(jwt);
@@ -142,11 +143,10 @@ export default function PageDot() {
           public_key,
           private_key
         );
-        const url = new URL("/auth/jwt/", nodeAPI);
         url.searchParams.set("token", token);
-        window.open(url.href);
       }
     }
+    window.open(url.href);
   };
 
   const switchNode = async (node: DotNode) => {
