@@ -1,4 +1,5 @@
 "use client";
+
 import { AppHeader } from "@/components/AppHeader";
 import {
   type MostWallet,
@@ -9,14 +10,13 @@ import dayjs from "dayjs";
 import { useEffect } from "react";
 import mp from "@/constants/mp";
 import { useUserStore } from "@/stores/userStore";
-import { useSearchParams } from "next/navigation";
 
 export default function AuthJWT() {
   const updateDot = useUserStore((state) => state.updateDot);
-  const params = useSearchParams();
 
   const initToken = async () => {
-    const token = params.get("token") || "";
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
     if (token) {
       // 移除 token
       window.history.replaceState(null, "", window.location.pathname);
