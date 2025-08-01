@@ -20,7 +20,6 @@ import { api } from "@/constants/api";
 import "./disk.scss";
 import Link from "next/link";
 import {
-  IconUpload,
   IconFolderPlus,
   IconX,
   IconRefresh,
@@ -319,7 +318,7 @@ export default function HomeDisk() {
               <Tooltip label="刷新">
                 <ActionIcon
                   size="lg"
-                  onClick={() => fetchFiles(filesPath)}
+                  onClick={() => fetchFiles("")}
                   color="blue"
                 >
                   <IconRefresh size={18} />
@@ -494,7 +493,7 @@ export default function HomeDisk() {
                 color="green"
                 disabled={uploading}
               >
-                <IconUpload size={18} />
+                <IconPlus size={18} />
               </ActionIcon>
             </Tooltip>
             <Tooltip label="上传文件夹">

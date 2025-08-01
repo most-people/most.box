@@ -108,25 +108,27 @@ const enBase64 = (str: string) => encodeBase64(toUtf8Bytes(str));
 const deBase64 = (str: string) => toUtf8String(decodeBase64(str));
 
 const createJWT = (wallet: MostWallet) => {
+  // 当天有效
   const time = dayjs().format("YYMMDD");
   const fingerprint = sessionStorage.getItem("fingerprint") || "";
-  const { public_key, private_key } = mostWallet(time, fingerprint);
+  const key = [location.origin, fingerprint].join("/");
+  const { public_key, private_key } = mostWallet(time, key);
   const jwt = mostEncode(JSON.stringify(wallet), public_key, private_key);
   return jwt;
 };
 
 const verifyJWT = (jwt: string) => {
+  // 当天有效
   const time = dayjs().format("YYMMDD");
   const fingerprint = sessionStorage.getItem("fingerprint") || "";
+  const key = [location.origin, fingerprint].join("/");
   // 获取设备指纹ID
-  const { public_key, private_key } = mostWallet(time, fingerprint);
+  const { public_key, private_key } = mostWallet(time, key);
   const json = mostDecode(jwt, public_key, private_key);
   if (json) {
     try {
       const wallet = JSON.parse(json) as MostWallet;
-      if (wallet.address) {
-        return wallet;
-      }
+      if (wallet.address) return wallet;
     } catch {
       console.log("jwt 过期");
     }

@@ -98,6 +98,8 @@
   img {
     vertical-align: top;
     border-radius: 4px;
+
+    max-width: min(100%, 1280px);
   }
   .language-css .token.string,
   .style .token.string,

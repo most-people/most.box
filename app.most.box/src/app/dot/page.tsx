@@ -579,83 +579,84 @@ export default function PageDot() {
                 <Divider mb="md" />
 
                 {/* 节点详细信息 */}
-                <Stack gap="sm">
-                  <Group gap="xs" wrap="nowrap">
-                    <IconDatabase
-                      size={14}
-                      color="gray"
-                      style={{ flexShrink: 0 }}
-                    />
-                    <Text size="xs" c="dimmed">
-                      {mp.formatAddress(node.address)}{" "}
-                      <Anchor
-                        component={Link}
-                        href={{
-                          pathname: "/dot/deploy",
-                          query: { address: node.address, api: node.APIs[0] },
-                        }}
-                        c="dimmed"
-                      >
-                        Deploy
-                      </Anchor>
-                    </Text>
-                  </Group>
-
-                  <Group gap="xs">
-                    <IconClock size={14} color="gray" />
-                    <Text size="xs" c="dimmed">
-                      {formatTime(node.lastUpdate)}
-                    </Text>
-                  </Group>
-
-                  {node.APIs.length > 0 && (
-                    <Stack gap={2} align="flex-start">
-                      {node.APIs.map((api, apiIndex) => (
+                <Stack justify="space-between" flex={1}>
+                  <Stack gap="sm">
+                    <Group gap="xs" wrap="nowrap">
+                      <IconDatabase
+                        size={14}
+                        color="gray"
+                        style={{ flexShrink: 0 }}
+                      />
+                      <Text size="xs" c="dimmed">
+                        {mp.formatAddress(node.address)}{" "}
                         <Anchor
-                          key={apiIndex}
-                          c="blue"
                           component={Link}
-                          href={api}
-                          target="_blank"
-                          lineClamp={1}
+                          href={{
+                            pathname: "/dot/deploy",
+                            query: { address: node.address, api: node.APIs[0] },
+                          }}
+                          c="dimmed"
                         >
-                          {api}
+                          Deploy
                         </Anchor>
-                      ))}
-                    </Stack>
-                  )}
-
-                  <Box>
-                    <Text size="xs" fw={500} mb={4} c="gray">
-                      CID 浏览器
-                    </Text>
-                    <Group gap={2} align="flex-start">
-                      {node.CIDs.map((cid, cidIndex) => (
-                        <Anchor
-                          key={cidIndex}
-                          component={Link}
-                          c="blue"
-                          href={cid + "/ipfs"}
-                          target="_blank"
-                          lineClamp={1}
-                        >
-                          {cid + "/ipfs"}
-                        </Anchor>
-                      ))}
-                      {defaultCID(node) && (
-                        <Anchor
-                          c="blue"
-                          component={Link}
-                          href={defaultCID(node) || ""}
-                          target="_blank"
-                          lineClamp={1}
-                        >
-                          {defaultCID(node)}
-                        </Anchor>
-                      )}
+                      </Text>
                     </Group>
-                  </Box>
 
+                    <Group gap="xs">
+                      <IconClock size={14} color="gray" />
+                      <Text size="xs" c="dimmed">
+                        {formatTime(node.lastUpdate)}
+                      </Text>
+                    </Group>
+
+                    {node.APIs.length > 0 && (
+                      <Stack gap={2} align="flex-start">
+                        {node.APIs.map((api, apiIndex) => (
+                          <Anchor
+                            key={apiIndex}
+                            c="blue"
+                            component={Link}
+                            href={api}
+                            target="_blank"
+                            lineClamp={1}
+                          >
+                            {api}
+                          </Anchor>
+                        ))}
+                      </Stack>
+                    )}
+
+                    <Box>
+                      <Text size="xs" fw={500} mb={4} c="gray">
+                        CID 浏览器
+                      </Text>
+                      <Group gap={2} align="flex-start">
+                        {node.CIDs.map((cid, cidIndex) => (
+                          <Anchor
+                            key={cidIndex}
+                            component={Link}
+                            c="blue"
+                            href={cid + "/ipfs"}
+                            target="_blank"
+                            lineClamp={1}
+                          >
+                            {cid + "/ipfs"}
+                          </Anchor>
+                        ))}
+                        {defaultCID(node) && (
+                          <Anchor
+                            c="blue"
+                            component={Link}
+                            href={defaultCID(node) || ""}
+                            target="_blank"
+                            lineClamp={1}
+                          >
+                            {defaultCID(node)}
+                          </Anchor>
+                        )}
+                      </Group>
+                    </Box>
+                  </Stack>
                   <Button
                     fullWidth
                     variant={isCurrentNode(node) ? "filled" : "light"}
@@ -664,7 +665,6 @@ export default function PageDot() {
                     onClick={() => handleSwitchNode(node)}
                     loading={switchingNode === node.address}
                     disabled={isCurrentNode(node) || !node.APIs.length}
-                    mt="sm"
                   >
                     {isCurrentNode(node) ? "当前节点" : "切换到此节点"}
                   </Button>

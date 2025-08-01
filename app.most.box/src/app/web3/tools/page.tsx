@@ -141,7 +141,7 @@ export default function Web3ToolPage() {
         <Text size="xl">Most Wallet 账户查询</Text>
 
         <Text c="dimmed">
-          开源代码：https://github.com/most-people/most.box/blob/master/app.most.box/src/constants/MostWallet.ts
+          开源代码：https://github.com/most-people/most.box/blob/master/app.most.box/src/app/web3/tools/page.tsx
         </Text>
 
         {/* 模式切换开关 */}
