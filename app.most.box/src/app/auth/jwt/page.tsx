@@ -10,11 +10,15 @@ import dayjs from "dayjs";
 import { useEffect } from "react";
 import mp from "@/constants/mp";
 import { useUserStore } from "@/stores/userStore";
+import { useRouter } from "next/navigation";
 
 export default function AuthJWT() {
   const updateDot = useUserStore((state) => state.updateDot);
+  const setItem = useUserStore((state) => state.setItem);
+  const fingerprint = useUserStore((state) => state.fingerprint);
+  const router = useRouter();
 
-  const initToken = async () => {
+  const initToken = () => {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
     if (token) {
@@ -26,21 +30,23 @@ export default function AuthJWT() {
       const json = mostDecode(token, public_key, private_key);
       try {
         const wallet = JSON.parse(json) as MostWallet;
-        const jwt = mp.createJWT(wallet);
-        localStorage.setItem("jwt", jwt);
-        mp.createToken(wallet);
+        mp.loginSave(wallet);
+        setTimeout(() => {
+          setItem("wallet", wallet);
+        }, 0);
       } catch (error) {
         console.error(error);
-      } finally {
-        await updateDot(location.origin);
       }
     }
-    window.location.replace("/dot");
+    router.replace("/");
   };
 
   useEffect(() => {
-    initToken();
-  }, []);
+    if (fingerprint) {
+      initToken();
+      updateDot(location.origin);
+    }
+  }, [fingerprint]);
 
   return <AppHeader title="Auth JWT"></AppHeader>;
 }

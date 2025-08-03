@@ -12,8 +12,9 @@ export default function AppProvider() {
       const fp = await FingerprintJS.load();
       const result = await fp.get();
       // 返回唯一的访客标识符
-      sessionStorage.setItem("fingerprint", result.visitorId);
-      initWallet();
+      const fingerprint = result.visitorId;
+      sessionStorage.setItem("fingerprint", fingerprint);
+      initWallet(fingerprint);
     } catch (error) {
       console.warn("获取设备指纹失败:", error);
       return "";

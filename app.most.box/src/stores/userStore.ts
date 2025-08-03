@@ -32,7 +32,7 @@ export interface Note {
 
 interface UserStore {
   wallet?: MostWallet;
-  initWallet: () => void;
+  initWallet: (fingerprint: string) => void;
   updateDot: (url: string, first?: boolean) => Promise<string[] | null>;
   firstPath: string;
   dotAPI: string;
@@ -41,6 +41,7 @@ interface UserStore {
   notes?: Note[];
   files?: FileItem[];
   filesPath: string;
+  fingerprint: string;
   exit: () => void;
 }
 
@@ -50,15 +51,14 @@ interface State extends UserStore {
 
 export const useUserStore = create<State>((set, get) => ({
   wallet: undefined,
-  initWallet() {
+  initWallet(fingerprint: string) {
+    set({ fingerprint });
     const jwt = localStorage.getItem("jwt");
     if (jwt) {
       const wallet = mp.verifyJWT(jwt);
       if (wallet) {
         mp.createToken(wallet);
         set({ wallet });
-      } else {
-        get().exit();
       }
     }
   },
@@ -109,10 +109,10 @@ export const useUserStore = create<State>((set, get) => ({
   notes: undefined,
   files: undefined,
   filesPath: "",
+  fingerprint: "",
   exit() {
     set({ wallet: undefined, notes: undefined, files: undefined });
     localStorage.removeItem("jwt");
-    localStorage.removeItem("jwtSecret");
     localStorage.removeItem("token");
   },
 }));

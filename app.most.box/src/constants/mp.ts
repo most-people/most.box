@@ -110,7 +110,10 @@ const deBase64 = (str: string) => toUtf8String(decodeBase64(str));
 const createJWT = (wallet: MostWallet, template = "YYMMDD") => {
   // 当天有效
   const time = dayjs().format(template);
-  const fingerprint = sessionStorage.getItem("fingerprint") || "";
+  const fingerprint = sessionStorage.getItem("fingerprint");
+  if (!fingerprint) {
+    throw new Error("请先获取设备指纹");
+  }
   const key = [location.origin, fingerprint].join("/");
   const { public_key, private_key } = mostWallet(time, key);
   const jwt = mostEncode(JSON.stringify(wallet), public_key, private_key);
@@ -120,7 +123,10 @@ const createJWT = (wallet: MostWallet, template = "YYMMDD") => {
 const verifyJWT = (jwt: string, template = "YYMMDD") => {
   // 当天有效
   const time = dayjs().format(template);
-  const fingerprint = sessionStorage.getItem("fingerprint") || "";
+  const fingerprint = sessionStorage.getItem("fingerprint");
+  if (!fingerprint) {
+    throw new Error("请先获取设备指纹");
+  }
   const key = [location.origin, fingerprint].join("/");
   // 获取设备指纹ID
   const { public_key, private_key } = mostWallet(time, key);
@@ -145,12 +151,16 @@ const createToken = async (wallet: MostWallet) => {
 
 // 登录
 const login = (username: string, password: string): MostWallet | null => {
+  const wallet = mostWallet(
+    username,
+    password,
+    "I know loss mnemonic will lose my wallet."
+  );
+  return loginSave(wallet);
+};
+
+const loginSave = (wallet: MostWallet) => {
   try {
-    const wallet = mostWallet(
-      username,
-      password,
-      "I know loss mnemonic will lose my wallet."
-    );
     const jwt = createJWT(wallet); // 24小时有效期
 
     // 验证并存储
@@ -201,6 +211,7 @@ const mp = {
   createJWT,
   verifyJWT,
   login,
+  loginSave,
   ZeroAddress,
   createToken,
   pinyin,
