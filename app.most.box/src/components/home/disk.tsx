@@ -51,7 +51,7 @@ export default function HomeDisk() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
 
-  const fetchFiles = async (path: string = "") => {
+  const fetchFiles = async (path: string) => {
     try {
       setLoading(true);
       const res = await api.post(`/files/${path}`);
@@ -77,7 +77,16 @@ export default function HomeDisk() {
 
   // 过滤文件列表
   const filteredFiles = files
-    ? files.filter((file) => mp.pinyin(file.name, searchQuery, 0))
+    ? files
+        .filter((file) => mp.pinyin(file.name, searchQuery, 0))
+        // 文件夹在前，文件在后
+        .sort((a, b) => {
+          if (a.type === "directory" && b.type !== "directory") return -1;
+          if (a.type !== "directory" && b.type === "directory") return 1;
+          // 同类型按名称排序
+          // return a.name.localeCompare(b.name);
+          return 0;
+        })
     : [];
 
   // 获取当前显示的文件列表
@@ -107,10 +116,8 @@ export default function HomeDisk() {
         // 如果在子目录中，需要包含当前路径
         const path = file.webkitRelativePath;
         const filePath = filesPath ? `${filesPath}/${path}` : path;
-        formData.append("path", filePath);
-
+        formData.append("path", filePath + file.name);
         const res = await api.put("/files.upload", formData);
-
         const cid = res.data?.cid;
         if (cid) {
           notifications.show({
@@ -270,6 +277,17 @@ export default function HomeDisk() {
     }
   };
 
+  // 下载文件
+  const formatDownload = (item: FileItem) => {
+    if (item.type === "directory") {
+      // 文件夹压缩为 tar 下载
+      return `${dotCID}/ipfs/${item.cid["/"]}?download=true&format=tar&filename=${item.name}.tar`;
+    } else {
+      // 文件直接下载
+      return `${dotCID}/ipfs/${item.cid["/"]}?download=true&filename=${item.name}`;
+    }
+  };
+
   useEffect(() => {
     if (wallet && !files) {
       fetchFiles(filesPath);
@@ -318,7 +336,7 @@ export default function HomeDisk() {
               <Tooltip label="刷新">
                 <ActionIcon
                   size="lg"
-                  onClick={() => fetchFiles("")}
+                  onClick={() => fetchFiles(filesPath)}
                   color="blue"
                 >
                   <IconRefresh size={18} />
@@ -406,8 +424,7 @@ export default function HomeDisk() {
                           <Menu.Dropdown>
                             <Menu.Item
                               leftSection={<span>📖</span>}
-                              onClick={(e) => {
-                                e.stopPropagation();
+                              onClick={() => {
                                 if (item.type === "directory") {
                                   handleFolderClick(item.name);
                                 } else {
@@ -420,8 +437,7 @@ export default function HomeDisk() {
 
                             <Menu.Item
                               leftSection={<span>📤</span>}
-                              onClick={(e) => {
-                                e.stopPropagation();
+                              onClick={() => {
                                 handleShareFile(item);
                               }}
                             >
@@ -431,13 +447,21 @@ export default function HomeDisk() {
                             <Menu.Divider />
 
                             <Menu.Item
+                              leftSection={<span>⬇️</span>}
+                              component={Link}
+                              target="_blank"
+                              href={formatDownload(item)}
+                            >
+                              下载
+                            </Menu.Item>
+
+                            <Menu.Item
                               disabled={
                                 item.type === "directory" &&
                                 item.name === ".note"
                               }
                               leftSection={<span>🗑️</span>}
-                              onClick={(e) => {
-                                e.stopPropagation();
+                              onClick={() => {
                                 handleDeleteFile(item);
                               }}
                             >
