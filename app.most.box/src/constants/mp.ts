@@ -93,6 +93,7 @@ const formatDate = (date: string | number) => {
   }
 };
 
+// 地址格式化
 const formatAddress = (address?: string) => {
   if (address) {
     return address.slice(0, 6) + "..." + address.slice(-4);
@@ -107,6 +108,7 @@ const enBase64 = (str: string) => encodeBase64(toUtf8Bytes(str));
 // Base64 解码
 const deBase64 = (str: string) => toUtf8String(decodeBase64(str));
 
+// 创建 JWT
 const createJWT = (wallet: MostWallet, template = "YYMMDD") => {
   // 当天有效
   const time = dayjs().format(template);
@@ -120,6 +122,7 @@ const createJWT = (wallet: MostWallet, template = "YYMMDD") => {
   return jwt;
 };
 
+// 解析 JWT
 const verifyJWT = (jwt: string, template = "YYMMDD") => {
   // 当天有效
   const time = dayjs().format(template);
@@ -142,6 +145,7 @@ const verifyJWT = (jwt: string, template = "YYMMDD") => {
   return null;
 };
 
+// 创建 token
 const createToken = async (wallet: MostWallet) => {
   const message = Date.now().toString();
   const ethWallet = HDNodeWallet.fromPhrase(wallet.mnemonic);
@@ -159,6 +163,7 @@ const login = (username: string, password: string): MostWallet | null => {
   return loginSave(wallet);
 };
 
+// 登录保存
 const loginSave = (wallet: MostWallet) => {
   try {
     const jwt = createJWT(wallet); // 24小时有效期
@@ -186,6 +191,7 @@ const loginSave = (wallet: MostWallet) => {
 //   }
 // };
 
+// 拼音搜索
 const pinyin = (t: string, v: string, jump = 2) => {
   if (v.length < jump) {
     return false;

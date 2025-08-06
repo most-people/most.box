@@ -359,26 +359,26 @@ export default function HomeNote() {
 
                           <Menu.Dropdown>
                             <Menu.Item
-                              leftSection={<span>📖</span>}
+                              leftSection="📖"
                               onClick={() => handleOpen(note)}
                             >
                               打开
                             </Menu.Item>
                             <Menu.Item
-                              leftSection={<span>📤</span>}
+                              leftSection="📤"
                               onClick={() => handleShare(note)}
                             >
                               分享
                             </Menu.Item>
                             <Menu.Item
-                              leftSection={<span>✏️</span>}
+                              leftSection="✏️"
                               onClick={() => handleRename(note)}
                             >
                               重命名
                             </Menu.Item>
                             <Menu.Divider />
                             <Menu.Item
-                              leftSection={<span>🗑️</span>}
+                              leftSection="🗑️"
                               onClick={() => handleDelete(note)}
                             >
                               删除

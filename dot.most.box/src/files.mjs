@@ -1,6 +1,8 @@
 import mp from "./mp.mjs";
 // 压缩 zip
 import archiver from "archiver";
+// 解压 tar
+import tar from "tar-stream";
 
 /**
  * 注册文件相关的路由
@@ -73,13 +75,13 @@ export const registerFiles = (server, ipfs) => {
         rawLeaves: true,
       });
 
-      // 检查文件是否已存在，如果存在则先删除
+      // 检查文件是否已存在，如果存在则报错
       try {
         await ipfs.files.stat(targetPath);
-        // 文件存在，先删除
-        await ipfs.files.rm(targetPath);
+        // 文件存在，直接报错
+        return reply.code(409).send("文件已存在");
       } catch (error) {
-        // 文件不存在，忽略错误
+        // 文件不存在，继续上传
       }
 
       // 将文件复制到指定地址目录
@@ -231,6 +233,157 @@ export const registerFiles = (server, ipfs) => {
       };
     } catch (error) {
       return reply.code(500).send("重命名失败 " + error.message);
+    }
+  });
+
+  // 上传 tar 压缩包并解压
+  server.put("/files.import", async (request, reply) => {
+    const address = mp.getAddress(request.headers.authorization);
+    if (!address) {
+      return reply.code(400).send("token 无效");
+    }
+
+    try {
+      const data = await request.file();
+
+      if (!data) {
+        return reply.code(400).send("没有文件");
+      }
+
+      const buffer = await data.toBuffer();
+      const targetDir = data.fields.targetDir?.value || "";
+      const filename = data.filename || "archive.tar";
+
+      // 检查文件是否为 tar 格式
+      if (!filename.endsWith(".tar")) {
+        return reply.code(400).send("只支持 .tar 格式的压缩包");
+      }
+
+      const basePath = targetDir ? `/${address}/${targetDir}` : `/${address}`;
+
+      // 确保目标目录存在
+      try {
+        await ipfs.files.mkdir(basePath, { parents: true });
+      } catch (error) {
+        // 目录可能已存在，忽略错误
+      }
+
+      const extract = tar.extract();
+      const uploadedFiles = [];
+      const errors = [];
+
+      // 处理 tar 文件中的每个条目
+      extract.on("entry", async (header, stream, next) => {
+        try {
+          if (header.type === "file") {
+            const chunks = [];
+
+            stream.on("data", (chunk) => {
+              chunks.push(chunk);
+            });
+
+            stream.on("end", async () => {
+              try {
+                const fileBuffer = Buffer.concat(chunks);
+                const filePath = `${basePath}/${header.name}`;
+
+                // 将文件添加到 IPFS
+                const fileAdded = await ipfs.add(fileBuffer, {
+                  cidVersion: 1,
+                  rawLeaves: true,
+                });
+
+                // 检查文件是否已存在，如果存在则先删除
+                try {
+                  await ipfs.files.stat(filePath);
+                  await ipfs.files.rm(filePath);
+                } catch (error) {
+                  // 文件不存在，忽略错误
+                }
+
+                // 确保父目录存在
+                const parentDir = filePath.substring(
+                  0,
+                  filePath.lastIndexOf("/")
+                );
+                try {
+                  await ipfs.files.mkdir(parentDir, { parents: true });
+                } catch (error) {
+                  // 目录可能已存在，忽略错误
+                }
+
+                // 将文件复制到指定路径
+                await ipfs.files.cp(`/ipfs/${fileAdded.cid}`, filePath, {
+                  parents: true,
+                });
+
+                uploadedFiles.push({
+                  name: header.name,
+                  path: filePath,
+                  cid: fileAdded.cid.toString(),
+                  size: fileAdded.size,
+                });
+
+                next();
+              } catch (error) {
+                errors.push(`文件 ${header.name} 上传失败: ${error.message}`);
+                next();
+              }
+            });
+
+            stream.on("error", (error) => {
+              errors.push(`文件 ${header.name} 读取失败: ${error.message}`);
+              next();
+            });
+          } else if (header.type === "directory") {
+            // 创建目录
+            try {
+              const dirPath = `${basePath}/${header.name}`;
+              await ipfs.files.mkdir(dirPath, { parents: true });
+              uploadedFiles.push({
+                name: header.name,
+                path: dirPath,
+                type: "directory",
+              });
+            } catch (error) {
+              errors.push(`目录 ${header.name} 创建失败: ${error.message}`);
+            }
+            next();
+          } else {
+            // 跳过其他类型的条目
+            next();
+          }
+        } catch (error) {
+          errors.push(`处理 ${header.name} 时出错: ${error.message}`);
+          next();
+        }
+      });
+
+      // 处理完成
+      extract.on("finish", () => {
+        const result = {
+          ok: true,
+          message: "tar 压缩包上传并解压成功",
+          uploadedFiles: uploadedFiles,
+          totalFiles: uploadedFiles.length,
+        };
+
+        if (errors.length > 0) {
+          result.errors = errors;
+          result.message += `，但有 ${errors.length} 个文件处理失败`;
+        }
+
+        reply.send(result);
+      });
+
+      extract.on("error", (error) => {
+        reply.code(500).send("tar 文件解压失败: " + error.message);
+      });
+
+      // 开始解压
+      extract.end(buffer);
+    } catch (error) {
+      return reply.code(500).send("tar 压缩包上传失败 " + error.message);
     }
   });
 };

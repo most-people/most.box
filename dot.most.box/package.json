@@ -5,10 +5,11 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "npx nodemon src/index.mjs",
-    "start": "node src/index.mjs"
+    "start": "node src/index.mjs",
+    "npm": "npm i"
   },
   "dependencies": {
-    "@fastify/cors": "^11.0.1",
+    "@fastify/cors": "^11.1.0",
     "archiver": "^7.0.1",
     "axios": "^1.11.0",
     "dayjs": "^1.11.13",
@@ -16,7 +17,7 @@
     "ethers": "^6.15.0",
     "kubo-rpc-client": "^5.2.0",
     "rdrand-lite": "^1.4.12",
-    "undici": "^7.12.0"
+    "undici": "^7.13.0"
   },
   "devDependencies": {
     "@fastify/multipart": "^9.0.3",

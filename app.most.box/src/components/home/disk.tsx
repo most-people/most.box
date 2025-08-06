@@ -36,6 +36,8 @@ interface PreviewFile {
   size: string;
 }
 
+const SystemDir = [".note"];
+
 export default function HomeDisk() {
   const wallet = useUserStore((state) => state.wallet);
   const dotCID = useUserStore((state) => state.dotCID);
@@ -48,6 +50,9 @@ export default function HomeDisk() {
   const [showPreview, setShowPreview] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [displayCount, setDisplayCount] = useState(100);
+  const [renameModalOpen, setRenameModalOpen] = useState(false);
+  const [renamingItem, setRenamingItem] = useState<FileItem | null>(null);
+  const [newName, setNewName] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
 
@@ -107,6 +112,12 @@ export default function HomeDisk() {
     if (!files || files.length === 0) return;
 
     setUploading(true);
+    const notificationId = notifications.show({
+      title: "上传中",
+      message: "请稍后...",
+      color: "blue",
+      autoClose: false,
+    });
 
     try {
       for (let i = 0; i < files.length; i++) {
@@ -120,13 +131,21 @@ export default function HomeDisk() {
         const res = await api.put("/files.upload", formData);
         const cid = res.data?.cid;
         if (cid) {
-          notifications.show({
-            title: "上传成功",
-            message: `文件 ${file.name} 上传成功`,
-            color: "green",
+          notifications.update({
+            id: notificationId,
+            title: "上传中",
+            message: `${file.name} 上传成功`,
           });
         }
       }
+
+      notifications.update({
+        id: notificationId,
+        title: "上传完成",
+        message: `共上传 ${files.length} 个文件`,
+        color: "green",
+        autoClose: true,
+      });
 
       // 上传完成后刷新文件列表
       await fetchFiles(filesPath);
@@ -137,10 +156,12 @@ export default function HomeDisk() {
       if (message.includes("already has")) {
         message = "文件已存在";
       }
-      notifications.show({
+      notifications.update({
+        id: notificationId,
         title: "上传失败",
         message,
         color: "red",
+        autoClose: true,
       });
     } finally {
       setUploading(false);
@@ -233,6 +254,54 @@ export default function HomeDisk() {
     const confirmed = window.confirm(`确定要删除文件 "${item.name}" 吗？`);
     if (confirmed) {
       deleteFile(item.name);
+    }
+  };
+
+  // 重命名文件函数
+  const handleRename = (item: FileItem) => {
+    setRenamingItem(item);
+    setNewName(item.name);
+    setRenameModalOpen(true);
+  };
+
+  // 执行重命名
+  const executeRename = async () => {
+    if (!renamingItem || !newName.trim() || newName === renamingItem.name) {
+      setRenameModalOpen(false);
+      return;
+    }
+
+    try {
+      const oldPath = filesPath
+        ? `${filesPath}/${renamingItem.name}`
+        : renamingItem.name;
+      const newPath = filesPath
+        ? `${filesPath}/${newName.trim()}`
+        : newName.trim();
+
+      await api.put("/files.rename", {
+        oldName: `/${oldPath}`,
+        newName: `/${newPath}`,
+      });
+
+      notifications.show({
+        title: "重命名成功",
+        message: `新名称 "${newName.trim()}"`,
+        color: "green",
+      });
+
+      // 重命名成功后刷新文件列表
+      await fetchFiles(filesPath);
+      setRenameModalOpen(false);
+      setRenamingItem(null);
+      setNewName("");
+    } catch (error) {
+      console.error("重命名失败:", error);
+      notifications.show({
+        title: "重命名失败",
+        message: `重命名文件 "${renamingItem.name}" 失败，请重试`,
+        color: "red",
+      });
     }
   };
 
@@ -380,7 +449,7 @@ export default function HomeDisk() {
               <Card radius="md" withBorder>
                 <Group
                   style={{
-                    cursor: filesPath ? "pointer" : "auto",
+                    cursor: filesPath ? "pointer" : "",
                   }}
                   onClick={filesPath ? handleGoBack : undefined}
                 >
@@ -400,8 +469,7 @@ export default function HomeDisk() {
                           gap={4}
                           flex={1}
                           style={{
-                            cursor:
-                              item.type === "directory" ? "pointer" : "default",
+                            cursor: item.type === "directory" ? "pointer" : "",
                           }}
                           onClick={() => {
                             if (item.type === "directory") {
@@ -423,7 +491,7 @@ export default function HomeDisk() {
 
                           <Menu.Dropdown>
                             <Menu.Item
-                              leftSection={<span>📖</span>}
+                              leftSection="📖"
                               onClick={() => {
                                 if (item.type === "directory") {
                                   handleFolderClick(item.name);
@@ -436,7 +504,7 @@ export default function HomeDisk() {
                             </Menu.Item>
 
                             <Menu.Item
-                              leftSection={<span>📤</span>}
+                              leftSection="📤"
                               onClick={() => {
                                 handleShareFile(item);
                               }}
@@ -444,10 +512,17 @@ export default function HomeDisk() {
                               分享
                             </Menu.Item>
 
+                            <Menu.Item
+                              leftSection="✏️"
+                              onClick={() => handleRename(item)}
+                            >
+                              重命名
+                            </Menu.Item>
+
                             <Menu.Divider />
 
                             <Menu.Item
-                              leftSection={<span>⬇️</span>}
+                              leftSection="⬇️"
                               component={Link}
                               target="_blank"
                               href={formatDownload(item)}
@@ -458,9 +533,9 @@ export default function HomeDisk() {
                             <Menu.Item
                               disabled={
                                 item.type === "directory" &&
-                                item.name === ".note"
+                                SystemDir.includes(item.name)
                               }
-                              leftSection={<span>🗑️</span>}
+                              leftSection="🗑️"
                               onClick={() => {
                                 handleDeleteFile(item);
                               }}
@@ -611,6 +686,50 @@ export default function HomeDisk() {
               disabled={previewFiles.length === 0}
             >
               确认上传
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      {/* 重命名模态框 */}
+      <Modal
+        opened={renameModalOpen}
+        onClose={() => {
+          setRenameModalOpen(false);
+          setRenamingItem(null);
+          setNewName("");
+        }}
+        title="新名称"
+        centered
+      >
+        <Stack gap="md">
+          <TextInput
+            placeholder="请输入新的文件名"
+            value={newName}
+            onChange={(event) => setNewName(event.currentTarget.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                executeRename();
+              }
+            }}
+            autoFocus
+          />
+          <Group justify="flex-end" gap="sm">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setRenameModalOpen(false);
+                setRenamingItem(null);
+                setNewName("");
+              }}
+            >
+              取消
+            </Button>
+            <Button
+              onClick={executeRename}
+              disabled={!newName.trim() || newName === renamingItem?.name}
+            >
+              确认
             </Button>
           </Group>
         </Stack>
