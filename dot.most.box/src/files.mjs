@@ -251,29 +251,37 @@ export const registerFiles = (server, ipfs) => {
       }
 
       const buffer = await data.toBuffer();
-      const targetDir = data.fields.targetDir?.value || "";
-      const filename = data.filename || "archive.tar";
+      const path = data.fields.path?.value || "";
+      const filename = data.filename;
 
       // 检查文件是否为 tar 格式
       if (!filename.endsWith(".tar")) {
         return reply.code(400).send("只支持 .tar 格式的压缩包");
       }
 
-      const basePath = targetDir ? `/${address}/${targetDir}` : `/${address}`;
+      // 使用 filename 去掉 .tar 后缀作为文件夹名称
+      const folderName = filename.replace(/\.tar$/, "");
+      const targetPath = path ? `/${address}/${path}` : `/${address}`;
 
-      // 确保目标目录存在
-      try {
-        await ipfs.files.mkdir(basePath, { parents: true });
-      } catch (error) {
-        // 目录可能已存在，忽略错误
-      }
+      // 路径处理函数：替换压缩包内部的根文件夹名称为 folderName
+      const formatPath = (originalPath) => {
+        const pathParts = originalPath.split("/");
+        if (pathParts.length > 1) {
+          // 如果是在子文件夹中的文件/目录，替换根文件夹名称
+          pathParts[0] = folderName;
+          return pathParts.join("/");
+        } else {
+          // 如果是根目录下的文件，直接放在 folderName 文件夹下
+          return `${folderName}/${originalPath}`;
+        }
+      };
 
       const extract = tar.extract();
       const uploadedFiles = [];
       const errors = [];
 
       // 处理 tar 文件中的每个条目
-      extract.on("entry", async (header, stream, next) => {
+      extract.on("entry", (header, stream, next) => {
         try {
           if (header.type === "file") {
             const chunks = [];
@@ -285,7 +293,8 @@ export const registerFiles = (server, ipfs) => {
             stream.on("end", async () => {
               try {
                 const fileBuffer = Buffer.concat(chunks);
-                const filePath = `${basePath}/${header.name}`;
+                const adjustedPath = formatPath(header.name);
+                const filePath = `${targetPath}/${adjustedPath}`;
 
                 // 将文件添加到 IPFS
                 const fileAdded = await ipfs.add(fileBuffer, {
@@ -293,32 +302,13 @@ export const registerFiles = (server, ipfs) => {
                   rawLeaves: true,
                 });
 
-                // 检查文件是否已存在，如果存在则先删除
-                try {
-                  await ipfs.files.stat(filePath);
-                  await ipfs.files.rm(filePath);
-                } catch (error) {
-                  // 文件不存在，忽略错误
-                }
-
-                // 确保父目录存在
-                const parentDir = filePath.substring(
-                  0,
-                  filePath.lastIndexOf("/")
-                );
-                try {
-                  await ipfs.files.mkdir(parentDir, { parents: true });
-                } catch (error) {
-                  // 目录可能已存在，忽略错误
-                }
-
-                // 将文件复制到指定路径
+                // 将文件复制到指定路径（自动创建父目录和覆盖已存在文件）
                 await ipfs.files.cp(`/ipfs/${fileAdded.cid}`, filePath, {
                   parents: true,
                 });
 
                 uploadedFiles.push({
-                  name: header.name,
+                  name: adjustedPath,
                   path: filePath,
                   cid: fileAdded.cid.toString(),
                   size: fileAdded.size,
@@ -337,18 +327,22 @@ export const registerFiles = (server, ipfs) => {
             });
           } else if (header.type === "directory") {
             // 创建目录
-            try {
-              const dirPath = `${basePath}/${header.name}`;
-              await ipfs.files.mkdir(dirPath, { parents: true });
-              uploadedFiles.push({
-                name: header.name,
-                path: dirPath,
-                type: "directory",
-              });
-            } catch (error) {
-              errors.push(`目录 ${header.name} 创建失败: ${error.message}`);
-            }
-            next();
+            (async () => {
+              try {
+                const adjustedPath = formatPath(header.name);
+                const dirPath = `${targetPath}/${adjustedPath}`;
+                await ipfs.files.mkdir(dirPath, { parents: true });
+                uploadedFiles.push({
+                  name: adjustedPath,
+                  path: dirPath,
+                  type: "directory",
+                });
+                next();
+              } catch (error) {
+                errors.push(`目录 ${header.name} 创建失败: ${error.message}`);
+                next();
+              }
+            })();
           } else {
             // 跳过其他类型的条目
             next();
@@ -359,29 +353,30 @@ export const registerFiles = (server, ipfs) => {
         }
       });
 
-      // 处理完成
-      extract.on("finish", () => {
-        const result = {
-          ok: true,
-          message: "tar 压缩包上传并解压成功",
-          uploadedFiles: uploadedFiles,
-          totalFiles: uploadedFiles.length,
-        };
+      return new Promise((resolve, reject) => {
+        extract.on("finish", () => {
+          const result = {
+            ok: true,
+            message: `成功导入 ${uploadedFiles.length} 个文件`,
+            // uploadedFiles,
+          };
 
-        if (errors.length > 0) {
-          result.errors = errors;
-          result.message += `，但有 ${errors.length} 个文件处理失败`;
-        }
+          if (errors.length > 0) {
+            result.errors = errors;
+            result.message += `，但有 ${errors.length} 个文件处理失败`;
+          }
 
-        reply.send(result);
+          reply.code(200).send(result);
+          resolve(result);
+        });
+
+        extract.on("error", (error) => {
+          reply.code(500).send("tar 文件解压失败: " + error.message);
+          reject(error);
+        });
+
+        extract.end(buffer);
       });
-
-      extract.on("error", (error) => {
-        reply.code(500).send("tar 文件解压失败: " + error.message);
-      });
-
-      // 开始解压
-      extract.end(buffer);
     } catch (error) {
       return reply.code(500).send("tar 压缩包上传失败 " + error.message);
     }

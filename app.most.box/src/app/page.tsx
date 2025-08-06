@@ -11,12 +11,9 @@ import HomeExplore from "@/components/home/explore";
 import { AppHeader } from "@/components/AppHeader";
 import { useUserStore } from "@/stores/userStore";
 import Link from "next/link";
-// import { useHash } from "@mantine/hooks";
-// import { useRouter } from "next/navigation";
+import HomeMore from "@/components/home/more";
 
 export default function PageHome() {
-  // const router = useRouter();
-  // const [hash] = useHash();
   const [homeTab, setHomeTab] = useState<string | null>(null);
   const dotAPI = useUserStore((state) => state.dotAPI);
 
@@ -28,11 +25,6 @@ export default function PageHome() {
   useEffect(() => {
     const activeTab = localStorage.getItem("homeTab");
     setHomeTab(activeTab || "disk");
-    // const query = new URLSearchParams(window.location.search);
-    // const keyword = Array.from(query.keys());
-    // if (keyword.length > 0) {
-    //   router.replace("/search?q=" + keyword[0]);
-    // }
   }, []);
 
   const title = useMemo(() => {
@@ -57,6 +49,7 @@ export default function PageHome() {
             <Icon name="Earth" size={24} />
           </ActionIcon>
         }
+        right={<HomeMore homeTab={homeTab} />}
       />
       <Tabs
         id="page-home"

@@ -44,8 +44,8 @@ export default function HomeDisk() {
   const files = useUserStore((state) => state.files);
   const filesPath = useUserStore((state) => state.filesPath);
   const setItem = useUserStore((state) => state.setItem);
-  const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [fetchLoading, setFetchLoading] = useState(false);
+  const [uploadLoading, setUploadLoading] = useState(false);
   const [previewFiles, setPreviewFiles] = useState<PreviewFile[]>([]);
   const [showPreview, setShowPreview] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -58,7 +58,7 @@ export default function HomeDisk() {
 
   const fetchFiles = async (path: string) => {
     try {
-      setLoading(true);
+      setFetchLoading(true);
       const res = await api.post(`/files/${path}`);
       setItem("files", res.data);
     } catch (error) {
@@ -68,7 +68,7 @@ export default function HomeDisk() {
         color: "red",
       });
     } finally {
-      setLoading(false);
+      setFetchLoading(false);
     }
   };
 
@@ -111,7 +111,7 @@ export default function HomeDisk() {
   const uploadFiles = async (files: File[]) => {
     if (!files || files.length === 0) return;
 
-    setUploading(true);
+    setUploadLoading(true);
     const notificationId = notifications.show({
       title: "上传中",
       message: "请稍后...",
@@ -164,7 +164,7 @@ export default function HomeDisk() {
         autoClose: true,
       });
     } finally {
-      setUploading(false);
+      setUploadLoading(false);
     }
   };
 
@@ -416,7 +416,7 @@ export default function HomeDisk() {
                   size="lg"
                   onClick={handleFileUpload}
                   color="green"
-                  disabled={uploading}
+                  disabled={uploadLoading}
                 >
                   <IconPlus size={18} />
                 </ActionIcon>
@@ -426,7 +426,7 @@ export default function HomeDisk() {
                   size="lg"
                   onClick={handleFolderUpload}
                   color="yellow"
-                  disabled={uploading}
+                  disabled={uploadLoading}
                 >
                   <IconFolderPlus size={18} />
                 </ActionIcon>
@@ -532,6 +532,7 @@ export default function HomeDisk() {
 
                             <Menu.Item
                               disabled={
+                                filesPath === "" &&
                                 item.type === "directory" &&
                                 SystemDir.includes(item.name)
                               }
@@ -573,7 +574,7 @@ export default function HomeDisk() {
       ) : (
         <Stack align="center" justify="center" h={200}>
           <Text size="lg" c="dimmed">
-            {loading ? "正在加载" : "暂无文件"}
+            {fetchLoading ? "正在加载" : "暂无文件"}
           </Text>
           <Group>
             <Tooltip label="刷新">
@@ -590,7 +591,7 @@ export default function HomeDisk() {
                 size="lg"
                 onClick={handleFileUpload}
                 color="green"
-                disabled={uploading}
+                disabled={uploadLoading}
               >
                 <IconPlus size={18} />
               </ActionIcon>
@@ -600,7 +601,7 @@ export default function HomeDisk() {
                 size="lg"
                 onClick={handleFolderUpload}
                 color="yellow"
-                disabled={uploading}
+                disabled={uploadLoading}
               >
                 <IconFolderPlus size={18} />
               </ActionIcon>
@@ -676,13 +677,13 @@ export default function HomeDisk() {
             <Button
               variant="outline"
               onClick={handleCancelUpload}
-              disabled={uploading}
+              disabled={uploadLoading}
             >
               取消
             </Button>
             <Button
               onClick={handleConfirmUpload}
-              loading={uploading}
+              loading={uploadLoading}
               disabled={previewFiles.length === 0}
             >
               确认上传

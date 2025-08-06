@@ -49,7 +49,7 @@ interface State extends UserStore {
   setItem: <K extends keyof State>(key: K, value: State[K]) => void;
 }
 
-export const useUserStore = create<State>((set, get) => ({
+export const useUserStore = create<State>((set) => ({
   wallet: undefined,
   initWallet(fingerprint: string) {
     set({ fingerprint });
