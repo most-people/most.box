@@ -1,3 +1,4 @@
+import mp from "./mp.mjs";
 import rng from "rdrand-lite";
 import { exec } from "child_process";
 import { promisify } from "util";

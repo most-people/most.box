@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
 import { Anchor, Blockquote, Button, Stack } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
