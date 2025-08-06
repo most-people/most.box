@@ -75,13 +75,13 @@ export const registerFiles = (server, ipfs) => {
         rawLeaves: true,
       });
 
-      // 检查文件是否已存在，如果存在则报错
+      // 检查文件是否已存在，如果存在则先删除
       try {
         await ipfs.files.stat(targetPath);
-        // 文件存在，直接报错
-        return reply.code(409).send("文件已存在");
+        // 文件存在，先删除
+        await ipfs.files.rm(targetPath);
       } catch (error) {
-        // 文件不存在，继续上传
+        // 文件不存在，忽略错误
       }
 
       // 将文件复制到指定地址目录

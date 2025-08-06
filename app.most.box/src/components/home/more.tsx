@@ -6,8 +6,9 @@ import { notifications } from "@mantine/notifications";
 import { useUserStore } from "@/stores/userStore";
 
 const HomeMore = ({ homeTab }: { homeTab: string | null }) => {
-  const filesPath = useUserStore((state) => state.filesPath);
+  const wallet = useUserStore((state) => state.wallet);
   const setItem = useUserStore((state) => state.setItem);
+  const filesPath = useUserStore((state) => state.filesPath);
 
   const tarInputRef = useRef<HTMLInputElement>(null);
 
@@ -86,7 +87,11 @@ const HomeMore = ({ homeTab }: { homeTab: string | null }) => {
           </Menu.Target>
 
           <Menu.Dropdown>
-            <Menu.Item leftSection="📁" onClick={handleImportTar}>
+            <Menu.Item
+              leftSection="📁"
+              onClick={handleImportTar}
+              disabled={!wallet}
+            >
               导入 tar 压缩包
             </Menu.Item>
           </Menu.Dropdown>
