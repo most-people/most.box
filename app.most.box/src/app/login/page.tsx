@@ -10,16 +10,15 @@ import {
   PasswordInput,
   Avatar,
   Anchor,
-  Box,
   Space,
   Group,
   ActionIcon,
   Tooltip,
   Modal,
   TextInput,
+  Container,
 } from "@mantine/core";
 
-import "./login.scss";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import mp from "@/constants/mp";
@@ -33,6 +32,7 @@ import { Icon } from "@/components/Icon";
 import { SupabaseURL } from "@/constants/api";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
+import { AppHeader } from "@/components/AppHeader";
 
 interface TelegramAuthData {
   id: number;
@@ -253,13 +253,13 @@ export default function PageLogin() {
   };
 
   return (
-    <Box id="page-login">
-      <Stack gap="md">
-        <Box className="header">
+    <Container maw={424} w="100%">
+      <AppHeader title="登录" />
+      <Stack gap="md" mt="md">
+        <Stack align="center">
           <Text size="xl" fw={500}>
             Most.Box
           </Text>
-          <Space h="sx" />
           <Avatar
             size="xl"
             radius="md"
@@ -270,7 +270,7 @@ export default function PageLogin() {
             }
             alt="it's me"
           />
-        </Box>
+        </Stack>
         <Stack gap="md">
           <Input
             autoFocus
@@ -414,6 +414,6 @@ export default function PageLogin() {
         </Stack>
       </Modal>
       <Script src="https://telegram.org/js/telegram-widget.js"></Script>
-    </Box>
+    </Container>
   );
 }
