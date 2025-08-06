@@ -1,12 +1,13 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
-import { Blockquote, Button, Stack } from "@mantine/core";
+import { Anchor, Blockquote, Button, Stack } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { BrowserProvider, getAddress } from "ethers";
 import { useRouter } from "next/navigation";
 import { IconInfoCircle } from "@tabler/icons-react";
 import axios from "axios";
+import Link from "next/link";
 
 const SignMessage = ({ dotApi }: { dotApi: string }) => {
   const router = useRouter();
@@ -82,6 +83,7 @@ export default function PageDeploy() {
   const [address, setAddress] = useState("");
   const [dotAddress, setDotAddress] = useState("");
   const [dotApi, setDotApi] = useState("");
+  const [dotDeploy, setDotDeploy] = useState("");
 
   useEffect(() => {
     const query = new URLSearchParams(window.location.search);
@@ -90,6 +92,7 @@ export default function PageDeploy() {
     if (address && api) {
       setDotAddress(address);
       setDotApi(api);
+      setDotDeploy(api + window.location.pathname + window.location.search);
     } else {
       router.back();
     }
@@ -153,7 +156,10 @@ export default function PageDeploy() {
     <Stack>
       <AppHeader title="更新节点代码" />
       <Blockquote icon={<IconInfoCircle />} mt="xl">
-        节点地址：{dotApi}
+        节点地址：
+        <Anchor component={Link} href={dotDeploy} target="_blank">
+          {dotApi}
+        </Anchor>
       </Blockquote>
 
       {address ? (
