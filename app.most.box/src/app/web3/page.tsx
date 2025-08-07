@@ -14,7 +14,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import Link from "next/link";
 
-export default function Web3Page() {
+export default function PageWeb3() {
   const wallet = useUserStore((state) => state.wallet);
   const [showX25519, setShowX25519] = useState(false);
 

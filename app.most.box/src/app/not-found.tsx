@@ -6,7 +6,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-export default function NotFound() {
+export default function PageNotFound() {
   const back = useBack();
   const router = useRouter();
   const pathname = usePathname();

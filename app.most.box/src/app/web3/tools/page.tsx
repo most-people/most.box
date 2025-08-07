@@ -25,7 +25,7 @@ interface DeriveAddress {
   privateKey: string;
 }
 
-export default function Web3ToolPage() {
+export default function PageWeb3Tool() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [address, setAddress] = useState(mp.ZeroAddress);

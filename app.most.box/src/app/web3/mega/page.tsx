@@ -12,7 +12,7 @@ import { useUserStore } from "@/stores/userStore";
 // 定义网络类型
 type NetworkType = "mega" | "monad";
 
-export default function Web3MegaPage() {
+export default function PageWeb3Mega() {
   const wallet = useUserStore((state) => state.wallet);
   const [pressedKey, setPressedKey] = useState<string | null>(null);
   const [network, setNetwork] = useState<NetworkType>("mega");

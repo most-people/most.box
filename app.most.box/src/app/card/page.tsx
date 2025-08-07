@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { AppHeader } from "@/components/AppHeader";
 import mp from "@/constants/mp";
 import {
@@ -18,7 +19,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { notifications } from "@mantine/notifications";
 import { IconCopy, IconShare } from "@tabler/icons-react";
 
-export default function PageCard() {
+const PageContent = () => {
   const params = useSearchParams();
   const uid = params.get("uid") || mp.ZeroAddress;
 
@@ -149,5 +150,13 @@ export default function PageCard() {
         </Box>
       </Stack>
     </Container>
+  );
+};
+
+export default function PageCard() {
+  return (
+    <Suspense>
+      <PageContent />
+    </Suspense>
   );
 }

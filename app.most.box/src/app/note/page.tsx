@@ -2,8 +2,6 @@
 
 import { useEffect, useMemo, useState, Suspense } from "react";
 import {
-  Loader,
-  Center,
   Box,
   Button,
   Group,
@@ -34,7 +32,7 @@ import { api } from "@/constants/api";
 import { notifications } from "@mantine/notifications";
 import { mostDecode, mostEncode } from "@/constants/MostWallet";
 
-const NoteContent = () => {
+const PageContent = () => {
   const params = useSearchParams();
   const dotCID = useUserStore((state) => state.dotCID);
   const wallet = useUserStore((state) => state.wallet);
@@ -277,16 +275,10 @@ const NoteContent = () => {
   );
 };
 
-export default function NotePage() {
+export default function PageNote() {
   return (
-    <Suspense
-      fallback={
-        <Center h={200}>
-          <Loader size="md" />
-        </Center>
-      }
-    >
-      <NoteContent />
+    <Suspense>
+      <PageContent />
     </Suspense>
   );
 }

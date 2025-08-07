@@ -7,7 +7,7 @@ import { ethers } from "ethers";
 import Link from "next/link";
 import { useEffect } from "react";
 
-export default function Web3EthersPage() {
+export default function PageWeb3Ethers() {
   useEffect(() => {
     (window as any).ethers = ethers;
     (window as any).dayjs = dayjs;
