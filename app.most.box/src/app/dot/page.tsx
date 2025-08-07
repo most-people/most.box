@@ -330,6 +330,16 @@ export default function PageDot() {
     });
   };
 
+  const isDisabledNode = (node: DotNode) => {
+    if (!node.APIs.length) {
+      return true;
+    }
+    if (location.protocol === "https:" && node.APIs[0].startsWith("http:")) {
+      return true;
+    }
+    return isCurrentNode(node);
+  };
+
   useEffect(() => {
     if (dotNodes.length > 0) {
       setLoading(false);
@@ -689,7 +699,7 @@ export default function PageDot() {
                       leftSection={<IconSwitchHorizontal size={16} />}
                       onClick={() => switchNode(node)}
                       loading={switchingNode === node.address}
-                      disabled={isCurrentNode(node) || !node.APIs.length}
+                      disabled={isDisabledNode(node)}
                     >
                       {isCurrentNode(node) ? "当前节点" : "切换节点"}
                     </Button>
@@ -744,16 +754,6 @@ export default function PageDot() {
         >
           主网 RPC
         </Anchor>
-
-        {/* <Anchor
-          size="sm"
-          c="blue"
-          component={Link}
-          href="https://chainlist.org/chain/84532"
-          target="_blank"
-        >
-          测试网 RPC
-        </Anchor> */}
 
         <Anchor
           size="sm"

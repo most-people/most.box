@@ -44,9 +44,8 @@ export default function HomeMine() {
             ml={"auto"}
             variant="subtle"
             color="gray"
-            onClick={() =>
-              notifications.show({ title: "二维码", message: "开发中" })
-            }
+            component={Link}
+            href={{ pathname: "/card", query: { uid: address } }}
           >
             <Icon name="QRCode" size={18} />
           </ActionIcon>

@@ -15,7 +15,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { mostWallet } from "@/constants/MostWallet";
 import { HDNodeWallet } from "ethers";
-import { QRCodeCanvas } from "qrcode.react";
+import { QRCodeSVG } from "qrcode.react";
 import { AppHeader } from "@/components/AppHeader";
 import mp from "@/constants/mp";
 
@@ -228,7 +228,7 @@ export default function Web3ToolPage() {
               backgroundColor: "white",
             }}
           >
-            <QRCodeCanvas value={address} size={200} />
+            <QRCodeSVG value={address} size={200} />
           </Paper>
         )}
 
@@ -259,7 +259,7 @@ export default function Web3ToolPage() {
               backgroundColor: "white",
             }}
           >
-            <QRCodeCanvas value={mnemonic || " "} size={260} />
+            <QRCodeSVG value={mnemonic || " "} size={260} />
           </Paper>
         )}
 
