@@ -1,13 +1,21 @@
-#editorElement {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  padding-top: 64px;
-  background-color: var(--mantine-color-body);
-}
-#viewerElement {
-  padding: 0 20px;
-  width: 100%;
-  max-width: 1280px;
+#page-note {
+  #editorElement {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding-top: 64px;
+    background-color: var(--mantine-color-body);
+  }
+  #viewerElement {
+    padding: 0 20px;
+    width: 100%;
+    max-width: 1280px;
+  }
+
+  #switch-box {
+    position: fixed;
+    bottom: 3px;
+    left: 10px;
+  }
 }

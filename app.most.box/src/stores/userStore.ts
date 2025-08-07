@@ -39,6 +39,7 @@ interface UserStore {
   dotCID: string;
   dotNodes: DotNode[];
   notes?: Note[];
+  notesQuery: string;
   files?: FileItem[];
   filesPath: string;
   fingerprint: string;
@@ -107,6 +108,7 @@ export const useUserStore = create<State>((set) => ({
   dotCID: DotCID,
   dotNodes: [],
   notes: undefined,
+  notesQuery: "",
   files: undefined,
   filesPath: "",
   fingerprint: "",

@@ -26,9 +26,9 @@ import { useDisclosure } from "@mantine/hooks";
 export default function HomeNote() {
   const wallet = useUserStore((state) => state.wallet);
   const notes = useUserStore((state) => state.notes);
+  const notesQuery = useUserStore((state) => state.notesQuery);
   const setItem = useUserStore((state) => state.setItem);
   const [loading, setLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [displayCount, setDisplayCount] = useState(100);
 
   // 添加弹窗相关状态
@@ -63,7 +63,7 @@ export default function HomeNote() {
 
   // 过滤笔记列表
   const filteredNotes = notes
-    ? notes.filter((note) => mp.pinyin(note.name, searchQuery, 0))
+    ? notes.filter((note) => mp.pinyin(note.name, notesQuery, 0))
     : [];
 
   // 获取当前显示的笔记列表
@@ -78,7 +78,7 @@ export default function HomeNote() {
   // 重置显示数量（搜索时使用）
   useEffect(() => {
     setDisplayCount(100);
-  }, [searchQuery]);
+  }, [notesQuery]);
 
   const fetchNotes = async () => {
     try {
@@ -287,8 +287,10 @@ export default function HomeNote() {
           <Center>
             <TextInput
               placeholder="搜索笔记名称"
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.currentTarget.value)}
+              value={notesQuery}
+              onChange={(event) =>
+                setItem("notesQuery", event.currentTarget.value)
+              }
               size="md"
               radius="md"
               w={400}
@@ -302,7 +304,7 @@ export default function HomeNote() {
 
           <Group justify="space-between" align="center">
             <Badge variant="light" size="lg">
-              {searchQuery
+              {notesQuery
                 ? `显示 ${displayedNotes.length} / ${filteredNotes.length} (总共 ${notes.length})`
                 : `显示 ${displayedNotes.length} / ${notes.length}`}{" "}
               个笔记
@@ -322,7 +324,7 @@ export default function HomeNote() {
           </Group>
 
           {/* 搜索结果为空时的提示 */}
-          {searchQuery && filteredNotes.length === 0 ? (
+          {notesQuery && filteredNotes.length === 0 ? (
             <Stack align="center" justify="center" h={200}>
               <Text size="lg" c="dimmed">
                 未找到笔记

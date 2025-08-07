@@ -9,6 +9,7 @@ import {
   Group,
   useMantineColorScheme,
   useComputedColorScheme,
+  Switch,
 } from "@mantine/core";
 import Script from "next/script";
 import { AppHeader } from "@/components/AppHeader";
@@ -44,7 +45,7 @@ const NoteContent = () => {
   const markdown = useMarkdown();
 
   const [content, setContent] = useState("");
-  const [isEditing, setIsEditing] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
   const [isSecret, setIsSecret] = useState(false);
 
   const setHash = (cid: string) => {
@@ -71,12 +72,16 @@ const NoteContent = () => {
             wallet.public_key,
             wallet.private_key
           );
-          setIsSecret(true);
-          setContent(decrypted);
-        } else {
-          setIsSecret(false);
-          setContent(content);
+          if (decrypted) {
+            // 解密成功
+            setIsSecret(true);
+            setContent(decrypted);
+            return;
+          }
         }
+
+        setIsSecret(false);
+        setContent(content);
       })
       .catch((error) => {
         console.error("Error:", error);
@@ -203,7 +208,7 @@ const NoteContent = () => {
       );
     }
     return (
-      <Button size="xs" onClick={() => setIsEditing(true)}>
+      <Button size="xs" onClick={() => setIsEditing(true)} disabled={!wallet}>
         编辑
       </Button>
     );
@@ -232,7 +237,7 @@ const NoteContent = () => {
   }, [colorScheme, computedColorScheme, viewer, editor]);
 
   return (
-    <>
+    <Box id="page-note">
       <AppHeader title={title} right={renderHeaderButtons()} />
 
       <Box
@@ -243,6 +248,14 @@ const NoteContent = () => {
         id="editorElement"
         style={{ display: isEditing ? "block" : "none" }}
       />
+
+      <Box id="switch-box" style={{ display: isEditing ? "block" : "none" }}>
+        <Switch
+          checked={isSecret}
+          onChange={(event) => setIsSecret(event.currentTarget.checked)}
+          label={isSecret ? "加密" : "公开"}
+        />
+      </Box>
 
       {/* https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js */}
       <Script src="/toast-ui/toastui-editor-all.min.js" />
@@ -260,7 +273,7 @@ const NoteContent = () => {
           onReady={initEditor}
         />
       )}
-    </>
+    </Box>
   );
 };
 
