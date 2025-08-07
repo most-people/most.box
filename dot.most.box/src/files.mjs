@@ -259,22 +259,7 @@ export const registerFiles = (server, ipfs) => {
         return reply.code(400).send("只支持 .tar 格式的压缩包");
       }
 
-      // 使用 filename 去掉 .tar 后缀作为文件夹名称
-      const folderName = filename.replace(/\.tar$/, "");
       const targetPath = path ? `/${address}/${path}` : `/${address}`;
-
-      // 路径处理函数：替换压缩包内部的根文件夹名称为 folderName
-      const formatPath = (originalPath) => {
-        const pathParts = originalPath.split("/");
-        if (pathParts.length > 1) {
-          // 如果是在子文件夹中的文件/目录，替换根文件夹名称
-          pathParts[0] = folderName;
-          return pathParts.join("/");
-        } else {
-          // 如果是根目录下的文件，直接放在 folderName 文件夹下
-          return `${folderName}/${originalPath}`;
-        }
-      };
 
       const extract = tar.extract();
       const uploadedFiles = [];
@@ -293,8 +278,7 @@ export const registerFiles = (server, ipfs) => {
             stream.on("end", async () => {
               try {
                 const fileBuffer = Buffer.concat(chunks);
-                const adjustedPath = formatPath(header.name);
-                const filePath = `${targetPath}/${adjustedPath}`;
+                const filePath = `${targetPath}/${header.name}`;
 
                 // 将文件添加到 IPFS
                 const fileAdded = await ipfs.add(fileBuffer, {
@@ -308,7 +292,7 @@ export const registerFiles = (server, ipfs) => {
                 });
 
                 uploadedFiles.push({
-                  name: adjustedPath,
+                  name: header.name,
                   path: filePath,
                   cid: fileAdded.cid.toString(),
                   size: fileAdded.size,
@@ -329,11 +313,10 @@ export const registerFiles = (server, ipfs) => {
             // 创建目录
             (async () => {
               try {
-                const adjustedPath = formatPath(header.name);
-                const dirPath = `${targetPath}/${adjustedPath}`;
+                const dirPath = `${targetPath}/${header.name}`;
                 await ipfs.files.mkdir(dirPath, { parents: true });
                 uploadedFiles.push({
-                  name: adjustedPath,
+                  name: header.name,
                   path: dirPath,
                   type: "directory",
                 });
@@ -358,7 +341,6 @@ export const registerFiles = (server, ipfs) => {
           const result = {
             ok: true,
             message: `成功导入 ${uploadedFiles.length} 个文件`,
-            // uploadedFiles,
           };
 
           if (errors.length > 0) {
