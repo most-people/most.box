@@ -46,6 +46,16 @@ const HomeMore = ({ homeTab }: { homeTab: string | null }) => {
 
       const res = await api.put("/files.import", formData);
 
+      const oldName = res.data.name;
+      const newName = file.name.replace(/\.tar$/, "");
+      const oldPath = filesPath ? `${filesPath}/${oldName}` : oldName;
+      const newPath = filesPath ? `${filesPath}/${newName}` : newName;
+
+      await api.put("/files.rename", {
+        oldName: `/${oldPath}`,
+        newName: `/${newPath}`,
+      });
+
       notifications.update({
         id: notificationId,
         title: "导入成功",

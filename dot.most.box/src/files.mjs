@@ -341,10 +341,10 @@ export const registerFiles = (server, ipfs) => {
           const result = {
             ok: true,
             message: `成功导入 ${uploadedFiles.length} 个文件`,
+            name: uploadedFiles[0]?.name || "",
           };
 
           if (errors.length > 0) {
-            result.errors = errors;
             result.message += `，但有 ${errors.length} 个文件处理失败`;
           }
 
