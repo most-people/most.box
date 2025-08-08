@@ -57,7 +57,7 @@ cd ./dot.most.box/
 npm install
 
 # 启动应用
-pm2 start src/index.mjs --name "dot"
+pm2 start src/index.mjs --name dot
 
 # 保存当前进程列表
 pm2 save
