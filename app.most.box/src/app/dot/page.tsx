@@ -95,7 +95,7 @@ export default function PageDot() {
   // 网络配置
   const NETWORK_CONFIG = {
     mainnet: {
-      rpc: "https://mainnet.base.org",
+      rpc: "https://mainnet-preconf.base.org",
       name: "Base 主网",
       color: "blue",
       explorer: "https://basescan.org",
