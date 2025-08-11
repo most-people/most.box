@@ -36,7 +36,6 @@ const PageContent = () => {
   const params = useSearchParams();
   const dotCID = useUserStore((state) => state.dotCID);
   const wallet = useUserStore((state) => state.wallet);
-  const dotID = useUserStore((state) => state.dotID);
 
   const [inited, setInited] = useState(false);
   const [viewer, setViewer] = useState<any>(null);
@@ -52,10 +51,6 @@ const PageContent = () => {
     url.hash = cid;
     window.history.replaceState(null, "", url.href);
   };
-
-  useEffect(() => {
-    console.log("🌊", dotID);
-  }, [dotID]);
 
   const initViewer = () => {
     setViewer(markdown.initViewer());

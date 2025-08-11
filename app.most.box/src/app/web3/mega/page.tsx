@@ -3,7 +3,7 @@
 import { AppHeader } from "@/components/AppHeader";
 import { Box, Button } from "@mantine/core";
 import { useEffect, useState } from "react";
-import { ethers } from "ethers";
+import { HDNodeWallet, JsonRpcProvider, parseEther, Wallet } from "ethers";
 import Link from "next/link";
 import { notifications } from "@mantine/notifications";
 import "./mega.scss";
@@ -71,19 +71,15 @@ export default function PageWeb3Mega() {
   };
 
   // 分别为两个网络创建 provider
-  const [megaProvider] = useState<ethers.JsonRpcProvider>(
-    new ethers.JsonRpcProvider(networkConfig.mega.rpc)
+  const [megaProvider] = useState<JsonRpcProvider>(
+    new JsonRpcProvider(networkConfig.mega.rpc)
   );
-  const [monadProvider] = useState<ethers.JsonRpcProvider>(
-    new ethers.JsonRpcProvider(networkConfig.monad.rpc)
+  const [monadProvider] = useState<JsonRpcProvider>(
+    new JsonRpcProvider(networkConfig.monad.rpc)
   );
 
-  const [megaSigner, setMegaSigner] = useState<ethers.HDNodeWallet | null>(
-    null
-  );
-  const [monadSigner, setMonadSigner] = useState<ethers.HDNodeWallet | null>(
-    null
-  );
+  const [megaSigner, setMegaSigner] = useState<HDNodeWallet | null>(null);
+  const [monadSigner, setMonadSigner] = useState<HDNodeWallet | null>(null);
   const [megaNonce, setMegaNonce] = useState<number | null>(null);
   const [monadNonce, setMonadNonce] = useState<number | null>(null);
 
@@ -107,7 +103,7 @@ export default function PageWeb3Mega() {
   useEffect(() => {
     if (wallet) {
       // 创建钱包实例
-      const w = ethers.Wallet.fromPhrase(wallet.mnemonic);
+      const w = Wallet.fromPhrase(wallet.mnemonic);
 
       // 连接到 Mega ETH 网络
       const megaWalletSigner = w.connect(megaProvider);
@@ -140,7 +136,7 @@ export default function PageWeb3Mega() {
       // 发送一笔交易，指定 nonce
       const tx = await currentSigner.sendTransaction({
         to: currentSigner.address,
-        value: ethers.parseEther("0"),
+        value: parseEther("0"),
         nonce: currentNonce,
       });
 

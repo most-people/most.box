@@ -43,33 +43,7 @@ import Link from "next/link";
 import { DotNode, useUserStore } from "@/stores/userStore";
 import { mostEncode, mostWallet } from "@/constants/MostWallet";
 import dayjs from "dayjs";
-
-// DotContract ABI
-const DotContractABI = [
-  {
-    inputs: [],
-    name: "getAllDots",
-    outputs: [
-      { internalType: "address[]", name: "addresses", type: "address[]" },
-      { internalType: "string[]", name: "names", type: "string[]" },
-      { internalType: "uint256[]", name: "timestamps", type: "uint256[]" },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [{ internalType: "address", name: "dot", type: "address" }],
-    name: "getDot",
-    outputs: [
-      { internalType: "string", name: "name", type: "string" },
-      { internalType: "string[]", name: "APIs", type: "string[]" },
-      { internalType: "string[]", name: "CIDs", type: "string[]" },
-      { internalType: "uint256", name: "update", type: "uint256" },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-];
+import { CONTRACT_ADDRESS, NETWORK_CONFIG, getDotNodes } from "@/constants/dot";
 
 export default function PageDot() {
   // 当前节点状态
@@ -88,25 +62,6 @@ export default function PageDot() {
   const [error, setError] = useState<string | null>(null);
   const [network, setNetwork] = useState<"mainnet" | "testnet">("mainnet");
   const [switchingNode, setSwitchingNode] = useState<string | null>(null);
-
-  // 合约配置
-  const CONTRACT_ADDRESS = "0xdc82cef1a8416210afb87caeec908a4df843f016";
-
-  // 网络配置
-  const NETWORK_CONFIG = {
-    mainnet: {
-      rpc: "https://mainnet-preconf.base.org",
-      name: "Base 主网",
-      color: "blue",
-      explorer: "https://basescan.org",
-    },
-    testnet: {
-      rpc: "https://sepolia.base.org",
-      name: "Base 测试网",
-      color: "orange",
-      explorer: "https://sepolia.basescan.org",
-    },
-  };
 
   const RPC = NETWORK_CONFIG[network].rpc;
   const [customRPC, setCustomRPC] = useState(RPC);
@@ -179,8 +134,8 @@ export default function PageDot() {
     try {
       setLoading(true);
       setError(null);
-
-      const provider = new ethers.JsonRpcProvider(rpc || customRPC || RPC);
+      rpc = rpc || customRPC || RPC;
+      const provider = new ethers.JsonRpcProvider(rpc);
       const network = await provider.getNetwork();
       const chainId = Number(network.chainId);
 
@@ -198,30 +153,8 @@ export default function PageDot() {
         return;
       }
 
-      const contract = new ethers.Contract(
-        CONTRACT_ADDRESS,
-        DotContractABI,
-        provider
-      );
-
-      const [addresses, names, timestamps] = await contract.getAllDots();
-
-      const nodePromises = addresses.map(
-        async (address: string, index: number) => {
-          const [name, APIs, CIDs, update] = await contract.getDot(address);
-          return {
-            address,
-            name: name || names[index] || `节点 ${index + 1}`,
-            APIs: APIs || [],
-            CIDs: CIDs || [],
-            lastUpdate: Number(update || timestamps[index]),
-          };
-        }
-      );
-
-      const nodeList = await Promise.all(nodePromises);
-      localStorage.setItem("dotNodes", JSON.stringify(nodeList));
-      setItem("dotNodes", nodeList);
+      const nodes = await getDotNodes(rpc);
+      if (nodes) setItem("dotNodes", nodes);
     } catch (err) {
       console.error("获取节点列表失败:", err);
       setError("获取节点列表失败，请检查 RPC 连接");
@@ -803,9 +736,7 @@ export default function PageDot() {
           size="sm"
           c="blue"
           component={Link}
-          href={
-            Explorer + "/address/0xdc82cef1a8416210afb87caeec908a4df843f016"
-          }
+          href={Explorer + "/address/" + CONTRACT_ADDRESS}
           target="_blank"
         >
           合约地址

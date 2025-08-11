@@ -3,6 +3,7 @@ import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { useUserStore } from "@/stores/userStore";
 import { useEffect } from "react";
 import { api } from "@/constants/api";
+import { getDotNodes } from "@/constants/dot";
 
 export default function AppProvider() {
   const initWallet = useUserStore((state) => state.initWallet);
@@ -33,8 +34,31 @@ export default function AppProvider() {
     }
   };
 
+  const dotNodes = useUserStore((state) => state.dotNodes);
+
+  const initNodes = () => {
+    if (dotNodes.length > 0) {
+      return;
+    }
+
+    // 尝试从缓存加载
+    const nodes = localStorage.getItem("dotNodes");
+    if (nodes) {
+      try {
+        setItem("dotNodes", JSON.parse(nodes));
+        return;
+      } catch {}
+    }
+
+    // 从区块链获取最新数据
+    getDotNodes().then((nodes) => {
+      if (nodes) setItem("dotNodes", nodes);
+    });
+  };
+
   useEffect(() => {
     initDot();
+    initNodes();
     initFinger();
     sessionStorage.firstPath = window.location.pathname;
   }, []);
