@@ -22,7 +22,7 @@ import {
   TextInput,
   Anchor,
 } from "@mantine/core";
-import { ethers } from "ethers";
+import { Contract, ethers } from "ethers";
 import { notifications } from "@mantine/notifications";
 import {
   IconCheck,
@@ -43,7 +43,11 @@ import Link from "next/link";
 import { DotNode, useUserStore } from "@/stores/userStore";
 import { mostEncode, mostWallet } from "@/constants/MostWallet";
 import dayjs from "dayjs";
-import { CONTRACT_ADDRESS, NETWORK_CONFIG, getDotNodes } from "@/constants/dot";
+import {
+  CONTRACT_ABI,
+  CONTRACT_ADDRESS,
+  NETWORK_CONFIG,
+} from "@/constants/dot";
 
 export default function PageDot() {
   // 当前节点状态
@@ -153,8 +157,26 @@ export default function PageDot() {
         return;
       }
 
-      const nodes = await getDotNodes(rpc);
-      if (nodes) setItem("dotNodes", nodes);
+      const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+      const [addresses, names, timestamps] = await contract.getAllDots();
+
+      const nodePromises = addresses.map(
+        async (address: string, index: number) => {
+          const [name, APIs, CIDs, update] = await contract.getDot(address);
+          return {
+            address,
+            name: name || names[index] || `节点 ${index + 1}`,
+            APIs: APIs || [],
+            CIDs: CIDs || [],
+            lastUpdate: Number(update || timestamps[index]),
+          };
+        }
+      );
+      const nodes = await Promise.all(nodePromises);
+      localStorage.setItem("dotNodes", JSON.stringify(nodes));
+      if (nodes) {
+        setItem("dotNodes", nodes);
+      }
     } catch (err) {
       console.error("获取节点列表失败:", err);
       setError("获取节点列表失败，请检查 RPC 连接");
