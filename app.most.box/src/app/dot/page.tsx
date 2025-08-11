@@ -17,7 +17,6 @@ import {
   Divider,
   ActionIcon,
   Tooltip,
-  Grid,
   ThemeIcon,
   Flex,
   TextInput,
@@ -81,6 +80,7 @@ export default function PageDot() {
   const dotAPI = useUserStore((state) => state.dotAPI);
   const dotNodes = useUserStore((state) => state.dotNodes);
   const updateDot = useUserStore((state) => state.updateDot);
+  const dotID = useUserStore((state) => state.dotID);
 
   // 节点列表状态
   const [loading, setLoading] = useState(true);
@@ -347,6 +347,15 @@ export default function PageDot() {
     });
   };
 
+  const nodeIndex = dotNodes.findIndex(isCurrentNode);
+  useEffect(() => {
+    if (nodeIndex >= 0) {
+      setItem("dotID", `${network.slice(0, 1).toUpperCase()}${nodeIndex + 1}`);
+    } else {
+      setItem("dotID", "");
+    }
+  }, [nodeIndex]);
+
   const isDisabledNode = (node: DotNode) => {
     if (!node.APIs.length) {
       return true;
@@ -397,7 +406,7 @@ export default function PageDot() {
           <Title>DOT.MOST.BOX</Title>
           {ApiList.length > 0 ? (
             <>
-              <Text>已成功接入</Text>
+              <Text>已成功接入 {dotID}</Text>
               <Stack justify="center">
                 {ApiList.map((url, index) => (
                   <Anchor
@@ -414,7 +423,7 @@ export default function PageDot() {
             </>
           ) : (
             <>
-              <Text>当前节点</Text>
+              <Text>当前节点 {nodeIndex}</Text>
               <Anchor component={Link} href={dotAPI} target="_blank">
                 {dotAPI}
               </Anchor>
@@ -583,7 +592,7 @@ export default function PageDot() {
                   <Box>
                     <Group gap="xs">
                       <Text fw={600} size="md" lineClamp={1}>
-                        {node.name} #{network.slice(0, 1).toUpperCase()}
+                        {node.name} {network.slice(0, 1).toUpperCase()}
                         {index + 1}
                       </Text>
                       {isCurrentNode(node) && (
