@@ -56,6 +56,8 @@ ipfs shutdown
 ```bash
 # 1. 创建一个 systemd 服务文件
 sudo nano /etc/systemd/system/ipfs.service
+
+# 提示 User = ubuntu | root 替换为当前用户
 ```
 
 ```conf
@@ -65,7 +67,7 @@ After=network.target
 
 [Service]
 Type=simple
-User=ubuntu
+User=root
 ExecStart=/usr/local/bin/ipfs daemon
 Restart=always
 RestartSec=10
@@ -79,21 +81,6 @@ WantedBy=multi-user.target
 # 启用服务
 sudo systemctl enable ipfs.service
 sudo systemctl start ipfs.service
-
-# 检查内存使用
-free -h
-
-# 检查磁盘空间
-df -h
-
-# 查看实时日志
-journalctl -u ipfs.service -f
-
-# 查看最近的日志
-journalctl -u ipfs.service -n 100
-
-# 查看今天的日志
-journalctl -u ipfs.service --since today
 ```
 
 ## Ubuntu 安装 Caddy
