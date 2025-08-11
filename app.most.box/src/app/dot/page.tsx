@@ -181,6 +181,23 @@ export default function PageDot() {
       setError(null);
 
       const provider = new ethers.JsonRpcProvider(rpc || customRPC || RPC);
+      const network = await provider.getNetwork();
+      const chainId = Number(network.chainId);
+
+      if (chainId === 8453) {
+        setNetwork("mainnet");
+      } else if (chainId === 84532) {
+        setNetwork("testnet");
+      } else {
+        notifications.show({
+          title: "网络错误",
+          message: `网络 ID 为 ${chainId}，不支持 Base 协议`,
+          color: "red",
+        });
+        setCustomRPC("");
+        return;
+      }
+
       const contract = new ethers.Contract(
         CONTRACT_ADDRESS,
         DotContractABI,
@@ -518,197 +535,195 @@ export default function PageDot() {
           </Text>
         </Paper>
       ) : (
-        <Grid>
-          {dotNodes.map((node) => (
-            <Grid.Col key={node.address} span="auto">
-              <Card
-                shadow="sm"
-                padding="lg"
-                radius="md"
-                withBorder
-                h="100%"
-                w={343}
-                style={{
-                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                  border: isCurrentNode(node) ? "2px solid #228be6" : undefined,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.boxShadow =
-                    "0 4px 20px rgba(0,0,0,0.1)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "";
-                }}
-              >
-                {/* 节点头部 */}
-                <Group justify="space-between" mb="md">
-                  <Group>
-                    <ThemeIcon
-                      size={36}
-                      radius="md"
-                      variant="light"
-                      color={
-                        node.isOnline
-                          ? "green"
-                          : node.isOnline === false
-                          ? "red"
-                          : "gray"
-                      }
-                    >
-                      {node.isOnline ? (
-                        <IconWifi size={18} />
-                      ) : node.isOnline === false ? (
-                        <IconWifiOff size={18} />
-                      ) : (
-                        <IconServer size={18} />
-                      )}
-                    </ThemeIcon>
-                    <Box>
-                      <Group gap="xs">
-                        <Text fw={600} size="md" lineClamp={1}>
-                          {node.name}
-                        </Text>
-                        {isCurrentNode(node) && (
-                          <Badge size="xs" color="blue" variant="filled">
-                            当前
-                          </Badge>
-                        )}
-                      </Group>
-                      <Text size="xs" c="dimmed">
-                        节点地址
+        <Flex wrap="wrap" gap="md">
+          {dotNodes.map((node, index) => (
+            <Card
+              key={node.address}
+              shadow="sm"
+              padding="lg"
+              radius="md"
+              withBorder
+              w={343}
+              style={{
+                transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                border: isCurrentNode(node) ? "2px solid #228be6" : undefined,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.1)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "";
+              }}
+            >
+              {/* 节点头部 */}
+              <Group justify="space-between" mb="md">
+                <Group>
+                  <ThemeIcon
+                    size={36}
+                    radius="md"
+                    variant="light"
+                    color={
+                      node.isOnline
+                        ? "green"
+                        : node.isOnline === false
+                        ? "red"
+                        : "gray"
+                    }
+                  >
+                    {node.isOnline ? (
+                      <IconWifi size={18} />
+                    ) : node.isOnline === false ? (
+                      <IconWifiOff size={18} />
+                    ) : (
+                      <IconServer size={18} />
+                    )}
+                  </ThemeIcon>
+                  <Box>
+                    <Group gap="xs">
+                      <Text fw={600} size="md" lineClamp={1}>
+                        {node.name} #{network.slice(0, 1).toUpperCase()}
+                        {index + 1}
                       </Text>
-                    </Box>
-                  </Group>
-
-                  {node.isOnline !== undefined && (
-                    <Badge
-                      color={node.isOnline ? "green" : "red"}
-                      variant="light"
-                      leftSection={
-                        node.isOnline ? (
-                          <IconCheck size={12} />
-                        ) : (
-                          <IconX size={12} />
-                        )
-                      }
-                    >
-                      {node.isOnline ? "在线" : "离线"}
-                      {node.responseTime !== undefined &&
-                        ` (${formatResponseTime(node.responseTime)})`}
-                    </Badge>
-                  )}
+                      {isCurrentNode(node) && (
+                        <Badge size="xs" color="blue" variant="filled">
+                          当前
+                        </Badge>
+                      )}
+                    </Group>
+                    <Text size="xs" c="dimmed">
+                      节点地址
+                    </Text>
+                  </Box>
                 </Group>
 
-                <Divider mb="md" />
+                {node.isOnline !== undefined && (
+                  <Badge
+                    color={node.isOnline ? "green" : "red"}
+                    variant="light"
+                    leftSection={
+                      node.isOnline ? (
+                        <IconCheck size={12} />
+                      ) : (
+                        <IconX size={12} />
+                      )
+                    }
+                  >
+                    {node.isOnline ? "在线" : "离线"}
+                    {node.responseTime !== undefined &&
+                      ` (${formatResponseTime(node.responseTime)})`}
+                  </Badge>
+                )}
+              </Group>
 
-                {/* 节点详细信息 */}
-                <Stack justify="space-between" flex={1}>
-                  <Stack gap="sm">
-                    <Group gap="xs" wrap="nowrap">
-                      <IconDatabase
-                        size={14}
-                        color="gray"
-                        style={{ flexShrink: 0 }}
-                      />
-                      <Text size="xs" c="dimmed">
-                        {mp.formatAddress(node.address)}{" "}
-                        <Anchor
-                          component={Link}
-                          href={{
-                            pathname: "/dot/deploy",
-                            query: { address: node.address, api: node.APIs[0] },
-                          }}
-                          c="dimmed"
-                        >
-                          Deploy
-                        </Anchor>
-                      </Text>
-                    </Group>
+              <Divider mb="md" />
 
-                    <Group gap="xs">
-                      <IconClock size={14} color="gray" />
-                      <Text size="xs" c="dimmed">
-                        {formatTime(node.lastUpdate)}
-                      </Text>
-                    </Group>
-
-                    {node.APIs.length > 0 && (
-                      <Stack gap={2} align="flex-start">
-                        {node.APIs.map((api, apiIndex) => (
-                          <Anchor
-                            key={apiIndex}
-                            c="blue"
-                            component={Link}
-                            href={api}
-                            target="_blank"
-                            lineClamp={1}
-                          >
-                            {api}
-                          </Anchor>
-                        ))}
-                      </Stack>
-                    )}
-
-                    <Box>
-                      <Text size="xs" fw={500} mb={4} c="gray">
-                        CID 浏览器
-                      </Text>
-                      <Group gap={2} align="flex-start">
-                        {node.CIDs.map((cid, cidIndex) => (
-                          <Anchor
-                            key={cidIndex}
-                            component={Link}
-                            c="blue"
-                            href={cid + "/ipfs"}
-                            target="_blank"
-                            lineClamp={1}
-                          >
-                            {cid + "/ipfs"}
-                          </Anchor>
-                        ))}
-                        {defaultCID(node) && (
-                          <Anchor
-                            c="blue"
-                            component={Link}
-                            href={defaultCID(node) || ""}
-                            target="_blank"
-                            lineClamp={1}
-                          >
-                            {defaultCID(node)}
-                          </Anchor>
-                        )}
-                      </Group>
-                    </Box>
-                  </Stack>
-                  <Group>
-                    <Button
-                      flex={1}
-                      variant="light"
-                      color="blue"
-                      leftSection={<IconExternalLink size={16} />}
-                      onClick={() => openNode(node)}
-                    >
-                      打开节点
-                    </Button>
-                    <Button
-                      flex={1}
-                      variant={isCurrentNode(node) ? "filled" : "light"}
-                      color={isCurrentNode(node) ? "green" : "blue"}
-                      leftSection={<IconSwitchHorizontal size={16} />}
-                      onClick={() => switchNode(node)}
-                      loading={switchingNode === node.address}
-                      disabled={isDisabledNode(node)}
-                    >
-                      {isCurrentNode(node) ? "当前节点" : "切换节点"}
-                    </Button>
+              {/* 节点详细信息 */}
+              <Stack justify="space-between" flex={1}>
+                <Stack gap="sm">
+                  <Group gap="xs" wrap="nowrap">
+                    <IconDatabase
+                      size={14}
+                      color="gray"
+                      style={{ flexShrink: 0 }}
+                    />
+                    <Text size="xs" c="dimmed">
+                      {mp.formatAddress(node.address)}{" "}
+                      <Anchor
+                        component={Link}
+                        href={{
+                          pathname: "/dot/deploy",
+                          query: { address: node.address, api: node.APIs[0] },
+                        }}
+                        c="dimmed"
+                      >
+                        Deploy
+                      </Anchor>
+                    </Text>
                   </Group>
+
+                  <Group gap="xs">
+                    <IconClock size={14} color="gray" />
+                    <Text size="xs" c="dimmed">
+                      {formatTime(node.lastUpdate)}
+                    </Text>
+                  </Group>
+
+                  {node.APIs.length > 0 && (
+                    <Stack gap={2} align="flex-start">
+                      {node.APIs.map((api, apiIndex) => (
+                        <Anchor
+                          key={apiIndex}
+                          c="blue"
+                          component={Link}
+                          href={api}
+                          target="_blank"
+                          lineClamp={1}
+                        >
+                          {api}
+                        </Anchor>
+                      ))}
+                    </Stack>
+                  )}
+
+                  <Box>
+                    <Text size="xs" fw={500} mb={4} c="gray">
+                      CID 浏览器
+                    </Text>
+                    <Group gap={2} align="flex-start">
+                      {node.CIDs.map((cid, cidIndex) => (
+                        <Anchor
+                          key={cidIndex}
+                          component={Link}
+                          c="blue"
+                          href={cid + "/ipfs"}
+                          target="_blank"
+                          lineClamp={1}
+                        >
+                          {cid + "/ipfs"}
+                        </Anchor>
+                      ))}
+                      {defaultCID(node) && (
+                        <Anchor
+                          c="blue"
+                          component={Link}
+                          href={defaultCID(node) || ""}
+                          target="_blank"
+                          lineClamp={1}
+                        >
+                          {defaultCID(node)}
+                        </Anchor>
+                      )}
+                    </Group>
+                  </Box>
                 </Stack>
-              </Card>
-            </Grid.Col>
+                <Group>
+                  <Button
+                    flex={1}
+                    variant="light"
+                    color="blue"
+                    leftSection={<IconExternalLink size={16} />}
+                    onClick={() => openNode(node)}
+                  >
+                    打开节点
+                  </Button>
+                  <Button
+                    flex={1}
+                    variant={isCurrentNode(node) ? "filled" : "light"}
+                    color={isCurrentNode(node) ? "green" : "blue"}
+                    leftSection={<IconSwitchHorizontal size={16} />}
+                    onClick={() => switchNode(node)}
+                    loading={switchingNode === node.address}
+                    disabled={isDisabledNode(node)}
+                  >
+                    {isCurrentNode(node) ? "当前节点" : "切换节点"}
+                  </Button>
+                </Group>
+              </Stack>
+            </Card>
           ))}
-        </Grid>
+        </Flex>
       )}
 
       <Group mt="lg" justify="space-between">
