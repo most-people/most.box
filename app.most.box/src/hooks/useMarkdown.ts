@@ -16,7 +16,7 @@ const uploadImage = async (
   const params = new URLSearchParams(location.search);
   const name = params.get("name");
   formData.append("file", file);
-  formData.append("path", `/.note/${name}/${file.name}`);
+  formData.append("path", `/.note/${name}/${Date.now()}-${file.name}`);
 
   const res = await api.put("/files.upload", formData);
   const cid = res.data.cid;
