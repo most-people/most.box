@@ -1,5 +1,5 @@
 import { AppHeader } from "@/components/AppHeader";
-import { Box, Text, Stack } from "@mantine/core";
+import { Box, Text, Stack, Button } from "@mantine/core";
 import Link from "next/link";
 
 export default function PageAbout() {
@@ -34,12 +34,12 @@ export default function PageAbout() {
           </Link>
         </Box>
 
-        <Box>
-          <Text size="lg" fw="bold" mb="xs">
+        <Stack gap="xs">
+          <Text size="lg" fw="bold">
             最后更新
           </Text>
-          <Text c="dimmed">2025-08-07 01:48:00</Text>
-        </Box>
+          <Text c="dimmed">2025-08-13 03:21:00</Text>
+        </Stack>
       </Stack>
     </Box>
   );

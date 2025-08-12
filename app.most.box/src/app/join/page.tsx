@@ -7,7 +7,7 @@ export default function PageJoin() {
       <AppHeader title="Internationale" />
       <Stack>
         <Title>文明演化与宇宙尺度的社会发展</Title>
-        <Text>
+        <Text c="dimmed">
           探讨文明如何跨越行星界限发展为「戴森球文明」或「卡尔达肖夫等级」中的高等级文明
         </Text>
 

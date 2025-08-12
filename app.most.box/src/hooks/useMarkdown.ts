@@ -15,15 +15,16 @@ const uploadImage = async (
   const formData = new FormData();
   const params = new URLSearchParams(location.search);
   const name = params.get("name");
+  const fileName = `${file.size}-${file.name}`;
   formData.append("file", file);
-  formData.append("path", `/.note/${name}/${Date.now()}-${file.name}`);
+  formData.append("path", `/.note/${name}/${fileName}`);
 
   const res = await api.put("/files.upload", formData);
   const cid = res.data.cid;
   if (cid) {
-    callback(`/ipfs/${cid}?filename=${file.name}`, file.name);
+    callback(`/ipfs/${cid}?filename=${fileName}`, fileName);
   } else {
-    callback("", file.name);
+    callback("", fileName);
   }
 };
 
