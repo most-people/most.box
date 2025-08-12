@@ -37,8 +37,11 @@ import {
   IconWorldWww,
   IconSwitchHorizontal,
   IconExternalLink,
+  IconSearch,
+  IconSettings,
 } from "@tabler/icons-react";
 import mp from "@/constants/mp";
+import { CID } from "multiformats";
 import Link from "next/link";
 import { DotNode, useUserStore } from "@/stores/userStore";
 import { mostEncode, mostWallet } from "@/constants/MostWallet";
@@ -49,27 +52,51 @@ import {
   NETWORK_CONFIG,
 } from "@/constants/dot";
 
+// ===== 常量定义 =====
+const TIMEOUT = 2000;
+
+// ===== 类型定义 =====
+type DetectionStatus = "success" | "error" | "timeout" | "pending";
+type DetectionResult = {
+  status: DetectionStatus;
+  responseTime?: number;
+};
+type NetworkType = "mainnet" | "testnet";
+
 export default function PageDot() {
-  // 当前节点状态
-  const [apiLoading, setApiLoading] = useState(false);
-  const [ApiList, setApiList] = useState<string[]>([]);
-  const [apiURL, setApiURL] = useState("");
+  // ===== Zustand Store =====
   const setItem = useUserStore((state) => state.setItem);
   const dotAPI = useUserStore((state) => state.dotAPI);
   const dotNodes = useUserStore((state) => state.dotNodes);
   const updateDot = useUserStore((state) => state.updateDot);
 
-  // 节点列表状态
+  // ===== 当前节点状态 =====
+  const [apiLoading, setApiLoading] = useState(false);
+  const [ApiList, setApiList] = useState<string[]>([]);
+  const [apiURL, setApiURL] = useState("");
+
+  // ===== 节点列表状态 =====
   const [loading, setLoading] = useState(true);
   const [checkingConnectivity, setCheckingConnectivity] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [network, setNetwork] = useState<"mainnet" | "testnet">("mainnet");
   const [switchingNode, setSwitchingNode] = useState<string | null>(null);
 
+  // ===== 网络和RPC状态 =====
+  const [network, setNetwork] = useState<NetworkType>("mainnet");
   const RPC = NETWORK_CONFIG[network].rpc;
   const [customRPC, setCustomRPC] = useState(RPC);
   const Explorer = NETWORK_CONFIG[network].explorer;
 
+  // ===== CID检测状态 =====
+  const [customCid, setCustomCid] = useState(
+    "bafkreihp5o7tdipf6ajkgkdxknnffkuxpeecwqydi4q5iqt4gko6r2agk4"
+  );
+  const [isDetecting, setIsDetecting] = useState(false);
+  const [detectionResults, setDetectionResults] = useState<
+    Record<string, DetectionResult>
+  >({});
+
+  // ===== 计算属性 =====
   const dotID = useMemo(() => {
     const nodeIndex = dotNodes.findIndex((node) => {
       return node.APIs.some((api) => {
@@ -80,36 +107,280 @@ export default function PageDot() {
         }
       });
     });
-    if (nodeIndex >= 0) {
-      return network.slice(0, 1).toUpperCase() + (nodeIndex + 1);
-    }
-    return "";
+    return nodeIndex >= 0
+      ? network.slice(0, 1).toUpperCase() + (nodeIndex + 1)
+      : "";
   }, [dotNodes, dotAPI, network]);
 
-  // 更新当前节点
+  const onlineNodes = dotNodes.filter((node) => node.isOnline);
+  const offlineNodes = dotNodes.filter((node) => node.isOnline === false);
+
+  const title = useMemo(() => {
+    try {
+      return new URL(dotAPI).hostname.toUpperCase();
+    } catch {
+      return "节点选择";
+    }
+  }, [dotAPI]);
+
+  // ===== 工具函数 =====
+  const formatTime = (timestamp: number) => {
+    if (!timestamp) return "未知";
+    return new Date(timestamp * 1000).toLocaleString("zh-CN");
+  };
+
+  const formatResponseTime = (time?: number) => {
+    return time === undefined ? "" : `${time}ms`;
+  };
+
+  const defaultCID = (node: DotNode) => {
+    return node.APIs.find((api) => api.endsWith(":1976"))?.replace(
+      ":1976",
+      ":8080/ipfs"
+    );
+  };
+
+  const isCurrentNode = (node: DotNode) => {
+    return node.APIs.some((api) => {
+      try {
+        return new URL(api).origin === new URL(dotAPI).origin;
+      } catch {
+        return false;
+      }
+    });
+  };
+
+  const isDisabledNode = (node: DotNode) => {
+    if (!node.APIs.length) return true;
+    if (location.protocol === "https:" && node.APIs[0].startsWith("http:"))
+      return true;
+    return isCurrentNode(node);
+  };
+
+  const showNotification = (title: string, message: string, color: string) => {
+    notifications.show({ title, message, color });
+  };
+
+  // ===== CID检测相关函数 =====
+  const checkCidOnGateway = async (
+    fullUrl: string
+  ): Promise<DetectionResult> => {
+    const startTime = Date.now();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
+
+    try {
+      const response = await fetch(fullUrl, {
+        headers: { Range: "bytes=0-1023" },
+        signal: controller.signal,
+      });
+      const responseTime = Date.now() - startTime;
+      clearTimeout(timeoutId);
+
+      if (response.ok || response.status === 206) {
+        return { status: "success", responseTime };
+      } else {
+        return { status: "error", responseTime };
+      }
+    } catch (error: any) {
+      clearTimeout(timeoutId);
+      if (error.name === "AbortError") {
+        return { status: "timeout" };
+      }
+      return { status: "error" };
+    }
+  };
+
+  const validateCID = (cid: string): boolean => {
+    if (!cid) {
+      showNotification("CID不能为空", "请输入一个CID进行检测", "orange");
+      return false;
+    }
+
+    try {
+      CID.parse(cid);
+      return true;
+    } catch {
+      showNotification("无效的 CID", "输入的值不是有效的 CID", "red");
+      return false;
+    }
+  };
+
+  const buildDetectionUrls = (): string[] => {
+    const allUrls: string[] = [];
+    dotNodes.forEach((node) => {
+      const gateways = [
+        ...node.CIDs.map((url) => `${url}/ipfs`),
+        defaultCID(node),
+      ].filter((url): url is string => !!url);
+
+      gateways.forEach((gatewayBase) => {
+        allUrls.push(`${gatewayBase}/${customCid}`);
+      });
+    });
+    return [...new Set(allUrls)];
+  };
+
+  const handleDetectCid = async () => {
+    if (!validateCID(customCid)) return;
+
+    setIsDetecting(true);
+    const uniqueUrls = buildDetectionUrls();
+
+    // 初始化检测结果
+    const initialResults: typeof detectionResults = {};
+    uniqueUrls.forEach((url) => {
+      initialResults[url] = { status: "pending" };
+    });
+    setDetectionResults(initialResults);
+
+    // 并行检测所有URL
+    const detectionPromises = uniqueUrls.map(async (fullUrl) => {
+      const result = await checkCidOnGateway(fullUrl);
+      setDetectionResults((prev) => ({ ...prev, [fullUrl]: result }));
+    });
+
+    await Promise.all(detectionPromises);
+    setIsDetecting(false);
+  };
+
+  // ===== 节点管理相关函数 =====
+  const validateNetwork = (chainId: number): boolean => {
+    if (chainId === NETWORK_CONFIG.mainnet.chainId) {
+      setNetwork("mainnet");
+      return true;
+    } else if (chainId === NETWORK_CONFIG.testnet.chainId) {
+      setNetwork("testnet");
+      return true;
+    } else {
+      showNotification(
+        "网络错误",
+        `网络 ID 为 ${chainId}，不支持 Base 协议`,
+        "red"
+      );
+      setCustomRPC("");
+      return false;
+    }
+  };
+
+  const fetchNodes = async (rpc?: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const rpcUrl = rpc || customRPC || RPC;
+      const provider = new ethers.JsonRpcProvider(rpcUrl);
+      const networkInfo = await provider.getNetwork();
+      const chainId = Number(networkInfo.chainId);
+
+      if (!validateNetwork(chainId)) return;
+
+      const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+      const [addresses, names, timestamps] = await contract.getAllDots();
+
+      const nodePromises = addresses.map(
+        async (address: string, index: number) => {
+          const [name, APIs, CIDs, update] = await contract.getDot(address);
+          return {
+            address,
+            name: name || names[index] || `节点 ${index + 1}`,
+            APIs: APIs || [],
+            CIDs: CIDs || [],
+            lastUpdate: Number(update || timestamps[index]),
+          };
+        }
+      );
+
+      const nodes = await Promise.all(nodePromises);
+      localStorage.setItem("dotNodes", JSON.stringify(nodes));
+      if (nodes) {
+        setItem("dotNodes", nodes);
+      }
+    } catch (err) {
+      console.error("获取节点列表失败:", err);
+      setError("获取节点列表失败，请检查 RPC 连接");
+      showNotification("获取失败", "无法获取节点列表", "red");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const checkNodeConnectivity = (
+    node: DotNode
+  ): Promise<{ isOnline: boolean; responseTime: number }> => {
+    return new Promise((resolve) => {
+      if (!node.APIs || node.APIs.length === 0) {
+        resolve({ isOnline: false, responseTime: 0 });
+        return;
+      }
+
+      const nodeUrl = node.APIs[0];
+      const startTime = Date.now();
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
+
+      fetch(`${nodeUrl}/api.dot`, {
+        signal: controller.signal,
+        mode: "cors",
+      })
+        .then(() => {
+          clearTimeout(timeoutId);
+          const responseTime = Date.now() - startTime;
+          resolve({ isOnline: true, responseTime });
+        })
+        .catch(() => {
+          clearTimeout(timeoutId);
+          const responseTime = Date.now() - startTime;
+          resolve({ isOnline: false, responseTime });
+        });
+    });
+  };
+
+  const checkAllConnectivity = async () => {
+    setCheckingConnectivity(true);
+
+    try {
+      const updatedNodes = await Promise.all(
+        dotNodes.map(async (node) => {
+          const { isOnline, responseTime } = await checkNodeConnectivity(node);
+          return { ...node, isOnline, responseTime };
+        })
+      );
+
+      setItem("dotNodes", updatedNodes);
+
+      const onlineCount = updatedNodes.filter((node) => node.isOnline).length;
+      showNotification(
+        "连通性检测完成",
+        `${onlineCount}/${updatedNodes.length} 个节点在线`,
+        onlineCount > 0 ? "green" : "orange"
+      );
+    } catch (error) {
+      console.log("连通性检测失败:", error);
+      showNotification("检测失败", "连通性检测过程中出现错误", "red");
+    } finally {
+      setCheckingConnectivity(false);
+    }
+  };
+
   const apiUrlChange = async () => {
     setApiLoading(true);
     const list = await updateDot(apiURL);
     if (list) {
       setApiList(list);
-      notifications.show({
-        title: "节点切换成功",
-        message: list[0],
-        color: "green",
-      });
+      showNotification("节点切换成功", list[0], "green");
     }
     setApiLoading(false);
   };
 
-  // 切换到指定节点
   const openNode = async (node: DotNode) => {
     const nodeAPI = node.APIs[0];
     const url = new URL("/auth/jwt/", nodeAPI);
     const jwt = localStorage.getItem("jwt");
+
     if (jwt) {
       const wallet = mp.verifyJWT(jwt);
       if (wallet) {
-        // 当前分钟有效
         const key = dayjs().format("YY/M/D HH:mm");
         const { public_key, private_key } = mostWallet("auth/jwt", key);
         const token = mostEncode(
@@ -130,160 +401,16 @@ export default function PageDot() {
       const list = await updateDot(nodeAPI);
       if (list) {
         setApiList(list);
-        notifications.show({
-          title: "节点切换成功",
-          message: `已切换到 ${node.name}`,
-          color: "green",
-        });
+        showNotification("节点切换成功", `已切换到 ${node.name}`, "green");
       }
     } catch (error) {
       console.error(error);
-      notifications.show({
-        title: "切换失败",
-        message: "无法连接到该节点",
-        color: "red",
-      });
+      showNotification("切换失败", "无法连接到该节点", "red");
     } finally {
       setSwitchingNode(null);
     }
   };
 
-  // 获取节点列表
-  const fetchNodes = async (rpc?: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      rpc = rpc || customRPC || RPC;
-      const provider = new ethers.JsonRpcProvider(rpc);
-      const network = await provider.getNetwork();
-      const chainId = Number(network.chainId);
-
-      if (chainId === 8453) {
-        setNetwork("mainnet");
-      } else if (chainId === 84532) {
-        setNetwork("testnet");
-      } else {
-        notifications.show({
-          title: "网络错误",
-          message: `网络 ID 为 ${chainId}，不支持 Base 协议`,
-          color: "red",
-        });
-        setCustomRPC("");
-        return;
-      }
-
-      const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
-      const [addresses, names, timestamps] = await contract.getAllDots();
-
-      const nodePromises = addresses.map(
-        async (address: string, index: number) => {
-          const [name, APIs, CIDs, update] = await contract.getDot(address);
-          return {
-            address,
-            name: name || names[index] || `节点 ${index + 1}`,
-            APIs: APIs || [],
-            CIDs: CIDs || [],
-            lastUpdate: Number(update || timestamps[index]),
-          };
-        }
-      );
-      const nodes = await Promise.all(nodePromises);
-      localStorage.setItem("dotNodes", JSON.stringify(nodes));
-      if (nodes) {
-        setItem("dotNodes", nodes);
-      }
-    } catch (err) {
-      console.error("获取节点列表失败:", err);
-      setError("获取节点列表失败，请检查 RPC 连接");
-      notifications.show({
-        title: "获取失败",
-        message: "无法获取节点列表",
-        color: "red",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 检测节点连通性
-  const checkNodeConnectivity = (
-    node: DotNode
-  ): Promise<{ isOnline: boolean; responseTime: number }> => {
-    return new Promise((resolve) => {
-      if (!node.APIs || node.APIs.length === 0) {
-        resolve({ isOnline: false, responseTime: 0 });
-        return;
-      }
-      const nodeUrl = node.APIs[0];
-
-      const startTime = Date.now();
-      const timeout = 3000;
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-      fetch(`${nodeUrl}/api.dot`, {
-        signal: controller.signal,
-        mode: "cors",
-      })
-        .then(() => {
-          clearTimeout(timeoutId);
-          const responseTime = Date.now() - startTime;
-          resolve({ isOnline: true, responseTime });
-        })
-        .catch(() => {
-          clearTimeout(timeoutId);
-          const responseTime = Date.now() - startTime;
-          resolve({ isOnline: false, responseTime });
-        });
-    });
-  };
-
-  // 批量检测连通性
-  const checkAllConnectivity = async () => {
-    setCheckingConnectivity(true);
-
-    try {
-      const updatedNodes = await Promise.all(
-        dotNodes.map(async (node) => {
-          const { isOnline, responseTime } = await checkNodeConnectivity(node);
-          return { ...node, isOnline, responseTime };
-        })
-      );
-
-      setItem("dotNodes", updatedNodes);
-
-      const onlineCount = updatedNodes.filter((node) => node.isOnline).length;
-      notifications.show({
-        title: "连通性检测完成",
-        message: `${onlineCount}/${updatedNodes.length} 个节点在线`,
-        color: onlineCount > 0 ? "green" : "orange",
-      });
-    } catch (error) {
-      console.log("连通性检测失败:", error);
-      notifications.show({
-        title: "检测失败",
-        message: "连通性检测过程中出现错误",
-        color: "red",
-      });
-    } finally {
-      setCheckingConnectivity(false);
-    }
-  };
-
-  // 格式化时间
-  const formatTime = (timestamp: number) => {
-    if (!timestamp) return "未知";
-    return new Date(timestamp * 1000).toLocaleString("zh-CN");
-  };
-
-  // 格式化响应时间
-  const formatResponseTime = (time?: number) => {
-    if (time === undefined) return "";
-    return `${time}ms`;
-  };
-
-  // 网络切换处理
   const changeNetwork = (value: string | null) => {
     if (value && (value === "mainnet" || value === "testnet")) {
       const rpc = NETWORK_CONFIG[value].rpc;
@@ -299,34 +426,7 @@ export default function PageDot() {
     }
   };
 
-  const defaultCID = (node: DotNode) => {
-    return node.APIs.find((api) => api.endsWith(":1976"))?.replace(
-      ":1976",
-      ":8080/ipfs"
-    );
-  };
-
-  // 检查当前节点是否在列表中
-  const isCurrentNode = (node: DotNode) => {
-    return node.APIs.some((api) => {
-      try {
-        return new URL(api).origin === new URL(dotAPI).origin;
-      } catch {
-        return false;
-      }
-    });
-  };
-
-  const isDisabledNode = (node: DotNode) => {
-    if (!node.APIs.length) {
-      return true;
-    }
-    if (location.protocol === "https:" && node.APIs[0].startsWith("http:")) {
-      return true;
-    }
-    return isCurrentNode(node);
-  };
-
+  // ===== 初始化 =====
   useEffect(() => {
     if (dotNodes.length > 0) {
       setLoading(false);
@@ -347,20 +447,11 @@ export default function PageDot() {
     fetchNodes();
   }, []);
 
-  const onlineNodes = dotNodes.filter((node) => node.isOnline);
-  const offlineNodes = dotNodes.filter((node) => node.isOnline === false);
-
-  const title = useMemo(() => {
-    try {
-      return new URL(dotAPI).hostname.toUpperCase();
-    } catch {
-      return "节点选择";
-    }
-  }, [dotAPI]);
-
+  // ===== 主渲染 =====
   return (
-    <Container size="lg" w="100%">
+    <Container size="lg" w="100%" style={{ wordBreak: "break-all" }}>
       <AppHeader title={title} />
+
       {/* 当前节点信息区域 */}
       <Box mb="lg">
         <Stack align="center">
@@ -399,8 +490,12 @@ export default function PageDot() {
               onChange={(event) => setApiURL(event.currentTarget.value)}
               placeholder="自定义节点地址"
             />
-            <Button onClick={apiUrlChange} loading={apiLoading}>
-              自定义
+            <Button
+              leftSection={<IconSettings size={16} />}
+              onClick={apiUrlChange}
+              loading={apiLoading}
+            >
+              自定义节点
             </Button>
           </Group>
         </Stack>
@@ -432,14 +527,8 @@ export default function PageDot() {
               value={network}
               onChange={changeNetwork}
               data={[
-                {
-                  value: "testnet",
-                  label: "🧪 Base 测试网",
-                },
-                {
-                  value: "mainnet",
-                  label: "🌐 Base 主网",
-                },
+                { value: "testnet", label: "🧪 Base 测试网" },
+                { value: "mainnet", label: "🌐 Base 主网" },
               ]}
               leftSection={<IconNetwork size={16} />}
               variant="filled"
@@ -472,6 +561,24 @@ export default function PageDot() {
           </Group>
         </Flex>
       </Box>
+
+      {/* CID检测区域 */}
+      <Group align="flex-end" mb="lg">
+        <TextInput
+          style={{ flex: 1 }}
+          placeholder="输入要查询的 CID..."
+          value={customCid}
+          onChange={(event) => setCustomCid(event.currentTarget.value)}
+        />
+        <Button
+          onClick={handleDetectCid}
+          loading={isDetecting}
+          disabled={!customCid}
+        >
+          <IconSearch size={16} />
+          <Text ml="xs">CID 检测</Text>
+        </Button>
+      </Group>
 
       {/* 节点列表 */}
       {loading ? (
@@ -641,33 +748,50 @@ export default function PageDot() {
                     <Text size="xs" fw={500} mb={4} c="gray">
                       CID 浏览器
                     </Text>
-                    <Group gap={2} align="flex-start">
-                      {node.CIDs.map((cid, cidIndex) => (
-                        <Anchor
-                          key={cidIndex}
-                          component={Link}
-                          c="blue"
-                          href={cid + "/ipfs"}
-                          target="_blank"
-                          lineClamp={1}
-                        >
-                          {cid + "/ipfs"}
-                        </Anchor>
-                      ))}
-                      {defaultCID(node) && (
-                        <Anchor
-                          c="blue"
-                          component={Link}
-                          href={defaultCID(node) || ""}
-                          target="_blank"
-                          lineClamp={1}
-                        >
-                          {defaultCID(node)}
-                        </Anchor>
-                      )}
-                    </Group>
+                    <Stack gap="xs" align="flex-start">
+                      {[
+                        ...node.CIDs.map((url) => `${url}/ipfs`),
+                        defaultCID(node),
+                      ]
+                        .filter((url): url is string => !!url)
+                        .map((gatewayBase, index) => {
+                          const finalUrl = customCid
+                            ? `${gatewayBase}/${customCid}`
+                            : gatewayBase;
+                          const result = detectionResults[finalUrl];
+
+                          return (
+                            <Stack key={index} gap="xs">
+                              <Anchor
+                                component={Link}
+                                c="blue"
+                                href={finalUrl}
+                                target="_blank"
+                                lineClamp={1}
+                              >
+                                {finalUrl}
+                              </Anchor>
+                              <Badge
+                                flex={1}
+                                size="sm"
+                                color={
+                                  result?.status === "success"
+                                    ? "green"
+                                    : "gray"
+                                }
+                                variant="light"
+                              >
+                                {result?.status || "CID"}
+                                {result?.responseTime != null &&
+                                  ` (${result?.responseTime}ms)`}
+                              </Badge>
+                            </Stack>
+                          );
+                        })}
+                    </Stack>
                   </Box>
                 </Stack>
+
                 <Group>
                   <Button
                     flex={1}
@@ -696,6 +820,7 @@ export default function PageDot() {
         </Flex>
       )}
 
+      {/* 底部控制区域 */}
       <Group mt="lg" justify="space-between">
         <TextInput
           size="sm"
@@ -729,7 +854,6 @@ export default function PageDot() {
         >
           官方 RPC
         </Anchor>
-
         <Anchor
           size="sm"
           c="blue"
@@ -739,7 +863,6 @@ export default function PageDot() {
         >
           主网 RPC
         </Anchor>
-
         <Anchor
           size="sm"
           c="blue"
@@ -749,7 +872,6 @@ export default function PageDot() {
         >
           水龙头列表
         </Anchor>
-
         <Anchor
           size="sm"
           c="blue"
@@ -759,7 +881,6 @@ export default function PageDot() {
         >
           注册领水
         </Anchor>
-
         <Anchor
           size="sm"
           c="blue"

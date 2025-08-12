@@ -4,12 +4,14 @@ export const CONTRACT_ADDRESS = "0xdc82cef1a8416210afb87caeec908a4df843f016";
 // 网络配置
 export const NETWORK_CONFIG = {
   mainnet: {
+    chainId: 8453,
     rpc: "https://mainnet-preconf.base.org",
     name: "Base 主网",
     color: "blue",
     explorer: "https://basescan.org",
   },
   testnet: {
+    chainId: 84532,
     rpc: "https://sepolia.base.org",
     name: "Base 测试网",
     color: "orange",
