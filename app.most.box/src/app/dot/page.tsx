@@ -556,7 +556,7 @@ export default function PageDot() {
               variant="gradient"
               gradient={{ from: "blue", to: "cyan" }}
             >
-              检测连通性
+              节点连通性
             </Button>
           </Group>
         </Flex>
@@ -576,7 +576,7 @@ export default function PageDot() {
           disabled={!customCid}
         >
           <IconSearch size={16} />
-          <Text ml="xs">CID 检测</Text>
+          <Text ml="xs">CID</Text>
         </Button>
       </Group>
 

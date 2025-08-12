@@ -46,7 +46,7 @@ const PageContent = () => {
       try {
         await navigator.share({
           title: "Most.Box 名片",
-          text: `查看我的 Most.Box 名片`,
+          text: shareUrl,
           url: shareUrl,
         });
       } catch {
@@ -67,12 +67,8 @@ const PageContent = () => {
         message: "分享链接已复制到剪贴板",
         color: "blue",
       });
-    } catch {
-      notifications.show({
-        title: "复制失败",
-        message: "无法复制分享链接",
-        color: "red",
-      });
+    } catch (error) {
+      console.error(error);
     }
   };
 
