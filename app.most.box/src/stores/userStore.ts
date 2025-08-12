@@ -37,7 +37,6 @@ interface UserStore {
   firstPath: string;
   dotAPI: string;
   dotCID: string;
-  dotID: string;
   dotNodes: DotNode[];
   notes?: Note[];
   notesQuery: string;
@@ -107,7 +106,6 @@ export const useUserStore = create<State>((set) => ({
   firstPath: "",
   dotAPI: DotAPI,
   dotCID: DotCID,
-  dotID: "",
   dotNodes: [],
   notes: undefined,
   notesQuery: "",

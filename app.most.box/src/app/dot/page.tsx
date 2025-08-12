@@ -58,7 +58,6 @@ export default function PageDot() {
   const dotAPI = useUserStore((state) => state.dotAPI);
   const dotNodes = useUserStore((state) => state.dotNodes);
   const updateDot = useUserStore((state) => state.updateDot);
-  const dotID = useUserStore((state) => state.dotID);
 
   // 节点列表状态
   const [loading, setLoading] = useState(true);
@@ -70,6 +69,22 @@ export default function PageDot() {
   const RPC = NETWORK_CONFIG[network].rpc;
   const [customRPC, setCustomRPC] = useState(RPC);
   const Explorer = NETWORK_CONFIG[network].explorer;
+
+  const dotID = useMemo(() => {
+    const nodeIndex = dotNodes.findIndex((node) => {
+      return node.APIs.some((api) => {
+        try {
+          return new URL(api).origin === new URL(dotAPI).origin;
+        } catch {
+          return false;
+        }
+      });
+    });
+    if (nodeIndex >= 0) {
+      return network.slice(0, 1).toUpperCase() + (nodeIndex + 1);
+    }
+    return "";
+  }, [dotNodes, dotAPI, network]);
 
   // 更新当前节点
   const apiUrlChange = async () => {
@@ -302,15 +317,6 @@ export default function PageDot() {
     });
   };
 
-  const nodeIndex = dotNodes.findIndex(isCurrentNode);
-  useEffect(() => {
-    if (nodeIndex >= 0) {
-      setItem("dotID", `${network.slice(0, 1).toUpperCase()}${nodeIndex + 1}`);
-    } else {
-      setItem("dotID", "");
-    }
-  }, [nodeIndex]);
-
   const isDisabledNode = (node: DotNode) => {
     if (!node.APIs.length) {
       return true;
@@ -378,7 +384,7 @@ export default function PageDot() {
             </>
           ) : (
             <>
-              <Text>当前节点 {nodeIndex}</Text>
+              <Text>当前节点 {dotID}</Text>
               <Anchor component={Link} href={dotAPI} target="_blank">
                 {dotAPI}
               </Anchor>
