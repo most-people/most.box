@@ -53,6 +53,7 @@ export default function HomeDisk() {
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [renamingItem, setRenamingItem] = useState<FileItem | null>(null);
   const [newName, setNewName] = useState("");
+  const [renameLoading, setRenameLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
 
@@ -271,6 +272,7 @@ export default function HomeDisk() {
       return;
     }
 
+    setRenameLoading(true);
     try {
       const oldPath = filesPath
         ? `${filesPath}/${renamingItem.name}`
@@ -302,6 +304,8 @@ export default function HomeDisk() {
         message: `重命名文件 "${renamingItem.name}" 失败，请重试`,
         color: "red",
       });
+    } finally {
+      setRenameLoading(false);
     }
   };
 
@@ -713,6 +717,7 @@ export default function HomeDisk() {
                 executeRename();
               }
             }}
+            disabled={renameLoading}
             autoFocus
           />
           <Group justify="flex-end" gap="sm">
@@ -723,12 +728,18 @@ export default function HomeDisk() {
                 setRenamingItem(null);
                 setNewName("");
               }}
+              disabled={renameLoading}
             >
               取消
             </Button>
             <Button
               onClick={executeRename}
-              disabled={!newName.trim() || newName === renamingItem?.name}
+              disabled={
+                !newName.trim() ||
+                newName === renamingItem?.name ||
+                renameLoading
+              }
+              loading={renameLoading}
             >
               确认
             </Button>

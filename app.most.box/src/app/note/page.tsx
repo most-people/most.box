@@ -8,11 +8,12 @@ import {
   useMantineColorScheme,
   useComputedColorScheme,
   Switch,
+  Loader,
+  Center,
 } from "@mantine/core";
 import Script from "next/script";
 import { AppHeader } from "@/components/AppHeader";
 import { useMarkdown } from "@/hooks/useMarkdown";
-// import { useUserStore } from "@/stores/userStore";
 
 // https://uicdn.toast.com/editor/latest/toastui-editor.min.css
 import "@/assets/toast-ui/toastui-editor.min.css";
@@ -31,6 +32,7 @@ import { useUserStore } from "@/stores/userStore";
 import { api } from "@/constants/api";
 import { notifications } from "@mantine/notifications";
 import { mostDecode, mostEncode } from "@/constants/MostWallet";
+import Link from "next/link";
 
 const PageContent = () => {
   const params = useSearchParams();
@@ -38,6 +40,7 @@ const PageContent = () => {
   const wallet = useUserStore((state) => state.wallet);
 
   const [inited, setInited] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [viewer, setViewer] = useState<any>(null);
   const [editor, setEditor] = useState<any>(null);
   const markdown = useMarkdown();
@@ -46,9 +49,12 @@ const PageContent = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSecret, setIsSecret] = useState(false);
 
-  const setHash = (cid: string) => {
+  const setHash = (cid: string, uid?: string) => {
     const url = new URL(window.location.href);
     url.hash = cid;
+    if (uid) {
+      url.searchParams.set("uid", uid);
+    }
     window.history.replaceState(null, "", url.href);
   };
 
@@ -89,6 +95,9 @@ const PageContent = () => {
       })
       .catch((error) => {
         console.error("Error:", error);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   };
 
@@ -111,7 +120,7 @@ const PageContent = () => {
       const res = await api.put("/files.upload", formData);
       const cid = res.data?.cid;
       if (cid) {
-        setHash(cid);
+        setHash(cid, wallet?.address);
         notifications.show({
           message: `${name} 保存成功`,
           color: "green",
@@ -154,16 +163,14 @@ const PageContent = () => {
     const hash = location.hash;
     const uid = params.get("uid");
     const name = params.get("name");
-    const customAPI = params.get("dot") || "";
+    const customAPI = params.get("dot") || undefined;
 
     if (uid && name) {
       try {
-        const resDot = await api.get(`/api.dot`, {
-          baseURL: customAPI || undefined,
-        });
-        const customCID = (resDot.data?.CIDs[0] as string) || undefined;
+        const resDot = await api.get(`/api.dot`, { baseURL: customAPI });
+        const customCID = (resDot.data?.CIDs?.[0] as string) || undefined;
         const res = await api.get(`/files.find.cid/${uid}/.note/${name}`, {
-          baseURL: customAPI || undefined,
+          baseURL: customAPI,
         });
         const cid = res.data;
         if (cid) {
@@ -212,22 +219,27 @@ const PageContent = () => {
 
   // 根据编辑状态渲染不同的按钮
   const renderHeaderButtons = () => {
-    if (isEditing) {
-      return (
-        <Group gap="xs" wrap="nowrap">
-          <Button size="xs" onClick={handleSave}>
-            保存
-          </Button>
-          <Button size="xs" variant="outline" onClick={handleCancel}>
-            取消
-          </Button>
-        </Group>
-      );
-    }
     return (
-      <Button size="xs" onClick={() => setIsEditing(true)} disabled={!wallet}>
-        编辑
-      </Button>
+      <Group gap="xs" wrap="nowrap">
+        {isEditing ? (
+          <>
+            <Button size="xs" onClick={handleSave}>
+              保存
+            </Button>
+            <Button size="xs" variant="outline" onClick={handleCancel}>
+              取消
+            </Button>
+          </>
+        ) : wallet ? (
+          <Button size="xs" onClick={() => setIsEditing(true)}>
+            编辑
+          </Button>
+        ) : (
+          <Button size="xs" variant="gradient" component={Link} href="/login">
+            编辑
+          </Button>
+        )}
+      </Group>
     );
   };
 
@@ -273,6 +285,12 @@ const PageContent = () => {
           label={isSecret ? "加密" : "公开"}
         />
       </Box>
+
+      {loading && (
+        <Center mt="md">
+          <Loader size="xl" type="dots" />
+        </Center>
+      )}
 
       {/* https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js */}
       <Script src="/toast-ui/toastui-editor-all.min.js" />

@@ -14,6 +14,20 @@
   .task-list-item:before {
     top: 10px;
   }
+  .toastui-editor-md-preview-highlight:after {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+
+  .language-css .token.string,
+  .style .token.string,
+  .token.entity,
+  .token.operator,
+  .token.url {
+    background-color: transparent;
+  }
 
   ol > li:before {
     width: auto;
@@ -101,13 +115,7 @@
 
     max-width: min(100%, 1280px);
   }
-  .language-css .token.string,
-  .style .token.string,
-  .token.entity,
-  .token.operator,
-  .token.url {
-    background-color: transparent;
-  }
+
   pre,
   code {
     text-shadow: none;
@@ -229,6 +237,7 @@
     margin: 20px 0;
     line-height: 1.75;
     // text-indent: 2em;
+    color: #666;
   }
 
   ul {
@@ -261,6 +270,8 @@
     margin: 16px 0;
     font-weight: 600;
     line-height: 1.2;
+    border: 0;
+    padding: 0;
   }
 
   h1 {
@@ -279,7 +290,7 @@
     font-size: 18px;
   }
   h6 {
-    font-size: 18px;
+    font-size: 16px;
   }
 
   th,
@@ -317,4 +328,10 @@
 .ProseMirror {
   font-size: 16px;
   font-family: initial;
+}
+
+.toastui-editor-dark {
+  .toastui-editor-contents p {
+    color: #c9c9c9;
+  }
 }
