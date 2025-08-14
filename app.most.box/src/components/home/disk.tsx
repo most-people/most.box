@@ -15,6 +15,7 @@ import {
   Card,
   Menu,
   Badge,
+  LoadingOverlay,
 } from "@mantine/core";
 import { api } from "@/constants/api";
 import "./disk.scss";
@@ -61,6 +62,7 @@ export default function HomeDisk() {
     try {
       setFetchLoading(true);
       const res = await api.post(`/files/${path}`);
+      setSearchQuery("");
       setItem("files", res.data);
     } catch (error) {
       console.error(error);
@@ -398,7 +400,12 @@ export default function HomeDisk() {
             />
           </Center>
 
-          <Group justify="space-between" align="center">
+          <Group justify="space-between" align="center" pos="relative">
+            <LoadingOverlay
+              visible={fetchLoading}
+              overlayProps={{ backgroundOpacity: 0 }}
+              loaderProps={{ type: "dots" }}
+            />
             <Badge variant="light" size="lg">
               {searchQuery
                 ? `显示 ${displayedFiles.length} / ${filteredFiles.length} (总共 ${files.length})`

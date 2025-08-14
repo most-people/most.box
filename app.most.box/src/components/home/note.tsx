@@ -12,6 +12,7 @@ import {
   Modal,
   Menu,
   Tooltip,
+  LoadingOverlay,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { IconDotsVertical, IconPlus, IconRefresh } from "@tabler/icons-react";
@@ -28,7 +29,7 @@ export default function HomeNote() {
   const notes = useUserStore((state) => state.notes);
   const notesQuery = useUserStore((state) => state.notesQuery);
   const setItem = useUserStore((state) => state.setItem);
-  const [loading, setLoading] = useState(false);
+  const [fetchLoading, setFetchLoading] = useState(false);
   const [displayCount, setDisplayCount] = useState(100);
 
   // 添加弹窗相关状态
@@ -82,7 +83,7 @@ export default function HomeNote() {
 
   const fetchNotes = async () => {
     try {
-      setLoading(true);
+      setFetchLoading(true);
       const res = await api.post("/files/.note");
       const list = res.data as { name: string; cid: { "/": string } }[];
       if (list) {
@@ -98,7 +99,7 @@ export default function HomeNote() {
         color: "red",
       });
     } finally {
-      setLoading(false);
+      setFetchLoading(false);
     }
   };
 
@@ -302,7 +303,12 @@ export default function HomeNote() {
             />
           </Center>
 
-          <Group justify="space-between" align="center">
+          <Group justify="space-between" align="center" pos="relative">
+            <LoadingOverlay
+              visible={fetchLoading}
+              overlayProps={{ backgroundOpacity: 0 }}
+              loaderProps={{ type: "dots" }}
+            />
             <Badge variant="light" size="lg">
               {notesQuery
                 ? `显示 ${displayedNotes.length} / ${filteredNotes.length} (总共 ${notes.length})`
@@ -406,7 +412,7 @@ export default function HomeNote() {
       ) : (
         <Stack align="center" justify="center" h={200}>
           <Text size="lg" c="dimmed">
-            {loading ? "正在加载" : "暂无笔记"}
+            {fetchLoading ? "正在加载" : "暂无笔记"}
           </Text>
           <Group>
             <Tooltip label="刷新">
