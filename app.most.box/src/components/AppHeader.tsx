@@ -1,14 +1,15 @@
 "use client";
-import { Text, Group, ActionIcon } from "@mantine/core";
+import { Text, Group, ActionIcon, TextVariant } from "@mantine/core";
 import { Icon } from "@/components/Icon";
 import { useBack } from "@/hooks/useBack";
 
 interface AppHeaderProps {
   title: string | string[];
+  variant?: TextVariant;
   left?: React.ReactNode;
   right?: React.ReactNode;
 }
-export const AppHeader = ({ title, right, left }: AppHeaderProps) => {
+export const AppHeader = ({ title, variant, right, left }: AppHeaderProps) => {
   const back = useBack();
 
   return (
@@ -20,7 +21,7 @@ export const AppHeader = ({ title, right, left }: AppHeaderProps) => {
           <Icon name="Back" size={24} />
         </ActionIcon>
       )}
-      <Text lineClamp={2} variant="gradient">
+      <Text lineClamp={2} variant={variant || "gradient"}>
         {title}
       </Text>
       {right ? (

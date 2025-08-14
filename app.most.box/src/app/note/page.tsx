@@ -60,10 +60,15 @@ const PageContent = () => {
     setEditor(markdown.initEditor());
   };
 
-  const fetchNote = (cid: string) => {
-    fetch(`${dotCID}/ipfs/${cid}/index.md`)
+  const fetchNote = (cid: string, customCID?: string) => {
+    fetch(`${customCID || dotCID}/ipfs/${cid}/index.md`)
       .then((response) => response.text())
       .then((content) => {
+        const customAPI = params.get("dot") || "";
+        const url = new URL(window.location.href);
+        url.searchParams.set("dot", customAPI || api.getUri());
+        window.history.replaceState(null, "", url.href);
+
         if (wallet && content.startsWith("mp://2")) {
           // 解密
           const decrypted = mostDecode(
@@ -145,40 +150,50 @@ const PageContent = () => {
     setIsEditing(false);
   };
 
+  const init = async () => {
+    const hash = location.hash;
+    const uid = params.get("uid");
+    const name = params.get("name");
+    const customAPI = params.get("dot") || "";
+
+    if (uid && name) {
+      try {
+        const resDot = await api.get(`/api.dot`, {
+          baseURL: customAPI || undefined,
+        });
+        const customCID = (resDot.data?.CIDs[0] as string) || undefined;
+        const res = await api.get(`/files.find.cid/${uid}/.note/${name}`, {
+          baseURL: customAPI || undefined,
+        });
+        const cid = res.data;
+        if (cid) {
+          setHash(cid);
+          fetchNote(cid, customCID);
+        } else if (hash) {
+          fetchNote(hash.slice(1), customCID);
+        }
+      } catch (error) {
+        console.error(error);
+        if (hash) {
+          fetchNote(hash.slice(1));
+        }
+      }
+    }
+  };
+
+  // 获取最新的 CID
   useEffect(() => {
     if (inited) {
-      const hash = location.hash;
-      const uid = params.get("uid");
-      const name = params.get("name");
-      if (uid && name) {
-        api
-          .get(`/files.find.cid/${uid}/.note/${name}`)
-          .then((res) => {
-            const cid = res.data;
-            if (cid) {
-              setHash(cid);
-              fetchNote(cid);
-            } else if (hash) {
-              fetchNote(hash.slice(1));
-            }
-          })
-          .catch(() => {
-            if (hash) {
-              fetchNote(hash.slice(1));
-            }
-          });
-      }
+      init();
     }
   }, [inited]);
 
   useEffect(() => {
-    if (content) {
-      if (viewer) {
-        viewer.setMarkdown(content);
-      }
-      if (editor) {
-        editor.setMarkdown(content);
-      }
+    if (viewer) {
+      viewer.setMarkdown(content);
+    }
+    if (editor) {
+      editor.setMarkdown(content);
     }
   }, [content, viewer, editor]);
 
@@ -189,8 +204,11 @@ const PageContent = () => {
     if (name) {
       t = name;
     }
+    if (isSecret) {
+      t = "🔒 " + t;
+    }
     return t;
-  }, []);
+  }, [isSecret]);
 
   // 根据编辑状态渲染不同的按钮
   const renderHeaderButtons = () => {
@@ -237,7 +255,7 @@ const PageContent = () => {
 
   return (
     <Box id="page-note">
-      <AppHeader title={title} right={renderHeaderButtons()} />
+      <AppHeader title={title} variant="text" right={renderHeaderButtons()} />
 
       <Box
         id="viewerElement"
