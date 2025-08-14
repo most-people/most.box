@@ -1,5 +1,5 @@
 import { AppHeader } from "@/components/AppHeader";
-import { Box, Text, Stack, Button } from "@mantine/core";
+import { Box, Text, Stack } from "@mantine/core";
 import Link from "next/link";
 
 export default function PageAbout() {
