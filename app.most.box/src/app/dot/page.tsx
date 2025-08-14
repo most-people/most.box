@@ -89,28 +89,12 @@ export default function PageDot() {
 
   // ===== CID检测状态 =====
   const [customCid, setCustomCid] = useState(
-    "bafkreihp5o7tdipf6ajkgkdxknnffkuxpeecwqydi4q5iqt4gko6r2agk4"
+    "bafkreihp5o7tdipf6ajkgkdxknnffkuxpeecwqydi4q5iqt4gko6r2agk4?filename=长征.jpg"
   );
   const [isDetecting, setIsDetecting] = useState(false);
   const [detectionResults, setDetectionResults] = useState<
     Record<string, DetectionResult>
   >({});
-
-  // ===== 计算属性 =====
-  const dotID = useMemo(() => {
-    const nodeIndex = dotNodes.findIndex((node) => {
-      return node.APIs.some((api) => {
-        try {
-          return new URL(api).origin === new URL(dotAPI).origin;
-        } catch {
-          return false;
-        }
-      });
-    });
-    return nodeIndex >= 0
-      ? network.slice(0, 1).toUpperCase() + (nodeIndex + 1)
-      : "";
-  }, [dotNodes, dotAPI, network]);
 
   const onlineNodes = dotNodes.filter((node) => node.isOnline);
   const offlineNodes = dotNodes.filter((node) => node.isOnline === false);
@@ -192,6 +176,7 @@ export default function PageDot() {
   };
 
   const validateCID = (cid: string): boolean => {
+    cid = cid.trim().split("?")[0];
     if (!cid) {
       showNotification("CID不能为空", "请输入一个CID进行检测", "orange");
       return false;
@@ -458,7 +443,7 @@ export default function PageDot() {
           <Title>DOT.MOST.BOX</Title>
           {ApiList.length > 0 ? (
             <>
-              <Text>已成功接入 {dotID}</Text>
+              <Text>已成功接入</Text>
               <Stack justify="center">
                 {ApiList.map((url, index) => (
                   <Anchor
@@ -475,7 +460,7 @@ export default function PageDot() {
             </>
           ) : (
             <>
-              <Text>当前节点 {dotID}</Text>
+              <Text>当前节点</Text>
               <Anchor component={Link} href={dotAPI} target="_blank">
                 {dotAPI}
               </Anchor>
@@ -660,8 +645,7 @@ export default function PageDot() {
                   <Box>
                     <Group gap="xs">
                       <Text fw={600} size="md" lineClamp={1}>
-                        {node.name} {network.slice(0, 1).toUpperCase()}
-                        {index + 1}
+                        {node.name}
                       </Text>
                       {isCurrentNode(node) && (
                         <Badge size="xs" color="blue" variant="filled">
@@ -670,7 +654,8 @@ export default function PageDot() {
                       )}
                     </Group>
                     <Text size="xs" c="dimmed">
-                      节点地址
+                      节点地址 {network.slice(0, 1).toUpperCase()}
+                      {index + 1}
                     </Text>
                   </Box>
                 </Group>
@@ -746,7 +731,7 @@ export default function PageDot() {
 
                   <Box>
                     <Text size="xs" fw={500} mb={4} c="gray">
-                      CID 浏览器
+                      IPFS 网关
                     </Text>
                     <Stack gap="xs" align="flex-start">
                       {[
