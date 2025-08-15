@@ -37,12 +37,12 @@ export default function PageAbout() {
 
       <p>观察这个图片：</p>
       <p>
-        https://cid.most.red/ipfs/QmNpwZFhWg1PqPu7TxgSshhYPpUXwSqj9PxSwXRegMaoGS
+        https://cid.most.red/ipfs/bafkreihp5o7tdipf6ajkgkdxknnffkuxpeecwqydi4q5iqt4gko6r2agk4
       </p>
       <p>
         <Image
-          src="https://cid.most.red/ipfs/QmNpwZFhWg1PqPu7TxgSshhYPpUXwSqj9PxSwXRegMaoGS"
-          alt="IPFS"
+          src="https://cid.most.red/ipfs/bafkreihp5o7tdipf6ajkgkdxknnffkuxpeecwqydi4q5iqt4gko6r2agk4?filename=Long%20March.jpg"
+          alt="Long March"
         />
       </p>
       <p>
@@ -52,9 +52,9 @@ export default function PageAbout() {
         如果大家都喜欢这本书，越来越多的人把这本书带会自己的图书馆，那么世界各地都会有这本书，你之前可能要去国外才能读到的书，现在只需要去一趟镇上就能拿到。
       </p>
       <p>
-        IPFS 网络负责告诉离你最近的书在哪里。 IPFS 每个文件有一个 CID
-        就是文件的身份证号，上文中 QmNpw...MaoGS 就是这个文件的
-        CID，它的容量很大，大到足以给地球上的每一粒沙子发身份证号。
+        IPFS 网关负责告诉离你最近的书在哪里。 IPFS 每个文件有一个 CID
+        就是文件的身份证号，上文中 bafkr...2agk4 就是这个文件的
+        CID，它的容量很大，大到足以给地球上的每一粒沙子都发一个身份证号。
       </p>
     </Box>
   );
