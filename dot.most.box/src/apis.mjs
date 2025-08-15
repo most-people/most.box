@@ -87,4 +87,52 @@ export const registerApis = (server, __dirname) => {
       };
     }
   });
+
+  // 重启电脑
+  server.put("/api.reboot", async (request, reply) => {
+    try {
+      const isOwner = mp.isOwner(request.headers.authorization);
+      if (!isOwner) {
+        reply.code(401);
+        return { ok: false, message: "管理员 token 无效" };
+      }
+
+      let command;
+      if (process.platform === "win32") {
+        command = "shutdown /r /t 0";
+      } else if (process.platform === "linux") {
+        command = "sudo reboot";
+      } else {
+        reply.code(500);
+        return {
+          ok: false,
+          message: `不支持的操作系统: ${process.platform}`,
+          timestamp: new Date().toJSON(),
+        };
+      }
+
+      // 立即返回成功响应，因为服务器即将关闭
+      reply.send({
+        ok: true,
+        message: `正在执行重启命令: ${command}`,
+        timestamp: new Date().toJSON(),
+      });
+
+      // 异步执行重启命令，不等待其完成
+      exec(command, (error) => {
+        if (error) {
+          // 此处错误客户端无法收到，但可以在服务器日志中记录
+          console.error(`执行重启时出错: ${error.message}`);
+        }
+      });
+    } catch (error) {
+      reply.code(500);
+      return {
+        ok: false,
+        message: "发起重启失败",
+        error: error.message,
+        timestamp: new Date().toJSON(),
+      };
+    }
+  });
 };
