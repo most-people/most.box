@@ -119,7 +119,11 @@ const HomeMore = ({ homeTab }: { homeTab: string | null }) => {
     );
   }
   return (
-    <ActionIcon variant="transparent" color="--text-color">
+    <ActionIcon
+      variant="transparent"
+      color="--text-color"
+      onClick={() => notifications.show({ message: "没有更多" })}
+    >
       <Icon name="More" size={24} />
     </ActionIcon>
   );

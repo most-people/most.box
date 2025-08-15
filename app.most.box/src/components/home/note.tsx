@@ -270,164 +270,153 @@ export default function HomeNote() {
     }
   }, [wallet, notes]);
 
-  if (!wallet) {
-    return (
-      <Center>
-        <Button mt={200} variant="gradient" component={Link} href="/login">
-          去登录
-        </Button>
-      </Center>
-    );
-  }
-
   return (
     <>
-      {notes?.length ? (
-        <Stack gap="md" p="md" className="note-box">
-          {/* 搜索框 */}
-          <Center>
-            <TextInput
-              placeholder="搜索笔记名称"
-              value={notesQuery}
-              onChange={(event) =>
-                setItem("notesQuery", event.currentTarget.value)
-              }
-              size="md"
-              radius="md"
-              w={400}
-              styles={{
-                input: {
-                  textAlign: "center",
-                },
-              }}
-            />
-          </Center>
+      <Stack gap="md" p="md">
+        {/* 搜索框 */}
+        <Center>
+          <TextInput
+            placeholder="搜索笔记名称"
+            value={notesQuery}
+            onChange={(event) =>
+              setItem("notesQuery", event.currentTarget.value)
+            }
+            size="md"
+            radius="md"
+            w={400}
+            styles={{
+              input: {
+                textAlign: "center",
+              },
+            }}
+          />
+        </Center>
 
-          <Group justify="space-between" align="center" pos="relative">
-            <LoadingOverlay
-              visible={fetchLoading}
-              overlayProps={{ backgroundOpacity: 0 }}
-              loaderProps={{ type: "dots" }}
-            />
-            <Badge variant="light" size="lg">
-              {notesQuery
-                ? `显示 ${displayedNotes.length} / ${filteredNotes.length} (总共 ${notes.length})`
-                : `显示 ${displayedNotes.length} / ${notes.length}`}{" "}
-              个笔记
-            </Badge>
-            <Group>
-              <Tooltip label="刷新">
-                <ActionIcon size="lg" onClick={fetchNotes} color="blue">
-                  <IconRefresh size={18} />
-                </ActionIcon>
-              </Tooltip>
-              <Tooltip label="新笔记">
-                <ActionIcon size="lg" onClick={openNoteModal} color="green">
-                  <IconPlus size={18} />
-                </ActionIcon>
-              </Tooltip>
-            </Group>
-          </Group>
-
-          {/* 搜索结果为空时的提示 */}
-          {notesQuery && filteredNotes.length === 0 ? (
-            <Stack align="center" justify="center" h={200}>
-              <Text size="lg" c="dimmed">
-                未找到笔记
-              </Text>
-              <Text size="sm" c="dimmed">
-                尝试用其他关键词搜索
-              </Text>
-            </Stack>
-          ) : (
-            <>
-              <Grid gutter="md">
-                {displayedNotes.map((note) => (
-                  <Grid.Col
-                    key={note.name}
-                    span={{ base: 12, xs: 6, sm: 4, md: 3, lg: 3, xl: 2 }}
-                  >
-                    <Card radius="md" withBorder>
-                      <Group justify="space-between" wrap="nowrap" gap={4}>
-                        <Text
-                          flex={1}
-                          fw={500}
-                          lineClamp={1}
-                          component={Link}
-                          href={shareUrl(note)}
-                        >
-                          {note.name}
-                        </Text>
-                        <Menu shadow="md" width={120}>
-                          <Menu.Target>
-                            <ActionIcon variant="subtle" color="gary">
-                              <IconDotsVertical size={14} />
-                            </ActionIcon>
-                          </Menu.Target>
-
-                          <Menu.Dropdown>
-                            <Menu.Item
-                              leftSection="📖"
-                              onClick={() => handleOpen(note)}
-                            >
-                              打开
-                            </Menu.Item>
-                            <Menu.Item
-                              leftSection="📤"
-                              onClick={() => handleShare(note)}
-                            >
-                              分享
-                            </Menu.Item>
-                            <Menu.Item
-                              leftSection="✏️"
-                              onClick={() => handleRename(note)}
-                            >
-                              重命名
-                            </Menu.Item>
-                            <Menu.Divider />
-                            <Menu.Item
-                              leftSection="🗑️"
-                              onClick={() => handleDelete(note)}
-                            >
-                              删除
-                            </Menu.Item>
-                          </Menu.Dropdown>
-                        </Menu>
-                      </Group>
-                    </Card>
-                  </Grid.Col>
-                ))}
-              </Grid>
-
-              {hasMore && (
-                <Center>
-                  <Button variant="light" onClick={loadMore} size="md">
-                    继续加载 ({filteredNotes.length - displayCount} 个剩余)
-                  </Button>
-                </Center>
-              )}
-            </>
-          )}
-        </Stack>
-      ) : (
-        <Stack align="center" justify="center" h={200}>
-          <Text size="lg" c="dimmed">
-            {fetchLoading ? "正在加载" : "暂无笔记"}
-          </Text>
+        <Group justify="space-between" align="center" pos="relative">
+          <LoadingOverlay
+            visible={fetchLoading}
+            overlayProps={{ backgroundOpacity: 0 }}
+            loaderProps={{ type: "dots" }}
+          />
+          <Badge variant="light" size="lg">
+            {notesQuery
+              ? `显示 ${displayedNotes.length} / ${
+                  filteredNotes.length
+                } (总共 ${notes?.length || 0})`
+              : `显示 ${displayedNotes.length} / ${notes?.length || 0}`}{" "}
+            个笔记
+          </Badge>
           <Group>
             <Tooltip label="刷新">
-              <ActionIcon size="lg" onClick={fetchNotes} color="blue">
+              <ActionIcon
+                size="lg"
+                onClick={fetchNotes}
+                color="blue"
+                disabled={!wallet}
+              >
                 <IconRefresh size={18} />
               </ActionIcon>
             </Tooltip>
-
             <Tooltip label="新笔记">
-              <ActionIcon size="lg" onClick={openNoteModal} color="green">
+              <ActionIcon
+                size="lg"
+                onClick={openNoteModal}
+                color="green"
+                disabled={!wallet}
+              >
                 <IconPlus size={18} />
               </ActionIcon>
             </Tooltip>
           </Group>
-        </Stack>
+        </Group>
+
+        {/* 搜索结果为空时的提示 */}
+        {notesQuery && filteredNotes.length === 0 ? (
+          <Stack align="center" justify="center" h={200}>
+            <Text size="lg" c="dimmed">
+              未找到笔记
+            </Text>
+            <Text size="sm" c="dimmed">
+              尝试用其他关键词搜索
+            </Text>
+          </Stack>
+        ) : (
+          <>
+            <Grid gutter="md">
+              {displayedNotes.map((note) => (
+                <Grid.Col
+                  key={note.name}
+                  span={{ base: 12, xs: 6, sm: 4, md: 3, lg: 3, xl: 2 }}
+                >
+                  <Card radius="md" withBorder>
+                    <Group justify="space-between" wrap="nowrap" gap={4}>
+                      <Text
+                        flex={1}
+                        fw={500}
+                        lineClamp={1}
+                        component={Link}
+                        href={shareUrl(note)}
+                      >
+                        {note.name}
+                      </Text>
+                      <Menu shadow="md" width={120}>
+                        <Menu.Target>
+                          <ActionIcon variant="subtle" color="gary">
+                            <IconDotsVertical size={14} />
+                          </ActionIcon>
+                        </Menu.Target>
+
+                        <Menu.Dropdown>
+                          <Menu.Item
+                            leftSection="📖"
+                            onClick={() => handleOpen(note)}
+                          >
+                            打开
+                          </Menu.Item>
+                          <Menu.Item
+                            leftSection="📤"
+                            onClick={() => handleShare(note)}
+                          >
+                            分享
+                          </Menu.Item>
+                          <Menu.Item
+                            leftSection="✏️"
+                            onClick={() => handleRename(note)}
+                          >
+                            重命名
+                          </Menu.Item>
+                          <Menu.Divider />
+                          <Menu.Item
+                            leftSection="🗑️"
+                            onClick={() => handleDelete(note)}
+                          >
+                            删除
+                          </Menu.Item>
+                        </Menu.Dropdown>
+                      </Menu>
+                    </Group>
+                  </Card>
+                </Grid.Col>
+              ))}
+            </Grid>
+
+            {hasMore && (
+              <Center>
+                <Button variant="light" onClick={loadMore} size="md">
+                  继续加载 ({filteredNotes.length - displayCount} 个剩余)
+                </Button>
+              </Center>
+            )}
+          </>
+        )}
+      </Stack>
+
+      {!wallet && (
+        <Center>
+          <Button variant="gradient" component={Link} href="/login">
+            去登录
+          </Button>
+        </Center>
       )}
 
       {/* 创建笔记弹窗 */}

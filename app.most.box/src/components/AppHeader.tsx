@@ -2,6 +2,7 @@
 import { Text, Group, ActionIcon, TextVariant } from "@mantine/core";
 import { Icon } from "@/components/Icon";
 import { useBack } from "@/hooks/useBack";
+import { notifications } from "@mantine/notifications";
 
 interface AppHeaderProps {
   title: string | string[];
@@ -27,7 +28,11 @@ export const AppHeader = ({ title, variant, right, left }: AppHeaderProps) => {
       {right ? (
         right
       ) : (
-        <ActionIcon variant="transparent" color="--text-color">
+        <ActionIcon
+          variant="transparent"
+          color="--text-color"
+          onClick={() => notifications.show({ message: "没有更多" })}
+        >
           <Icon name="More" size={24} />
         </ActionIcon>
       )}

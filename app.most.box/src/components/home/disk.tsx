@@ -369,230 +369,47 @@ export default function HomeDisk() {
     }
   }, [wallet, files]);
 
-  if (!wallet) {
-    return (
-      <Center>
-        <Button mt={200} variant="gradient" component={Link} href="/login">
-          去登录
-        </Button>
-      </Center>
-    );
-  }
-
   return (
     <>
-      {files?.length ? (
-        <Stack gap="md" p="md" className="disk-box">
-          {/* 搜索框 */}
-          <Center>
-            <TextInput
-              placeholder="搜索文件名称"
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.currentTarget.value)}
-              size="md"
-              radius="md"
-              w={400}
-              styles={{
-                input: {
-                  textAlign: "center",
-                },
-              }}
-            />
-          </Center>
+      <Stack gap="md" p="md">
+        {/* 搜索框 */}
+        <Center>
+          <TextInput
+            placeholder="搜索文件名称"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.currentTarget.value)}
+            size="md"
+            radius="md"
+            w={400}
+            styles={{
+              input: {
+                textAlign: "center",
+              },
+            }}
+          />
+        </Center>
 
-          <Group justify="space-between" align="center" pos="relative">
-            <LoadingOverlay
-              visible={fetchLoading}
-              overlayProps={{ backgroundOpacity: 0 }}
-              loaderProps={{ type: "dots" }}
-            />
-            <Badge variant="light" size="lg">
-              {searchQuery
-                ? `显示 ${displayedFiles.length} / ${filteredFiles.length} (总共 ${files.length})`
-                : `显示 ${displayedFiles.length} / ${files.length}`}{" "}
-              个文件
-            </Badge>
-            <Group>
-              <Tooltip label="刷新">
-                <ActionIcon
-                  size="lg"
-                  onClick={() => fetchFiles(filesPath)}
-                  color="blue"
-                >
-                  <IconRefresh size={18} />
-                </ActionIcon>
-              </Tooltip>
-              <Tooltip label="上传文件">
-                <ActionIcon
-                  size="lg"
-                  onClick={handleFileUpload}
-                  color="green"
-                  disabled={uploadLoading}
-                >
-                  <IconPlus size={18} />
-                </ActionIcon>
-              </Tooltip>
-              <Tooltip label="上传文件夹">
-                <ActionIcon
-                  size="lg"
-                  onClick={handleFolderUpload}
-                  color="yellow"
-                  disabled={uploadLoading}
-                >
-                  <IconFolderPlus size={18} />
-                </ActionIcon>
-              </Tooltip>
-            </Group>
-          </Group>
-
-          {/* 搜索结果为空时的提示 */}
-          {searchQuery && filteredFiles.length === 0 ? (
-            <Stack align="center" justify="center" h={200}>
-              <Text size="lg" c="dimmed">
-                未找到文件
-              </Text>
-              <Text size="sm" c="dimmed">
-                尝试用其他关键词搜索
-              </Text>
-            </Stack>
-          ) : (
-            <>
-              <Card radius="md" withBorder>
-                <Group
-                  style={{
-                    cursor: filesPath ? "pointer" : "",
-                  }}
-                  onClick={filesPath ? handleGoBack : undefined}
-                >
-                  <Text fw={500}>📁 {filesPath ? ".." : "根目录"}</Text>
-                </Group>
-              </Card>
-
-              <Grid gutter="md">
-                {displayedFiles.map((item, index) => (
-                  <Grid.Col
-                    key={index}
-                    span={{ base: 12, xs: 6, sm: 4, md: 3, lg: 3, xl: 2 }}
-                  >
-                    <Card radius="md" withBorder>
-                      <Group justify="space-between" wrap="nowrap" gap={4}>
-                        <Stack
-                          gap={4}
-                          flex={1}
-                          style={{
-                            cursor: item.type === "directory" ? "pointer" : "",
-                          }}
-                          onClick={() => {
-                            if (item.type === "directory") {
-                              handleFolderClick(item.name);
-                            }
-                          }}
-                        >
-                          <Text fw={500} lineClamp={1}>
-                            {item.type === "directory" ? "📁" : "📄"}{" "}
-                            {item.name}
-                          </Text>
-                        </Stack>
-                        <Menu shadow="md" width={120}>
-                          <Menu.Target>
-                            <ActionIcon variant="subtle" color="gray">
-                              <IconDotsVertical size={14} />
-                            </ActionIcon>
-                          </Menu.Target>
-
-                          <Menu.Dropdown>
-                            <Menu.Item
-                              leftSection="📖"
-                              onClick={() => {
-                                if (item.type === "directory") {
-                                  handleFolderClick(item.name);
-                                } else {
-                                  handleOpenFile(item);
-                                }
-                              }}
-                            >
-                              {item.type === "directory" ? "打开" : "查看"}
-                            </Menu.Item>
-
-                            <Menu.Item
-                              leftSection="📤"
-                              onClick={() => {
-                                handleShareFile(item);
-                              }}
-                            >
-                              分享
-                            </Menu.Item>
-
-                            <Menu.Item
-                              leftSection="✏️"
-                              onClick={() => handleRename(item)}
-                            >
-                              重命名
-                            </Menu.Item>
-
-                            <Menu.Divider />
-
-                            <Menu.Item
-                              leftSection="⬇️"
-                              component={Link}
-                              target="_blank"
-                              href={formatDownload(item)}
-                            >
-                              下载
-                            </Menu.Item>
-
-                            <Menu.Item
-                              disabled={
-                                filesPath === "" &&
-                                item.type === "directory" &&
-                                SystemDir.includes(item.name)
-                              }
-                              leftSection="🗑️"
-                              onClick={() => {
-                                handleDeleteFile(item);
-                              }}
-                            >
-                              删除
-                            </Menu.Item>
-
-                            {item.size > 0 && (
-                              <Menu.Label>
-                                <Center>
-                                  <Text size="xs" c="dimmed">
-                                    {formatFileSize(item.size)}
-                                  </Text>
-                                </Center>
-                              </Menu.Label>
-                            )}
-                          </Menu.Dropdown>
-                        </Menu>
-                      </Group>
-                    </Card>
-                  </Grid.Col>
-                ))}
-              </Grid>
-
-              {hasMore && (
-                <Center>
-                  <Button variant="light" onClick={loadMore} size="md">
-                    继续加载 ({filteredFiles.length - displayCount} 个剩余)
-                  </Button>
-                </Center>
-              )}
-            </>
-          )}
-        </Stack>
-      ) : (
-        <Stack align="center" justify="center" h={200}>
-          <Text size="lg" c="dimmed">
-            {fetchLoading ? "正在加载" : "暂无文件"}
-          </Text>
+        <Group justify="space-between" align="center" pos="relative">
+          <LoadingOverlay
+            visible={fetchLoading}
+            overlayProps={{ backgroundOpacity: 0 }}
+            loaderProps={{ type: "dots" }}
+          />
+          <Badge variant="light" size="lg">
+            {searchQuery
+              ? `显示 ${displayedFiles.length} / ${
+                  filteredFiles.length
+                } (总共 ${files?.length || 0})`
+              : `显示 ${displayedFiles.length} / ${files?.length || 0}`}{" "}
+            个文件
+          </Badge>
           <Group>
             <Tooltip label="刷新">
               <ActionIcon
                 size="lg"
                 onClick={() => fetchFiles(filesPath)}
                 color="blue"
+                disabled={!wallet}
               >
                 <IconRefresh size={18} />
               </ActionIcon>
@@ -602,7 +419,7 @@ export default function HomeDisk() {
                 size="lg"
                 onClick={handleFileUpload}
                 color="green"
-                disabled={uploadLoading}
+                disabled={!wallet || uploadLoading}
               >
                 <IconPlus size={18} />
               </ActionIcon>
@@ -612,13 +429,157 @@ export default function HomeDisk() {
                 size="lg"
                 onClick={handleFolderUpload}
                 color="yellow"
-                disabled={uploadLoading}
+                disabled={!wallet || uploadLoading}
               >
                 <IconFolderPlus size={18} />
               </ActionIcon>
             </Tooltip>
           </Group>
-        </Stack>
+        </Group>
+
+        {/* 搜索结果为空时的提示 */}
+        {searchQuery && filteredFiles.length === 0 ? (
+          <Stack align="center" justify="center" h={200}>
+            <Text size="lg" c="dimmed">
+              未找到文件
+            </Text>
+            <Text size="sm" c="dimmed">
+              尝试用其他关键词搜索
+            </Text>
+          </Stack>
+        ) : (
+          <>
+            <Card radius="md" withBorder>
+              <Group
+                style={{
+                  cursor: filesPath ? "pointer" : "",
+                }}
+                onClick={filesPath ? handleGoBack : undefined}
+              >
+                <Text fw={500}>📁 {filesPath ? ".." : "根目录"}</Text>
+              </Group>
+            </Card>
+
+            <Grid gutter="md">
+              {displayedFiles.map((item, index) => (
+                <Grid.Col
+                  key={index}
+                  span={{ base: 12, xs: 6, sm: 4, md: 3, lg: 3, xl: 2 }}
+                >
+                  <Card radius="md" withBorder>
+                    <Group justify="space-between" wrap="nowrap" gap={4}>
+                      <Stack
+                        gap={4}
+                        flex={1}
+                        style={{
+                          cursor: item.type === "directory" ? "pointer" : "",
+                        }}
+                        onClick={() => {
+                          if (item.type === "directory") {
+                            handleFolderClick(item.name);
+                          }
+                        }}
+                      >
+                        <Text fw={500} lineClamp={1}>
+                          {item.type === "directory" ? "📁" : "📄"} {item.name}
+                        </Text>
+                      </Stack>
+                      <Menu shadow="md" width={120}>
+                        <Menu.Target>
+                          <ActionIcon variant="subtle" color="gray">
+                            <IconDotsVertical size={14} />
+                          </ActionIcon>
+                        </Menu.Target>
+
+                        <Menu.Dropdown>
+                          <Menu.Item
+                            leftSection="📖"
+                            onClick={() => {
+                              if (item.type === "directory") {
+                                handleFolderClick(item.name);
+                              } else {
+                                handleOpenFile(item);
+                              }
+                            }}
+                          >
+                            {item.type === "directory" ? "打开" : "查看"}
+                          </Menu.Item>
+
+                          <Menu.Item
+                            leftSection="📤"
+                            onClick={() => {
+                              handleShareFile(item);
+                            }}
+                          >
+                            分享
+                          </Menu.Item>
+
+                          <Menu.Item
+                            leftSection="✏️"
+                            onClick={() => handleRename(item)}
+                          >
+                            重命名
+                          </Menu.Item>
+
+                          <Menu.Divider />
+
+                          <Menu.Item
+                            leftSection="⬇️"
+                            component={Link}
+                            target="_blank"
+                            href={formatDownload(item)}
+                          >
+                            下载
+                          </Menu.Item>
+
+                          <Menu.Item
+                            disabled={
+                              filesPath === "" &&
+                              item.type === "directory" &&
+                              SystemDir.includes(item.name)
+                            }
+                            leftSection="🗑️"
+                            onClick={() => {
+                              handleDeleteFile(item);
+                            }}
+                          >
+                            删除
+                          </Menu.Item>
+
+                          {item.size > 0 && (
+                            <Menu.Label>
+                              <Center>
+                                <Text size="xs" c="dimmed">
+                                  {formatFileSize(item.size)}
+                                </Text>
+                              </Center>
+                            </Menu.Label>
+                          )}
+                        </Menu.Dropdown>
+                      </Menu>
+                    </Group>
+                  </Card>
+                </Grid.Col>
+              ))}
+            </Grid>
+
+            {hasMore && (
+              <Center>
+                <Button variant="light" onClick={loadMore} size="md">
+                  继续加载 ({filteredFiles.length - displayCount} 个剩余)
+                </Button>
+              </Center>
+            )}
+          </>
+        )}
+      </Stack>
+
+      {!wallet && (
+        <Center>
+          <Button variant="gradient" component={Link} href="/login">
+            去登录
+          </Button>
+        </Center>
       )}
 
       {/* 隐藏的文件输入框 */}

@@ -36,12 +36,12 @@ export default function PageWeb3() {
         <Text size="lg" fw={500}>
           ETH 地址
         </Text>
-        <Text>{wallet?.address}</Text>
+        <Text>{wallet?.address || "-"}</Text>
 
         <Text size="lg" fw={500}>
           x25519 公钥
         </Text>
-        <Text>{wallet?.public_key}</Text>
+        <Text>{wallet?.public_key || "-"}</Text>
 
         <Group align="center" gap="xs">
           <Text size="lg" fw={500}>
@@ -60,9 +60,6 @@ export default function PageWeb3() {
 
         <Divider my="md" />
 
-        <Anchor component={Link} href="/web3/mega">
-          <Text>Mega ETH</Text>
-        </Anchor>
         <Anchor component={Link} href="/web3/ethers">
           <Text>Ethers</Text>
         </Anchor>
