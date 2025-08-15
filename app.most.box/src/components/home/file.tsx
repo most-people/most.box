@@ -18,7 +18,7 @@ import {
   LoadingOverlay,
 } from "@mantine/core";
 import { api } from "@/constants/api";
-import "./disk.scss";
+import "./file.scss";
 import Link from "next/link";
 import {
   IconFolderPlus,
@@ -39,7 +39,7 @@ interface PreviewFile {
 
 const SystemDir = [".note"];
 
-export default function HomeDisk() {
+export default function HomeFile() {
   const wallet = useUserStore((state) => state.wallet);
   const dotCID = useUserStore((state) => state.dotCID);
   const files = useUserStore((state) => state.files);

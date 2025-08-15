@@ -1,6 +1,6 @@
 // https://www.flaticon.com/free-icon-font/message-star_16866110?page=1&position=3&term=message-star&origin=search&related_id=16866110
-import Chat from "@/assets/icons/chat.svg";
-import ChatActive from "@/assets/icons/chat-active.svg";
+import File from "@/assets/icons/file.svg";
+import FileActive from "@/assets/icons/file-active.svg";
 // https://www.flaticon.com/free-icon-font/pencil_16861405?term=pencil&related_id=16861405
 import Note from "@/assets/icons/note.svg";
 import NoteActive from "@/assets/icons/note-active.svg";
@@ -39,8 +39,8 @@ import Mail from "@/assets/icons/mail.svg";
 import Telegram from "@/assets/icons/telegram.svg";
 
 const icons = {
-  Chat,
-  ChatActive,
+  File,
+  FileActive,
   Note,
   NoteActive,
   Explore,

@@ -1,5 +1,6 @@
 import { AppHeader } from "@/components/AppHeader";
 import { Container, Title, Text, Stack } from "@mantine/core";
+import Link from "next/link";
 
 export default function PageJoin() {
   return (
@@ -10,7 +11,6 @@ export default function PageJoin() {
         <Text c="dimmed">
           探讨文明如何跨越行星界限发展为「戴森球文明」或「卡尔达肖夫等级」中的高等级文明
         </Text>
-
         <Title>祖国不会忘记</Title>
         <Text c="dimmed">在茫茫的人海里 我是哪一个</Text>
         <Text c="dimmed">在奔腾的浪花里 我是哪一朵</Text>
@@ -26,9 +26,10 @@ export default function PageJoin() {
         <Text c="dimmed">我把光辉融进 融进祖国的星座</Text>
         <Text c="dimmed">山知道我 江河知道我</Text>
         <Text c="dimmed">祖国不会忘记 不会忘记我</Text>
-
         <Title>為全人類徹底解放奮鬥終身</Title>
         <Text c="dimmed">随时准备为党和人民牺牲一切</Text>
+
+        <Text c="dimmed">app.most.box@gmail.com</Text>
       </Stack>
     </Container>
   );

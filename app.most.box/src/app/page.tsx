@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ActionIcon, Tabs, Text } from "@mantine/core";
 import { Icon } from "@/components/Icon";
 import HomeMine from "@/components/home/mine";
-import HomeDisk from "@/components/home/disk";
+import HomeFile from "@/components/home/file";
 
 import "./page.scss";
 import HomeNote from "@/components/home/note";
@@ -19,12 +19,12 @@ export default function PageHome() {
 
   const tabChange = (value: string | null) => {
     setHomeTab(value);
-    localStorage.setItem("homeTab", value || "disk");
+    localStorage.setItem("homeTab", value || "explore");
   };
 
   useEffect(() => {
     const activeTab = localStorage.getItem("homeTab");
-    setHomeTab(activeTab || "disk");
+    setHomeTab(activeTab || "explore");
   }, []);
 
   const title = useMemo(() => {
@@ -58,8 +58,8 @@ export default function PageHome() {
         value={homeTab}
         onChange={tabChange}
       >
-        <Tabs.Panel keepMounted value="disk">
-          <HomeDisk />
+        <Tabs.Panel keepMounted value="file">
+          <HomeFile />
         </Tabs.Panel>
 
         <Tabs.Panel keepMounted value="note">
@@ -75,9 +75,9 @@ export default function PageHome() {
         </Tabs.Panel>
 
         <Tabs.List>
-          <Tabs.Tab value="disk">
-            <Icon name={homeTab === "disk" ? "ChatActive" : "Chat"} />
-            <Text>网盘</Text>
+          <Tabs.Tab value="file">
+            <Icon name={homeTab === "file" ? "FileActive" : "File"} />
+            <Text>文件</Text>
           </Tabs.Tab>
           <Tabs.Tab value="note">
             <Icon name={homeTab === "note" ? "NoteActive" : "Note"} />

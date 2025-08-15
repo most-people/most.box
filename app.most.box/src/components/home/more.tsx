@@ -86,7 +86,7 @@ const HomeMore = ({ homeTab }: { homeTab: string | null }) => {
     event.target.value = "";
   };
 
-  if (homeTab === "disk") {
+  if (homeTab === "file") {
     return (
       <>
         <Menu shadow="md">
