@@ -55,22 +55,6 @@ const mathPlugin = () => {
   return { toHTMLRenderers };
 };
 
-// 动态导入 Toast Editor 相关模块
-const loadEditorModules = async () => {
-  const [{ default: Editor }, { default: codeSyntaxHighlight }] =
-    await Promise.all([
-      // eslint-disable-next-line
-      // @ts-ignore
-      import("@toast-ui/editor"),
-      import("@toast-ui/editor-plugin-code-syntax-highlight"),
-      // eslint-disable-next-line
-      // @ts-ignore
-      import("@toast-ui/editor/dist/i18n/zh-cn"),
-    ]);
-
-  return { Editor, codeSyntaxHighlight };
-};
-
 const getEditorCore = (codeSyntaxHighlight: any) => {
   // https://nhn.github.io/tui.editor/latest/ToastUIEditorCore
   return {
