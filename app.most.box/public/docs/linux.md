@@ -1,5 +1,3 @@
-[Ubuntu 教程](/dot.most.box/readme.md) [Windows 教程](/README.md)
-
 ## Ubuntu 安装 Node.js
 
 ```bash

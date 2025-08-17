@@ -1,17 +1,24 @@
 "use client";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
-import { Anchor, Blockquote, Button, Stack } from "@mantine/core";
+import { Anchor, Blockquote, Button, Text, Stack } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { BrowserProvider, getAddress } from "ethers";
 import { useRouter } from "next/navigation";
-import { IconInfoCircle } from "@tabler/icons-react";
+import {
+  IconInfoCircle,
+  IconRefreshAlert,
+  IconSignature,
+} from "@tabler/icons-react";
 import axios from "axios";
 import Link from "next/link";
 
 const SignMessage = ({ dotApi }: { dotApi: string }) => {
   const router = useRouter();
-  const [signLoading, setSignLoading] = useState(false);
+  const [deployLoading, setDeployLoading] = useState(false);
+  const [reloadLoading, setReloadLoading] = useState(false);
+
+  const isLoading = deployLoading || reloadLoading;
 
   const deploy = async (token: string) => {
     try {
@@ -39,19 +46,55 @@ const SignMessage = ({ dotApi }: { dotApi: string }) => {
       });
     }
   };
-  const sign = async () => {
+
+  const reload = async (token: string) => {
+    try {
+      const res = await axios({
+        method: "put",
+        url: dotApi + "/api.reload",
+        headers: {
+          Authorization: token,
+        },
+      });
+
+      if (res.data?.ok) {
+        notifications.show({
+          color: "green",
+          title: "提示",
+          message: "重启成功",
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      notifications.show({
+        color: "red",
+        title: "提示",
+        message: "重启失败",
+      });
+    }
+  };
+
+  const sign = async (type: "deploy" | "reload") => {
     const message = Date.now().toString();
 
     // @ts-expect-error window.ethereum
     const ethereum = window.ethereum;
     if (ethereum) {
       try {
-        setSignLoading(true);
+        if (type === "deploy") {
+          setDeployLoading(true);
+        } else {
+          setReloadLoading(true);
+        }
         const ethersProvider = new BrowserProvider(ethereum);
         const signer = await ethersProvider.getSigner();
         const signature = await signer.signMessage(message);
         const token = [signer.address, message, signature].join(".");
-        await deploy(token);
+        if (type === "deploy") {
+          await deploy(token);
+        } else {
+          await reload(token);
+        }
       } catch {
         notifications.show({
           color: "red",
@@ -59,21 +102,38 @@ const SignMessage = ({ dotApi }: { dotApi: string }) => {
           message: "签名失败",
         });
       } finally {
-        setSignLoading(false);
+        if (type === "deploy") {
+          setDeployLoading(false);
+        } else {
+          setReloadLoading(false);
+        }
       }
     }
   };
   return (
-    <>
+    <Stack>
       <Button
+        leftSection={<IconSignature />}
         variant="gradient"
-        loading={signLoading}
+        disabled={isLoading}
+        loading={deployLoading}
         loaderProps={{ type: "dots" }}
-        onClick={sign}
+        onClick={() => sign("deploy")}
       >
         签名部署
       </Button>
-    </>
+
+      <Button
+        leftSection={<IconRefreshAlert />}
+        variant="outline"
+        disabled={isLoading}
+        loading={reloadLoading}
+        loaderProps={{ type: "dots" }}
+        onClick={() => sign("reload")}
+      >
+        签名重启
+      </Button>
+    </Stack>
   );
 };
 
@@ -153,7 +213,7 @@ export default function PageDeploy() {
     initAccount();
   }, []);
   return (
-    <Stack>
+    <Stack px="md">
       <AppHeader title="更新节点代码" />
       <Blockquote icon={<IconInfoCircle />} mt="xl">
         节点地址：
@@ -163,9 +223,14 @@ export default function PageDeploy() {
       </Blockquote>
 
       {address ? (
-        <Button variant="default" onClick={disconnect}>
+        <Text
+          fw={700}
+          variant="gradient"
+          gradient={{ from: "blue", to: "cyan", deg: 90 }}
+          onClick={disconnect}
+        >
           {address}
-        </Button>
+        </Text>
       ) : (
         <Button
           variant="default"

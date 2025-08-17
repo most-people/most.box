@@ -11,8 +11,8 @@ import "@mantine/notifications/styles.css";
 import "@/app/global.scss";
 
 export const metadata: Metadata = {
-  title: "Most.Box - IPFS",
-  description: "完全去中心化节点",
+  title: "Most.Box - 如影随形",
+  description: "隐私分身，数据加密，随时访问，随时分享",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

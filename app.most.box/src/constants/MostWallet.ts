@@ -79,7 +79,7 @@ export const mostDecode = (
 ) => {
   const [prefix, nonce64, encrypted64] = data.split(".");
   if (prefix !== "mp://2") {
-    console.info("无效的密文");
+    console.info("无效协议");
     return "";
   }
   const decrypted = nacl.box.open(

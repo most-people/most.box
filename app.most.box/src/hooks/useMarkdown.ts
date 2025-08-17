@@ -55,9 +55,24 @@ const mathPlugin = () => {
   return { toHTMLRenderers };
 };
 
-const getEditorCore = (Editor: any) => {
+// 动态导入 Toast Editor 相关模块
+const loadEditorModules = async () => {
+  const [{ default: Editor }, { default: codeSyntaxHighlight }] =
+    await Promise.all([
+      // eslint-disable-next-line
+      // @ts-ignore
+      import("@toast-ui/editor"),
+      import("@toast-ui/editor-plugin-code-syntax-highlight"),
+      // eslint-disable-next-line
+      // @ts-ignore
+      import("@toast-ui/editor/dist/i18n/zh-cn"),
+    ]);
+
+  return { Editor, codeSyntaxHighlight };
+};
+
+const getEditorCore = (codeSyntaxHighlight: any) => {
   // https://nhn.github.io/tui.editor/latest/ToastUIEditorCore
-  const { codeSyntaxHighlight } = Editor.plugin;
   return {
     theme: "light",
     language: "zh-CN",
@@ -94,12 +109,12 @@ const getEditorCore = (Editor: any) => {
   };
 };
 
-const initEditor = () => {
-  const Editor = (window as any).toastui?.Editor;
+const initEditor = (Editor: any, codeSyntaxHighlight: any) => {
   const editorElement = document.querySelector("#editorElement");
   if (!editorElement) {
     return;
   }
+
   const editor = new Editor({
     el: editorElement,
     height: "100%",
@@ -109,7 +124,7 @@ const initEditor = () => {
     placeholder: "\n✍️ 开始记录你的灵感",
     // 隐藏切换到 markdown
     // hideModeSwitch: false,
-    ...getEditorCore(Editor),
+    ...getEditorCore(codeSyntaxHighlight),
     hooks: {
       addImageBlobHook: uploadImage,
     },
@@ -146,16 +161,16 @@ const initEditor = () => {
   return editor;
 };
 
-const initViewer = () => {
-  const Editor = (window as any).toastui?.Editor;
+const initViewer = (Editor: any, codeSyntaxHighlight: any) => {
   const viewerElement = document.querySelector("#viewerElement");
   if (!viewerElement) {
     return;
   }
+
   return Editor.factory({
     el: viewerElement,
     viewer: true,
-    ...getEditorCore(Editor),
+    ...getEditorCore(codeSyntaxHighlight),
   });
 };
 

@@ -138,10 +138,11 @@ const verifyJWT = (jwt: string, template = "YYMMDD") => {
     try {
       const wallet = JSON.parse(json) as MostWallet;
       if (wallet.address) return wallet;
-    } catch {
-      console.log("jwt 过期");
+    } catch (error) {
+      console.error(error);
     }
   }
+  console.log("jwt 过期");
   return null;
 };
 

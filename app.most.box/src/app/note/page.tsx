@@ -11,21 +11,18 @@ import {
   Loader,
   Center,
 } from "@mantine/core";
-import Script from "next/script";
+
 import { AppHeader } from "@/components/AppHeader";
 import { useMarkdown } from "@/hooks/useMarkdown";
 
-// https://uicdn.toast.com/editor/latest/toastui-editor.min.css
-import "@/assets/toast-ui/toastui-editor.min.css";
-// https://www.jsdelivr.com/package/npm/prismjs
-import "@/assets/toast-ui/prism.min.css";
-// https://uicdn.toast.com/editor/latest/theme/toastui-editor-dark.css
-import "@/assets/toast-ui/toastui-editor-dark.css";
-// https://uicdn.toast.com/editor-plugin-code-syntax-highlight/latest/toastui-editor-plugin-code-syntax-highlight.min.css
-import "@/assets/toast-ui/toastui-editor-plugin-code-syntax-highlight.min.css";
+// Toast UI Editor CSS from npm packages
+import "@toast-ui/editor/dist/toastui-editor.css";
+import "@toast-ui/editor/dist/theme/toastui-editor-dark.css";
+import "@toast-ui/editor-plugin-code-syntax-highlight/dist/toastui-editor-plugin-code-syntax-highlight.css";
+import "prismjs/themes/prism.css";
 
-import "./note.scss";
-import "./markdown.scss";
+import "@/app/note/markdown.scss";
+import "@/app/note/note.scss";
 
 import { useSearchParams } from "next/navigation";
 import { useUserStore } from "@/stores/userStore";
@@ -39,7 +36,6 @@ const PageContent = () => {
   const dotCID = useUserStore((state) => state.dotCID);
   const wallet = useUserStore((state) => state.wallet);
 
-  const [inited, setInited] = useState(false);
   const [loading, setLoading] = useState(true);
   const [viewer, setViewer] = useState<any>(null);
   const [editor, setEditor] = useState<any>(null);
@@ -56,14 +52,6 @@ const PageContent = () => {
       url.searchParams.set("uid", uid);
     }
     window.history.replaceState(null, "", url.href);
-  };
-
-  const initViewer = () => {
-    setViewer(markdown.initViewer());
-    setInited(true);
-  };
-  const initEditor = () => {
-    setEditor(markdown.initEditor());
   };
 
   const fetchNote = (cid: string, customCID?: string) => {
@@ -188,13 +176,6 @@ const PageContent = () => {
     }
   };
 
-  // 获取最新的 CID
-  useEffect(() => {
-    if (inited) {
-      init();
-    }
-  }, [inited]);
-
   useEffect(() => {
     if (viewer) {
       viewer.setMarkdown(content);
@@ -265,6 +246,30 @@ const PageContent = () => {
     }
   }, [colorScheme, computedColorScheme, viewer, editor]);
 
+  const initToastUI = async () => {
+    const [{ default: Editor }, { default: codeSyntaxHighlight }] =
+      await Promise.all([
+        // eslint-disable-next-line
+        // @ts-ignore
+        import("@toast-ui/editor"),
+        import("@toast-ui/editor-plugin-code-syntax-highlight"),
+        // eslint-disable-next-line
+        // @ts-ignore
+        import("@toast-ui/editor/dist/i18n/zh-cn"),
+      ]);
+
+    const editor = markdown.initEditor(Editor, codeSyntaxHighlight);
+    setEditor(editor);
+
+    const viewer = markdown.initViewer(Editor, codeSyntaxHighlight);
+    setViewer(viewer);
+  };
+
+  useEffect(() => {
+    init();
+    initToastUI();
+  }, []);
+
   return (
     <Box id="page-note">
       <AppHeader title={title} variant="text" right={renderHeaderButtons()} />
@@ -290,23 +295,6 @@ const PageContent = () => {
         <Center mt="md">
           <Loader size="xl" type="dots" />
         </Center>
-      )}
-
-      {/* https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js */}
-      <Script src="/toast-ui/toastui-editor-all.min.js" />
-      {/* https://uicdn.toast.com/editor-plugin-code-syntax-highlight/latest/toastui-editor-plugin-code-syntax-highlight-all.min.js */}
-      <Script
-        src="/toast-ui/toastui-editor-plugin-code-syntax-highlight-all.min.js"
-        strategy="lazyOnload"
-        onReady={initViewer}
-      />
-      {/* https://uicdn.toast.com/editor/latest/i18n/zh-cn.js */}
-      {inited && (
-        <Script
-          src="/toast-ui/zh-cn.js"
-          strategy="lazyOnload"
-          onReady={initEditor}
-        />
       )}
     </Box>
   );
