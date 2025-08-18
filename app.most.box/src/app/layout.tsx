@@ -8,6 +8,13 @@ import { ModalsProvider } from "@mantine/modals";
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
 
+// Toast UI Editor CSS from npm packages
+import "@toast-ui/editor/dist/toastui-editor.css";
+import "@toast-ui/editor/dist/theme/toastui-editor-dark.css";
+import "@toast-ui/editor-plugin-code-syntax-highlight/dist/toastui-editor-plugin-code-syntax-highlight.css";
+import "prismjs/themes/prism.css";
+import "@/app/markdown.scss";
+
 import "@/app/global.scss";
 
 export const metadata: Metadata = {

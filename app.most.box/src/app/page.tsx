@@ -5,7 +5,7 @@ import { Icon } from "@/components/Icon";
 import HomeMine from "@/components/home/mine";
 import HomeFile from "@/components/home/file";
 
-import "./page.scss";
+import "@/app/page.scss";
 import HomeNote from "@/components/home/note";
 import HomeExplore from "@/components/home/explore";
 import { AppHeader } from "@/components/AppHeader";

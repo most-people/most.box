@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, Suspense } from "react";
+import { useEffect, useMemo, useState, Suspense, useRef } from "react";
 import {
   Box,
   Button,
@@ -10,18 +10,12 @@ import {
   Switch,
   Loader,
   Center,
+  Container,
 } from "@mantine/core";
 
 import { AppHeader } from "@/components/AppHeader";
 import { useMarkdown } from "@/hooks/useMarkdown";
 
-// Toast UI Editor CSS from npm packages
-import "@toast-ui/editor/dist/toastui-editor.css";
-import "@toast-ui/editor/dist/theme/toastui-editor-dark.css";
-import "@toast-ui/editor-plugin-code-syntax-highlight/dist/toastui-editor-plugin-code-syntax-highlight.css";
-import "prismjs/themes/prism.css";
-
-import "@/app/note/markdown.scss";
 import "@/app/note/note.scss";
 
 import { useSearchParams } from "next/navigation";
@@ -246,23 +240,23 @@ const PageContent = () => {
     }
   }, [colorScheme, computedColorScheme, viewer, editor]);
 
+  const viewerElement = useRef<HTMLDivElement>(null);
+  const editorElement = useRef<HTMLDivElement>(null);
+
   const initToastUI = async () => {
-    const [{ default: Editor }, { default: codeSyntaxHighlight }] =
-      await Promise.all([
-        // eslint-disable-next-line
-        // @ts-ignore
-        import("@toast-ui/editor"),
-        import("@toast-ui/editor-plugin-code-syntax-highlight"),
-        // eslint-disable-next-line
-        // @ts-ignore
-        import("@toast-ui/editor/dist/i18n/zh-cn"),
-      ]);
+    const { Editor, codeSyntaxHighlight } = await markdown.loadModules();
 
-    const editor = markdown.initEditor(Editor, codeSyntaxHighlight);
-    setEditor(editor);
+    if (viewerElement.current) {
+      setViewer(
+        markdown.initViewer(viewerElement.current, Editor, codeSyntaxHighlight)
+      );
+    }
 
-    const viewer = markdown.initViewer(Editor, codeSyntaxHighlight);
-    setViewer(viewer);
+    if (editorElement.current) {
+      setEditor(
+        markdown.initEditor(editorElement.current, Editor, codeSyntaxHighlight)
+      );
+    }
   };
 
   useEffect(() => {
@@ -271,15 +265,15 @@ const PageContent = () => {
   }, []);
 
   return (
-    <Box id="page-note">
+    <Container id="page-note">
       <AppHeader title={title} variant="text" right={renderHeaderButtons()} />
 
       <Box
-        id="viewerElement"
+        ref={viewerElement}
         style={{ display: isEditing ? "none" : "block" }}
       />
       <Box
-        id="editorElement"
+        ref={editorElement}
         style={{ display: isEditing ? "block" : "none" }}
       />
 
@@ -296,7 +290,7 @@ const PageContent = () => {
           <Loader size="xl" type="dots" />
         </Center>
       )}
-    </Box>
+    </Container>
   );
 };
 

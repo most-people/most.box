@@ -93,14 +93,9 @@ const getEditorCore = (codeSyntaxHighlight: any) => {
   };
 };
 
-const initEditor = (Editor: any, codeSyntaxHighlight: any) => {
-  const editorElement = document.querySelector("#editorElement");
-  if (!editorElement) {
-    return;
-  }
-
+const initEditor = (el: Element, Editor: any, codeSyntaxHighlight: any) => {
   const editor = new Editor({
-    el: editorElement,
+    el,
     height: "100%",
     initialValue: "",
     initialEditType: "wysiwyg",
@@ -145,14 +140,9 @@ const initEditor = (Editor: any, codeSyntaxHighlight: any) => {
   return editor;
 };
 
-const initViewer = (Editor: any, codeSyntaxHighlight: any) => {
-  const viewerElement = document.querySelector("#viewerElement");
-  if (!viewerElement) {
-    return;
-  }
-
+const initViewer = (el: Element, Editor: any, codeSyntaxHighlight: any) => {
   return Editor.factory({
-    el: viewerElement,
+    el,
     viewer: true,
     ...getEditorCore(codeSyntaxHighlight),
   });
@@ -160,6 +150,24 @@ const initViewer = (Editor: any, codeSyntaxHighlight: any) => {
 
 export const useMarkdown = () => {
   return {
+    loadModules: async () => {
+      const [{ default: Editor }, { default: codeSyntaxHighlight }] =
+        await Promise.all([
+          // eslint-disable-next-line
+          // @ts-ignore
+          import("@toast-ui/editor"),
+          import("@toast-ui/editor-plugin-code-syntax-highlight"),
+          // eslint-disable-next-line
+          // @ts-ignore
+          import("@toast-ui/editor/dist/i18n/zh-cn"),
+        ]);
+
+      return {
+        Editor,
+        codeSyntaxHighlight,
+      };
+    },
+
     initEditor,
     initViewer,
   };

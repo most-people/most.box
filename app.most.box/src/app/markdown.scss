@@ -37,75 +37,15 @@
     margin-top: 11px;
   }
 
-  // most-people custom
-  mp-mi {
-    display: flex;
-    flex-direction: column;
-    position: relative;
-
-    > a {
-      margin-top: 10px;
-      text-align: center;
-    }
-
-    > div {
-      color: #000;
-    }
-    > span {
-      color: #f1f1f1;
-    }
-
-    > div,
-    > span {
-      width: auto;
-      padding: 16px;
-      background-color: #999;
-      border-radius: 20px;
-      font-size: 16px;
-      line-height: 24px;
-    }
-    > input {
-      width: auto;
-      padding: 0 16px;
-      height: 56px;
-      border-radius: 20px;
-      outline: 0;
-      border: 0;
-      margin: 10px 0;
-      background-color: var(--tab-background);
-    }
-    > p {
-      cursor: pointer;
-      margin: 0;
-      position: absolute;
-      right: 16px;
-      bottom: 23px;
-      display: inline-flex;
-      align-items: center;
-      height: 30px;
-      background-color: rgb(29, 155, 240);
-      color: white;
-      margin-left: 16px;
-      padding: 0 16px;
-      border-radius: 20px;
-
-      &:hover {
-        background-color: rgb(23, 124, 192);
-        color: white;
-      }
-    }
-  }
-
   // default
   a {
-    color: #acf;
+    // color: var(--mantine-color-anchor);
     text-decoration: none;
     word-break: break-word;
-    border-bottom: 1px solid transparent;
   }
 
   a:hover {
-    color: #8fbbfe;
+    // color: var(--mantine-color-anchor);
     text-decoration: underline;
   }
 
@@ -234,7 +174,7 @@
   }
 
   p {
-    margin: 20px 0;
+    // margin: 20px 0;
     line-height: 1.75;
     // text-indent: 2em;
     color: #666;
