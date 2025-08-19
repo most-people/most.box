@@ -105,18 +105,16 @@ const postIP = async (RPC) => {
   const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
   const contract = dotContract.connect(wallet);
 
-
-  // 开始获取
-  const [name, APIs, CIDs, update] = await contract.getDot(wallet.address);
-  const dot = getIP()
-
-  if (arrayEqual(APIs, dot.APIs) && arrayEqual(CIDs, dot.CIDs)) {
-    console.log(RPC, "节点无变化");
-    return;
-  }
-
-  // 开始更新
+  // 更新
   try {
+    const [name, APIs, CIDs, update] = await contract.getDot(wallet.address);
+    const dot = getIP()
+  
+    if (arrayEqual(APIs, dot.APIs) && arrayEqual(CIDs, dot.CIDs)) {
+      console.log(RPC, "节点无变化");
+      return;
+    }
+
     // 估算gas费用
     const gasEstimate = await contract.setDot.estimateGas(dot.name, dot.APIs, dot.CIDs);
     const gasPrice = await provider.getFeeData();
