@@ -81,13 +81,19 @@ export default function PageLogin() {
   };
 
   const login = (username: string, password: string) => {
-    if (username) {
-      const wallet = mp.login(username, password);
-      if (wallet) {
-        setTimeout(() => {
-          setItem("wallet", wallet);
-        }, 0);
-      }
+    if (!username) {
+      notifications.show({ message: "请输入用户名" });
+      return;
+    }
+    if (!password) {
+      notifications.show({ message: "请输入密码" });
+      return;
+    }
+    const wallet = mp.login(username, password);
+    if (wallet) {
+      setTimeout(() => {
+        setItem("wallet", wallet);
+      }, 0);
     }
     back();
   };
@@ -276,6 +282,11 @@ export default function PageLogin() {
             placeholder="用户名"
             value={username}
             onChange={(event) => setUsername(event.currentTarget.value)}
+            onKeyUp={(event) => {
+              if (event.key === "Enter") {
+                login(username, password);
+              }
+            }}
           />
           <PasswordInput
             placeholder="密码"
@@ -283,6 +294,11 @@ export default function PageLogin() {
             onVisibilityChange={toggle}
             value={password}
             onChange={(event) => setPassword(event.currentTarget.value)}
+            onKeyUp={(event) => {
+              if (event.key === "Enter") {
+                login(username, password);
+              }
+            }}
           />
           <Button onClick={() => login(username, password)} variant="gradient">
             {username ? "登录" : "游客"}

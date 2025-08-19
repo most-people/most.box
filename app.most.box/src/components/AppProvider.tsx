@@ -3,6 +3,7 @@ import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { useUserStore } from "@/stores/userStore";
 import { useEffect } from "react";
 import { api } from "@/constants/api";
+import { useComputedColorScheme, useMantineColorScheme } from "@mantine/core";
 
 export default function AppProvider() {
   const initWallet = useUserStore((state) => state.initWallet);
@@ -38,6 +39,13 @@ export default function AppProvider() {
     initFinger();
     sessionStorage.firstPath = window.location.pathname;
   }, []);
+
+  const { colorScheme } = useMantineColorScheme();
+  const computedColorScheme = useComputedColorScheme();
+  useEffect(() => {
+    const theme = colorScheme === "auto" ? computedColorScheme : colorScheme;
+    setItem("nodeDark", theme === "dark" ? "toastui-editor-dark" : "");
+  }, [colorScheme, computedColorScheme]);
 
   return null;
 }

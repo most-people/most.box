@@ -5,8 +5,6 @@ import {
   Box,
   Button,
   Group,
-  useMantineColorScheme,
-  useComputedColorScheme,
   Switch,
   Loader,
   Center,
@@ -220,28 +218,6 @@ const PageContent = () => {
     );
   };
 
-  const { colorScheme } = useMantineColorScheme();
-  const computedColorScheme = useComputedColorScheme();
-
-  useEffect(() => {
-    const theme = colorScheme === "auto" ? computedColorScheme : colorScheme;
-    const isDark = theme === "dark";
-    if (viewer) {
-      if (isDark) {
-        viewer.options.el.classList.add("toastui-editor-dark");
-      } else {
-        viewer.options.el.classList.remove("toastui-editor-dark");
-      }
-    }
-    if (editor) {
-      if (isDark) {
-        editor.options.el.classList.add("toastui-editor-dark");
-      } else {
-        editor.options.el.classList.remove("toastui-editor-dark");
-      }
-    }
-  }, [colorScheme, computedColorScheme, viewer, editor]);
-
   useEffect(() => {
     if (viewer) {
       viewer.setMarkdown(content);
@@ -254,6 +230,8 @@ const PageContent = () => {
   const viewerElement = useRef<HTMLDivElement>(null);
   const editorElement = useRef<HTMLDivElement>(null);
 
+  const nodeDark = useUserStore((state) => state.nodeDark);
+
   useEffect(() => {
     init();
     initToastUI();
@@ -265,11 +243,13 @@ const PageContent = () => {
 
       <Box
         id="viewer-box"
+        className={nodeDark}
         ref={viewerElement}
         style={{ display: isEditing ? "none" : "block" }}
       />
       <Box
         id="editor-box"
+        className={nodeDark}
         ref={editorElement}
         style={{ display: isEditing ? "block" : "none" }}
       />

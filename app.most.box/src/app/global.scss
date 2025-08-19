@@ -2,6 +2,7 @@
   --red: #c93721;
 }
 :root[data-mantine-color-scheme="light"] {
+  --mantine-color-body: #fff;
   --tab-background: #0000000a;
   --tab-color: #8e8e8f;
 
@@ -24,8 +25,16 @@ body {
   min-height: 100%;
   position: relative;
   word-break: break-word;
-  font-family: -apple-system, SF UI Text, PingFang SC, Hiragino Sans GB,
-    Microsoft YaHei, Helvetica Neue, Helvetica, Arial, sans-serif;
+  font-family:
+    -apple-system,
+    SF UI Text,
+    PingFang SC,
+    Hiragino Sans GB,
+    Microsoft YaHei,
+    Helvetica Neue,
+    Helvetica,
+    Arial,
+    sans-serif;
 }
 body::after {
   pointer-events: none;

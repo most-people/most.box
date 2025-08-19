@@ -4,9 +4,11 @@ import { useMarkdown } from "@/hooks/useMarkdown";
 import { Container, Box } from "@mantine/core";
 import { useEffect, useRef } from "react";
 import content from "./thesis.md";
+import { useUserStore } from "@/stores/userStore";
 
 const PageAboutThesis = () => {
   const markdown = useMarkdown();
+  const nodeDark = useUserStore((state) => state.nodeDark);
 
   const init = async () => {
     if (viewerElement.current) {
@@ -24,7 +26,7 @@ const PageAboutThesis = () => {
   return (
     <Container py="md">
       <AppHeader title="论文" />
-      <Box ref={viewerElement} />
+      <Box className={nodeDark} ref={viewerElement} />
     </Container>
   );
 };

@@ -13,6 +13,7 @@ import {
 import { useMarkdown } from "@/hooks/useMarkdown";
 import IPFS from "@/assets/docs/IPFS.md";
 import "./explore.scss";
+import { useUserStore } from "@/stores/userStore";
 
 export default function HomeExplore() {
   const [randomWord, setRandomWord] = useState("");
@@ -32,6 +33,7 @@ export default function HomeExplore() {
   };
 
   const ipfsElement = useRef<HTMLDivElement>(null);
+  const nodeDark = useUserStore((state) => state.nodeDark);
 
   useEffect(() => {
     init();
@@ -48,7 +50,7 @@ export default function HomeExplore() {
         <Accordion.Item value="IPFS">
           <Accordion.Control icon="🍎">1. IPFS</Accordion.Control>
           <Accordion.Panel>
-            <Box ref={ipfsElement} />
+            <Box className={nodeDark} ref={ipfsElement} />
           </Accordion.Panel>
         </Accordion.Item>
 

@@ -39,6 +39,7 @@ interface UserStore {
   dotCID: string;
   dotNodes: DotNode[];
   notes?: Note[];
+  nodeDark: "toastui-editor-dark" | "";
   notesQuery: string;
   files?: FileItem[];
   filesPath: string;
@@ -111,6 +112,7 @@ export const useUserStore = create<State>((set, get) => ({
   dotNodes: [],
   notes: undefined,
   notesQuery: "",
+  nodeDark: "",
   files: undefined,
   filesPath: "",
   fingerprint: "",
