@@ -1,5 +1,4 @@
 import { api } from "@/constants/api";
-import type { Editor } from "@toast-ui/editor";
 import { parse, HtmlGenerator } from "latex.js";
 
 interface CodeBlockMdNode {
@@ -8,6 +7,26 @@ interface CodeBlockMdNode {
   type: string;
   wysiwygNode: boolean;
 }
+
+let editorModulesPromise: Promise<[any, any, any]> | null = null;
+const getEditorModules = () => {
+  if (!editorModulesPromise) {
+    editorModulesPromise = Promise.all([
+      // eslint-disable-next-line
+      // @ts-ignore
+      import("@toast-ui/editor"),
+      import(
+        // eslint-disable-next-line
+        // @ts-ignore
+        "@toast-ui/editor-plugin-code-syntax-highlight/dist/toastui-editor-plugin-code-syntax-highlight-all.js"
+      ),
+      // eslint-disable-next-line
+      // @ts-ignore
+      import("@toast-ui/editor/dist/i18n/zh-cn"),
+    ]);
+  }
+  return editorModulesPromise;
+};
 
 const uploadImage = async (
   file: File | Blob,
@@ -56,9 +75,9 @@ const mathPlugin = () => {
   return { toHTMLRenderers };
 };
 
-const getEditorCore = (Editor: any) => {
+const getEditorCore = (codeSyntaxHighlight: any) => {
   // https://nhn.github.io/tui.editor/latest/tutorial-example08-editor-with-code-syntax-highlight-plugin
-  const { codeSyntaxHighlight } = Editor.plugin;
+  // const { codeSyntaxHighlight } = Editor.plugin;
 
   return {
     theme: "light",
@@ -96,17 +115,20 @@ const getEditorCore = (Editor: any) => {
   };
 };
 
-const initEditor = (el: HTMLDivElement, Editor: any) => {
-  const options = {
+const initEditor = async (el: HTMLDivElement) => {
+  const [EditorModule, codeSyntaxHighlightModule] = await getEditorModules();
+  const Editor = EditorModule.default;
+  const codeSyntaxHighlight = codeSyntaxHighlightModule.default;
+  const editor: any = new Editor({
     el,
     height: "100%",
     initialValue: "",
     initialEditType: "wysiwyg",
     previewStyle: "vertical",
-    placeholder: "\n✍️ 开始记录你的灵感",
+    placeholder: "\\n✍️ 开始记录你的灵感",
     // 隐藏切换到 markdown
     // hideModeSwitch: false,
-    ...getEditorCore(Editor),
+    ...getEditorCore(codeSyntaxHighlight),
     hooks: {
       addImageBlobHook: uploadImage,
     },
@@ -137,8 +159,7 @@ const initEditor = (el: HTMLDivElement, Editor: any) => {
       ],
       ["scrollSync"],
     ],
-  };
-  const editor: Editor = new Editor(options);
+  });
 
   const $math = () => {
     const latex = "a^{2}+b^{2}=c^{2}";
@@ -164,11 +185,14 @@ const initEditor = (el: HTMLDivElement, Editor: any) => {
   return editor;
 };
 
-const initViewer = (el: HTMLDivElement, Editor: any) => {
+const initViewer = async (el: HTMLDivElement) => {
+  const [EditorModule, codeSyntaxHighlightModule] = await getEditorModules();
+  const Editor = EditorModule.default;
+  const codeSyntaxHighlight = codeSyntaxHighlightModule.default;
   return Editor.factory({
     el,
     viewer: true,
-    ...getEditorCore(Editor),
+    ...getEditorCore(codeSyntaxHighlight),
   });
 };
 

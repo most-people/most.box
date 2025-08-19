@@ -141,6 +141,17 @@ const PageContent = () => {
     setIsEditing(false);
   };
 
+  const initToastUI = async () => {
+    if (viewerElement.current) {
+      const viewer = await markdown.initViewer(viewerElement.current);
+      setViewer(viewer);
+    }
+    if (editorElement.current) {
+      const editor = await markdown.initEditor(editorElement.current);
+      setEditor(editor);
+    }
+  };
+
   const init = async () => {
     const hash = location.hash;
     const uid = params.get("uid");
@@ -242,20 +253,11 @@ const PageContent = () => {
 
   const viewerElement = useRef<HTMLDivElement>(null);
   const editorElement = useRef<HTMLDivElement>(null);
-  const noteReady = useUserStore((state) => state.noteReady);
 
   useEffect(() => {
-    if (noteReady) {
-      const Editor = (window as any).toastui?.Editor;
-      if (viewerElement.current) {
-        setViewer(markdown.initViewer(viewerElement.current, Editor));
-      }
-      if (editorElement.current) {
-        setEditor(markdown.initEditor(editorElement.current, Editor));
-      }
-      init();
-    }
-  }, [noteReady]);
+    init();
+    initToastUI();
+  }, []);
 
   return (
     <Container id="page-note">
@@ -289,10 +291,12 @@ const PageContent = () => {
   );
 };
 
-export default function PageNote() {
+const PageNote = () => {
   return (
     <Suspense>
       <PageContent />
     </Suspense>
   );
-}
+};
+
+export default PageNote;

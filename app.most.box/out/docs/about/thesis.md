@@ -1,40 +1,76 @@
-# 论如何利用 IPFS + Fastify + Smart Contracts 构建完全不需要后端的去中心化应用
+# 技术架构 - 顶层设计
 
-**作者：Most.Box**
+Most People 是基于数学和密码学的密码朋克精神指引下的去中心化应用。
 
-为了跟大家讲清楚，需要了解一定基础知识， 若你已经了解，请跳过
+## 基于数学和密码学实现无法破解的，军用级别加密算法
 
-## 目录
+目前已经实现第一版 mp://1. 加密算法，具体代码如下
 
-1. 去中心化密码朋克
-2. IPFS
-3. Most.Box
-4. 我们需要你一起添砖加瓦
+```ts
+// password 推荐使用较长的中文、甚至 Emoji 来大幅度增加破解难度
+const mp = {
+  // 本地私钥
+  async key(username: string, password: string) {
+    const p = toUtf8Bytes(password);
+    const salt = toUtf8Bytes("/mp/" + username);
+    const kdf = pbkdf2(p, salt, 1, 256 / 8, "sha512");
+    const privateKey = sha256(kdf);
+    // x25519 key
+    await sodium.ready;
+    const seed = sodium.from_string(privateKey);
+    const keyData = sodium.crypto_generichash(32, seed);
+    const keyPair = sodium.crypto_box_seed_keypair(keyData);
 
-## 去中心化
+    const public_key = sodium.to_hex(keyPair.publicKey);
+    const private_key = sodium.to_hex(keyPair.privateKey);
 
-通俗地讲，就是每个人都是中心，每个人都可以连接并影响其他节点，这种扁平化、开源化、平等化的现象或结构。
+    // AES-GCM key
+    const keydata = toUtf8Bytes(privateKey).slice(-32);
+    // https://gist.github.com/pedrouid/b4056fd1f754918ddae86b32cf7d803e#aes-gcm
+    const key = await window.crypto.subtle.importKey(
+      "raw",
+      keydata,
+      { name: "AES-GCM" },
+      false,
+      ["encrypt", "decrypt"]
+    );
 
-去中心化代表的是言论自由，信息公开透明，保护个人隐私。你可以不相信任何个人或组织，但你可以永远相信数学。
+    // wallet all in one
+    const mnemonic = Mnemonic.entropyToPhrase(
+      toUtf8Bytes(privateKey).slice(-16)
+    );
+    const wallet = HDNodeWallet.fromPhrase(mnemonic);
+    const address = wallet.address;
 
-因为不论在任何宇宙，任何表达方式，同等条件数学结果都是恒定不变的。
+    // token
+    const message = String(dayjs().unix());
+    const sig = await wallet.signMessage(message);
+    const token = [message, sig].join();
 
-## 密码朋克
+    return { key, address, token, mnemonic, public_key, private_key };
+  },
+};
+```
 
-热衷于使用加密技术保护隐私的人们，他们相信通过技术而不是法律，才能真正保障个人信息的安全和自由。
+复杂密码的一些关键点：
 
-最简单的例子就是中本聪，他无人不知无人不晓，却也无人知晓他是谁。
+如：**狼虫虎豹+-\*/🐺🐛🐯🐆**
+或是一段话：**打得那狼虫虎豹，无处躲！**
 
-## IPFS 星际文件系统
+密码的复杂性：结合中文字符、特殊符号和 Emoji，显著增加了潜在的字符集大小。这意味着破解所需尝试的可能组合数量巨大。
 
-观察这个图片：
+攻击方法：
 
-https://cid.most.red/ipfs/bafkreihp5o7tdipf6ajkgkdxknnffkuxpeecwqydi4q5iqt4gko6r2agk4
+**暴力破解**：这种方法涉及尝试所有可能的密码组合，直到找到正确的那一个。考虑到您的密码的长度和字符集复杂性，暴力破解此密码几乎是不可行的，即使使用强大的计算资源。
 
-![Long March](https://cid.most.red/ipfs/bafkreihp5o7tdipf6ajkgkdxknnffkuxpeecwqydi4q5iqt4gko6r2agk4?filename=Long%20March.jpg)
+**字典攻击**：由于密码使用了非常规字符和组合，标准的字典攻击方法不太可能成功。
 
-我们可以把任意文件（如图片、视频、网站…）想象成一本书。把 IPFS 想象成一座图书馆。
-当我们把书在自己的图书馆后，当其它人得知你有这本书，就会把书复制一份带回自己的图书馆。
-如果大家都喜欢这本书，越来越多的人把这本书带会自己的图书馆，那么世界各地都会有这本书，你之前可能要去国外才能读到的书，现在只需要去一趟镇上就能拿到。
+**社会工程**：如果攻击者采用社会工程技巧或通过其他途径获取密码提示或部分信息，这可能是破解的薄弱环节。
 
-IPFS 网关负责告诉离你最近的书在哪里。 IPFS 每个文件有一个 CID 就是文件的身份证号，上文中 bafkr...2agk4 就是这个文件的 CID，它的容量很大，大到足以给地球上的每一粒沙子都发一个身份证号。
+**计算资源**：即使对于拥有大量计算资源的攻击者（例如，使用专门的硬件），破解这样的密码也可能需要不切实际的长时间，可能是数十年甚至更长。
+
+综上所述，破解出的这样一个复杂的密码需要极其长的时间，在实际情况下是不可行的。然而，密码的安全性最重要的还是将秘钥【**只保存大脑中，不记录在任何地方**】。
+
+SEA
+
+2024 年 9 月 25 日 拂晓 4 点 29 分

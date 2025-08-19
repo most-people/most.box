@@ -3,12 +3,10 @@ import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { useUserStore } from "@/stores/userStore";
 import { useEffect } from "react";
 import { api } from "@/constants/api";
-import Script from "next/script";
 
 export default function AppProvider() {
   const initWallet = useUserStore((state) => state.initWallet);
   const setItem = useUserStore((state) => state.setItem);
-  const noteReady = useUserStore((state) => state.noteReady);
   const initFinger = async () => {
     try {
       const fp = await FingerprintJS.load();
@@ -41,18 +39,5 @@ export default function AppProvider() {
     sessionStorage.firstPath = window.location.pathname;
   }, []);
 
-  return (
-    <>
-      {/* https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js */}
-      <Script src="/toast-ui/toastui-editor-all.min.js" />
-      {/* https://uicdn.toast.com/editor-plugin-code-syntax-highlight/latest/toastui-editor-plugin-code-syntax-highlight-all.min.js */}
-      <Script
-        strategy="lazyOnload"
-        src="/toast-ui/toastui-editor-plugin-code-syntax-highlight-all.min.js"
-        onLoad={() => setItem("noteReady", true)}
-      />
-      {/* https://uicdn.toast.com/editor/latest/i18n/zh-cn.js */}
-      {noteReady && <Script strategy="lazyOnload" src="/toast-ui/zh-cn.js" />}
-    </>
-  );
+  return null;
 }
