@@ -11,7 +11,8 @@ export default function PageAboutThesis() {
 
   const init = async () => {
     if (viewerElement.current) {
-      const viewer = markdown.initViewer(viewerElement.current);
+      const Editor = (window as any).toastui?.Editor;
+      const viewer = markdown.initViewer(viewerElement.current, Editor);
       fetch("/docs/about/thesis.md")
         .then((res) => res.text())
         .then((text) => {

@@ -56,9 +56,7 @@ const mathPlugin = () => {
   return { toHTMLRenderers };
 };
 
-const getEditorCore = () => {
-  // https://nhn.github.io/tui.editor/latest/ToastUIEditorCore
-  const Editor = (window as any).toastui?.Editor;
+const getEditorCore = (Editor: any) => {
   // https://nhn.github.io/tui.editor/latest/tutorial-example08-editor-with-code-syntax-highlight-plugin
   const { codeSyntaxHighlight } = Editor.plugin;
 
@@ -98,8 +96,7 @@ const getEditorCore = () => {
   };
 };
 
-const initEditor = (el: HTMLDivElement) => {
-  const Editor = (window as any).toastui?.Editor;
+const initEditor = (el: HTMLDivElement, Editor: any) => {
   const options = {
     el,
     height: "100%",
@@ -109,7 +106,7 @@ const initEditor = (el: HTMLDivElement) => {
     placeholder: "\n✍️ 开始记录你的灵感",
     // 隐藏切换到 markdown
     // hideModeSwitch: false,
-    ...getEditorCore(),
+    ...getEditorCore(Editor),
     hooks: {
       addImageBlobHook: uploadImage,
     },
@@ -167,12 +164,11 @@ const initEditor = (el: HTMLDivElement) => {
   return editor;
 };
 
-const initViewer = (el: HTMLDivElement) => {
-  const Editor = (window as any).toastui?.Editor;
+const initViewer = (el: HTMLDivElement, Editor: any) => {
   return Editor.factory({
     el,
     viewer: true,
-    ...getEditorCore(),
+    ...getEditorCore(Editor),
   });
 };
 

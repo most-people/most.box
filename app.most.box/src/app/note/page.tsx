@@ -246,11 +246,12 @@ const PageContent = () => {
 
   useEffect(() => {
     if (noteReady) {
+      const Editor = (window as any).toastui?.Editor;
       if (viewerElement.current) {
-        setViewer(markdown.initViewer(viewerElement.current));
+        setViewer(markdown.initViewer(viewerElement.current, Editor));
       }
       if (editorElement.current) {
-        setEditor(markdown.initEditor(editorElement.current));
+        setEditor(markdown.initEditor(editorElement.current, Editor));
       }
       init();
     }
