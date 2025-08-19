@@ -10,13 +10,13 @@ interface CodeBlockMdNode {
 }
 
 const uploadImage = async (
-  file: File,
+  file: File | Blob,
   callback: (url: string, altText: string) => void
 ) => {
   const formData = new FormData();
   const params = new URLSearchParams(location.search);
   const name = params.get("name");
-  const fileName = `${file.size}-${file.name}`;
+  const fileName = `${file.size}-${(file as File).name}`;
   formData.append("file", file);
   formData.append("path", `/.note/${name}/${fileName}`);
 
@@ -56,8 +56,12 @@ const mathPlugin = () => {
   return { toHTMLRenderers };
 };
 
-const getEditorCore = (codeSyntaxHighlight: any) => {
+const getEditorCore = () => {
   // https://nhn.github.io/tui.editor/latest/ToastUIEditorCore
+  const Editor = (window as any).toastui?.Editor;
+  // https://nhn.github.io/tui.editor/latest/tutorial-example08-editor-with-code-syntax-highlight-plugin
+  const { codeSyntaxHighlight } = Editor.plugin;
+
   return {
     theme: "light",
     language: "zh-CN",
@@ -94,8 +98,9 @@ const getEditorCore = (codeSyntaxHighlight: any) => {
   };
 };
 
-const initEditor = (el: Element, Editor: any, codeSyntaxHighlight: any) => {
-  const editor: Editor = new Editor({
+const initEditor = (el: HTMLDivElement) => {
+  const Editor = (window as any).toastui?.Editor;
+  const options = {
     el,
     height: "100%",
     initialValue: "",
@@ -104,7 +109,7 @@ const initEditor = (el: Element, Editor: any, codeSyntaxHighlight: any) => {
     placeholder: "\n✍️ 开始记录你的灵感",
     // 隐藏切换到 markdown
     // hideModeSwitch: false,
-    ...getEditorCore(codeSyntaxHighlight),
+    ...getEditorCore(),
     hooks: {
       addImageBlobHook: uploadImage,
     },
@@ -135,7 +140,8 @@ const initEditor = (el: Element, Editor: any, codeSyntaxHighlight: any) => {
       ],
       ["scrollSync"],
     ],
-  });
+  };
+  const editor: Editor = new Editor(options);
 
   const $math = () => {
     const latex = "a^{2}+b^{2}=c^{2}";
@@ -161,33 +167,17 @@ const initEditor = (el: Element, Editor: any, codeSyntaxHighlight: any) => {
   return editor;
 };
 
-const initViewer = (el: Element, Editor: any, codeSyntaxHighlight: any) => {
+const initViewer = (el: HTMLDivElement) => {
+  const Editor = (window as any).toastui?.Editor;
   return Editor.factory({
     el,
     viewer: true,
-    ...getEditorCore(codeSyntaxHighlight),
+    ...getEditorCore(),
   });
-};
-
-const loadModules = async () => {
-  const [{ default: Editor }, { default: codeSyntaxHighlight }] =
-    await Promise.all([
-      import("@toast-ui/editor"),
-      import("@toast-ui/editor-plugin-code-syntax-highlight"),
-      // eslint-disable-next-line
-      // @ts-ignore
-      import("@toast-ui/editor/dist/i18n/zh-cn"),
-    ]);
-
-  return {
-    Editor,
-    codeSyntaxHighlight,
-  };
 };
 
 export const useMarkdown = () => {
   return {
-    loadModules,
     initEditor,
     initViewer,
   };

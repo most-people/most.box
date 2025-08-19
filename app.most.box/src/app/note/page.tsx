@@ -170,15 +170,6 @@ const PageContent = () => {
     }
   };
 
-  useEffect(() => {
-    if (viewer) {
-      viewer.setMarkdown(content);
-    }
-    if (editor) {
-      editor.setMarkdown(content);
-    }
-  }, [content, viewer, editor]);
-
   // 使用 useMemo 缓存标题提取结果
   const title = useMemo(() => {
     let t = "笔记";
@@ -240,29 +231,30 @@ const PageContent = () => {
     }
   }, [colorScheme, computedColorScheme, viewer, editor]);
 
+  useEffect(() => {
+    if (viewer) {
+      viewer.setMarkdown(content);
+    }
+    if (editor) {
+      editor.setMarkdown(content);
+    }
+  }, [content, viewer, editor]);
+
   const viewerElement = useRef<HTMLDivElement>(null);
   const editorElement = useRef<HTMLDivElement>(null);
-
-  const initToastUI = async () => {
-    const { Editor, codeSyntaxHighlight } = await markdown.loadModules();
-
-    if (viewerElement.current) {
-      setViewer(
-        markdown.initViewer(viewerElement.current, Editor, codeSyntaxHighlight)
-      );
-    }
-
-    if (editorElement.current) {
-      setEditor(
-        markdown.initEditor(editorElement.current, Editor, codeSyntaxHighlight)
-      );
-    }
-  };
+  const noteReady = useUserStore((state) => state.noteReady);
 
   useEffect(() => {
-    init();
-    initToastUI();
-  }, []);
+    if (noteReady) {
+      if (viewerElement.current) {
+        setViewer(markdown.initViewer(viewerElement.current));
+      }
+      if (editorElement.current) {
+        setEditor(markdown.initEditor(editorElement.current));
+      }
+      init();
+    }
+  }, [noteReady]);
 
   return (
     <Container id="page-note">

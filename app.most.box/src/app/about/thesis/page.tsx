@@ -3,18 +3,15 @@ import { AppHeader } from "@/components/AppHeader";
 import { useMarkdown } from "@/hooks/useMarkdown";
 import { Container, Box } from "@mantine/core";
 import { useEffect, useRef } from "react";
+import { useUserStore } from "@/stores/userStore";
 
 export default function PageAboutThesis() {
   const markdown = useMarkdown();
-  const initToastUI = async () => {
-    const { Editor, codeSyntaxHighlight } = await markdown.loadModules();
+  const noteReady = useUserStore((state) => state.noteReady);
 
+  const init = async () => {
     if (viewerElement.current) {
-      const viewer = markdown.initViewer(
-        viewerElement.current,
-        Editor,
-        codeSyntaxHighlight
-      );
+      const viewer = markdown.initViewer(viewerElement.current);
       fetch("/docs/about/thesis.md")
         .then((res) => res.text())
         .then((text) => {
@@ -26,8 +23,8 @@ export default function PageAboutThesis() {
   const viewerElement = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    initToastUI();
-  }, []);
+    if (noteReady) init();
+  }, [noteReady]);
 
   return (
     <Container py="md">

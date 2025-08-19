@@ -40,6 +40,7 @@ interface UserStore {
   dotNodes: DotNode[];
   notes?: Note[];
   notesQuery: string;
+  noteReady: boolean;
   files?: FileItem[];
   filesPath: string;
   fingerprint: string;
@@ -111,6 +112,7 @@ export const useUserStore = create<State>((set, get) => ({
   dotNodes: [],
   notes: undefined,
   notesQuery: "",
+  noteReady: false,
   files: undefined,
   filesPath: "",
   fingerprint: "",

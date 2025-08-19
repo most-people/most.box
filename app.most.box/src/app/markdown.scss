@@ -177,7 +177,11 @@
     // margin: 20px 0;
     line-height: 1.75;
     // text-indent: 2em;
-    color: #666;
+    color: #555;
+  }
+
+  strong {
+    color: #333;
   }
 
   ul {
@@ -271,7 +275,12 @@
 }
 
 .toastui-editor-dark {
-  .toastui-editor-contents p {
-    color: #c9c9c9;
+  .toastui-editor-contents {
+    p {
+      color: #c9c9c9;
+    }
+    strong {
+      color: #eeeeee;
+    }
   }
 }
