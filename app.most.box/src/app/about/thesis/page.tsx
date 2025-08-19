@@ -3,6 +3,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { useMarkdown } from "@/hooks/useMarkdown";
 import { Container, Box } from "@mantine/core";
 import { useEffect, useRef } from "react";
+import content from "./thesis.md";
 
 const PageAboutThesis = () => {
   const markdown = useMarkdown();
@@ -10,11 +11,7 @@ const PageAboutThesis = () => {
   const init = async () => {
     if (viewerElement.current) {
       const viewer = await markdown.initViewer(viewerElement.current);
-      fetch("/docs/about/thesis.md")
-        .then((res) => res.text())
-        .then((text) => {
-          viewer.setMarkdown(text);
-        });
+      viewer.setMarkdown(content);
     }
   };
 

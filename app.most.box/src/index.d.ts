@@ -10,3 +10,8 @@ declare module "latex.js" {
     htmlDocument(): { body: HTMLElement };
   };
 }
+
+declare module "*.md" {
+  const content: string;
+  export default content;
+}
