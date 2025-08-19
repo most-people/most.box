@@ -44,7 +44,7 @@ export default function AppProvider() {
   return (
     <>
       {/* https://uicdn.toast.com/editor/latest/toastui-editor-all.min.js */}
-      <Script strategy="lazyOnload" src="/toast-ui/toastui-editor-all.min.js" />
+      <Script src="/toast-ui/toastui-editor-all.min.js" />
       {/* https://uicdn.toast.com/editor-plugin-code-syntax-highlight/latest/toastui-editor-plugin-code-syntax-highlight-all.min.js */}
       <Script
         strategy="lazyOnload"
