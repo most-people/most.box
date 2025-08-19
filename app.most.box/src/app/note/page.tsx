@@ -269,10 +269,12 @@ const PageContent = () => {
       <AppHeader title={title} variant="text" right={renderHeaderButtons()} />
 
       <Box
+        id="viewer-box"
         ref={viewerElement}
         style={{ display: isEditing ? "none" : "block" }}
       />
       <Box
+        id="editor-box"
         ref={editorElement}
         style={{ display: isEditing ? "block" : "none" }}
       />

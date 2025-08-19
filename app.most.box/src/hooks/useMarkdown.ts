@@ -1,4 +1,5 @@
 import { api } from "@/constants/api";
+import type { Editor } from "@toast-ui/editor";
 import { parse, HtmlGenerator } from "latex.js";
 
 interface CodeBlockMdNode {
@@ -94,7 +95,7 @@ const getEditorCore = (codeSyntaxHighlight: any) => {
 };
 
 const initEditor = (el: Element, Editor: any, codeSyntaxHighlight: any) => {
-  const editor = new Editor({
+  const editor: Editor = new Editor({
     el,
     height: "100%",
     initialValue: "",
@@ -119,7 +120,15 @@ const initEditor = (el: Element, Editor: any, codeSyntaxHighlight: any) => {
           name: "math",
           tooltip: "插入LaTeX公式",
           command: "math",
-          text: "🔢",
+          text: "∑",
+          className: "toastui-editor-toolbar-icons",
+          style: { backgroundImage: "none", fontSize: "18px" },
+        },
+        {
+          name: "file",
+          tooltip: "插入文件",
+          command: "file",
+          text: "📂",
           className: "toastui-editor-toolbar-icons",
           style: { backgroundImage: "none", fontSize: "18px" },
         },
@@ -131,12 +140,24 @@ const initEditor = (el: Element, Editor: any, codeSyntaxHighlight: any) => {
   const $math = () => {
     const latex = "a^{2}+b^{2}=c^{2}";
     editor.replaceSelection(
-      "\n$$math\n" + latex + "\n$$\n\n" + "LaTeX公式编辑 www.latexlive.com\n"
+      "\n$$math\n" + latex + "\n$$\n\n" + "LaTeX公式编辑 latexlive.com\n"
     );
-    if (editor.mode === "wysiwyg") editor.setMarkdown(editor.getMarkdown());
+    // if (editor.isWysiwygMode()) {
+    //   editor.setMarkdown(editor.getMarkdown());
+    //   editor.changeMode("markdown");
+    // }
+    return true;
   };
   editor.addCommand("wysiwyg", "math", $math);
   editor.addCommand("markdown", "math", $math);
+
+  const $file = () => {
+    localStorage.setItem("homeTab", "file");
+    window.open("/");
+    return true;
+  };
+  editor.addCommand("wysiwyg", "file", $file);
+  editor.addCommand("markdown", "file", $file);
   return editor;
 };
 
@@ -148,26 +169,25 @@ const initViewer = (el: Element, Editor: any, codeSyntaxHighlight: any) => {
   });
 };
 
+const loadModules = async () => {
+  const [{ default: Editor }, { default: codeSyntaxHighlight }] =
+    await Promise.all([
+      import("@toast-ui/editor"),
+      import("@toast-ui/editor-plugin-code-syntax-highlight"),
+      // eslint-disable-next-line
+      // @ts-ignore
+      import("@toast-ui/editor/dist/i18n/zh-cn"),
+    ]);
+
+  return {
+    Editor,
+    codeSyntaxHighlight,
+  };
+};
+
 export const useMarkdown = () => {
   return {
-    loadModules: async () => {
-      const [{ default: Editor }, { default: codeSyntaxHighlight }] =
-        await Promise.all([
-          // eslint-disable-next-line
-          // @ts-ignore
-          import("@toast-ui/editor"),
-          import("@toast-ui/editor-plugin-code-syntax-highlight"),
-          // eslint-disable-next-line
-          // @ts-ignore
-          import("@toast-ui/editor/dist/i18n/zh-cn"),
-        ]);
-
-      return {
-        Editor,
-        codeSyntaxHighlight,
-      };
-    },
-
+    loadModules,
     initEditor,
     initViewer,
   };

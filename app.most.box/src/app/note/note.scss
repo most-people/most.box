@@ -1,5 +1,5 @@
 #page-note {
-  #editorElement {
+  #editor-box {
     position: fixed;
     top: 0;
     left: 0;
@@ -8,8 +8,7 @@
     background-color: var(--mantine-color-body);
   }
 
-  #viewerElement {
-    padding: 0 20px;
+  #viewer-box {
     width: 100%;
     max-width: 1280px;
   }
