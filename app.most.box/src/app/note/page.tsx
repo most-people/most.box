@@ -36,6 +36,7 @@ const PageContent = () => {
   const [content, setContent] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [isSecret, setIsSecret] = useState(false);
+  const [inited, setInited] = useState(false);
 
   const setHash = (cid: string, uid?: string) => {
     const url = new URL(window.location.href);
@@ -54,22 +55,7 @@ const PageContent = () => {
         const url = new URL(window.location.href);
         url.searchParams.set("dot", customAPI || api.getUri());
         window.history.replaceState(null, "", url.href);
-
-        if (wallet && content.startsWith("mp://2")) {
-          // 解密
-          const decrypted = mostDecode(
-            content,
-            wallet.public_key,
-            wallet.private_key
-          );
-          if (decrypted) {
-            // 解密成功
-            setIsSecret(true);
-            setContent(decrypted);
-            return;
-          }
-        }
-
+        setInited(true);
         setIsSecret(false);
         setContent(content);
       })
@@ -80,6 +66,23 @@ const PageContent = () => {
         setLoading(false);
       });
   };
+
+  useEffect(() => {
+    if (!inited) return;
+    if (wallet && content.startsWith("mp://2")) {
+      // 尝试解密
+      const decrypted = mostDecode(
+        content,
+        wallet.public_key,
+        wallet.private_key
+      );
+      if (decrypted) {
+        // 解密成功
+        setIsSecret(true);
+        setContent(decrypted);
+      }
+    }
+  }, [inited, wallet, content]);
 
   const updateNote = async (name: string, newContent: string) => {
     // 加密
@@ -219,13 +222,10 @@ const PageContent = () => {
   };
 
   useEffect(() => {
-    if (viewer) {
-      viewer.setMarkdown(content);
-    }
-    if (editor) {
-      editor.setMarkdown(content);
-    }
-  }, [content, viewer, editor]);
+    if (!inited) return;
+    viewer?.setMarkdown(content);
+    editor?.setMarkdown(content);
+  }, [inited, content, viewer, editor]);
 
   const viewerElement = useRef<HTMLDivElement>(null);
   const editorElement = useRef<HTMLDivElement>(null);

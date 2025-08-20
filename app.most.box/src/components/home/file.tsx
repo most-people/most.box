@@ -55,6 +55,9 @@ export default function HomeFile() {
   const [renamingItem, setRenamingItem] = useState<FileItem | null>(null);
   const [newName, setNewName] = useState("");
   const [renameLoading, setRenameLoading] = useState(false);
+  const [newFolderModalOpen, setNewFolderModalOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [newFolderLoading, setNewFolderLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
 
@@ -72,6 +75,55 @@ export default function HomeFile() {
       });
     } finally {
       setFetchLoading(false);
+    }
+  };
+
+  const createFolder = async () => {
+    if (!newFolderName) {
+      notifications.show({
+        title: "提示",
+        message: "文件夹名称不能为空",
+        color: "red",
+      });
+      return;
+    }
+
+    const folderExists = files?.some(
+      (file) => file.type === "directory" && file.name === newFolderName
+    );
+
+    if (folderExists) {
+      notifications.show({
+        title: "提示",
+        message: "文件夹已存在",
+        color: "red",
+      });
+      return;
+    }
+
+    try {
+      setNewFolderLoading(true);
+      const path = filesPath ? `${filesPath}/${newFolderName}` : newFolderName;
+      const emptyFile = new Blob(["https://most.box"], { type: "text/plain" });
+      const formData = new FormData();
+      formData.append("file", emptyFile, "readme.md");
+      formData.append("path", `${path}/readme.md`);
+      await api.put("/files.upload", formData);
+      notifications.show({
+        message: "文件夹创建成功",
+        color: "green",
+      });
+      await fetchFiles(filesPath);
+      setNewFolderModalOpen(false);
+      setNewFolderName("");
+    } catch (error) {
+      console.error(error);
+      notifications.show({
+        message: (error as Error).message,
+        color: "red",
+      });
+    } finally {
+      setNewFolderLoading(false);
     }
   };
 
@@ -450,13 +502,29 @@ export default function HomeFile() {
         ) : (
           <>
             <Card radius="md" withBorder>
-              <Group
-                style={{
-                  cursor: filesPath ? "pointer" : "",
-                }}
-                onClick={filesPath ? handleGoBack : undefined}
-              >
-                <Text fw={500}>📁 {filesPath ? ".." : "根目录"}</Text>
+              <Group justify="space-between" wrap="nowrap" gap={4}>
+                <Group
+                  flex={1}
+                  style={{ cursor: filesPath ? "pointer" : "" }}
+                  onClick={filesPath ? handleGoBack : undefined}
+                >
+                  <Text fw={500}>📁 {filesPath ? ".." : "根目录"}</Text>
+                </Group>
+                <Menu shadow="md">
+                  <Menu.Target>
+                    <ActionIcon variant="subtle" color="gray">
+                      <IconDotsVertical size={14} />
+                    </ActionIcon>
+                  </Menu.Target>
+                  <Menu.Dropdown>
+                    <Menu.Item
+                      onClick={() => setNewFolderModalOpen(true)}
+                      leftSection="📁"
+                    >
+                      新建文件夹
+                    </Menu.Item>
+                  </Menu.Dropdown>
+                </Menu>
               </Group>
             </Card>
 
@@ -469,7 +537,6 @@ export default function HomeFile() {
                   <Card radius="md" withBorder>
                     <Group justify="space-between" wrap="nowrap" gap={4}>
                       <Stack
-                        gap={4}
                         flex={1}
                         style={{
                           cursor: item.type === "directory" ? "pointer" : "",
@@ -665,6 +732,38 @@ export default function HomeFile() {
       </Modal>
 
       {/* 重命名模态框 */}
+      <Modal
+        opened={newFolderModalOpen}
+        onClose={() => setNewFolderModalOpen(false)}
+        title="新建文件夹"
+        centered
+      >
+        <Stack gap="md">
+          <TextInput
+            value={newFolderName}
+            onChange={(event) => setNewFolderName(event.currentTarget.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                createFolder();
+              }
+            }}
+            disabled={newFolderLoading}
+            autoFocus
+          />
+          <Group justify="flex-end" gap="sm">
+            <Button
+              onClick={() => setNewFolderModalOpen(false)}
+              variant="default"
+            >
+              取消
+            </Button>
+            <Button onClick={createFolder} loading={newFolderLoading}>
+              确认
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
       <Modal
         opened={renameModalOpen}
         onClose={() => {
