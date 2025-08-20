@@ -106,8 +106,8 @@ export default function HomeFile() {
       const path = filesPath ? `${filesPath}/${newFolderName}` : newFolderName;
       const emptyFile = new Blob(["https://most.box"], { type: "text/plain" });
       const formData = new FormData();
-      formData.append("file", emptyFile, "readme.md");
-      formData.append("path", `${path}/readme.md`);
+      formData.append("file", emptyFile, "readme.txt");
+      formData.append("path", `${path}/readme.txt`);
       await api.put("/files.upload", formData);
       notifications.show({
         message: "文件夹创建成功",

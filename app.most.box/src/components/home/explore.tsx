@@ -12,6 +12,7 @@ import {
 } from "@mantine/core";
 import { useMarkdown } from "@/hooks/useMarkdown";
 import IPFS from "@/assets/docs/IPFS.md";
+import IPv6 from "@/assets/docs/IPv6.md";
 import "./explore.scss";
 import { useUserStore } from "@/stores/userStore";
 
@@ -30,9 +31,14 @@ export default function HomeExplore() {
       const viewer = await markdown.initViewer(ipfsElement.current);
       viewer.setMarkdown(IPFS);
     }
+    if (ipv6Element.current) {
+      const viewer = await markdown.initViewer(ipv6Element.current);
+      viewer.setMarkdown(IPv6);
+    }
   };
 
   const ipfsElement = useRef<HTMLDivElement>(null);
+  const ipv6Element = useRef<HTMLDivElement>(null);
   const nodeDark = useUserStore((state) => state.nodeDark);
 
   useEffect(() => {
@@ -54,12 +60,10 @@ export default function HomeExplore() {
           </Accordion.Panel>
         </Accordion.Item>
 
-        <Accordion.Item value="IPV6">
+        <Accordion.Item value="IPv6">
           <Accordion.Control icon="🍌">2. 公网 IPV6</Accordion.Control>
           <Accordion.Panel>
-            Crisp and refreshing fruit. Apples are known for their versatility
-            and nutritional benefits. They come in a variety of flavors and are
-            great for snacking, baking, or adding to salads.
+            <Box className={nodeDark} ref={ipv6Element} />
           </Accordion.Panel>
         </Accordion.Item>
 

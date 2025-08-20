@@ -5,7 +5,7 @@ export const CONTRACT_ADDRESS = "0xdc82cef1a8416210afb87caeec908a4df843f016";
 export const NETWORK_CONFIG = {
   mainnet: {
     chainId: 8453,
-    rpc: "https://mainnet-preconf.base.org",
+    rpc: "https://mainnet.base.org",
     name: "Base 主网",
     color: "blue",
     explorer: "https://basescan.org",

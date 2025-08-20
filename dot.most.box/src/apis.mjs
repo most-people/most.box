@@ -7,6 +7,9 @@ import path from "path";
 const execAsync = promisify(exec);
 const isRdrandSupported = rng.isRrdrandSupported();
 
+// SSE rooms: roomId -> Set<{ id: string, send: (data:any)=>void, res: ServerResponse }>
+const rooms = new Map();
+
 /**
  * 注册 API 相关的路由
  * @param {import('fastify').FastifyInstance} server - Fastify 服务器实例
@@ -16,6 +19,102 @@ export const registerApis = (server, __dirname) => {
   // 节点信息
   server.get("/api.dot", async () => {
     return mp.getIP();
+  });
+
+  // ============ HTTP + SSE 信令 ============
+  // 订阅房间消息（SSE）
+  server.get("/api.signaling/sse", (request, reply) => {
+    try {
+      const { roomId, clientId } = request.query || {};
+      if (!roomId || !clientId) {
+        reply.code(400);
+        reply.send({ ok: false, message: "roomId 和 clientId 必填" });
+        return;
+      }
+
+      // SSE 必要响应头
+      reply.raw.setHeader("Content-Type", "text/event-stream");
+      reply.raw.setHeader("Cache-Control", "no-cache");
+      reply.raw.setHeader("Connection", "keep-alive");
+      reply.raw.setHeader("Access-Control-Allow-Origin", "*");
+      reply.raw.flushHeaders?.();
+
+      // 写入工具
+      const send = (obj) => {
+        try {
+          reply.raw.write(`data: ${JSON.stringify(obj)}\n\n`);
+        } catch (e) {
+          // ignore
+        }
+      };
+
+      // 加入房间
+      let set = rooms.get(roomId);
+      if (!set) {
+        set = new Set();
+        rooms.set(roomId, set);
+      }
+      const client = { id: String(clientId), send, res: reply.raw };
+      set.add(client);
+      console.log(
+        `[SSE] client ${clientId} joined room ${roomId}, size=${set.size}`
+      );
+
+      // 初次问候
+      send({ type: "hello", roomId, clientId, ts: Date.now() });
+
+      // 心跳保持
+      const heartbeat = setInterval(() => {
+        try {
+          reply.raw.write(`: ping ${Date.now()}\n\n`);
+        } catch {}
+      }, 15000);
+
+      // 断开清理
+      request.raw.on("close", () => {
+        clearInterval(heartbeat);
+        const s = rooms.get(roomId);
+        if (s) {
+          s.delete(client);
+          if (s.size === 0) rooms.delete(roomId);
+        }
+        console.log(`[SSE] client ${clientId} left room ${roomId}`);
+      });
+    } catch (error) {
+      console.error("[SSE] subscribe error:", error);
+      reply.code(500).send({ ok: false, message: error.message });
+    }
+  });
+
+  // 发送信令（HTTP POST）
+  server.post("/api.signaling", async (request, reply) => {
+    try {
+      const { roomId, from, to, type, payload } = request.body || {};
+      if (!roomId || !from || !type) {
+        reply.code(400);
+        return { ok: false, message: "roomId、from、type 必填" };
+      }
+
+      const s = rooms.get(roomId);
+      if (!s || s.size === 0) {
+        return { ok: true, delivered: 0 };
+      }
+
+      let delivered = 0;
+      const message = { from, type, payload, ts: Date.now() };
+      s.forEach((client) => {
+        if (client.id === String(from)) return; // 不回给自己
+        if (to && client.id !== String(to)) return; // 指定接收方
+        client.send(message);
+        delivered++;
+      });
+
+      return { ok: true, delivered };
+    } catch (error) {
+      console.error("[SSE] post signaling error:", error);
+      reply.code(500);
+      return { ok: false, message: error.message };
+    }
   });
 
   // 真随机数
