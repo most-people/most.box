@@ -1,5 +1,6 @@
 "use client";
 import { AppHeader } from "@/components/AppHeader";
+import { useUserStore } from "@/stores/userStore";
 import {
   Button,
   Container,
@@ -12,10 +13,6 @@ import {
 } from "@mantine/core";
 import { useRef, useState } from "react";
 
-const SIGNAL_BASE = "http://localhost:1976";
-const SSE_URL = `${SIGNAL_BASE}/api.signaling/sse`;
-const POST_URL = `${SIGNAL_BASE}/api.signaling`;
-
 type Role = "caller" | "callee";
 
 type SignalMessage = {
@@ -26,6 +23,11 @@ type SignalMessage = {
 };
 
 export default function PageWebRTC() {
+  const dotAPI = useUserStore((state) => state.dotAPI);
+
+  const SSE_URL = `${dotAPI}/api.signaling/sse`;
+  const POST_URL = `${dotAPI}/api.signaling`;
+
   const [roomId, setRoomId] = useState<string>("demo-room");
   const [clientId] = useState<string>(() =>
     typeof crypto !== "undefined" && "randomUUID" in crypto
