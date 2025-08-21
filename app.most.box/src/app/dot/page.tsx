@@ -562,7 +562,7 @@ export default function PageDot() {
           disabled={!customCid}
         >
           <IconSearch size={16} />
-          <Text ml="xs">CID 寻址</Text>
+          <Text ml="xs">CID</Text>
         </Button>
       </Group>
 
@@ -586,14 +586,6 @@ export default function PageDot() {
           </Alert>
 
           <Group mt="md">
-            <Button
-              size="sm"
-              color="yellow"
-              variant="light"
-              onClick={() => setCustomRPC(randomRPC())}
-            >
-              更换 RPC
-            </Button>
             <Button
               size="sm"
               color="orange"
@@ -625,7 +617,8 @@ export default function PageDot() {
               padding="lg"
               radius="md"
               withBorder
-              w={343}
+              maw="100%"
+              w={358}
               style={{
                 transition: "transform 0.2s ease, box-shadow 0.2s ease",
                 border: isCurrentNode(node) ? "2px solid #228be6" : undefined,
@@ -826,7 +819,16 @@ export default function PageDot() {
       )}
 
       {/* 底部控制区域 */}
-      <Group mt="lg" justify="space-between">
+      <Group mt="lg" gap="xs" justify="space-between">
+        <Button
+          size="sm"
+          color="yellow"
+          variant="light"
+          onClick={() => setCustomRPC(randomRPC())}
+        >
+          更换 RPC
+        </Button>
+
         <TextInput
           size="sm"
           flex={1}
