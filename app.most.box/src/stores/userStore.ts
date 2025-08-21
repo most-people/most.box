@@ -88,7 +88,7 @@ export const useUserStore = create<State>((set, get) => ({
     } catch (error) {
       notifications.show({
         title: "节点切换失败",
-        message: url,
+        message: url || (error as Error).message,
         color: "red",
       });
       console.info(error);

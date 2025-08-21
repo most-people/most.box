@@ -50,6 +50,7 @@ import {
   CONTRACT_ABI,
   CONTRACT_ADDRESS,
   NETWORK_CONFIG,
+  randomRPC,
 } from "@/constants/dot";
 
 // ===== 常量定义 =====
@@ -282,8 +283,8 @@ export default function PageDot() {
         setItem("dotNodes", nodes);
       }
     } catch (err) {
-      console.error("获取节点列表失败:", err);
-      setError("获取节点列表失败，请检查 RPC 连接");
+      console.info("获取节点列表失败:", err);
+      setError("获取节点列表失败，请更换 RPC");
       showNotification("获取失败", "无法获取节点列表", "red");
     } finally {
       setLoading(false);
@@ -583,6 +584,25 @@ export default function PageDot() {
           <Alert color="red" title="加载失败" icon={<IconX size={16} />}>
             {error}
           </Alert>
+
+          <Group mt="md">
+            <Button
+              size="sm"
+              color="yellow"
+              variant="light"
+              onClick={() => setCustomRPC(randomRPC())}
+            >
+              更换 RPC
+            </Button>
+            <Button
+              size="sm"
+              color="orange"
+              variant="light"
+              onClick={() => fetchNodes()}
+            >
+              重新尝试
+            </Button>
+          </Group>
         </Paper>
       ) : dotNodes.length === 0 ? (
         <Paper shadow="sm" p="xl" radius="md" style={{ textAlign: "center" }}>

@@ -125,7 +125,7 @@ const initEditor = async (el: HTMLDivElement) => {
     initialValue: "",
     initialEditType: "wysiwyg",
     previewStyle: "vertical",
-    placeholder: "\\n✍️ 开始记录你的灵感",
+    placeholder: "\n✍️ 开始记录你的灵感",
     // 隐藏切换到 markdown
     // hideModeSwitch: false,
     ...getEditorCore(codeSyntaxHighlight),
