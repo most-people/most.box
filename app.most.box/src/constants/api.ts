@@ -2,15 +2,12 @@ import axios from "axios";
 
 export const isDev = process.env.NODE_ENV !== "production";
 
-export const DotAPI = isDev ? "http://localhost:1976" : "https://dot.most.red";
-export const DotCID = isDev ? "http://localhost:8080" : "https://cid.most.red";
-
 export const SupabaseURL = isDev
   ? "http://localhost:2025/auth/callback"
   : "https://most.box/auth/callback";
 
 export const api = axios.create({
-  baseURL: DotAPI,
+  baseURL: "",
 });
 
 // 添加请求拦截器，自动在 header 中加载 Authorization
@@ -33,10 +30,7 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    // 网络错误
-    if (error.code === "ERR_NETWORK") {
-      window.location.href = "/dot";
-    }
+    // window.location.href = "/dot";
     return Promise.reject(error);
   }
 );

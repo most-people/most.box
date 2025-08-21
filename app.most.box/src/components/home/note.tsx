@@ -95,10 +95,8 @@ export default function HomeNote() {
         setItem("notes", notes);
       }
     } catch (error) {
-      notifications.show({
-        message: (error as Error).message,
-        color: "red",
-      });
+      console.info(error);
+      // notifications.show({ message: (error as Error).message, color: "red" });
     } finally {
       setFetchLoading(false);
     }

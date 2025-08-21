@@ -4,10 +4,15 @@ import { useUserStore } from "@/stores/userStore";
 import { useEffect } from "react";
 import { api } from "@/constants/api";
 import { useComputedColorScheme, useMantineColorScheme } from "@mantine/core";
+import { usePathname, useRouter } from "next/navigation";
 
 export default function AppProvider() {
   const initWallet = useUserStore((state) => state.initWallet);
   const setItem = useUserStore((state) => state.setItem);
+  const dotAPI = useUserStore((state) => state.dotAPI);
+  const updateDot = useUserStore((state) => state.updateDot);
+  const router = useRouter();
+
   const initFinger = async () => {
     try {
       const fp = await FingerprintJS.load();
@@ -22,15 +27,26 @@ export default function AppProvider() {
     }
   };
 
-  const initDot = () => {
-    const dotAPI = localStorage.getItem("dotAPI");
+  const initDot = async () => {
+    const hash = window.location.hash.slice(1);
+    const dot = hash
+      ? `http${hash.endsWith(":1976") ? "" : "s"}://` + hash
+      : hash;
+    const dotAPI = dot || localStorage.getItem("dotAPI");
     if (dotAPI) {
       api.defaults.baseURL = dotAPI;
-      setItem("dotAPI", dotAPI);
-      const dotCID = localStorage.getItem("dotCID");
-      if (dotCID) {
-        setItem("dotCID", dotCID);
-      }
+      // setItem("dotAPI", dotAPI);
+      updateDot(dotAPI).then((list) => {
+        if (!list) {
+          router.push("/dot");
+        }
+      });
+    } else {
+      router.push("/dot");
+    }
+    const dotCID = localStorage.getItem("dotCID");
+    if (dotCID) {
+      setItem("dotCID", dotCID);
     }
   };
 
@@ -39,6 +55,25 @@ export default function AppProvider() {
     initFinger();
     sessionStorage.firstPath = window.location.pathname;
   }, []);
+
+  const pathname = usePathname();
+
+  useEffect(() => {
+    if (pathname && dotAPI) {
+      try {
+        const url = new URL(window.location.href);
+        const dot = new URL(dotAPI);
+        if (url.hash !== "#" + dot.host) {
+          if (url.host === dot.host) {
+            url.hash = "";
+          } else {
+            url.hash = dot.host;
+          }
+          router.replace(url.href, { scroll: false });
+        }
+      } catch {}
+    }
+  }, [pathname, dotAPI]);
 
   const { colorScheme } = useMantineColorScheme();
   const computedColorScheme = useComputedColorScheme();

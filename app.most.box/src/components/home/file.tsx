@@ -68,11 +68,8 @@ export default function HomeFile() {
       setSearchQuery("");
       setItem("files", res.data);
     } catch (error) {
-      console.error(error);
-      notifications.show({
-        message: (error as Error).message,
-        color: "red",
-      });
+      console.info(error);
+      // notifications.show({ message: (error as Error).message, color: "red" });
     } finally {
       setFetchLoading(false);
     }
@@ -117,7 +114,7 @@ export default function HomeFile() {
       setNewFolderModalOpen(false);
       setNewFolderName("");
     } catch (error) {
-      console.error(error);
+      console.info(error);
       notifications.show({
         message: (error as Error).message,
         color: "red",

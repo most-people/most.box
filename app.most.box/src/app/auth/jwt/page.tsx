@@ -13,7 +13,6 @@ import { useUserStore } from "@/stores/userStore";
 import { useRouter } from "next/navigation";
 
 export default function AuthJWT() {
-  const updateDot = useUserStore((state) => state.updateDot);
   const setItem = useUserStore((state) => state.setItem);
   const fingerprint = useUserStore((state) => state.fingerprint);
   const router = useRouter();
@@ -44,7 +43,6 @@ export default function AuthJWT() {
   useEffect(() => {
     if (fingerprint) {
       initToken();
-      updateDot(location.origin);
     }
   }, [fingerprint]);
 

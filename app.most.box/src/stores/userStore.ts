@@ -1,7 +1,7 @@
 import mp from "@/constants/mp";
 import { type MostWallet } from "@/constants/MostWallet";
 import { create } from "zustand";
-import { api, DotAPI, DotCID } from "@/constants/api";
+import { api } from "@/constants/api";
 import { notifications } from "@mantine/notifications";
 
 export interface FileItem {
@@ -107,8 +107,8 @@ export const useUserStore = create<State>((set, get) => ({
   },
   setItem: (key, value) => set((state) => ({ ...state, [key]: value })),
   firstPath: "",
-  dotAPI: DotAPI,
-  dotCID: DotCID,
+  dotAPI: "",
+  dotCID: "",
   dotNodes: [],
   notes: undefined,
   notesQuery: "",

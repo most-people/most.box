@@ -796,7 +796,7 @@ export default function PageDot() {
                     loading={switchingNode === node.address}
                     disabled={isDisabledNode(node)}
                   >
-                    {isCurrentNode(node) ? "当前节点" : "切换节点"}
+                    {isCurrentNode(node) ? "当前节点" : "选择节点"}
                   </Button>
                 </Group>
               </Stack>
