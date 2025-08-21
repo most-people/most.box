@@ -69,18 +69,9 @@ export const useUserStore = create<State>((set, get) => ({
   async updateDot(url) {
     try {
       const dotAPI = new URL(url).origin;
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-      const res = await fetch(dotAPI + "/api.dot", {
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-      const dot: Dot = await res.json();
+      const res = await api.get("/api.dot", { baseURL: dotAPI });
+      const dot = res.data as Dot;
       api.defaults.baseURL = dotAPI;
-
       set({ dotAPI });
       localStorage.setItem("dotAPI", dotAPI);
 

@@ -35,9 +35,8 @@ export default function AppProvider() {
     const dotAPI = dot || localStorage.getItem("dotAPI");
     if (dotAPI) {
       api.defaults.baseURL = dotAPI;
-      // setItem("dotAPI", dotAPI);
       updateDot(dotAPI).then((list) => {
-        if (!list) {
+        if (list === null) {
           router.push("/dot");
         }
       });

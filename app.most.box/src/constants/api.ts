@@ -30,7 +30,7 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    // window.location.href = "/dot";
+    window.location.href = "/dot";
     return Promise.reject(error);
   }
 );
