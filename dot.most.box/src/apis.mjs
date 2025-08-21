@@ -10,6 +10,52 @@ const isRdrandSupported = rng.isRrdrandSupported();
 // SSE rooms: roomId -> Set<{ id: string, send: (data:any)=>void, res: ServerResponse }>
 const rooms = new Map();
 
+// ---- SSE helpers (deduplicated) ----
+const setSSEHeaders = (reply) => {
+  reply.raw.setHeader("Content-Type", "text/event-stream");
+  reply.raw.setHeader("Cache-Control", "no-cache");
+  reply.raw.setHeader("Connection", "keep-alive");
+  reply.raw.setHeader("Access-Control-Allow-Origin", "*");
+  reply.raw.flushHeaders?.();
+};
+
+const makeSSESender = (rawRes) => (obj) => {
+  try {
+    rawRes.write(`data: ${JSON.stringify(obj)}\n\n`);
+  } catch (_) {
+    // ignore write errors
+  }
+};
+
+const getOrCreateRoom = (roomId) => {
+  let set = rooms.get(roomId);
+  if (!set) {
+    set = new Set();
+    rooms.set(roomId, set);
+  }
+  return set;
+};
+
+const broadcastToRoom = (roomId, message, { excludeId, toId } = {}) => {
+  const set = rooms.get(roomId);
+  if (!set || set.size === 0) return 0;
+  let delivered = 0;
+  set.forEach((client) => {
+    if (excludeId && client.id === String(excludeId)) return;
+    if (toId && client.id !== String(toId)) return;
+    client.send(message);
+    delivered++;
+  });
+  return delivered;
+};
+
+const validateSignalBody = ({ roomId, from, type }) => {
+  if (!roomId) return "roomId 必填";
+  if (!from) return "from 必填";
+  if (!type) return "type 必填";
+  return null;
+};
+
 /**
  * 注册 API 相关的路由
  * @param {import('fastify').FastifyInstance} server - Fastify 服务器实例
@@ -33,27 +79,13 @@ export const registerApis = (server, __dirname) => {
       }
 
       // SSE 必要响应头
-      reply.raw.setHeader("Content-Type", "text/event-stream");
-      reply.raw.setHeader("Cache-Control", "no-cache");
-      reply.raw.setHeader("Connection", "keep-alive");
-      reply.raw.setHeader("Access-Control-Allow-Origin", "*");
-      reply.raw.flushHeaders?.();
+      setSSEHeaders(reply);
 
       // 写入工具
-      const send = (obj) => {
-        try {
-          reply.raw.write(`data: ${JSON.stringify(obj)}\n\n`);
-        } catch (e) {
-          // ignore
-        }
-      };
+      const send = makeSSESender(reply.raw);
 
       // 加入房间
-      let set = rooms.get(roomId);
-      if (!set) {
-        set = new Set();
-        rooms.set(roomId, set);
-      }
+      const set = getOrCreateRoom(roomId);
       const client = { id: String(clientId), send, res: reply.raw };
       set.add(client);
       console.log(
@@ -90,23 +122,17 @@ export const registerApis = (server, __dirname) => {
   server.post("/api.signaling", async (request, reply) => {
     try {
       const { roomId, from, to, type, payload } = request.body || {};
-      if (!roomId || !from || !type) {
+
+      const err = validateSignalBody({ roomId, from, type });
+      if (err) {
         reply.code(400);
-        return { ok: false, message: "roomId、from、type 必填" };
+        return { ok: false, message: err };
       }
 
-      const s = rooms.get(roomId);
-      if (!s || s.size === 0) {
-        return { ok: true, delivered: 0 };
-      }
-
-      let delivered = 0;
       const message = { from, type, payload, ts: Date.now() };
-      s.forEach((client) => {
-        if (client.id === String(from)) return; // 不回给自己
-        if (to && client.id !== String(to)) return; // 指定接收方
-        client.send(message);
-        delivered++;
+      const delivered = broadcastToRoom(roomId, message, {
+        excludeId: from,
+        toId: to,
       });
 
       return { ok: true, delivered };

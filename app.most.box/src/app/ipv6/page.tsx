@@ -11,7 +11,7 @@ import {
   Title,
   Paper,
 } from "@mantine/core";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 
 type Role = "caller" | "callee";
 
@@ -44,8 +44,80 @@ export default function PageWebRTC() {
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
   const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
+  const roleRef = useRef<Role | null>(null);
+
+  useEffect(() => {
+    roleRef.current = role;
+  }, [role]);
 
   const appendLog = (s: string) => setLog((prev) => [s, ...prev].slice(0, 200));
+
+  // ---- Helpers ----
+  const safePlay = async (el: HTMLVideoElement | null) => {
+    if (!el) return;
+    try {
+      await el.play();
+    } catch (e) {
+      appendLog(`video play blocked: ${e}`);
+    }
+  };
+
+  const attachLocalStream = async (pc: RTCPeerConnection, stream: MediaStream) => {
+    localStreamRef.current = stream;
+    if (localVideoRef.current) {
+      localVideoRef.current.srcObject = stream;
+      await safePlay(localVideoRef.current);
+    }
+    stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+  };
+
+  const getLocalMediaWithFallback = async (): Promise<MediaStream> => {
+    try {
+      return await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: { width: 640, height: 360 },
+      });
+    } catch (e) {
+      appendLog(`getUserMedia video failed, fallback to audio-only: ${e}`);
+      return await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    }
+  };
+
+  const drainPendingCandidates = async (pc: RTCPeerConnection) => {
+    if (!pendingCandidatesRef.current.length) return;
+    const queued = pendingCandidatesRef.current.splice(0);
+    for (const c of queued) {
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(c));
+      } catch (err) {
+        appendLog(`drain candidate error: ${err}`);
+      }
+    }
+  };
+
+  const applyRemoteDescriptionAndDrain = async (
+    pc: RTCPeerConnection,
+    desc: RTCSessionDescriptionInit
+  ) => {
+    await pc.setRemoteDescription(new RTCSessionDescription(desc));
+    await drainPendingCandidates(pc);
+  };
+
+  const queueOrAddCandidate = async (
+    pc: RTCPeerConnection,
+    candidate: RTCIceCandidateInit
+  ) => {
+    try {
+      if (!pc.remoteDescription) {
+        pendingCandidatesRef.current.push(candidate);
+        appendLog("queued remote ICE candidate");
+      } else {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      }
+    } catch (err) {
+      appendLog(`addIceCandidate error: ${err}`);
+    }
+  };
 
   const postSignal = async (msg: {
     roomId: string;
@@ -81,12 +153,7 @@ export default function PageWebRTC() {
 
     pc.onicecandidate = (event) => {
       if (event.candidate) {
-        postSignal({
-          roomId,
-          from: clientId,
-          type: "candidate",
-          payload: event.candidate,
-        });
+        postSignal({ roomId, from: clientId, type: "candidate", payload: event.candidate });
       }
     };
 
@@ -96,38 +163,12 @@ export default function PageWebRTC() {
       const [stream] = ev.streams;
       if (stream) {
         remoteVideoRef.current.srcObject = stream;
-        remoteVideoRef.current
-          .play()
-          .then(() => appendLog("remote element playing"))
-          .catch((e) => appendLog(`remote play blocked: ${e}`));
+        safePlay(remoteVideoRef.current);
       }
     };
 
-    // 本地媒体（优先尝试视频+音频，失败则回退仅音频）
-    try {
-      const local = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: { width: 640, height: 360 },
-      });
-      localStreamRef.current = local;
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = local;
-        await localVideoRef.current.play().catch(() => {});
-      }
-      local.getTracks().forEach((t) => pc.addTrack(t, local));
-    } catch (e) {
-      appendLog(`getUserMedia video failed, fallback to audio-only: ${e}`);
-      const local = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: false,
-      });
-      localStreamRef.current = local;
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = local;
-        await localVideoRef.current.play().catch(() => {});
-      }
-      local.getTracks().forEach((t) => pc.addTrack(t, local));
-    }
+    const local = await getLocalMediaWithFallback();
+    await attachLocalStream(pc, local);
 
     pcRef.current = pc;
     return pc;
@@ -135,24 +176,16 @@ export default function PageWebRTC() {
 
   const subscribeSSE = () => {
     if (esRef.current) esRef.current.close();
-    const url = `${SSE_URL}?roomId=${encodeURIComponent(
-      roomId
-    )}&clientId=${encodeURIComponent(clientId)}`;
+    const url = `${SSE_URL}?roomId=${encodeURIComponent(roomId)}&clientId=${encodeURIComponent(clientId)}`;
     appendLog(`SSE subscribe: ${url}`);
     const es = new EventSource(url, { withCredentials: false });
 
     es.onopen = () => {
       appendLog("SSE opened");
       setConnected(true);
-      // Caller 在通道打开后重发当前 offer，避免 Callee 后加入收不到
       const pc = pcRef.current;
-      if (role === "caller" && pc?.localDescription?.type === "offer") {
-        postSignal({
-          roomId,
-          from: clientId,
-          type: "offer",
-          payload: pc.localDescription,
-        });
+      if (roleRef.current === "caller" && pc?.localDescription?.type === "offer") {
+        postSignal({ roomId, from: clientId, type: "offer", payload: pc.localDescription });
         appendLog("re-sent offer after SSE open");
       }
     };
@@ -174,56 +207,15 @@ export default function PageWebRTC() {
         const pc = pcRef.current;
         if (!pc) return;
 
-        if (data.type === "offer" && role === "callee") {
-          await pc.setRemoteDescription(
-            new RTCSessionDescription(data.payload)
-          );
-          // Drain queued candidates after remote description is set
-          if (pendingCandidatesRef.current.length) {
-            const queued = pendingCandidatesRef.current.splice(0);
-            for (const c of queued) {
-              try {
-                await pc.addIceCandidate(new RTCIceCandidate(c));
-              } catch (err) {
-                appendLog(`drain candidate error: ${err}`);
-              }
-            }
-          }
+        if (data.type === "offer" && roleRef.current === "callee") {
+          await applyRemoteDescriptionAndDrain(pc, data.payload);
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
-          await postSignal({
-            roomId,
-            from: clientId,
-            type: "answer",
-            payload: answer,
-          });
-        } else if (data.type === "answer" && role === "caller") {
-          await pc.setRemoteDescription(
-            new RTCSessionDescription(data.payload)
-          );
-          // Drain queued candidates after remote description is set
-          if (pendingCandidatesRef.current.length) {
-            const queued = pendingCandidatesRef.current.splice(0);
-            for (const c of queued) {
-              try {
-                await pc.addIceCandidate(new RTCIceCandidate(c));
-              } catch (err) {
-                appendLog(`drain candidate error: ${err}`);
-              }
-            }
-          }
+          await postSignal({ roomId, from: clientId, type: "answer", payload: answer });
+        } else if (data.type === "answer" && roleRef.current === "caller") {
+          await applyRemoteDescriptionAndDrain(pc, data.payload);
         } else if (data.type === "candidate") {
-          try {
-            if (!pc.remoteDescription) {
-              // Queue candidate until remote description is set
-              pendingCandidatesRef.current.push(data.payload);
-              appendLog("queued remote ICE candidate");
-            } else {
-              await pc.addIceCandidate(new RTCIceCandidate(data.payload));
-            }
-          } catch (err) {
-            appendLog(`addIceCandidate error: ${err}`);
-          }
+          await queueOrAddCandidate(pc, data.payload);
         }
       } catch (e) {
         appendLog(`onmessage parse error: ${e}`);
@@ -235,8 +227,8 @@ export default function PageWebRTC() {
 
   const connect = async (as: Role) => {
     try {
+      roleRef.current = as; // ensure immediate consistency
       setRole(as);
-      // reset queued candidates at the beginning of a new connection
       pendingCandidatesRef.current = [];
       appendLog(`connect as ${as}, room=${roomId}, id=${clientId}`);
       await setupPeerConnection();
@@ -246,12 +238,7 @@ export default function PageWebRTC() {
         const pc = pcRef.current!;
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
-        await postSignal({
-          roomId,
-          from: clientId,
-          type: "offer",
-          payload: offer,
-        });
+        await postSignal({ roomId, from: clientId, type: "offer", payload: offer });
       }
     } catch (e: any) {
       appendLog(`connect error: ${e?.message || e}`);
@@ -266,9 +253,7 @@ export default function PageWebRTC() {
     const pc = pcRef.current;
     if (pc) {
       pc.getSenders().forEach((s) => {
-        try {
-          s.track?.stop();
-        } catch {}
+        try { s.track?.stop(); } catch {}
       });
       pc.onicecandidate = null;
       pc.ontrack = null;
@@ -278,10 +263,16 @@ export default function PageWebRTC() {
 
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
     localStreamRef.current = null;
-    // clear any queued candidates
     pendingCandidatesRef.current = [];
     appendLog("disconnected");
   };
+
+  useEffect(() => {
+    return () => {
+      // cleanup on unmount
+      disconnect();
+    };
+  }, []);
 
   return (
     <Container py="md">
