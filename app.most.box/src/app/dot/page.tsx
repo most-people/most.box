@@ -101,9 +101,9 @@ export default function PageDot() {
 
   const title = useMemo(() => {
     try {
-      return new URL(dotAPI).hostname.toUpperCase();
+      return new URL(dotAPI).host.toUpperCase();
     } catch {
-      return "节点选择";
+      return "DOT.MOST.BOX";
     }
   }, [dotAPI]);
 
@@ -435,12 +435,12 @@ export default function PageDot() {
   // ===== 主渲染 =====
   return (
     <Container size="lg" w="100%" style={{ wordBreak: "break-all" }}>
-      <AppHeader title={title} />
+      <AppHeader title="节点选择" />
 
       {/* 当前节点信息区域 */}
       <Box mb="lg">
         <Stack align="center">
-          <Title>DOT.MOST.BOX</Title>
+          <Title>{title}</Title>
           {ApiList.length > 0 ? (
             <>
               <Text>已成功接入</Text>

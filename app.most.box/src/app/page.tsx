@@ -29,7 +29,7 @@ export default function PageHome() {
 
   const title = useMemo(() => {
     try {
-      return new URL(dotAPI).hostname.toUpperCase();
+      return new URL(dotAPI).host.toUpperCase();
     } catch {
       return "MOST.BOX";
     }
