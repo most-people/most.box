@@ -52,6 +52,7 @@ import {
   NETWORK_CONFIG,
   randomRPC,
 } from "@/constants/dot";
+import { useRouter } from "next/navigation";
 
 // ===== 常量定义 =====
 const TIMEOUT = 2000;
@@ -65,6 +66,7 @@ type DetectionResult = {
 type NetworkType = "mainnet" | "testnet";
 
 export default function PageDot() {
+  const router = useRouter();
   // ===== Zustand Store =====
   const setItem = useUserStore((state) => state.setItem);
   const dotAPI = useUserStore((state) => state.dotAPI);
@@ -443,7 +445,13 @@ export default function PageDot() {
         <Stack align="center">
           <Text mt="md">当前节点</Text>
           <Title>{title}</Title>
-          <Anchor component={Link} href="/dot/readme" c="dimmed">
+          <Anchor
+            c="dimmed"
+            onClick={() => {
+              localStorage.setItem("homeTab", "explore");
+              window.open("/");
+            }}
+          >
             「轻松简单、开源免费、部署自己的节点」
           </Anchor>
           {ApiList.length > 0 ? (

@@ -18,6 +18,16 @@ const SignMessage = ({ dotApi }: { dotApi: string }) => {
   const [deployLoading, setDeployLoading] = useState(false);
   const [reloadLoading, setReloadLoading] = useState(false);
 
+  const [showReload, setShowReload] = useState(false);
+
+  useEffect(() => {
+    const query = new URLSearchParams(window.location.search);
+    const reload = query.get("reload");
+    if (reload !== null) {
+      setShowReload(true);
+    }
+  }, []);
+
   const isLoading = deployLoading || reloadLoading;
 
   const deploy = async (token: string) => {
@@ -123,16 +133,18 @@ const SignMessage = ({ dotApi }: { dotApi: string }) => {
         签名部署
       </Button>
 
-      <Button
-        leftSection={<IconRefreshAlert />}
-        variant="outline"
-        disabled={isLoading}
-        loading={reloadLoading}
-        loaderProps={{ type: "dots" }}
-        onClick={() => sign("reload")}
-      >
-        签名重启
-      </Button>
+      {showReload && (
+        <Button
+          leftSection={<IconRefreshAlert />}
+          variant="outline"
+          disabled={isLoading}
+          loading={reloadLoading}
+          loaderProps={{ type: "dots" }}
+          onClick={() => sign("reload")}
+        >
+          签名重启
+        </Button>
+      )}
     </Stack>
   );
 };

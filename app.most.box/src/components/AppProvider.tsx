@@ -28,21 +28,19 @@ export default function AppProvider() {
   };
 
   const initDot = async () => {
-    const hash = window.location.hash.slice(1);
-    const dot = hash
-      ? `http${hash.endsWith(":1976") ? "" : "s"}://` + hash
-      : hash;
+    const host = location.hash.slice(1);
+    const protocol = `http${host.endsWith(":1976") ? "" : "s"}://`;
+    const dot = host ? protocol + host : null;
     const dotAPI = dot || localStorage.getItem("dotAPI");
     if (dotAPI) {
       api.defaults.baseURL = dotAPI;
-      updateDot(dotAPI).then((list) => {
-        if (list === null) {
-          router.push("/dot");
-        }
-      });
-    } else {
-      router.push("/dot");
     }
+    updateDot(dotAPI || location.origin).then((list) => {
+      if (list === null) {
+        router.push("/dot");
+      }
+    });
+
     const dotCID = localStorage.getItem("dotCID");
     if (dotCID) {
       setItem("dotCID", dotCID);
