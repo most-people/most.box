@@ -87,7 +87,7 @@ export const useUserStore = create<State>((set, get) => ({
       return dot.APIs;
     } catch (error) {
       notifications.show({
-        title: "节点切换失败",
+        title: "节点不可用",
         message: url || (error as Error).message,
         color: "red",
       });

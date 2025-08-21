@@ -436,12 +436,16 @@ export default function PageDot() {
   // ===== 主渲染 =====
   return (
     <Container size="lg" w="100%" style={{ wordBreak: "break-all" }}>
-      <AppHeader title="节点选择" />
+      <AppHeader title="请选择节点" />
 
       {/* 当前节点信息区域 */}
       <Box mb="lg">
         <Stack align="center">
+          <Text mt="md">当前节点</Text>
           <Title>{title}</Title>
+          <Anchor component={Link} href="/dot/readme" c="dimmed">
+            「轻松简单、开源免费、部署自己的节点」
+          </Anchor>
           {ApiList.length > 0 ? (
             <>
               <Text>已成功接入</Text>
@@ -460,12 +464,9 @@ export default function PageDot() {
               </Stack>
             </>
           ) : (
-            <>
-              <Text>当前节点</Text>
-              <Anchor component={Link} href={dotAPI} target="_blank">
-                {dotAPI}
-              </Anchor>
-            </>
+            <Anchor component={Link} href={dotAPI} target="_blank">
+              {dotAPI}
+            </Anchor>
           )}
 
           <Group mt="lg" w="100%" justify="space-between">
@@ -474,14 +475,14 @@ export default function PageDot() {
               leftSection={<IconWorldWww />}
               value={apiURL}
               onChange={(event) => setApiURL(event.currentTarget.value)}
-              placeholder="自定义节点地址"
+              placeholder="私有节点地址"
             />
             <Button
               leftSection={<IconSettings size={16} />}
               onClick={apiUrlChange}
               loading={apiLoading}
             >
-              自定义节点
+              私有节点
             </Button>
           </Group>
         </Stack>

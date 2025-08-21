@@ -10,6 +10,12 @@ export const api = axios.create({
   baseURL: "",
 });
 
+// 由客户端组件注入的路由跳转函数 useRouter().push
+let routerPush: ((url: string) => void) | null = null;
+export const setRouterPush = (push: (url: string) => void) => {
+  routerPush = push;
+};
+
 // 添加请求拦截器，自动在 header 中加载 Authorization
 api.interceptors.request.use(
   (config) => {
@@ -30,7 +36,9 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    window.location.href = "/dot";
+    if (routerPush) {
+      routerPush("/dot");
+    }
     return Promise.reject(error);
   }
 );

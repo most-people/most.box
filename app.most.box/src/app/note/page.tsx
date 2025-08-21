@@ -38,23 +38,19 @@ const PageContent = () => {
   const [isSecret, setIsSecret] = useState(false);
   const [inited, setInited] = useState(false);
 
-  const setHash = (cid: string, uid?: string) => {
+  const updateCid = (cid: string, uid?: string) => {
     const url = new URL(window.location.href);
-    url.hash = cid;
+    url.searchParams.set("cid", cid);
     if (uid) {
       url.searchParams.set("uid", uid);
     }
     window.history.replaceState(null, "", url.href);
   };
 
-  const fetchNote = (cid: string, customCID?: string) => {
-    fetch(`${customCID || dotCID}/ipfs/${cid}/index.md`)
+  const fetchNote = (cid: string) => {
+    fetch(`${dotCID}/ipfs/${cid}/index.md`)
       .then((response) => response.text())
       .then((content) => {
-        const customAPI = params.get("dot") || "";
-        const url = new URL(window.location.href);
-        url.searchParams.set("dot", customAPI || api.getUri());
-        window.history.replaceState(null, "", url.href);
         setInited(true);
         setIsSecret(false);
         setContent(content);
@@ -103,7 +99,7 @@ const PageContent = () => {
       const res = await api.put("/files.upload", formData);
       const cid = res.data?.cid;
       if (cid) {
-        setHash(cid, wallet?.address);
+        updateCid(cid, wallet?.address);
         notifications.show({
           message: `${name} 保存成功`,
           color: "green",
@@ -154,29 +150,27 @@ const PageContent = () => {
   };
 
   const init = async () => {
-    const hash = location.hash;
     const uid = params.get("uid");
     const name = params.get("name");
-    const customAPI = params.get("dot") || undefined;
-
+    // 获取最新 CID
     if (uid && name) {
       try {
-        const resDot = await api.get(`/api.dot`, { baseURL: customAPI });
-        const customCID = (resDot.data?.CIDs?.[0] as string) || undefined;
-        const res = await api.get(`/files.find.cid/${uid}/.note/${name}`, {
-          baseURL: customAPI,
-        });
+        const res = await api.get(`/files.find.cid/${uid}/.note/${name}`);
         const cid = res.data;
         if (cid) {
-          setHash(cid);
-          fetchNote(cid, customCID);
-        } else if (hash) {
-          fetchNote(hash.slice(1), customCID);
+          updateCid(cid);
+          fetchNote(cid);
+        } else {
+          const cid = params.get("cid");
+          if (cid) {
+            fetchNote(cid);
+          }
         }
       } catch (error) {
         console.error(error);
-        if (hash) {
-          fetchNote(hash.slice(1));
+        const cid = params.get("cid");
+        if (cid) {
+          fetchNote(cid);
         }
       }
     }
@@ -233,9 +227,12 @@ const PageContent = () => {
   const nodeDark = useUserStore((state) => state.nodeDark);
 
   useEffect(() => {
-    init();
     initToastUI();
   }, []);
+
+  useEffect(() => {
+    if (dotCID) init();
+  }, [dotCID]);
 
   return (
     <Container id="page-note">

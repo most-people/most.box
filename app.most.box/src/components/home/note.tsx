@@ -54,12 +54,10 @@ export default function HomeNote() {
   const [renameLoading, setRenameLoading] = useState(false);
 
   const shareUrl = (note: Note) => {
-    const shareUrl = new URL(window.location.origin);
+    const shareUrl = new URL(window.location.href);
     shareUrl.pathname = "/note/";
     shareUrl.searchParams.set("uid", wallet?.address || "");
     shareUrl.searchParams.set("name", note.name);
-    shareUrl.searchParams.set("dot", api.getUri());
-    shareUrl.hash = note.cid;
     return shareUrl.href;
   };
 

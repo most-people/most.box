@@ -2,7 +2,7 @@
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { useUserStore } from "@/stores/userStore";
 import { useEffect } from "react";
-import { api } from "@/constants/api";
+import { api, setRouterPush } from "@/constants/api";
 import { useComputedColorScheme, useMantineColorScheme } from "@mantine/core";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -50,6 +50,7 @@ export default function AppProvider() {
   };
 
   useEffect(() => {
+    setRouterPush(router.push);
     initDot();
     initFinger();
     sessionStorage.firstPath = window.location.pathname;
