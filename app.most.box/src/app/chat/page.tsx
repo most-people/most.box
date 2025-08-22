@@ -1,5 +1,6 @@
 "use client";
 import { AppHeader } from "@/components/AppHeader";
+import { Icon } from "@/components/Icon";
 import { useUserStore } from "@/stores/userStore";
 import {
   Button,
@@ -18,7 +19,12 @@ import {
   Center,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { IconPhone, IconPhoneCall } from "@tabler/icons-react";
+import {
+  IconPhoneCall,
+  IconPhoneOff,
+  IconPhonePlus,
+  IconPhoneRinging,
+} from "@tabler/icons-react";
 import { useRef, useState, useEffect } from "react";
 
 type Role = "joiner" | "creator";
@@ -33,7 +39,7 @@ type SignalMessage = {
 export default function PageWebRTC() {
   const dotAPI = useUserStore((state) => state.dotAPI);
 
-  const [roomId, setRoomId] = useState<string>("most.box");
+  const [roomId, setRoomId] = useState<string>("001");
   const [clientId, setClientId] = useState<string>("");
   const [role, setRole] = useState<Role | null>(null);
   const [connected, setConnected] = useState(false);
@@ -50,6 +56,12 @@ export default function PageWebRTC() {
   useEffect(() => {
     roleRef.current = role;
   }, [role]);
+
+  const updateRoomId = (id: string) => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("id", id);
+    window.history.replaceState({}, "", url.href);
+  };
 
   const statusText = connected
     ? `已连接${role ? `（${role === "creator" ? "创建者" : "加入者"}）` : ""}`
@@ -251,7 +263,7 @@ export default function PageWebRTC() {
           await queueOrAddCandidate(pc, data.payload);
         }
       } catch (err) {
-        console.info("处理信号失败", err);
+        console.info(err);
       }
     };
 
@@ -317,6 +329,7 @@ export default function PageWebRTC() {
   }, []);
 
   useEffect(() => {
+    updateRoomId(roomId);
     // Generate clientId only on client to avoid SSR/CSR mismatch
     const id =
       typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -327,14 +340,15 @@ export default function PageWebRTC() {
 
   return (
     <Container py="md">
-      <AppHeader title="WebRTC Demo (HTTP + SSE)" />
-
+      <AppHeader title="点对点聊天" />
       <Stack gap="md">
+        <Center>
+          <Icon name="Chat" size={40} />
+        </Center>
         <Group justify="space-between" align="center">
-          <Title order={3} style={{ lineHeight: 1 }}>
-            WebRTC Demo - HTTP + SSE
-          </Title>
+          <Title size="h2">WebRTC + HTTP + SSE</Title>
           <Badge
+            size="lg"
             color={statusColor}
             variant="light"
             aria-live="polite"
@@ -345,14 +359,18 @@ export default function PageWebRTC() {
         </Group>
 
         <Paper p="md" withBorder radius="md">
-          <Group align="flex-end" wrap="wrap">
+          <Group align="flex-end" wrap="wrap" justify="space-between">
             <TextInput
               label="房间 ID"
-              description="双方需使用相同的房间 ID 才可建立连接"
+              description="使用相同的房间 ID 才可建立连接"
               value={roomId}
-              onChange={(e) => setRoomId(e.currentTarget.value)}
-              placeholder="输入房间 ID（如：most.box）"
-              style={{ minWidth: 260, flex: 1 }}
+              onChange={(e) => {
+                updateRoomId(e.currentTarget.value);
+                setRoomId(e.currentTarget.value);
+              }}
+              placeholder="输入房间 ID"
+              flex={1}
+              miw={280}
               rightSection={
                 <CopyButton value={roomId} timeout={1000}>
                   {({ copied, copy }) => (
@@ -372,52 +390,58 @@ export default function PageWebRTC() {
             />
 
             <Group gap="xs" wrap="wrap">
-              <Button
-                onClick={() => connect("creator")}
-                disabled={!clientIdReady || connected}
-                leftSection={<IconPhone size={16} />}
-              >
-                创建
-              </Button>
-
-              <Button
-                onClick={() => connect("joiner")}
-                disabled={!clientIdReady || connected}
-                leftSection={<IconPhoneCall size={16} />}
-                variant="light"
-              >
-                加入
-              </Button>
-
-              <Button
-                color="red"
-                variant="light"
-                onClick={disconnect}
-                disabled={!connected}
-                aria-label="断开连接"
-              >
-                断开
-              </Button>
-
-              {role === "joiner" && (
-                <Button
-                  variant="light"
-                  color="teal"
-                  onClick={() => {
-                    const pc = pcRef.current;
-                    if (pc?.localDescription?.type === "offer") {
-                      postSignal({
-                        roomId,
-                        from: clientId,
-                        type: "offer",
-                        payload: pc.localDescription,
-                      });
-                    }
-                  }}
-                  disabled={!connected}
-                >
-                  重试
-                </Button>
+              {connected ? (
+                <>
+                  <Button
+                    color="red"
+                    variant="light"
+                    onClick={disconnect}
+                    leftSection={<IconPhoneOff size={16} />}
+                  >
+                    断开
+                  </Button>
+                  {role === "joiner" && (
+                    <Button
+                      variant="light"
+                      color="blue"
+                      onClick={() => {
+                        const pc = pcRef.current;
+                        if (pc?.localDescription?.type === "offer") {
+                          postSignal({
+                            roomId,
+                            from: clientId,
+                            type: "offer",
+                            payload: pc.localDescription,
+                          });
+                        }
+                      }}
+                      leftSection={<IconPhoneRinging size={16} />}
+                    >
+                      重试
+                    </Button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Button
+                    onClick={() => connect("creator")}
+                    disabled={!clientIdReady || connected}
+                    leftSection={<IconPhoneCall size={16} />}
+                    color="orange"
+                    variant="light"
+                  >
+                    创建
+                  </Button>
+                  <Button
+                    onClick={() => connect("joiner")}
+                    disabled={!clientIdReady || connected}
+                    leftSection={<IconPhonePlus size={16} />}
+                    color="blue"
+                    variant="light"
+                  >
+                    加入
+                  </Button>
+                </>
               )}
             </Group>
           </Group>
@@ -439,7 +463,7 @@ export default function PageWebRTC() {
                 width: "100%",
                 maxWidth: 560,
                 borderRadius: 8,
-                background: "#111",
+                background: "var(--mantine-color-yellow-light)",
               }}
             />
           </Paper>
@@ -457,7 +481,7 @@ export default function PageWebRTC() {
                 width: "100%",
                 maxWidth: 560,
                 borderRadius: 8,
-                background: "#111",
+                background: "var(--mantine-color-blue-light)",
               }}
             />
           </Paper>

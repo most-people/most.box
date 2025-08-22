@@ -517,6 +517,7 @@ export default function HomeFile() {
                     <Menu.Item
                       onClick={() => setNewFolderModalOpen(true)}
                       leftSection="📁"
+                      disabled={!wallet}
                     >
                       新建文件夹
                     </Menu.Item>

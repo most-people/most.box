@@ -109,6 +109,11 @@ export default function HomeNote() {
       return;
     }
 
+    if (name.includes("/")) {
+      setNoteNameError("不能包含字符 /");
+      return;
+    }
+
     // 检查是否已存在同名笔记
     if (notes?.some((note) => note.name === name)) {
       setNoteNameError("笔记名称已存在");

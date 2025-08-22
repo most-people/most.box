@@ -38,6 +38,9 @@ import Github from "@/assets/icons/github.svg";
 import Mail from "@/assets/icons/mail.svg";
 import Telegram from "@/assets/icons/telegram.svg";
 
+// https://www.flaticon.com/free-icon-font/meeting-alt_13085451?term=talk&related_id=13085451
+import Chat from "@/assets/icons/chat.svg";
+
 const icons = {
   File,
   FileActive,
@@ -53,6 +56,7 @@ const icons = {
   Back,
   More,
   QRCode,
+  Chat,
   // complex
   Exit,
   Web3,
