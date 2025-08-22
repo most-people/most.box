@@ -87,9 +87,8 @@ export default function PageWebRTC() {
     } catch (err) {
       console.info("获取视频失败", err);
       notifications.show({
-        title: "获取视频失败",
         message: "请检查摄像头权限",
-        color: "red",
+        color: "orange",
       });
       try {
         return await navigator.mediaDevices.getUserMedia({
@@ -99,9 +98,8 @@ export default function PageWebRTC() {
       } catch (err) {
         console.info("获取音频失败", err);
         notifications.show({
-          title: "获取音频失败",
           message: "请检查麦克风权限",
-          color: "red",
+          color: "orange",
         });
       }
     }
@@ -267,6 +265,7 @@ export default function PageWebRTC() {
       pendingCandidatesRef.current = [];
 
       await setupPeerConnection();
+
       setRole(as);
       subscribeSSE();
 
@@ -281,7 +280,7 @@ export default function PageWebRTC() {
           payload: offer,
         });
       }
-    } catch (e: any) {}
+    } catch {}
   };
 
   const disconnect = () => {
