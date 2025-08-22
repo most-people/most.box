@@ -64,7 +64,7 @@ export default function PageWeb3() {
           <Text>Ethers</Text>
         </Anchor>
         <Anchor component={Link} href="/ipv6">
-          <Text>IPv6</Text>
+          <Text>Chat</Text>
         </Anchor>
       </Stack>
     </Container>

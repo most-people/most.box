@@ -14,13 +14,14 @@ import {
   Tooltip,
   ActionIcon,
   CopyButton,
-  Divider,
   SimpleGrid,
+  Center,
 } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import { IconPhone, IconPhoneCall } from "@tabler/icons-react";
 import { useRef, useState, useEffect } from "react";
 
-type Role = "caller" | "callee";
+type Role = "joiner" | "creator";
 
 type SignalMessage = {
   from: string;
@@ -32,14 +33,10 @@ type SignalMessage = {
 export default function PageWebRTC() {
   const dotAPI = useUserStore((state) => state.dotAPI);
 
-  const SSE_URL = `${dotAPI}/api.signaling/sse`;
-  const POST_URL = `${dotAPI}/api.signaling`;
-
-  const [roomId, setRoomId] = useState<string>("demo-room");
+  const [roomId, setRoomId] = useState<string>("most.box");
   const [clientId, setClientId] = useState<string>("");
   const [role, setRole] = useState<Role | null>(null);
   const [connected, setConnected] = useState(false);
-  const [log, setLog] = useState<string[]>([]);
 
   const clientIdReady = clientId.length > 0;
   const esRef = useRef<EventSource | null>(null);
@@ -54,11 +51,8 @@ export default function PageWebRTC() {
     roleRef.current = role;
   }, [role]);
 
-  const appendLog = (s: string) => setLog((prev) => [s, ...prev].slice(0, 200));
-  const clearLogs = () => setLog([]);
-
   const statusText = connected
-    ? `已连接${role ? `（${role}）` : ""}`
+    ? `已连接${role ? `（${role === "creator" ? "创建者" : "加入者"}）` : ""}`
     : "未连接";
   const statusColor: any = connected ? "green" : "gray";
 
@@ -67,8 +61,8 @@ export default function PageWebRTC() {
     if (!el) return;
     try {
       await el.play();
-    } catch (e) {
-      appendLog(`video play blocked: ${e}`);
+    } catch (error) {
+      console.info("视频播放失败", error);
     }
   };
 
@@ -84,18 +78,32 @@ export default function PageWebRTC() {
     stream.getTracks().forEach((t) => pc.addTrack(t, stream));
   };
 
-  const getLocalMediaWithFallback = async (): Promise<MediaStream> => {
+  const getLocalMediaWithFallback = async () => {
     try {
       return await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: { width: 640, height: 360 },
       });
-    } catch (e) {
-      appendLog(`getUserMedia video failed, fallback to audio-only: ${e}`);
-      return await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: false,
+    } catch (err) {
+      console.info("获取视频失败", err);
+      notifications.show({
+        title: "获取视频失败",
+        message: "请检查摄像头权限",
+        color: "red",
       });
+      try {
+        return await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: false,
+        });
+      } catch (err) {
+        console.info("获取音频失败", err);
+        notifications.show({
+          title: "获取音频失败",
+          message: "请检查麦克风权限",
+          color: "red",
+        });
+      }
     }
   };
 
@@ -106,7 +114,7 @@ export default function PageWebRTC() {
       try {
         await pc.addIceCandidate(new RTCIceCandidate(c));
       } catch (err) {
-        appendLog(`drain candidate error: ${err}`);
+        console.info("添加 ICE 候选失败", err);
       }
     }
   };
@@ -126,12 +134,11 @@ export default function PageWebRTC() {
     try {
       if (!pc.remoteDescription) {
         pendingCandidatesRef.current.push(candidate);
-        appendLog("queued remote ICE candidate");
       } else {
         await pc.addIceCandidate(new RTCIceCandidate(candidate));
       }
     } catch (err) {
-      appendLog(`addIceCandidate error: ${err}`);
+      console.info("添加 ICE 候选失败", err);
     }
   };
 
@@ -143,15 +150,13 @@ export default function PageWebRTC() {
     payload?: any;
   }) => {
     try {
-      const res = await fetch(POST_URL, {
+      await fetch(`${dotAPI}/api.signaling`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(msg),
       });
-      const data = await res.json().catch(() => ({}));
-      appendLog(`POST ${msg.type} -> delivered: ${data.delivered ?? 0}`);
-    } catch (e: any) {
-      appendLog(`POST error: ${e?.message || e}`);
+    } catch (err) {
+      console.info("发送信号失败", err);
     }
   };
 
@@ -160,12 +165,8 @@ export default function PageWebRTC() {
       iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
     });
 
-    pc.oniceconnectionstatechange = () => {
-      appendLog(`iceConnectionState=${pc.iceConnectionState}`);
-    };
-    pc.onconnectionstatechange = () => {
-      appendLog(`connectionState=${pc.connectionState}`);
-    };
+    pc.oniceconnectionstatechange = () => {};
+    pc.onconnectionstatechange = () => {};
 
     pc.onicecandidate = (event) => {
       if (event.candidate) {
@@ -179,7 +180,6 @@ export default function PageWebRTC() {
     };
 
     pc.ontrack = (ev) => {
-      appendLog(`ontrack: kind=${ev.track.kind}`);
       if (!remoteVideoRef.current) return;
       const [stream] = ev.streams;
       if (stream) {
@@ -189,7 +189,9 @@ export default function PageWebRTC() {
     };
 
     const local = await getLocalMediaWithFallback();
-    await attachLocalStream(pc, local);
+    if (local) {
+      await attachLocalStream(pc, local);
+    }
 
     pcRef.current = pc;
     return pc;
@@ -197,18 +199,18 @@ export default function PageWebRTC() {
 
   const subscribeSSE = () => {
     if (esRef.current) esRef.current.close();
-    const url = `${SSE_URL}?roomId=${encodeURIComponent(
-      roomId
-    )}&clientId=${encodeURIComponent(clientId)}`;
-    appendLog(`SSE subscribe: ${url}`);
-    const es = new EventSource(url, { withCredentials: false });
+    const url = new URL(dotAPI);
+    url.pathname = "/sse.signaling";
+    url.searchParams.append("roomId", roomId);
+    url.searchParams.append("clientId", clientId);
+
+    const es = new EventSource(url.href, { withCredentials: false });
 
     es.onopen = () => {
-      appendLog("SSE opened");
       setConnected(true);
       const pc = pcRef.current;
       if (
-        roleRef.current === "caller" &&
+        roleRef.current === "joiner" &&
         pc?.localDescription?.type === "offer"
       ) {
         postSignal({
@@ -217,12 +219,11 @@ export default function PageWebRTC() {
           type: "offer",
           payload: pc.localDescription,
         });
-        appendLog("re-sent offer after SSE open");
       }
     };
 
-    es.onerror = (ev) => {
-      appendLog(`SSE error: ${JSON.stringify(ev)}`);
+    es.onerror = (err) => {
+      console.info("SSE 连接错误", err);
     };
 
     es.onmessage = async (ev) => {
@@ -230,15 +231,13 @@ export default function PageWebRTC() {
         const data: SignalMessage = JSON.parse(ev.data);
         if (!data || !data.type) return;
         if (data.type === "hello") {
-          appendLog(`SSE hello from ${data.from || "server"}`);
           return;
         }
-        appendLog(`SSE message: ${data.type} from ${data.from}`);
 
         const pc = pcRef.current;
         if (!pc) return;
 
-        if (data.type === "offer" && roleRef.current === "callee") {
+        if (data.type === "offer" && roleRef.current === "creator") {
           await applyRemoteDescriptionAndDrain(pc, data.payload);
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
@@ -248,13 +247,13 @@ export default function PageWebRTC() {
             type: "answer",
             payload: answer,
           });
-        } else if (data.type === "answer" && roleRef.current === "caller") {
+        } else if (data.type === "answer" && roleRef.current === "joiner") {
           await applyRemoteDescriptionAndDrain(pc, data.payload);
         } else if (data.type === "candidate") {
           await queueOrAddCandidate(pc, data.payload);
         }
-      } catch (e) {
-        appendLog(`onmessage parse error: ${e}`);
+      } catch (err) {
+        console.info("处理信号失败", err);
       }
     };
 
@@ -264,13 +263,14 @@ export default function PageWebRTC() {
   const connect = async (as: Role) => {
     try {
       roleRef.current = as; // ensure immediate consistency
-      setRole(as);
+
       pendingCandidatesRef.current = [];
-      appendLog(`connect as ${as}, room=${roomId}, id=${clientId}`);
+
       await setupPeerConnection();
+      setRole(as);
       subscribeSSE();
 
-      if (as === "caller") {
+      if (as === "joiner") {
         const pc = pcRef.current!;
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
@@ -281,22 +281,23 @@ export default function PageWebRTC() {
           payload: offer,
         });
       }
-    } catch (e: any) {
-      appendLog(`connect error: ${e?.message || e}`);
-    }
+    } catch (e: any) {}
   };
 
   const disconnect = () => {
     esRef.current?.close();
     esRef.current = null;
     setConnected(false);
+    setRole(null);
 
     const pc = pcRef.current;
     if (pc) {
       pc.getSenders().forEach((s) => {
         try {
           s.track?.stop();
-        } catch {}
+        } catch (err) {
+          console.info("停止发送器失败", err);
+        }
       });
       pc.onicecandidate = null;
       pc.ontrack = null;
@@ -307,7 +308,6 @@ export default function PageWebRTC() {
     localStreamRef.current?.getTracks().forEach((t) => t.stop());
     localStreamRef.current = null;
     pendingCandidatesRef.current = [];
-    appendLog("disconnected");
   };
 
   useEffect(() => {
@@ -346,71 +346,64 @@ export default function PageWebRTC() {
         </Group>
 
         <Paper p="md" withBorder radius="md">
-          <Stack gap="sm">
-            <Group align="flex-end" wrap="wrap">
-              <TextInput
-                label="房间 ID"
-                description="双方需使用相同的房间 ID 才可建立连接"
-                value={roomId}
-                onChange={(e) => setRoomId(e.currentTarget.value)}
-                placeholder="输入房间 ID（如：demo-room）"
-                style={{ minWidth: 260, flex: 1 }}
-                aria-label="房间 ID"
-              />
-              <Group gap="xs" wrap="wrap">
-                <Button
-                  onClick={() => connect("caller")}
-                  disabled={!clientIdReady || connected}
-                  leftSection={<IconPhoneCall size={16} />}
-                >
-                  连接（发起方）
-                </Button>
-                <Button
-                  onClick={() => connect("callee")}
-                  disabled={!clientIdReady || connected}
-                  variant="light"
-                  leftSection={<IconPhone size={16} />}
-                >
-                  连接（接听方）
-                </Button>
-                <Button
-                  color="red"
-                  variant="light"
-                  onClick={disconnect}
-                  disabled={!connected}
-                  aria-label="断开连接"
-                >
-                  断开
-                </Button>
-              </Group>
-            </Group>
-
-            <Group justify="space-between" wrap="wrap">
-              <Group gap={6}>
-                <Text size="sm" c="dimmed">
-                  客户端 ID:
-                </Text>
-                <Text size="sm" c="dimmed">
-                  {clientIdReady ? clientId : "生成中..."}
-                </Text>
-                <CopyButton value={clientId} timeout={1000}>
+          <Group align="flex-end" wrap="wrap">
+            <TextInput
+              label="房间 ID"
+              description="双方需使用相同的房间 ID 才可建立连接"
+              value={roomId}
+              onChange={(e) => setRoomId(e.currentTarget.value)}
+              placeholder="输入房间 ID（如：most.box）"
+              style={{ minWidth: 260, flex: 1 }}
+              rightSection={
+                <CopyButton value={roomId} timeout={1000}>
                   {({ copied, copy }) => (
-                    <Tooltip label={copied ? "已复制" : "复制客户端ID"}>
+                    <Tooltip label={copied ? "已复制" : "复制"}>
                       <ActionIcon
                         variant={copied ? "filled" : "light"}
                         color={copied ? "teal" : "gray"}
                         onClick={copy}
-                        aria-label="复制客户端ID"
+                        aria-label="复制房间ID"
                       >
                         {copied ? "✓" : "⧉"}
                       </ActionIcon>
                     </Tooltip>
                   )}
                 </CopyButton>
-              </Group>
-              {role === "caller" && (
+              }
+            />
+
+            <Group gap="xs" wrap="wrap">
+              <Button
+                onClick={() => connect("creator")}
+                disabled={!clientIdReady || connected}
+                leftSection={<IconPhone size={16} />}
+              >
+                创建
+              </Button>
+
+              <Button
+                onClick={() => connect("joiner")}
+                disabled={!clientIdReady || connected}
+                leftSection={<IconPhoneCall size={16} />}
+                variant="light"
+              >
+                加入
+              </Button>
+
+              <Button
+                color="red"
+                variant="light"
+                onClick={disconnect}
+                disabled={!connected}
+                aria-label="断开连接"
+              >
+                断开
+              </Button>
+
+              {role === "joiner" && (
                 <Button
-                  variant="outline"
+                  variant="light"
+                  color="teal"
                   onClick={() => {
                     const pc = pcRef.current;
                     if (pc?.localDescription?.type === "offer") {
@@ -420,28 +413,22 @@ export default function PageWebRTC() {
                         type: "offer",
                         payload: pc.localDescription,
                       });
-                      appendLog("手动重发 Offer");
-                    } else {
-                      appendLog(
-                        "当前没有可重发的 Offer（请先作为 Caller 建连）"
-                      );
                     }
                   }}
                   disabled={!connected}
-                  aria-label="手动重发 Offer"
                 >
-                  重发 Offer
+                  重试
                 </Button>
               )}
             </Group>
-          </Stack>
+          </Group>
         </Paper>
 
         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
           <Paper p="sm" withBorder radius="md">
-            <Text fw={500} mb={4} component="h3" style={{ lineHeight: 1.2 }}>
-              本地流
-            </Text>
+            <Center>
+              <Text>我</Text>
+            </Center>
             <video
               ref={localVideoRef}
               playsInline
@@ -458,9 +445,9 @@ export default function PageWebRTC() {
             />
           </Paper>
           <Paper p="sm" withBorder radius="md">
-            <Text fw={500} mb={4} component="h3" style={{ lineHeight: 1.2 }}>
-              远端流
-            </Text>
+            <Center>
+              <Text>你</Text>
+            </Center>
             <video
               ref={remoteVideoRef}
               playsInline
@@ -476,45 +463,6 @@ export default function PageWebRTC() {
             />
           </Paper>
         </SimpleGrid>
-
-        <Paper p="sm" withBorder radius="md">
-          <Group justify="space-between" align="center" mb={8}>
-            <Text fw={500} component="h3" style={{ lineHeight: 1.2 }}>
-              日志
-            </Text>
-            <Button
-              size="xs"
-              variant="subtle"
-              onClick={clearLogs}
-              aria-label="清空日志"
-            >
-              清空日志
-            </Button>
-          </Group>
-          <Divider mb="xs" />
-          <Stack
-            gap={4}
-            style={{ maxHeight: 260, overflowY: "auto" }}
-            role="log"
-            aria-live="polite"
-          >
-            {log.map((l, i) => (
-              <Text
-                key={i}
-                size="xs"
-                c="dimmed"
-                style={{ wordBreak: "break-word" }}
-              >
-                {l}
-              </Text>
-            ))}
-            {log.length === 0 && (
-              <Text size="xs" c="dimmed">
-                暂无日志
-              </Text>
-            )}
-          </Stack>
-        </Paper>
       </Stack>
     </Container>
   );

@@ -9,6 +9,7 @@ import { fileURLToPath } from "url";
 
 import { registerFiles } from "./files.mjs";
 import { registerApis } from "./apis.mjs";
+import { registerSSE } from "./sse.mjs";
 import mp from "./mp.mjs";
 
 // 创建 IPFS 客户端
@@ -43,6 +44,7 @@ server.register(fastifyMultipart, {
 // 注册文件路由
 registerFiles(server, ipfs);
 registerApis(server, __dirname);
+registerSSE(server);
 
 const start = async () => {
   // 运行 DOT.MOST.BOX
