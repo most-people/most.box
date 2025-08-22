@@ -43,6 +43,7 @@ export default function PageWebRTC() {
   const [clientId, setClientId] = useState<string>("");
   const [role, setRole] = useState<Role | null>(null);
   const [connected, setConnected] = useState(false);
+  const [roomUsers, setRoomUsers] = useState<string[]>([]);
 
   const clientIdReady = clientId.length > 0;
   const esRef = useRef<EventSource | null>(null);
@@ -170,6 +171,20 @@ export default function PageWebRTC() {
     }
   };
 
+  const fetchRoomUsers = async () => {
+    try {
+      const response = await fetch(
+        `${dotAPI}/api.room?roomId=${encodeURIComponent(roomId)}`
+      );
+      const data = await response.json();
+      if (data.ok) {
+        setRoomUsers(data.users || []);
+      }
+    } catch (err) {
+      console.info("获取房间用户失败", err);
+    }
+  };
+
   const setupPeerConnection = async () => {
     // STUN 服务器测试 https://webrtc.github.io/samples/src/content/peerconnection/trickle-ice/
     const pc = new RTCPeerConnection({
@@ -224,6 +239,13 @@ export default function PageWebRTC() {
 
     es.onopen = () => {
       setConnected(true);
+      // 立即获取房间用户列表
+      fetchRoomUsers();
+      // 每5秒更新一次用户列表
+      const userListInterval = setInterval(fetchRoomUsers, 5000);
+      // 保存interval引用以便清理
+      (es as any).userListInterval = userListInterval;
+
       const pc = pcRef.current;
       if (
         roleRef.current === "joiner" &&
@@ -304,10 +326,15 @@ export default function PageWebRTC() {
   };
 
   const disconnect = () => {
+    // 清理用户列表定时器
+    if (esRef.current && (esRef.current as any).userListInterval) {
+      clearInterval((esRef.current as any).userListInterval);
+    }
     esRef.current?.close();
     esRef.current = null;
     setConnected(false);
     setRole(null);
+    setRoomUsers([]);
 
     const pc = pcRef.current;
     if (pc) {
@@ -355,15 +382,27 @@ export default function PageWebRTC() {
         </Center>
         <Group justify="space-between" align="center">
           <Title size="h2">WebRTC + HTTP + SSE</Title>
-          <Badge
-            size="lg"
-            color={statusColor}
-            variant="light"
-            aria-live="polite"
-            aria-atomic
-          >
-            {statusText}
-          </Badge>
+          <Group gap="sm">
+            <Badge
+              size="lg"
+              color={statusColor}
+              variant="light"
+              aria-live="polite"
+              aria-atomic
+            >
+              {statusText}
+            </Badge>
+            {connected && (
+              <Badge
+                size="lg"
+                color="blue"
+                variant="light"
+                aria-label="房间用户数量"
+              >
+                {roomUsers.length} 人在线
+              </Badge>
+            )}
+          </Group>
         </Group>
 
         <Paper p="md" withBorder radius="md">
@@ -455,6 +494,42 @@ export default function PageWebRTC() {
           </Group>
         </Paper>
 
+        {connected && roomUsers.length > 0 && (
+          <Paper p="md" withBorder radius="md">
+            <Group justify="space-between" align="center" mb="sm">
+              <Text fw={500}>房间用户列表</Text>
+              <Badge variant="light" color="blue">
+                {roomUsers.length} 人
+              </Badge>
+            </Group>
+            <Stack gap="xs">
+              {roomUsers.map((user) => (
+                <Group
+                  key={user}
+                  justify="space-between"
+                  p="xs"
+                  style={{
+                    backgroundColor:
+                      user === clientId
+                        ? "var(--mantine-color-blue-light)"
+                        : "var(--mantine-color-gray-light)",
+                    borderRadius: 4,
+                  }}
+                >
+                  <Text size="sm" ff="monospace">
+                    {user === clientId ? `${user} (我)` : user}
+                  </Text>
+                  {user === clientId && (
+                    <Badge size="xs" color="blue" variant="filled">
+                      我
+                    </Badge>
+                  )}
+                </Group>
+              ))}
+            </Stack>
+          </Paper>
+        )}
+
         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
           <Paper p="sm" withBorder radius="md">
             <Center>
@@ -471,7 +546,6 @@ export default function PageWebRTC() {
                 width: "100%",
                 maxWidth: 560,
                 borderRadius: 8,
-                background: "var(--mantine-color-yellow-light)",
               }}
             />
           </Paper>
@@ -489,7 +563,6 @@ export default function PageWebRTC() {
                 width: "100%",
                 maxWidth: 560,
                 borderRadius: 8,
-                background: "var(--mantine-color-blue-light)",
               }}
             />
           </Paper>
