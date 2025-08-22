@@ -171,8 +171,14 @@ export default function PageWebRTC() {
   };
 
   const setupPeerConnection = async () => {
+    // STUN 服务器测试 https://webrtc.github.io/samples/src/content/peerconnection/trickle-ice/
     const pc = new RTCPeerConnection({
-      iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+      iceServers: [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+        { urls: "stun:stun.nextcloud.com:443" },
+        { urls: "stun:stun.freeswitch.org:3478" },
+      ],
     });
 
     pc.oniceconnectionstatechange = () => {};
@@ -292,7 +298,9 @@ export default function PageWebRTC() {
           payload: offer,
         });
       }
-    } catch {}
+    } catch (err) {
+      console.info("连接失败", err);
+    }
   };
 
   const disconnect = () => {

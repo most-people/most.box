@@ -53,9 +53,7 @@ export const registerSSE = (server) => {
 
       const client = { id: String(clientId), send, res: reply.raw };
       set.add(client);
-      console.log(
-        `[SSE] client ${clientId} joined room ${roomId}, size=${set.size}`
-      );
+      // console.log(`[SSE] client ${clientId} joined room ${roomId}, size=${set.size}`);
 
       // 初次问候
       send({ type: "hello", roomId, clientId, ts: Date.now() });
@@ -75,10 +73,10 @@ export const registerSSE = (server) => {
           s.delete(client);
           if (s.size === 0) rooms.delete(roomId);
         }
-        console.log(`[SSE] client ${clientId} left room ${roomId}`);
+        // console.log(`[SSE] client ${clientId} left room ${roomId}`);
       });
     } catch (error) {
-      console.error("[SSE] subscribe error:", error);
+      // console.error("[SSE] subscribe error:", error);
       reply.code(500).send({ ok: false, message: error.message });
     }
   });
@@ -101,7 +99,7 @@ export const registerSSE = (server) => {
 
       return { ok: true, delivered };
     } catch (error) {
-      console.error("[SSE] post signaling error:", error);
+      // console.error("[SSE] post signaling error:", error);
       reply.code(500);
       return { ok: false, message: error.message };
     }
