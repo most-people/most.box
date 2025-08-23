@@ -52,7 +52,6 @@ import {
   NETWORK_CONFIG,
   randomRPC,
 } from "@/constants/dot";
-import { useRouter } from "next/navigation";
 
 // ===== 常量定义 =====
 const TIMEOUT = 2000;
@@ -66,7 +65,6 @@ type DetectionResult = {
 type NetworkType = "mainnet" | "testnet";
 
 export default function PageDot() {
-  const router = useRouter();
   // ===== Zustand Store =====
   const setItem = useUserStore((state) => state.setItem);
   const dotAPI = useUserStore((state) => state.dotAPI);

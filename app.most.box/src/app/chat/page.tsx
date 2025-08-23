@@ -17,10 +17,15 @@ import {
   CopyButton,
   SimpleGrid,
   Center,
+  Box,
+  Card,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconPhoneOff, IconPhonePlus } from "@tabler/icons-react";
 import { useRef, useState, useEffect } from "react";
+import IPv6 from "@/assets/docs/IPv6.md";
+import { useUserStore } from "@/stores/userStore";
+import { useMarkdown } from "@/hooks/useMarkdown";
 
 type Role = "joiner" | "creator";
 
@@ -526,11 +531,15 @@ export default function PageChat() {
     pendingCandidatesRef.current = [];
   };
 
-  useEffect(() => {
-    return () => {
-      disconnect();
-    };
-  }, []);
+  const markdown = useMarkdown();
+  const ipv6Element = useRef<HTMLDivElement>(null);
+  const nodeDark = useUserStore((state) => state.nodeDark);
+  const init = async () => {
+    if (ipv6Element.current) {
+      const viewer = await markdown.initViewer(ipv6Element.current);
+      viewer.setMarkdown(IPv6);
+    }
+  };
 
   useEffect(() => {
     const uuid = Math.random().toString(36).slice(2, 10).toUpperCase();
@@ -539,6 +548,12 @@ export default function PageChat() {
     const id = new URLSearchParams(window.location.search).get("id");
     setRoomId(id || roomId);
     updateRoomId(id || roomId);
+
+    init();
+
+    return () => {
+      disconnect();
+    };
   }, []);
 
   return (
@@ -691,8 +706,8 @@ export default function PageChat() {
             </SimpleGrid>
             {!p2pConnected && connected && (
               <Text size="sm" c="dimmed" mt="sm">
-                💡 提示: 如果长时间无法建立 P2P
-                连接，请检查网络防火墙设置或尝试重新连接
+                💡 提示: 如果长时间无法建立 P2P 连接，请检查网络 IPv6
+                配置或尝试重新连接
               </Text>
             )}
             {p2pConnected && (
@@ -758,6 +773,10 @@ export default function PageChat() {
             />
           </Paper>
         </SimpleGrid>
+
+        <Card withBorder>
+          <Box className={nodeDark} ref={ipv6Element} />
+        </Card>
       </Stack>
     </Container>
   );
