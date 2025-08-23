@@ -662,7 +662,12 @@ export default function PageChat() {
             )}
             {p2pConnected && (
               <Group mt="sm" gap="xs">
-                <Button size="xs" variant="light" onClick={getConnectionStats}>
+                <Button
+                  size="xs"
+                  variant="light"
+                  color="blue"
+                  onClick={getConnectionStats}
+                >
                   获取连接统计
                 </Button>
                 {connectionStats && (
@@ -673,7 +678,7 @@ export default function PageChat() {
                           connectionStats.candidatePair.currentRoundTripTime *
                           1000
                         ).toFixed(0)}ms`
-                      : "N/A"}
+                      : "失败"}
                   </Text>
                 )}
               </Group>
