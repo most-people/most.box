@@ -394,7 +394,8 @@ export default function PageChat() {
   }, []);
 
   useEffect(() => {
-    updateRoomId(roomId);
+    const id = new URLSearchParams(window.location.search).get("id");
+    updateRoomId(id || roomId);
   }, []);
 
   return (
