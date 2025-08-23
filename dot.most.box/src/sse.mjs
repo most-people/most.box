@@ -71,41 +71,6 @@ export const registerSSE = (server) => {
         clearInterval(heartbeat);
         const s = rooms.get(roomId);
         if (s) {
-          // 判断是否为创建者（房间中的第一个用户）
-          const usersArray = Array.from(s);
-          const isCreator =
-            usersArray.length > 0 && usersArray[0].id === String(clientId);
-
-          // 如果是创建者断开连接，通知房间内其他用户并关闭房间
-          if (isCreator && s.size > 1) {
-            // 通知其他用户创建者已离开，房间即将关闭
-            broadcastToRoom(
-              roomId,
-              {
-                type: "closing",
-                message: "创建者已离开",
-                ts: Date.now(),
-              },
-              { excludeId: clientId }
-            );
-
-            // 延迟关闭房间，给其他用户时间处理消息
-            setTimeout(() => {
-              const currentSet = rooms.get(roomId);
-              if (currentSet) {
-                // 强制断开所有剩余连接
-                currentSet.forEach((remainingClient) => {
-                  try {
-                    remainingClient.res.end();
-                  } catch (e) {
-                    // 忽略断开连接错误
-                  }
-                });
-                rooms.delete(roomId);
-              }
-            }, 1000); // 1秒延迟
-          }
-
           s.delete(client);
 
           // 如果房间为空，清理房间

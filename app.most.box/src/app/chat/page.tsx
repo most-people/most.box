@@ -293,14 +293,14 @@ export default function PageChat() {
       if (state === "connected" || state === "completed") {
         setP2pConnected(true);
         notifications.show({
-          message: "P2P连接已建立！",
+          message: "P2P 连接已建立！",
           color: "green",
         });
       } else if (state === "disconnected" || state === "failed") {
         setP2pConnected(false);
         if (state === "failed") {
           notifications.show({
-            message: "P2P连接失败，请重试",
+            message: "P2P 连接失败，请重试",
             color: "red",
           });
         }
@@ -316,20 +316,20 @@ export default function PageChat() {
       if (state === "connected") {
         setP2pConnected(true);
         notifications.show({
-          message: "WebRTC连接已建立！",
+          message: "WebRTC 连接已建立！",
           color: "green",
         });
       } else if (state === "disconnected" || state === "failed") {
         setP2pConnected(false);
         if (state === "failed") {
           notifications.show({
-            message: "WebRTC连接失败",
+            message: "WebRTC 连接失败",
             color: "red",
           });
         }
       } else if (state === "connecting") {
         notifications.show({
-          message: "正在建立P2P连接...",
+          message: "正在建立 P2P 连接...",
           color: "blue",
         });
       }
@@ -487,7 +487,7 @@ export default function PageChat() {
     }
   };
 
-  const disconnect = () => {
+  const disconnect = async () => {
     // 清理用户列表定时器
     if (esRef.current && (esRef.current as any).userListInterval) {
       clearInterval((esRef.current as any).userListInterval);
@@ -524,7 +524,6 @@ export default function PageChat() {
 
   useEffect(() => {
     return () => {
-      // cleanup on unmount
       disconnect();
     };
   }, []);
@@ -568,7 +567,7 @@ export default function PageChat() {
                 size="lg"
                 color={p2pStatusColor}
                 variant="light"
-                aria-label="P2P连接状态"
+                aria-label="P2P 连接状态"
               >
                 {p2pStatusText}
               </Badge>
