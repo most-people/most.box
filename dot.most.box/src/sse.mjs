@@ -59,6 +59,17 @@ export const registerSSE = (server) => {
       // 初次问候
       send({ type: "hello", roomId, clientId, ts: Date.now() });
 
+      // 广播用户加入消息给房间内其他用户
+      broadcastToRoom(
+        roomId,
+        {
+          type: "join",
+          clientId,
+          ts: Date.now(),
+        },
+        { excludeId: clientId }
+      );
+
       // 心跳保持
       const heartbeat = setInterval(() => {
         try {
@@ -72,6 +83,17 @@ export const registerSSE = (server) => {
         const s = rooms.get(roomId);
         if (s) {
           s.delete(client);
+
+          // 广播用户离开消息给房间内其他用户
+          broadcastToRoom(
+            roomId,
+            {
+              type: "leave",
+              clientId,
+              ts: Date.now(),
+            },
+            { excludeId: clientId }
+          );
 
           // 如果房间为空，清理房间
           if (s.size === 0) {
@@ -117,11 +139,14 @@ export const registerSSE = (server) => {
         return { ok: false, message: "roomId, from, type 必填" };
       }
 
-      const message = { from, type, payload, ts: Date.now() };
-      const delivered = broadcastToRoom(roomId, message, {
-        excludeId: from,
-        toId: to,
-      });
+      const delivered = broadcastToRoom(
+        roomId,
+        { from, type, payload, ts: Date.now() },
+        {
+          excludeId: from,
+          toId: to,
+        }
+      );
 
       return { ok: true, delivered };
     } catch (error) {

@@ -1,7 +1,7 @@
 "use client";
 import { AppHeader } from "@/components/AppHeader";
 import { Icon } from "@/components/Icon";
-import { useUserStore } from "@/stores/userStore";
+import { api } from "@/constants/api";
 import {
   Button,
   Container,
@@ -20,24 +20,28 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { IconPhoneOff, IconPhonePlus } from "@tabler/icons-react";
-import Link from "next/link";
 import { useRef, useState, useEffect } from "react";
 
 type Role = "joiner" | "creator";
 
 type SignalMessage = {
   from: string;
-  type: "offer" | "answer" | "candidate" | "hello" | "closing";
+  type:
+    | "offer"
+    | "answer"
+    | "candidate"
+    | "hello"
+    | "closing"
+    | "join"
+    | "leave";
   payload?: any;
   message?: string;
+  clientId?: string;
   ts?: number;
 };
 
 export default function PageChat() {
-  const dotAPI = useUserStore((state) => state.dotAPI);
-  const wallet = useUserStore((state) => state.wallet);
-  const clientId = wallet ? wallet.address : "";
-
+  const [clientId, setClientId] = useState("");
   const [roomId, setRoomId] = useState<string>("001");
   const [role, setRole] = useState<Role | null>(null);
   const [connected, setConnected] = useState(false);
@@ -201,7 +205,7 @@ export default function PageChat() {
     payload?: any;
   }) => {
     try {
-      await fetch(`${dotAPI}/api.signaling`, {
+      await fetch(`${api.getUri()}/api.signaling`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(msg),
@@ -213,17 +217,16 @@ export default function PageChat() {
 
   const fetchRoomUsers = async () => {
     try {
-      const response = await fetch(
-        `${dotAPI}/api.room?roomId=${encodeURIComponent(roomId)}`
-      );
-      const data = await response.json();
-      if (data.ok) {
-        return data.users || [];
+      const res = await api.get(`/api.room`, {
+        params: {
+          roomId,
+        },
+      });
+      if (res.data.ok) {
+        return res.data.users as string[];
       }
-      return [];
     } catch (err) {
       console.info("获取房间用户失败", err);
-      return [];
     }
   };
 
@@ -282,7 +285,7 @@ export default function PageChat() {
     pc.oniceconnectionstatechange = () => {
       const state = pc.iceConnectionState;
       setIceConnectionState(state);
-      console.log("ICE连接状态变化:", state);
+      console.log("ICE 连接状态变化:", state);
 
       // ICE连接状态检查
       if (state === "connected" || state === "completed") {
@@ -361,7 +364,7 @@ export default function PageChat() {
 
   const subscribeSSE = () => {
     if (esRef.current) esRef.current.close();
-    const url = new URL(dotAPI);
+    const url = new URL(api.getUri());
     url.pathname = "/sse.signaling";
     url.searchParams.append("roomId", roomId);
     url.searchParams.append("clientId", clientId);
@@ -398,13 +401,25 @@ export default function PageChat() {
           return;
         }
 
-        // 处理房间关闭消息
-        if (data.type === "closing") {
+        // 处理用户加入房间
+        if (data.type === "join") {
           notifications.show({
-            message: data.message || "房间已关闭",
-            color: "orange",
+            message: data.clientId + " 加入房间",
+            color: "blue",
           });
-          disconnect();
+          return;
+        }
+
+        // 处理用户离开房间
+        if (data.type === "leave") {
+          notifications.show({
+            message: data.clientId + " 离开房间",
+            color: "blue",
+          });
+
+          if (roleRef.current === "joiner") {
+            disconnect();
+          }
           return;
         }
 
@@ -437,6 +452,23 @@ export default function PageChat() {
   const connect = async () => {
     try {
       const users = await fetchRoomUsers();
+
+      if (!users) {
+        notifications.show({
+          message: "获取房间用户失败",
+          color: "red",
+        });
+        return;
+      }
+
+      if (users.length >= 2) {
+        notifications.show({
+          message: "房间已满，试试更换房间 ID",
+          color: "red",
+        });
+        return;
+      }
+
       const role = users.length === 0 ? "creator" : "joiner";
 
       roleRef.current = role;
@@ -501,7 +533,11 @@ export default function PageChat() {
   }, []);
 
   useEffect(() => {
+    const uuid = Math.random().toString(36).slice(2, 10).toUpperCase();
+    setClientId(uuid);
+
     const id = new URLSearchParams(window.location.search).get("id");
+    setRoomId(id || roomId);
     updateRoomId(id || roomId);
   }, []);
 
@@ -585,7 +621,7 @@ export default function PageChat() {
                 <>
                   <Button
                     onClick={() => connect()}
-                    disabled={!clientId || connected}
+                    disabled={!clientId}
                     leftSection={<IconPhonePlus size={16} />}
                     color="blue"
                     variant="light"
@@ -597,14 +633,6 @@ export default function PageChat() {
             </Group>
           </Group>
         </Paper>
-
-        {!wallet && (
-          <Center>
-            <Button variant="gradient" component={Link} href="/login">
-              去登录
-            </Button>
-          </Center>
-        )}
 
         {connected && (
           <Paper p="md" withBorder radius="md">
@@ -623,7 +651,7 @@ export default function PageChat() {
                   borderRadius: 4,
                 }}
               >
-                <Text size="sm">WebRTC连接状态:</Text>
+                <Text size="sm">WebRTC 连接状态:</Text>
                 <Badge
                   size="sm"
                   color={
@@ -645,7 +673,7 @@ export default function PageChat() {
                   borderRadius: 4,
                 }}
               >
-                <Text size="sm">ICE连接状态:</Text>
+                <Text size="sm">ICE 连接状态:</Text>
                 <Badge
                   size="sm"
                   color={
@@ -663,8 +691,8 @@ export default function PageChat() {
             </SimpleGrid>
             {!p2pConnected && connected && (
               <Text size="sm" c="dimmed" mt="sm">
-                💡 提示:
-                如果长时间无法建立P2P连接，请检查网络防火墙设置或尝试重新连接
+                💡 提示: 如果长时间无法建立 P2P
+                连接，请检查网络防火墙设置或尝试重新连接
               </Text>
             )}
             {p2pConnected && (
@@ -675,7 +703,7 @@ export default function PageChat() {
                   color="blue"
                   onClick={getConnectionStats}
                 >
-                  获取连接统计
+                  延迟
                 </Button>
                 {connectionStats && (
                   <Text size="xs" c="dimmed">
