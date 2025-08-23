@@ -20,7 +20,6 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import {
-  IconPhoneCall,
   IconPhoneOff,
   IconPhonePlus,
   IconPhoneRinging,
@@ -32,8 +31,9 @@ type Role = "joiner" | "creator";
 
 type SignalMessage = {
   from: string;
-  type: "offer" | "answer" | "candidate" | "hello";
+  type: "offer" | "answer" | "candidate" | "connected" | "closing";
   payload?: any;
+  message?: string;
   ts?: number;
 };
 
@@ -272,7 +272,18 @@ export default function PageChat() {
       try {
         const data: SignalMessage = JSON.parse(ev.data);
         if (!data || !data.type) return;
-        if (data.type === "hello") {
+
+        if (data.type === "connected") {
+          return;
+        }
+
+        // 处理房间关闭消息
+        if (data.type === "closing") {
+          notifications.show({
+            message: data.message || "房间已关闭",
+            color: "orange",
+          });
+          disconnect();
           return;
         }
 
@@ -302,7 +313,7 @@ export default function PageChat() {
     esRef.current = es;
   };
 
-  const connect = async (as: Role) => {
+  const connect = async () => {
     try {
       // 先获取最新的房间用户列表
       const currentUsers = await fetchRoomUsers();
@@ -315,6 +326,9 @@ export default function PageChat() {
         });
         return;
       }
+
+      // 根据房间内是否有人来决定角色
+      const as: Role = currentUsers.length > 0 ? "joiner" : "creator";
 
       roleRef.current = as; // ensure immediate consistency
 
@@ -480,17 +494,9 @@ export default function PageChat() {
                 </>
               ) : (
                 <>
+                  {" "}
                   <Button
-                    onClick={() => connect("creator")}
-                    disabled={!clientId || connected}
-                    leftSection={<IconPhoneCall size={16} />}
-                    color="orange"
-                    variant="light"
-                  >
-                    创建
-                  </Button>
-                  <Button
-                    onClick={() => connect("joiner")}
+                    onClick={() => connect()}
                     disabled={!clientId || connected}
                     leftSection={<IconPhonePlus size={16} />}
                     color="blue"
