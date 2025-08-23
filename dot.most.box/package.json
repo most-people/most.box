@@ -4,8 +4,8 @@
   "description": "TypeScript + Fastify",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "npx nodemon src/index.mjs",
-    "start": "node src/index.mjs",
+    "start": "npx nodemon src/index.mjs",
+    "preview": "node src/index.mjs",
     "npm": "npm i"
   },
   "dependencies": {
@@ -17,7 +17,7 @@
     "ethers": "^6.15.0",
     "kubo-rpc-client": "^5.2.0",
     "rdrand-lite": "^1.4.12",
-    "undici": "^7.14.0"
+    "undici": "^7.15.0"
   },
   "devDependencies": {
     "@fastify/multipart": "^9.0.3",

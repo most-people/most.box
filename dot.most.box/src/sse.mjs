@@ -5,10 +5,11 @@ const rooms = new Map();
 const makeSSESender = (rawRes) => (obj) => {
   try {
     rawRes.write(`data: ${JSON.stringify(obj)}\n\n`);
-  } catch (_) {
+  } catch {
     // ignore write errors
   }
 };
+
 const broadcastToRoom = (roomId, message, { excludeId, toId } = {}) => {
   const set = rooms.get(roomId);
   if (!set || set.size === 0) return 0;

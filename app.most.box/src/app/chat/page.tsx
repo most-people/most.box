@@ -25,6 +25,7 @@ import {
   IconPhonePlus,
   IconPhoneRinging,
 } from "@tabler/icons-react";
+import Link from "next/link";
 import { useRef, useState, useEffect } from "react";
 
 type Role = "joiner" | "creator";
@@ -36,16 +37,16 @@ type SignalMessage = {
   ts?: number;
 };
 
-export default function PageWebRTC() {
+export default function PageChat() {
   const dotAPI = useUserStore((state) => state.dotAPI);
+  const wallet = useUserStore((state) => state.wallet);
+  const clientId = wallet ? wallet.address : "";
 
   const [roomId, setRoomId] = useState<string>("001");
-  const [clientId, setClientId] = useState<string>("");
   const [role, setRole] = useState<Role | null>(null);
   const [connected, setConnected] = useState(false);
   const [roomUsers, setRoomUsers] = useState<string[]>([]);
 
-  const clientIdReady = clientId.length > 0;
   const esRef = useRef<EventSource | null>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -179,9 +180,12 @@ export default function PageWebRTC() {
       const data = await response.json();
       if (data.ok) {
         setRoomUsers(data.users || []);
+        return data.users || [];
       }
+      return [];
     } catch (err) {
       console.info("获取房间用户失败", err);
+      return [];
     }
   };
 
@@ -300,6 +304,18 @@ export default function PageWebRTC() {
 
   const connect = async (as: Role) => {
     try {
+      // 先获取最新的房间用户列表
+      const currentUsers = await fetchRoomUsers();
+
+      // 检查 clientId 是否已存在于房间中
+      if (currentUsers.includes(clientId)) {
+        notifications.show({
+          message: "您已在房间中，无法重复加入",
+          color: "orange",
+        });
+        return;
+      }
+
       roleRef.current = as; // ensure immediate consistency
 
       pendingCandidatesRef.current = [];
@@ -365,12 +381,6 @@ export default function PageWebRTC() {
 
   useEffect(() => {
     updateRoomId(roomId);
-    // Generate clientId only on client to avoid SSR/CSR mismatch
-    const id =
-      typeof crypto !== "undefined" && "randomUUID" in crypto
-        ? (crypto as Crypto & { randomUUID: () => string }).randomUUID()
-        : String(Math.random()).slice(2);
-    setClientId(id);
   }, []);
 
   return (
@@ -472,7 +482,7 @@ export default function PageWebRTC() {
                 <>
                   <Button
                     onClick={() => connect("creator")}
-                    disabled={!clientIdReady || connected}
+                    disabled={!clientId || connected}
                     leftSection={<IconPhoneCall size={16} />}
                     color="orange"
                     variant="light"
@@ -481,7 +491,7 @@ export default function PageWebRTC() {
                   </Button>
                   <Button
                     onClick={() => connect("joiner")}
-                    disabled={!clientIdReady || connected}
+                    disabled={!clientId || connected}
                     leftSection={<IconPhonePlus size={16} />}
                     color="blue"
                     variant="light"
@@ -494,7 +504,15 @@ export default function PageWebRTC() {
           </Group>
         </Paper>
 
-        {connected && roomUsers.length > 0 && (
+        {!wallet && (
+          <Center>
+            <Button variant="gradient" component={Link} href="/login">
+              去登录
+            </Button>
+          </Center>
+        )}
+
+        {roomUsers.length > 0 && (
           <Paper p="md" withBorder radius="md">
             <Group justify="space-between" align="center" mb="sm">
               <Text fw={500}>房间用户列表</Text>
@@ -533,7 +551,7 @@ export default function PageWebRTC() {
         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
           <Paper p="sm" withBorder radius="md">
             <Center>
-              <Text>我</Text>
+              <Text>本地</Text>
             </Center>
             <video
               ref={localVideoRef}
@@ -551,7 +569,7 @@ export default function PageWebRTC() {
           </Paper>
           <Paper p="sm" withBorder radius="md">
             <Center>
-              <Text>你</Text>
+              <Text>远端</Text>
             </Center>
             <video
               ref={remoteVideoRef}
