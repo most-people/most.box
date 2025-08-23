@@ -2,7 +2,7 @@
 const rooms = new Map();
 
 // ---- SSE helpers (deduplicated) ----
-const makeSSESender = (rawRes) => (obj) => {
+const makeSender = (rawRes) => (obj) => {
   try {
     rawRes.write(`data: ${JSON.stringify(obj)}\n\n`);
   } catch {
@@ -43,7 +43,7 @@ export const registerSSE = (server) => {
       reply.raw.flushHeaders?.();
 
       // 写入工具
-      const send = makeSSESender(reply.raw);
+      const send = makeSender(reply.raw);
 
       // 加入房间
       let set = rooms.get(roomId);
@@ -57,7 +57,7 @@ export const registerSSE = (server) => {
       // console.log(`[SSE] client ${clientId} joined room ${roomId}, size=${set.size}`);
 
       // 初次问候
-      send({ type: "connected", roomId, clientId, ts: Date.now() });
+      send({ type: "hello", roomId, clientId, ts: Date.now() });
 
       // 心跳保持
       const heartbeat = setInterval(() => {
@@ -83,6 +83,27 @@ export const registerSSE = (server) => {
     } catch (error) {
       // console.error("[SSE] subscribe error:", error);
       reply.code(500).send({ ok: false, message: error.message });
+    }
+  });
+
+  // 获取房间用户列表 HTTP
+  server.get("/api.room", async (request, reply) => {
+    try {
+      const { roomId } = request.query || {};
+
+      if (!roomId) {
+        reply.code(400);
+        return { ok: false, message: "roomId 必填" };
+      }
+
+      const set = rooms.get(roomId);
+      const users = set ? Array.from(set).map((client) => client.id) : [];
+
+      return { ok: true, users };
+    } catch (error) {
+      // console.error("[SSE] get room users error:", error);
+      reply.code(500);
+      return { ok: false, message: error.message };
     }
   });
 

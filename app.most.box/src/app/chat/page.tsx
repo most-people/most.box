@@ -27,7 +27,7 @@ type Role = "joiner" | "creator";
 
 type SignalMessage = {
   from: string;
-  type: "offer" | "answer" | "candidate" | "connected" | "closing";
+  type: "offer" | "answer" | "candidate" | "hello" | "closing";
   payload?: any;
   message?: string;
   ts?: number;
@@ -98,7 +98,7 @@ export default function PageChat() {
   };
 
   const statusText = connected
-    ? `已连接${role ? `（${role === "creator" ? "创建者" : "加入者"}）` : ""}`
+    ? `已${role ? `${role === "creator" ? "创建" : "加入"}` : ""}`
     : "未连接";
   const statusColor: any = connected ? "green" : "gray";
 
@@ -208,6 +208,22 @@ export default function PageChat() {
       });
     } catch (err) {
       console.info("发送信号失败", err);
+    }
+  };
+
+  const fetchRoomUsers = async () => {
+    try {
+      const response = await fetch(
+        `${dotAPI}/api.room?roomId=${encodeURIComponent(roomId)}`
+      );
+      const data = await response.json();
+      if (data.ok) {
+        return data.users || [];
+      }
+      return [];
+    } catch (err) {
+      console.info("获取房间用户失败", err);
+      return [];
     }
   };
 
@@ -378,7 +394,7 @@ export default function PageChat() {
         const data: SignalMessage = JSON.parse(ev.data);
         if (!data || !data.type) return;
 
-        if (data.type === "connected") {
+        if (data.type === "hello") {
           return;
         }
 
@@ -418,21 +434,21 @@ export default function PageChat() {
     esRef.current = es;
   };
 
-  const connect = async (as: Role) => {
+  const connect = async () => {
     try {
-      // 默认设置为创建者角色，实际角色会在信令交换过程中确定
+      const users = await fetchRoomUsers();
+      const role = users.length === 0 ? "creator" : "joiner";
 
-      roleRef.current = as; // ensure immediate consistency
+      roleRef.current = role;
 
       pendingCandidatesRef.current = [];
 
       await setupPeerConnection();
 
-      setRole(as);
+      setRole(role);
       subscribeSSE();
 
-      // 创建offer并发送，如果房间里已有人会收到answer
-      if (as === "joiner") {
+      if (role === "joiner") {
         const pc = pcRef.current!;
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
@@ -568,16 +584,7 @@ export default function PageChat() {
               ) : (
                 <>
                   <Button
-                    onClick={() => connect("creator")}
-                    disabled={!clientId || connected}
-                    leftSection={<IconPhonePlus size={16} />}
-                    color="blue"
-                    variant="light"
-                  >
-                    创建
-                  </Button>
-                  <Button
-                    onClick={() => connect("joiner")}
+                    onClick={() => connect()}
                     disabled={!clientId || connected}
                     leftSection={<IconPhonePlus size={16} />}
                     color="blue"
