@@ -19,11 +19,7 @@ import {
   Center,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import {
-  IconPhoneOff,
-  IconPhonePlus,
-  IconPhoneRinging,
-} from "@tabler/icons-react";
+import { IconPhoneOff, IconPhonePlus } from "@tabler/icons-react";
 import Link from "next/link";
 import { useRef, useState, useEffect } from "react";
 
@@ -45,7 +41,7 @@ export default function PageChat() {
   const [roomId, setRoomId] = useState<string>("001");
   const [role, setRole] = useState<Role | null>(null);
   const [connected, setConnected] = useState(false);
-  const [roomUsers, setRoomUsers] = useState<string[]>([]);
+
   const [p2pConnected, setP2pConnected] = useState(false);
   const [connectionState, setConnectionState] = useState<string>("new");
   const [iceConnectionState, setIceConnectionState] = useState<string>("new");
@@ -215,23 +211,6 @@ export default function PageChat() {
     }
   };
 
-  const fetchRoomUsers = async () => {
-    try {
-      const response = await fetch(
-        `${dotAPI}/api.room?roomId=${encodeURIComponent(roomId)}`
-      );
-      const data = await response.json();
-      if (data.ok) {
-        setRoomUsers(data.users || []);
-        return data.users || [];
-      }
-      return [];
-    } catch (err) {
-      console.info("获取房间用户失败", err);
-      return [];
-    }
-  };
-
   const getConnectionStats = async () => {
     const pc = pcRef.current;
     if (!pc) return;
@@ -375,12 +354,6 @@ export default function PageChat() {
 
     es.onopen = () => {
       setConnected(true);
-      // 立即获取房间用户列表
-      fetchRoomUsers();
-      // 每5秒更新一次用户列表
-      const userListInterval = setInterval(fetchRoomUsers, 5000);
-      // 保存interval引用以便清理
-      (es as any).userListInterval = userListInterval;
 
       const pc = pcRef.current;
       if (
@@ -445,22 +418,9 @@ export default function PageChat() {
     esRef.current = es;
   };
 
-  const connect = async () => {
+  const connect = async (as: Role) => {
     try {
-      // 先获取最新的房间用户列表
-      const currentUsers = await fetchRoomUsers();
-
-      // 检查 clientId 是否已存在于房间中
-      if (currentUsers.includes(clientId)) {
-        notifications.show({
-          message: "您已在房间中，无法重复加入",
-          color: "orange",
-        });
-        return;
-      }
-
-      // 根据房间内是否有人来决定角色
-      const as: Role = currentUsers.length > 0 ? "joiner" : "creator";
+      // 默认设置为创建者角色，实际角色会在信令交换过程中确定
 
       roleRef.current = as; // ensure immediate consistency
 
@@ -471,6 +431,7 @@ export default function PageChat() {
       setRole(as);
       subscribeSSE();
 
+      // 创建offer并发送，如果房间里已有人会收到answer
       if (as === "joiner") {
         const pc = pcRef.current!;
         const offer = await pc.createOffer();
@@ -488,15 +449,10 @@ export default function PageChat() {
   };
 
   const disconnect = async () => {
-    // 清理用户列表定时器
-    if (esRef.current && (esRef.current as any).userListInterval) {
-      clearInterval((esRef.current as any).userListInterval);
-    }
     esRef.current?.close();
     esRef.current = null;
     setConnected(false);
     setRole(null);
-    setRoomUsers([]);
     setP2pConnected(false);
     setConnectionState("new");
     setIceConnectionState("new");
@@ -552,16 +508,7 @@ export default function PageChat() {
             >
               {statusText}
             </Badge>
-            {connected && (
-              <Badge
-                size="lg"
-                color="blue"
-                variant="light"
-                aria-label="房间用户数量"
-              >
-                {roomUsers.length} 人在线
-              </Badge>
-            )}
+
             {connected && (
               <Badge
                 size="lg"
@@ -620,9 +567,17 @@ export default function PageChat() {
                 </>
               ) : (
                 <>
-                  {" "}
                   <Button
-                    onClick={() => connect()}
+                    onClick={() => connect("creator")}
+                    disabled={!clientId || connected}
+                    leftSection={<IconPhonePlus size={16} />}
+                    color="blue"
+                    variant="light"
+                  >
+                    创建
+                  </Button>
+                  <Button
+                    onClick={() => connect("joiner")}
                     disabled={!clientId || connected}
                     leftSection={<IconPhonePlus size={16} />}
                     color="blue"
@@ -723,42 +678,6 @@ export default function PageChat() {
                 )}
               </Group>
             )}
-          </Paper>
-        )}
-
-        {roomUsers.length > 0 && (
-          <Paper p="md" withBorder radius="md">
-            <Group justify="space-between" align="center" mb="sm">
-              <Text fw={500}>房间用户列表</Text>
-              <Badge variant="light" color="blue">
-                {roomUsers.length} 人
-              </Badge>
-            </Group>
-            <Stack gap="xs">
-              {roomUsers.map((user) => (
-                <Group
-                  key={user}
-                  justify="space-between"
-                  p="xs"
-                  style={{
-                    backgroundColor:
-                      user === clientId
-                        ? "var(--mantine-color-blue-light)"
-                        : "var(--mantine-color-gray-light)",
-                    borderRadius: 4,
-                  }}
-                >
-                  <Text size="sm" ff="monospace">
-                    {user === clientId ? `${user} (我)` : user}
-                  </Text>
-                  {user === clientId && (
-                    <Badge size="xs" color="blue" variant="filled">
-                      我
-                    </Badge>
-                  )}
-                </Group>
-              ))}
-            </Stack>
           </Paper>
         )}
 

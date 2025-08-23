@@ -86,27 +86,6 @@ export const registerSSE = (server) => {
     }
   });
 
-  // 获取房间用户列表 HTTP
-  server.get("/api.room", async (request, reply) => {
-    try {
-      const { roomId } = request.query || {};
-
-      if (!roomId) {
-        reply.code(400);
-        return { ok: false, message: "roomId 必填" };
-      }
-
-      const set = rooms.get(roomId);
-      const users = set ? Array.from(set).map((client) => client.id) : [];
-
-      return { ok: true, users };
-    } catch (error) {
-      // console.error("[SSE] get room users error:", error);
-      reply.code(500);
-      return { ok: false, message: error.message };
-    }
-  });
-
   // 发送信令 HTTP
   server.post("/api.signaling", async (request, reply) => {
     try {
