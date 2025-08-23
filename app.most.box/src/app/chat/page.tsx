@@ -46,6 +46,10 @@ export default function PageChat() {
   const [role, setRole] = useState<Role | null>(null);
   const [connected, setConnected] = useState(false);
   const [roomUsers, setRoomUsers] = useState<string[]>([]);
+  const [p2pConnected, setP2pConnected] = useState(false);
+  const [connectionState, setConnectionState] = useState<string>("new");
+  const [iceConnectionState, setIceConnectionState] = useState<string>("new");
+  const [connectionStats, setConnectionStats] = useState<any>(null);
 
   const esRef = useRef<EventSource | null>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
@@ -59,6 +63,38 @@ export default function PageChat() {
     roleRef.current = role;
   }, [role]);
 
+  // 定期检查P2P连接状态
+  useEffect(() => {
+    if (!connected || !pcRef.current) return;
+
+    const checkInterval = setInterval(() => {
+      const pc = pcRef.current;
+      if (pc) {
+        const currentConnectionState = pc.connectionState;
+        const currentIceState = pc.iceConnectionState;
+
+        // 更新状态（如果有变化）
+        if (currentConnectionState !== connectionState) {
+          setConnectionState(currentConnectionState);
+        }
+        if (currentIceState !== iceConnectionState) {
+          setIceConnectionState(currentIceState);
+        }
+
+        // 检查P2P连接状态
+        const isP2PConnected =
+          currentConnectionState === "connected" &&
+          (currentIceState === "connected" || currentIceState === "completed");
+
+        if (isP2PConnected !== p2pConnected) {
+          setP2pConnected(isP2PConnected);
+        }
+      }
+    }, 2000); // 每2秒检查一次
+
+    return () => clearInterval(checkInterval);
+  }, [connected, connectionState, iceConnectionState, p2pConnected]);
+
   const updateRoomId = (id: string) => {
     const url = new URL(window.location.href);
     url.searchParams.set("id", id);
@@ -69,6 +105,13 @@ export default function PageChat() {
     ? `已连接${role ? `（${role === "creator" ? "创建者" : "加入者"}）` : ""}`
     : "未连接";
   const statusColor: any = connected ? "green" : "gray";
+
+  const p2pStatusText = p2pConnected ? "P2P已连接" : "P2P未连接";
+  const p2pStatusColor: any = p2pConnected
+    ? "green"
+    : connectionState === "connecting"
+    ? "yellow"
+    : "gray";
 
   // ---- Helpers ----
   const safePlay = async (el: HTMLVideoElement | null) => {
@@ -189,6 +232,47 @@ export default function PageChat() {
     }
   };
 
+  const getConnectionStats = async () => {
+    const pc = pcRef.current;
+    if (!pc) return;
+
+    try {
+      const stats = await pc.getStats();
+      const statsData: any = {};
+
+      stats.forEach((report) => {
+        if (report.type === "candidate-pair" && report.state === "succeeded") {
+          statsData.candidatePair = {
+            bytesReceived: report.bytesReceived,
+            bytesSent: report.bytesSent,
+            currentRoundTripTime: report.currentRoundTripTime,
+            availableOutgoingBitrate: report.availableOutgoingBitrate,
+          };
+        }
+        if (report.type === "inbound-rtp" && report.mediaType === "video") {
+          statsData.inboundVideo = {
+            bytesReceived: report.bytesReceived,
+            packetsReceived: report.packetsReceived,
+            packetsLost: report.packetsLost,
+            framesDecoded: report.framesDecoded,
+          };
+        }
+        if (report.type === "outbound-rtp" && report.mediaType === "video") {
+          statsData.outboundVideo = {
+            bytesSent: report.bytesSent,
+            packetsSent: report.packetsSent,
+            framesEncoded: report.framesEncoded,
+          };
+        }
+      });
+
+      setConnectionStats(statsData);
+      console.log("连接统计信息:", statsData);
+    } catch (err) {
+      console.error("获取连接统计失败:", err);
+    }
+  };
+
   const setupPeerConnection = async () => {
     // STUN 服务器测试 https://webrtc.github.io/samples/src/content/peerconnection/trickle-ice/
     const pc = new RTCPeerConnection({
@@ -200,8 +284,56 @@ export default function PageChat() {
       ],
     });
 
-    pc.oniceconnectionstatechange = () => {};
-    pc.onconnectionstatechange = () => {};
+    pc.oniceconnectionstatechange = () => {
+      const state = pc.iceConnectionState;
+      setIceConnectionState(state);
+      console.log("ICE连接状态变化:", state);
+
+      // ICE连接状态检查
+      if (state === "connected" || state === "completed") {
+        setP2pConnected(true);
+        notifications.show({
+          message: "P2P连接已建立！",
+          color: "green",
+        });
+      } else if (state === "disconnected" || state === "failed") {
+        setP2pConnected(false);
+        if (state === "failed") {
+          notifications.show({
+            message: "P2P连接失败，请重试",
+            color: "red",
+          });
+        }
+      }
+    };
+
+    pc.onconnectionstatechange = () => {
+      const state = pc.connectionState;
+      setConnectionState(state);
+      console.log("连接状态变化:", state);
+
+      // 连接状态检查
+      if (state === "connected") {
+        setP2pConnected(true);
+        notifications.show({
+          message: "WebRTC连接已建立！",
+          color: "green",
+        });
+      } else if (state === "disconnected" || state === "failed") {
+        setP2pConnected(false);
+        if (state === "failed") {
+          notifications.show({
+            message: "WebRTC连接失败",
+            color: "red",
+          });
+        }
+      } else if (state === "connecting") {
+        notifications.show({
+          message: "正在建立P2P连接...",
+          color: "blue",
+        });
+      }
+    };
 
     pc.onicecandidate = (event) => {
       if (event.candidate) {
@@ -365,6 +497,10 @@ export default function PageChat() {
     setConnected(false);
     setRole(null);
     setRoomUsers([]);
+    setP2pConnected(false);
+    setConnectionState("new");
+    setIceConnectionState("new");
+    setConnectionStats(null);
 
     const pc = pcRef.current;
     if (pc) {
@@ -427,6 +563,16 @@ export default function PageChat() {
                 {roomUsers.length} 人在线
               </Badge>
             )}
+            {connected && (
+              <Badge
+                size="lg"
+                color={p2pStatusColor}
+                variant="light"
+                aria-label="P2P连接状态"
+              >
+                {p2pStatusText}
+              </Badge>
+            )}
           </Group>
         </Group>
 
@@ -472,26 +618,6 @@ export default function PageChat() {
                   >
                     断开
                   </Button>
-                  {role === "joiner" && (
-                    <Button
-                      variant="light"
-                      color="blue"
-                      onClick={() => {
-                        const pc = pcRef.current;
-                        if (pc?.localDescription?.type === "offer") {
-                          postSignal({
-                            roomId,
-                            from: clientId,
-                            type: "offer",
-                            payload: pc.localDescription,
-                          });
-                        }
-                      }}
-                      leftSection={<IconPhoneRinging size={16} />}
-                    >
-                      重试
-                    </Button>
-                  )}
                 </>
               ) : (
                 <>
@@ -517,6 +643,88 @@ export default function PageChat() {
               去登录
             </Button>
           </Center>
+        )}
+
+        {connected && (
+          <Paper p="md" withBorder radius="md">
+            <Group justify="space-between" align="center" mb="sm">
+              <Text fw={500}>连接状态详情</Text>
+              <Badge variant="light" color={p2pStatusColor}>
+                {p2pConnected ? "已连接" : "未连接"}
+              </Badge>
+            </Group>
+            <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
+              <Group
+                justify="space-between"
+                p="xs"
+                style={{
+                  backgroundColor: "var(--mantine-color-gray-light)",
+                  borderRadius: 4,
+                }}
+              >
+                <Text size="sm">WebRTC连接状态:</Text>
+                <Badge
+                  size="sm"
+                  color={
+                    connectionState === "connected"
+                      ? "green"
+                      : connectionState === "connecting"
+                      ? "yellow"
+                      : "gray"
+                  }
+                >
+                  {connectionState}
+                </Badge>
+              </Group>
+              <Group
+                justify="space-between"
+                p="xs"
+                style={{
+                  backgroundColor: "var(--mantine-color-gray-light)",
+                  borderRadius: 4,
+                }}
+              >
+                <Text size="sm">ICE连接状态:</Text>
+                <Badge
+                  size="sm"
+                  color={
+                    iceConnectionState === "connected" ||
+                    iceConnectionState === "completed"
+                      ? "green"
+                      : iceConnectionState === "checking"
+                      ? "yellow"
+                      : "gray"
+                  }
+                >
+                  {iceConnectionState}
+                </Badge>
+              </Group>
+            </SimpleGrid>
+            {!p2pConnected && connected && (
+              <Text size="sm" c="dimmed" mt="sm">
+                💡 提示:
+                如果长时间无法建立P2P连接，请检查网络防火墙设置或尝试重新连接
+              </Text>
+            )}
+            {p2pConnected && (
+              <Group mt="sm" gap="xs">
+                <Button size="xs" variant="light" onClick={getConnectionStats}>
+                  获取连接统计
+                </Button>
+                {connectionStats && (
+                  <Text size="xs" c="dimmed">
+                    RTT:{" "}
+                    {connectionStats.candidatePair?.currentRoundTripTime
+                      ? `${(
+                          connectionStats.candidatePair.currentRoundTripTime *
+                          1000
+                        ).toFixed(0)}ms`
+                      : "N/A"}
+                  </Text>
+                )}
+              </Group>
+            )}
+          </Paper>
         )}
 
         {roomUsers.length > 0 && (
