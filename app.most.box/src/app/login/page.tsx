@@ -32,6 +32,7 @@ import { SupabaseURL } from "@/constants/api";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
+import { modals } from "@mantine/modals";
 
 interface TelegramAuthData {
   id: number;
@@ -105,6 +106,19 @@ export default function PageLogin() {
       notifications.show({ title: "提示", message: "Telegram 不存在" });
       return;
     }
+    if (location.host !== "most.box") {
+      modals.openConfirmModal({
+        centered: true,
+        title: "提示",
+        children: (
+          <Text c="dimmed">需要在 most.box 域名下登录，是否继续？</Text>
+        ),
+        labels: { confirm: "继续", cancel: "取消" },
+        onConfirm: () => window.open("https://most.box/login"),
+      });
+      return;
+    }
+
     Telegram.Login.auth(
       {
         bot_id: "7848968061",

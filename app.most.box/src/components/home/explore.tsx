@@ -48,7 +48,7 @@ export default function HomeExplore() {
   return (
     <Container py="md">
       <Title size="h3">Most.Box - 如影随形</Title>
-      <Text c="dimmed">——「轻松简单、开源免费、部署自己的云盘」</Text>
+      <Text c="dimmed">——「轻松简单、开源免费、部署自己的节点」</Text>
 
       <Divider my="md" />
 

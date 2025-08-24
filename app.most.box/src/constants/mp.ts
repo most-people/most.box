@@ -109,9 +109,10 @@ const enBase64 = (str: string) => encodeBase64(toUtf8Bytes(str));
 const deBase64 = (str: string) => toUtf8String(decodeBase64(str));
 
 // 创建 JWT
-const createJWT = (wallet: MostWallet, template = "YYMMDD") => {
-  // 当天有效
-  const time = dayjs().format(template);
+const createJWT = (wallet: MostWallet, template = "YYYYMM") => {
+  // 本周有效
+  const week = dayjs().isoWeek();
+  const time = dayjs().format(template) + week;
   const fingerprint = sessionStorage.getItem("fingerprint");
   if (!fingerprint) {
     throw new Error("请先获取设备指纹");
@@ -123,9 +124,10 @@ const createJWT = (wallet: MostWallet, template = "YYMMDD") => {
 };
 
 // 解析 JWT
-const verifyJWT = (jwt: string, template = "YYMMDD") => {
-  // 当天有效
-  const time = dayjs().format(template);
+const verifyJWT = (jwt: string, template = "YYYYMM") => {
+  // 本周有效
+  const week = dayjs().isoWeek();
+  const time = dayjs().format(template) + week;
   const fingerprint = sessionStorage.getItem("fingerprint");
   if (!fingerprint) {
     throw new Error("请先获取设备指纹");
@@ -134,16 +136,14 @@ const verifyJWT = (jwt: string, template = "YYMMDD") => {
   // 获取设备指纹ID
   const { public_key, private_key } = mostWallet(time, key);
   const json = mostDecode(jwt, public_key, private_key);
-  if (json) {
-    try {
-      const wallet = JSON.parse(json) as MostWallet;
-      if (wallet.address) return wallet;
-    } catch (error) {
-      console.error(error);
-    }
+  if (!json) {
+    throw new Error("jwt 解析失败");
   }
-  console.log("jwt 过期");
-  return null;
+  const wallet = JSON.parse(json) as MostWallet;
+  if (!wallet.address) {
+    throw new Error("jwt json 解析失败");
+  }
+  return wallet;
 };
 
 // 创建 token
@@ -207,6 +207,22 @@ const pinyin = (t: string, v: string, jump = 2) => {
   return false;
 };
 
+const openDot = (dot: string) => {
+  const url = new URL("/auth/jwt/", dot);
+  const jwt = localStorage.getItem("jwt");
+
+  if (jwt) {
+    const wallet = mp.verifyJWT(jwt);
+    if (wallet) {
+      const key = dayjs().format("YY/M/D HH:mm");
+      const { public_key, private_key } = mostWallet("auth/jwt", key);
+      const token = mostEncode(JSON.stringify(wallet), public_key, private_key);
+      url.searchParams.set("token", token);
+    }
+  }
+  window.open(url.href);
+};
+
 const mp = {
   avatar,
   avatarCID,
@@ -222,6 +238,7 @@ const mp = {
   ZeroAddress,
   createToken,
   pinyin,
+  openDot,
 };
 
 export default mp;

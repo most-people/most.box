@@ -102,8 +102,10 @@ export default function PageChat() {
 
   const updateRoomId = (id: string) => {
     const url = new URL(window.location.href);
-    url.searchParams.set("id", id);
-    window.history.replaceState({}, "", url.href);
+    if (id !== url.searchParams.get("id")) {
+      url.searchParams.set("id", id);
+      window.history.replaceState({}, "", url.href);
+    }
   };
 
   const statusText = connected

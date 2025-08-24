@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
-import { Anchor, Blockquote, Button, Text, Stack } from "@mantine/core";
+import { Anchor, Blockquote, Button, Text, Stack, Center } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { BrowserProvider, getAddress } from "ethers";
 import { useRouter } from "next/navigation";
@@ -12,9 +12,9 @@ import {
 } from "@tabler/icons-react";
 import axios from "axios";
 import Link from "next/link";
+import { modals } from "@mantine/modals";
 
 const SignMessage = ({ dotApi }: { dotApi: string }) => {
-  const router = useRouter();
   const [deployLoading, setDeployLoading] = useState(false);
   const [reloadLoading, setReloadLoading] = useState(false);
 
@@ -40,12 +40,15 @@ const SignMessage = ({ dotApi }: { dotApi: string }) => {
         },
       });
       if (res.data?.ok) {
-        notifications.show({
-          color: "green",
-          title: "提示",
-          message: "部署成功",
+        modals.open({
+          centered: true,
+          children: (
+            <Center>
+              <Text c="green">部署成功</Text>
+            </Center>
+          ),
+          withCloseButton: false,
         });
-        router.back();
       }
     } catch (error) {
       console.error(error);
@@ -155,6 +158,7 @@ export default function PageDeploy() {
   const [address, setAddress] = useState("");
   const [dotAddress, setDotAddress] = useState("");
   const [dotApi, setDotApi] = useState("");
+  const [dotGit, setDotGit] = useState("");
   const [dotDeploy, setDotDeploy] = useState("");
 
   useEffect(() => {
@@ -165,6 +169,17 @@ export default function PageDeploy() {
       setDotAddress(address);
       setDotApi(api);
       setDotDeploy(api + window.location.pathname + window.location.search);
+      fetch(api + "/api.git")
+        .then((res) => res.text())
+        .then((text) => {
+          // 截取 origin 和 (fetch) 之间的内容
+          const match = text.match(/origin\s+(.+?)\s+\(fetch\)/);
+          if (match) {
+            try {
+              setDotGit(match[1]);
+            } catch {}
+          }
+        });
     } else {
       router.back();
     }
@@ -228,10 +243,15 @@ export default function PageDeploy() {
     <Stack px="md">
       <AppHeader title="更新节点代码" />
       <Blockquote icon={<IconInfoCircle />} mt="xl">
-        节点地址：
-        <Anchor component={Link} href={dotDeploy} target="_blank">
-          {dotApi}
-        </Anchor>
+        <Text>
+          节点地址：
+          <Anchor component={Link} href={dotDeploy} target="_blank">
+            {dotApi}
+          </Anchor>
+        </Text>
+        <Text mt="md" c="dimmed">
+          开源代码：{dotGit}
+        </Text>
       </Blockquote>
 
       {address ? (

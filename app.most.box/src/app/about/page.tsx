@@ -1,4 +1,5 @@
 import { AppHeader } from "@/components/AppHeader";
+import mp from "@/constants/mp";
 import { Box, Text, Stack } from "@mantine/core";
 import Link from "next/link";
 
@@ -38,7 +39,7 @@ export default function PageAbout() {
           <Text size="lg" fw="bold">
             最后更新
           </Text>
-          <Text c="dimmed">2025-08-13 03:21:00</Text>
+          <Text c="dimmed">{mp.formatTime(1756062128975)}</Text>
         </Stack>
       </Stack>
     </Box>

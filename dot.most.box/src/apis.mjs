@@ -135,4 +135,10 @@ export const registerApis = (server, __dirname) => {
       };
     }
   });
+
+  // 获取 git 仓库信息
+  server.get("/api.git", async () => {
+    const { stdout: gitOut, stderr: gitErr } = await execAsync("git remote -v");
+    return gitOut || gitErr;
+  });
 };

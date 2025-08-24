@@ -44,8 +44,6 @@ import mp from "@/constants/mp";
 import { CID } from "multiformats";
 import Link from "next/link";
 import { DotNode, useUserStore } from "@/stores/userStore";
-import { mostEncode, mostWallet } from "@/constants/MostWallet";
-import dayjs from "dayjs";
 import {
   CONTRACT_ABI,
   CONTRACT_ADDRESS,
@@ -361,23 +359,7 @@ export default function PageDot() {
 
   const openNode = async (node: DotNode) => {
     const nodeAPI = node.APIs[0];
-    const url = new URL("/auth/jwt/", nodeAPI);
-    const jwt = localStorage.getItem("jwt");
-
-    if (jwt) {
-      const wallet = mp.verifyJWT(jwt);
-      if (wallet) {
-        const key = dayjs().format("YY/M/D HH:mm");
-        const { public_key, private_key } = mostWallet("auth/jwt", key);
-        const token = mostEncode(
-          JSON.stringify(wallet),
-          public_key,
-          private_key
-        );
-        url.searchParams.set("token", token);
-      }
-    }
-    window.open(url.href);
+    mp.openDot(nodeAPI);
   };
 
   const switchNode = async (node: DotNode) => {
