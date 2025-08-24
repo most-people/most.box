@@ -27,10 +27,14 @@ export default function AppProvider() {
     }
   };
 
-  const initDot = async () => {
-    const host = location.hash.slice(1);
+  const initDot = () => {
+    const host = window.location.hash.slice(1);
     const protocol = `http${host.endsWith(":1976") ? "" : "s"}://`;
-    const dot = host ? protocol + host : null;
+    let dot = host ? protocol + host : null;
+    // web2 登录成功 不处理
+    if (window.location.hash.startsWith("#access_token=")) {
+      dot = null;
+    }
     const dotAPI = dot || localStorage.getItem("dotAPI");
     if (dotAPI) {
       api.defaults.baseURL = dotAPI;
@@ -58,6 +62,10 @@ export default function AppProvider() {
   useEffect(() => {
     if (pathname && dotAPI) {
       try {
+        // web2 登录成功 不处理
+        if (window.location.hash.startsWith("#access_token=")) {
+          return;
+        }
         const url = new URL(window.location.href);
         const dot = new URL(dotAPI);
         if (url.hash !== "#" + dot.host) {
