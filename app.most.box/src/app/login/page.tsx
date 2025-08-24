@@ -54,6 +54,7 @@ export default function PageLogin() {
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const isLogin = Boolean(username || password);
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
   const [emailLoading, setEmailLoading] = useState(false);
@@ -80,7 +81,7 @@ export default function PageLogin() {
     return emailRegex.test(email);
   };
 
-  const login = (username: string, password: string) => {
+  const login = () => {
     if (!username) {
       notifications.show({ message: "请输入用户名" });
       return;
@@ -283,8 +284,8 @@ export default function PageLogin() {
             value={username}
             onChange={(event) => setUsername(event.currentTarget.value)}
             onKeyUp={(event) => {
-              if (event.key === "Enter") {
-                login(username, password);
+              if (event.key === "Enter" && isLogin) {
+                login();
               }
             }}
           />
@@ -295,13 +296,14 @@ export default function PageLogin() {
             value={password}
             onChange={(event) => setPassword(event.currentTarget.value)}
             onKeyUp={(event) => {
-              if (event.key === "Enter") {
-                login(username, password);
+              if (event.key === "Enter" && isLogin) {
+                login();
               }
             }}
           />
-          <Button onClick={() => login(username, password)} variant="gradient">
-            {username ? "登录" : "游客"}
+
+          <Button onClick={isLogin ? login : back} variant="gradient">
+            {isLogin ? "登录" : "游客"}
           </Button>
 
           <Divider label="Or" labelPosition="center" />
