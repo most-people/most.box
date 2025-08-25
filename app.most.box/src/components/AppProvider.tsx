@@ -32,23 +32,19 @@ export default function AppProvider() {
     const protocol = `http${host.endsWith(":1976") ? "" : "s"}://`;
     let dot = host ? protocol + host : null;
     // web2 登录成功 不处理
-    if (window.location.hash.startsWith("#access_token=")) {
-      dot = null;
-    }
+    if (window.location.hash.startsWith("#access_token=")) dot = null;
+    // 节点地址
     const dotAPI = dot || localStorage.getItem("dotAPI");
-    if (dotAPI) {
-      api.defaults.baseURL = dotAPI;
-    }
+    // 立刻赋值 便于请求
+    if (dotAPI) api.defaults.baseURL = dotAPI;
+    // 切换节点
     updateDot(dotAPI || location.origin).then((list) => {
       if (list === null) {
         router.push("/dot");
       }
     });
-
     const dotCID = localStorage.getItem("dotCID");
-    if (dotCID) {
-      setItem("dotCID", dotCID);
-    }
+    if (dotCID) setItem("dotCID", dotCID);
   };
 
   useEffect(() => {

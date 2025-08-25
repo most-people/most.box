@@ -142,7 +142,7 @@ export default function PageWeb3Tool() {
 
         {/* 模式切换开关 */}
         <Switch
-          label={useMnemonicMode ? "直接输入助记词" : "用户名+密码生成账户"}
+          label={useMnemonicMode ? "直接输入助记词" : "用户名 + 密码生成账户"}
           size="md"
           checked={useMnemonicMode}
           onChange={(event) => {

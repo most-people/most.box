@@ -48,8 +48,7 @@ export default function PageMpMi() {
   };
 
   const handleShareCipherText = async () => {
-    const url = new URL("https://most.box" + window.location.pathname);
-    // const url = new URL(window.location.origin + window.location.pathname);
+    const url = new URL(window.location.origin + window.location.pathname);
     url.searchParams.set("mi", cipherText);
     const shareUrl = url.href;
 

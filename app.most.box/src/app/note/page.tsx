@@ -167,7 +167,7 @@ const PageContent = () => {
           }
         }
       } catch (error) {
-        console.error(error);
+        console.info(error);
         const cid = params.get("cid");
         if (cid) {
           fetchNote(cid);
@@ -231,7 +231,9 @@ const PageContent = () => {
   }, []);
 
   useEffect(() => {
-    if (dotCID) init();
+    if (dotCID) {
+      init();
+    }
   }, [dotCID]);
 
   return (

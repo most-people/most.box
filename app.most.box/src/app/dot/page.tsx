@@ -579,7 +579,10 @@ export default function PageDot() {
               size="sm"
               color="orange"
               variant="light"
-              onClick={() => fetchNodes()}
+              onClick={() => {
+                setCustomRPC(randomRPC());
+                fetchNodes();
+              }}
             >
               重新尝试
             </Button>
