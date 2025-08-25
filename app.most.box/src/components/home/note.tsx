@@ -58,6 +58,7 @@ export default function HomeNote() {
     shareUrl.pathname = "/note/";
     shareUrl.searchParams.set("uid", wallet?.address || "");
     shareUrl.searchParams.set("name", note.name);
+    shareUrl.searchParams.set("cid", note.cid);
     return shareUrl.href;
   };
 

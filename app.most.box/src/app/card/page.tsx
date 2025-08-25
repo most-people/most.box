@@ -23,7 +23,6 @@ const PageContent = () => {
   const params = useSearchParams();
   const uid = params.get("uid") || mp.ZeroAddress;
 
-  const shareUrl = `https://most.box/card?uid=${uid}`;
   const handleCopyAddress = async () => {
     try {
       await navigator.clipboard.writeText(uid);
@@ -42,6 +41,7 @@ const PageContent = () => {
   };
 
   const handleShare = async () => {
+    const shareUrl = window.location.href;
     if (navigator.share) {
       try {
         await navigator.share({
@@ -99,7 +99,7 @@ const PageContent = () => {
             style={{ display: "flex", backgroundColor: "white" }}
           >
             <QRCodeSVG
-              value={shareUrl}
+              value={uid}
               size={180}
               bgColor="white"
               fgColor="#333"
@@ -107,8 +107,13 @@ const PageContent = () => {
             />
           </Paper>
 
-          <Text size="xs" c="dimmed" ta="center">
-            扫描二维码查看
+          <Text
+            c="dimmed"
+            ta="center"
+            variant="gradient"
+            gradient={{ from: "blue", to: "cyan", deg: 90 }}
+          >
+            {uid}
           </Text>
         </Stack>
 
