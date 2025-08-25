@@ -4,7 +4,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Box, Image, Text, Stack, Paper, Center, Flex } from "@mantine/core";
+import { Box, Image, Text, Stack, Paper, Flex } from "@mantine/core";
 
 // 根据文件后缀名判断文件类型
 function getFileType(
@@ -103,59 +103,59 @@ export default function PageIPFS() {
   const cid = searchParams.get("cid");
   const filename = searchParams.get("filename");
 
-  const title = `${cid}?filename=${filename}`;
-
   const [shareUrl, setShareUrl] = useState("");
 
   useEffect(() => {
-    setShareUrl(
-      `${window.location.origin}/ipfs/${title}${window.location.hash}`
-    );
+    const url = new URL(location.origin);
+    url.pathname = `/ipfs/${cid}`;
+    if (filename) {
+      url.searchParams.set("filename", filename);
+      url.hash = location.hash;
+    }
+    setShareUrl(url.href);
   }, []);
 
   return (
     <Suspense>
-      <AppHeader title={title}></AppHeader>
+      <AppHeader title={filename || "IPFS"}></AppHeader>
       <Stack gap="md" p="md">
-        <Box>
-          <Text size="sm" c="dimmed" mb="xs">
-            文件信息:
-          </Text>
-          <Text size="sm">CID: {cid}</Text>
-          <Text size="sm">文件名: {filename}</Text>
-        </Box>
+        <Stack>
+          <Text c="dimmed">文件信息:</Text>
+          <Text>文件名: {filename}</Text>
+          <Text>CID: {cid}</Text>
+        </Stack>
 
         <FilePreview cid={cid} filename={filename} />
 
-        <Box>
-          <Text size="sm" c="dimmed" mb="xs">
-            CID 二维码:
-          </Text>
-          <Flex>
-            <Paper
-              radius="md"
-              p={10}
-              withBorder
-              style={{ display: "flex", backgroundColor: "white" }}
-            >
-              <QRCodeSVG
-                value={shareUrl}
-                size={180}
-                bgColor="white"
-                fgColor="#333"
-                level="M"
-              />
-            </Paper>
-          </Flex>
-        </Box>
+        {shareUrl && (
+          <Box>
+            <Text size="sm" c="dimmed" mb="xs">
+              CID 二维码:
+            </Text>
+            <Flex>
+              <Paper
+                radius="md"
+                p={10}
+                withBorder
+                style={{ display: "flex", backgroundColor: "white" }}
+              >
+                <QRCodeSVG
+                  value={shareUrl}
+                  size={180}
+                  bgColor="white"
+                  fgColor="#333"
+                  level="L"
+                />
+              </Paper>
+            </Flex>
+          </Box>
+        )}
 
         <Box>
-          <Text size="sm" c="dimmed" mb="xs">
+          <Text c="dimmed" mb="xs">
             分享链接:
           </Text>
-          <Text size="xs" style={{ wordBreak: "break-all" }}>
-            {shareUrl}
-          </Text>
+          <Text style={{ wordBreak: "break-all" }}>{shareUrl}</Text>
         </Box>
       </Stack>
     </Suspense>
