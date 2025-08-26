@@ -31,8 +31,8 @@ export default function AppProvider() {
     const host = window.location.hash.slice(1);
     const protocol = `http${host.endsWith(":1976") ? "" : "s"}://`;
     let dot = host ? protocol + host : null;
-    // web2 登录成功 不处理
-    if (window.location.hash.startsWith("#access_token=")) dot = null;
+    // web2 登录 不处理
+    if (window.location.hash.includes("=")) dot = null;
     // 节点地址
     const dotAPI = dot || localStorage.getItem("dotAPI");
     // 立刻赋值 便于请求
@@ -58,8 +58,8 @@ export default function AppProvider() {
   useEffect(() => {
     if (pathname && dotAPI) {
       try {
-        // web2 登录成功 不处理
-        if (window.location.hash.startsWith("#access_token=")) {
+        // web2 登录 不处理
+        if (window.location.hash.includes("=")) {
           return;
         }
         const url = new URL(window.location.href);
