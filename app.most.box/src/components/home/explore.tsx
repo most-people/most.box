@@ -13,17 +13,17 @@ import {
 import { useMarkdown } from "@/hooks/useMarkdown";
 import IPFS from "@/assets/docs/IPFS.md";
 import IPv6 from "@/assets/docs/IPv6.md";
+import RunDot from "@/assets/docs/run-dot.md";
 import "./explore.scss";
 import { useUserStore } from "@/stores/userStore";
 
 export default function HomeExplore() {
   const [randomWord, setRandomWord] = useState("");
 
-  useEffect(() => {
-    // 随机选择一句话
-    const randomIndex = Math.floor(Math.random() * wordsData.length);
-    setRandomWord(wordsData[randomIndex]);
-  }, []);
+  const ipfsElement = useRef<HTMLDivElement>(null);
+  const ipv6Element = useRef<HTMLDivElement>(null);
+  const runDotElement = useRef<HTMLDivElement>(null);
+  const nodeDark = useUserStore((state) => state.nodeDark);
 
   const markdown = useMarkdown();
   const init = async () => {
@@ -35,14 +35,17 @@ export default function HomeExplore() {
       const viewer = await markdown.initViewer(ipv6Element.current);
       viewer.setMarkdown(IPv6);
     }
+    if (runDotElement.current) {
+      const viewer = await markdown.initViewer(runDotElement.current);
+      viewer.setMarkdown(RunDot);
+    }
   };
-
-  const ipfsElement = useRef<HTMLDivElement>(null);
-  const ipv6Element = useRef<HTMLDivElement>(null);
-  const nodeDark = useUserStore((state) => state.nodeDark);
 
   useEffect(() => {
     init();
+    // 随机选择一句话
+    const randomIndex = Math.floor(Math.random() * wordsData.length);
+    setRandomWord(wordsData[randomIndex]);
   }, []);
 
   return (
@@ -70,9 +73,7 @@ export default function HomeExplore() {
         <Accordion.Item value="DOT">
           <Accordion.Control icon="🥦">3. 运行节点</Accordion.Control>
           <Accordion.Panel>
-            Crisp and refreshing fruit. Apples are known for their versatility
-            and nutritional benefits. They come in a variety of flavors and are
-            great for snacking, baking, or adding to salads.
+            <Box className={nodeDark} ref={runDotElement} />
           </Accordion.Panel>
         </Accordion.Item>
       </Accordion>

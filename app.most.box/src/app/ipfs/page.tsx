@@ -2,42 +2,64 @@
 
 import { AppHeader } from "@/components/AppHeader";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useMemo } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { Box, Text, Stack, Paper, Flex } from "@mantine/core";
+import { Box, Text, Stack, Paper, Flex, Anchor } from "@mantine/core";
+import Link from "next/link";
+import { useUserStore } from "@/stores/userStore";
 
 export default function PageIPFS() {
   const searchParams = useSearchParams();
   const cid = searchParams.get("cid");
   const filename = searchParams.get("filename");
+  const dotCID = useUserStore((state) => state.dotCID);
+  const dotAPI = useUserStore((state) => state.dotAPI);
 
-  const [shareUrl, setShareUrl] = useState("");
-
-  useEffect(() => {
-    const url = new URL(location.origin);
-    url.pathname = `/ipfs/${cid}`;
-    if (filename) {
-      url.searchParams.set("filename", filename);
-      url.hash = location.hash;
+  const shareUrl = useMemo(() => {
+    if (dotAPI) {
+      const url = new URL(location.origin);
+      url.pathname = `/ipfs/${cid}`;
+      if (filename) {
+        url.searchParams.set("filename", filename);
+      }
+      try {
+        url.hash = new URL(dotAPI).host;
+      } catch {}
+      return url.href;
     }
-    setShareUrl(url.href);
-  }, []);
+    return "";
+  }, [dotAPI]);
+
+  const downloadUrl = useMemo(() => {
+    if (dotCID) {
+      const url = new URL(dotCID);
+      url.pathname = `/ipfs/${cid}`;
+      if (filename) {
+        url.searchParams.set("filename", filename);
+      }
+
+      return url.href;
+    }
+    return "";
+  }, [dotCID]);
 
   return (
     <Suspense>
-      <AppHeader title={filename || "IPFS"}></AppHeader>
+      <AppHeader title="IPFS 内容寻址"></AppHeader>
       <Stack gap="md" p="md">
-        <Stack>
-          <Text c="dimmed">文件信息:</Text>
-          <Text>文件名: {filename}</Text>
-          <Text>CID: {cid}</Text>
-        </Stack>
+        <Box>
+          <Text c="dimmed">文件信息</Text>
+          <Text>文件名：{filename || "无"}</Text>
+          <Text>CID：{cid}</Text>
+        </Box>
 
-        {shareUrl && (
-          <Box>
-            <Text size="sm" c="dimmed" mb="xs">
-              CID 二维码:
-            </Text>
+        <Box>
+          <Text c="dimmed">分享本页</Text>
+          <Anchor component={Link} href={shareUrl} target="_blank">
+            <Text>{shareUrl}</Text>
+          </Anchor>
+
+          {shareUrl && (
             <Flex>
               <Paper
                 radius="md"
@@ -54,14 +76,14 @@ export default function PageIPFS() {
                 />
               </Paper>
             </Flex>
-          </Box>
-        )}
+          )}
+        </Box>
 
         <Box>
-          <Text c="dimmed" mb="xs">
-            分享链接:
-          </Text>
-          <Text style={{ wordBreak: "break-all" }}>{shareUrl}</Text>
+          <Text c="dimmed">预览下载</Text>
+          <Anchor component={Link} href={downloadUrl} target="_blank">
+            <Text>{downloadUrl}</Text>
+          </Anchor>
         </Box>
       </Stack>
     </Suspense>
