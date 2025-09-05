@@ -1,5 +1,6 @@
 {
   "name": "contract.most.box",
+  "version": "2.0.0",
   "scripts": {
     "build": "hardhat compile",
     "test": "hardhat test",

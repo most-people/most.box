@@ -88,7 +88,9 @@ contract DotContract {
         returns (
             address[] memory addresses,
             string[] memory names,
-            uint256[] memory timestamps
+            string[][] memory APIss,
+            string[][] memory CIDss,
+            uint256[] memory updates
         )
     {
         require(start <= dotList.length, "Invalid start");
@@ -101,14 +103,18 @@ contract DotContract {
         uint256 length = end - start;
         addresses = new address[](length);
         names = new string[](length);
-        timestamps = new uint256[](length);
+        APIss = new string[][](length);
+        CIDss = new string[][](length);
+        updates = new uint256[](length);
 
         for (uint256 i = 0; i < length; i++) {
             address addr = dotList[start + i];
             Dot storage dot = dots[addr];
             addresses[i] = addr;
             names[i] = dot.name;
-            timestamps[i] = dot.update;
+            APIss[i] = dot.APIs;
+            CIDss[i] = dot.CIDs;
+            updates[i] = dot.update;
         }
     }
 
@@ -118,20 +124,26 @@ contract DotContract {
         returns (
             address[] memory addresses,
             string[] memory names,
-            uint256[] memory timestamps
+            string[][] memory APIss,
+            string[][] memory CIDss,
+            uint256[] memory updates
         )
     {
         uint256 length = dotList.length;
         addresses = new address[](length);
         names = new string[](length);
-        timestamps = new uint256[](length);
+        APIss = new string[][](length);
+        CIDss = new string[][](length);
+        updates = new uint256[](length);
 
         for (uint256 i = 0; i < length; i++) {
             address addr = dotList[i];
             Dot storage dot = dots[addr];
             addresses[i] = addr;
             names[i] = dot.name;
-            timestamps[i] = dot.update;
+            APIss[i] = dot.APIs;
+            CIDss[i] = dot.CIDs;
+            updates[i] = dot.update;
         }
     }
 }
