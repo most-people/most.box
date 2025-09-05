@@ -51,7 +51,7 @@ const start = async () => {
   try {
     const peer = await ipfs.id();
     console.log("IPFS", peer.id);
-    await server.listen({ port: mp.port, host: "::" });
+    await server.listen({ port: mp.PORT, host: "::" });
 
     // 获取 IP 地址
     mp.initIP();

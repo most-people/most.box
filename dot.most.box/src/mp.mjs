@@ -2,7 +2,8 @@ import { ethers } from "ethers";
 import os from "os";
 import DotContract from "./abi/DotContract.json" with { type: "json" };
 
-const port = 1976;
+const PORT = 1976;
+const CONTRACT_ADDRESS = "0xdc82cef1a8416210afb87caeec908a4df843f016";
 
 /**
  * 验证 token 并返回地址
@@ -47,20 +48,20 @@ const arrayEqual = (a, b) => {
 };
 
 const network = {
-  ipv4: [`http://localhost:${port}`],
-  ipv6: [`http://[::1]:${port}`],
+  ipv4: [`http://localhost:${PORT}`],
+  ipv6: [`http://[::1]:${PORT}`],
 };
 
 const initIP = () => {
   // 重置
-  network.ipv4 = [`http://localhost:${port}`]
-  network.ipv6 = [`http://[::1]:${port}`]
+  network.ipv4 = [`http://localhost:${PORT}`]
+  network.ipv6 = [`http://[::1]:${PORT}`]
   const interfaces = os.networkInterfaces();
   for (const name of Object.keys(interfaces)) {
     for (const iface of interfaces[name]) {
       // 获取 IPv4 地址
       if (iface.family === "IPv4" && !iface.internal) {
-        network.ipv4.push(`http://${iface.address}:${port}`);
+        network.ipv4.push(`http://${iface.address}:${PORT}`);
       }
       // 获取 IPv6 地址
       if (
@@ -68,13 +69,14 @@ const initIP = () => {
         !iface.internal &&
         !iface.address.startsWith("fe80")
       ) {
-        network.ipv6.push(`http://[${iface.address}]:${port}`);
+        network.ipv6.push(`http://[${iface.address}]:${PORT}`);
       }
     }
   }
   // 推送 IP 地址
   postIP("https://sepolia.base.org");
   postIP('https://mainnet.base.org');
+  // fetchDots('https://mainnet.base.org');
 };
 
 const getIP = () => {
@@ -99,7 +101,6 @@ const postIP = async (RPC) => {
     console.error('请在 .env 文件设置 PRIVATE_KEY 和 DOT_NAME');
     return;
   }
-  const CONTRACT_ADDRESS = "0xdc82cef1a8416210afb87caeec908a4df843f016";
   const provider = new ethers.JsonRpcProvider(RPC);
   const dotContract = new ethers.Contract(CONTRACT_ADDRESS, DotContract.abi, provider);
   const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
@@ -109,7 +110,7 @@ const postIP = async (RPC) => {
   try {
     const [name, APIs, CIDs, update] = await contract.getDot(wallet.address);
     const dot = getIP()
-  
+
     if (arrayEqual(APIs, dot.APIs) && arrayEqual(CIDs, dot.CIDs)) {
       console.log(RPC, "节点无变化");
       return;
@@ -139,14 +140,14 @@ const isOwner = (token) => {
   const { PRIVATE_KEY } = process.env;
   if (!PRIVATE_KEY) return false;
   const address = getAddress(token);
-  if (!address) return false ;
+  if (!address) return false;
   const wallet = new ethers.Wallet(PRIVATE_KEY);
   return wallet.address.toLowerCase() === address;
 }
 
 export default {
+  PORT,
   isOwner,
-  port,
   network,
   getIP,
   initIP,
