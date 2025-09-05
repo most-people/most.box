@@ -149,32 +149,46 @@ describe("DotContract", function () {
     });
 
     it("应该返回正确分页的节点", async function () {
-      const [addresses, names, timestamps] = await dotContract.getDots(0, 2);
+      const [addresses, names, APIss, CIDss, updates] =
+        await dotContract.getDots(0, 2);
 
       expect(addresses.length).to.equal(2);
       expect(names.length).to.equal(2);
-      expect(timestamps.length).to.equal(2);
+      expect(APIss.length).to.equal(2);
+      expect(CIDss.length).to.equal(2);
+      expect(updates.length).to.equal(2);
 
       expect(addresses[0]).to.equal(addr1.address);
       expect(addresses[1]).to.equal(addr2.address);
       expect(names[0]).to.equal("Dot1");
       expect(names[1]).to.equal("Dot2");
+      expect(APIss[0]).to.deep.equal(["api1"]);
+      expect(APIss[1]).to.deep.equal(["api2"]);
+      expect(CIDss[0]).to.deep.equal(["cid1"]);
+      expect(CIDss[1]).to.deep.equal(["cid2"]);
     });
 
     it("应该处理start + count超过总节点数的情况", async function () {
-      const [addresses, names, timestamps] = await dotContract.getDots(1, 10);
+      const [addresses, names, APIss, CIDss] = await dotContract.getDots(1, 10);
 
       expect(addresses.length).to.equal(2); // 只有2个节点从索引1开始
       expect(addresses[0]).to.equal(addr2.address);
       expect(addresses[1]).to.equal(addr3.address);
+      expect(APIss[0]).to.deep.equal(["api2"]);
+      expect(APIss[1]).to.deep.equal(["api3"]);
+      expect(CIDss[0]).to.deep.equal(["cid2"]);
+      expect(CIDss[1]).to.deep.equal(["cid3"]);
     });
 
     it("当start等于节点计数时应该返回空数组", async function () {
-      const [addresses, names, timestamps] = await dotContract.getDots(3, 1);
+      const [addresses, names, APIss, CIDss, updates] =
+        await dotContract.getDots(3, 1);
 
       expect(addresses.length).to.equal(0);
       expect(names.length).to.equal(0);
-      expect(timestamps.length).to.equal(0);
+      expect(APIss.length).to.equal(0);
+      expect(CIDss.length).to.equal(0);
+      expect(updates.length).to.equal(0);
     });
 
     it("当start无效时应该回滚", async function () {
@@ -184,21 +198,27 @@ describe("DotContract", function () {
     });
 
     it("应该处理count = 0的情况", async function () {
-      const [addresses, names, timestamps] = await dotContract.getDots(0, 0);
+      const [addresses, names, APIss, CIDss, updates] =
+        await dotContract.getDots(0, 0);
 
       expect(addresses.length).to.equal(0);
       expect(names.length).to.equal(0);
-      expect(timestamps.length).to.equal(0);
+      expect(APIss.length).to.equal(0);
+      expect(CIDss.length).to.equal(0);
+      expect(updates.length).to.equal(0);
     });
   });
 
   describe("getAllDots", function () {
     it("当没有节点时应该返回空数组", async function () {
-      const [addresses, names, timestamps] = await dotContract.getAllDots();
+      const [addresses, names, APIss, CIDss, updates] =
+        await dotContract.getAllDots();
 
       expect(addresses.length).to.equal(0);
       expect(names.length).to.equal(0);
-      expect(timestamps.length).to.equal(0);
+      expect(APIss.length).to.equal(0);
+      expect(CIDss.length).to.equal(0);
+      expect(updates.length).to.equal(0);
     });
 
     it("应该返回所有节点", async function () {
@@ -207,11 +227,14 @@ describe("DotContract", function () {
       await dotContract.connect(addr2).setDot("Bob", ["api2"], ["cid2"]);
       await dotContract.connect(addr3).setDot("Charlie", ["api3"], ["cid3"]);
 
-      const [addresses, names, timestamps] = await dotContract.getAllDots();
+      const [addresses, names, APIss, CIDss, updates] =
+        await dotContract.getAllDots();
 
       expect(addresses.length).to.equal(3);
       expect(names.length).to.equal(3);
-      expect(timestamps.length).to.equal(3);
+      expect(APIss.length).to.equal(3);
+      expect(CIDss.length).to.equal(3);
+      expect(updates.length).to.equal(3);
 
       expect(addresses).to.deep.equal([
         addr1.address,
@@ -219,9 +242,11 @@ describe("DotContract", function () {
         addr3.address,
       ]);
       expect(names).to.deep.equal(["Alice", "Bob", "Charlie"]);
+      expect(APIss).to.deep.equal([["api1"], ["api2"], ["api3"]]);
+      expect(CIDss).to.deep.equal([["cid1"], ["cid2"], ["cid3"]]);
 
       // 验证时间戳都大于0
-      timestamps.forEach((timestamp: bigint) => {
+      updates.forEach((timestamp: bigint) => {
         expect(timestamp).to.be.gt(0);
       });
     });
