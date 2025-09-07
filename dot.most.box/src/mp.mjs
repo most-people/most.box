@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import os from "os";
-import DotContract from "./abi/DotContract.json" with { type: "json" };
+import DotContractABI from "./abi/DotContractABI.json" with { type: "json" };
 
 const PORT = 1976;
 const CONTRACT_ADDRESS = "0xB67662F0d2BB106B055503062e1dba4f072f5781";
@@ -101,7 +101,7 @@ const postIP = async (RPC) => {
     return;
   }
   const provider = new ethers.JsonRpcProvider(RPC);
-  const dotContract = new ethers.Contract(CONTRACT_ADDRESS, DotContract.abi, provider);
+  const dotContract = new ethers.Contract(CONTRACT_ADDRESS, DotContractABI, provider);
   const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
   const contract = dotContract.connect(wallet);
 
@@ -137,9 +137,18 @@ const postIP = async (RPC) => {
 
 const fetchDots = async (RPC) => {
   const provider = new ethers.JsonRpcProvider(RPC);
-  const dotContract = new ethers.Contract(CONTRACT_ADDRESS, DotContract.abi, provider);
+  const dotContract = new ethers.Contract(CONTRACT_ADDRESS, DotContractABI, provider);
   const [addresses, names, APIss, CIDss, updates] = await dotContract.getAllDots();
-  console.log('🌊', addresses, names, APIss, CIDss, updates)
+  const nodes = addresses.map((address, index) => {
+    return {
+      address,
+      name: names[index] || `节点 ${index + 1}`,
+      APIs: APIss[index] || [],
+      CIDs: CIDss[index] || [],
+      lastUpdate: Number(updates[index]),
+    };
+  });
+  console.log('🌊', nodes)
 }
 
 const isOwner = (token) => {

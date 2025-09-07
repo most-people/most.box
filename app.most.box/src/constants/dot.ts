@@ -60,21 +60,31 @@ export const CONTRACT_ABI = [
     inputs: [],
     name: "getAllDots",
     outputs: [
-      { internalType: "address[]", name: "addresses", type: "address[]" },
-      { internalType: "string[]", name: "names", type: "string[]" },
-      { internalType: "uint256[]", name: "timestamps", type: "uint256[]" },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [{ internalType: "address", name: "dot", type: "address" }],
-    name: "getDot",
-    outputs: [
-      { internalType: "string", name: "name", type: "string" },
-      { internalType: "string[]", name: "APIs", type: "string[]" },
-      { internalType: "string[]", name: "CIDs", type: "string[]" },
-      { internalType: "uint256", name: "update", type: "uint256" },
+      {
+        internalType: "address[]",
+        name: "addresses",
+        type: "address[]",
+      },
+      {
+        internalType: "string[]",
+        name: "names",
+        type: "string[]",
+      },
+      {
+        internalType: "string[][]",
+        name: "APIss",
+        type: "string[][]",
+      },
+      {
+        internalType: "string[][]",
+        name: "CIDss",
+        type: "string[][]",
+      },
+      {
+        internalType: "uint256[]",
+        name: "updates",
+        type: "uint256[]",
+      },
     ],
     stateMutability: "view",
     type: "function",

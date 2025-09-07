@@ -260,22 +260,17 @@ export default function PageDot() {
       if (!validateNetwork(chainId)) return;
 
       const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
-      const [addresses, names, timestamps] = await contract.getAllDots();
-
-      const nodePromises = addresses.map(
-        async (address: string, index: number) => {
-          const [name, APIs, CIDs, update] = await contract.getDot(address);
-          return {
-            address,
-            name: name || names[index] || `节点 ${index + 1}`,
-            APIs: APIs || [],
-            CIDs: CIDs || [],
-            lastUpdate: Number(update || timestamps[index]),
-          };
-        }
-      );
-
-      const nodes = await Promise.all(nodePromises);
+      const [addresses, names, APIss, CIDss, updates] =
+        await contract.getAllDots();
+      const nodes = addresses.map((address: string, index: number) => {
+        return {
+          address,
+          name: names[index] || `节点 ${index + 1}`,
+          APIs: APIss[index] || [],
+          CIDs: CIDss[index] || [],
+          lastUpdate: Number(updates[index]),
+        };
+      });
       localStorage.setItem("dotNodes", JSON.stringify(nodes));
       if (nodes) {
         setItem("dotNodes", nodes);
