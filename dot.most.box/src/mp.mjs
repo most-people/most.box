@@ -1,5 +1,7 @@
 import { ethers } from "ethers";
 import os from "os";
+import fs from "fs";
+import path from "path";
 import DotContractABI from "./abi/DotContractABI.json" with { type: "json" };
 
 const PORT = 1976;
@@ -139,7 +141,7 @@ const fetchDots = async (RPC) => {
   const provider = new ethers.JsonRpcProvider(RPC);
   const dotContract = new ethers.Contract(CONTRACT_ADDRESS, DotContractABI, provider);
   const [addresses, names, APIss, CIDss, updates] = await dotContract.getAllDots();
-  const nodes = addresses.map((address, index) => {
+  const dotNodes = addresses.map((address, index) => {
     return {
       address,
       name: names[index] || `节点 ${index + 1}`,
@@ -148,7 +150,8 @@ const fetchDots = async (RPC) => {
       lastUpdate: Number(updates[index]),
     };
   });
-  console.log('🌊', nodes)
+  // ~/dotNodes.json
+  fs.promises.writeFile(path.join(os.homedir(), 'dotNodes.json'), JSON.stringify(dotNodes, null, 2), 'utf8');
 }
 
 const isOwner = (token) => {
