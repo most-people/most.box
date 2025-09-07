@@ -3,7 +3,7 @@ import os from "os";
 import DotContract from "./abi/DotContract.json" with { type: "json" };
 
 const PORT = 1976;
-const CONTRACT_ADDRESS = "0xdc82cef1a8416210afb87caeec908a4df843f016";
+const CONTRACT_ADDRESS = "0xB67662F0d2BB106B055503062e1dba4f072f5781";
 
 /**
  * 验证 token 并返回地址
@@ -75,8 +75,7 @@ const initIP = () => {
   }
   // 推送 IP 地址
   postIP("https://sepolia.base.org");
-  postIP('https://mainnet.base.org');
-  // fetchDots('https://mainnet.base.org');
+  postIP('https://mainnet.base.org').then(fetchDots('https://mainnet.base.org'));
 };
 
 const getIP = () => {
@@ -135,6 +134,13 @@ const postIP = async (RPC) => {
     console.error(RPC, "更新节点信息失败:", error);
   }
 };
+
+const fetchDots = async (RPC) => {
+  const provider = new ethers.JsonRpcProvider(RPC);
+  const dotContract = new ethers.Contract(CONTRACT_ADDRESS, DotContract.abi, provider);
+  const [addresses, names, APIss, CIDss, updates] = await dotContract.getAllDots();
+  console.log('🌊', addresses, names, APIss, CIDss, updates)
+}
 
 const isOwner = (token) => {
   const { PRIVATE_KEY } = process.env;
