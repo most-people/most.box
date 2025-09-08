@@ -33,6 +33,10 @@ server.register(fastifyStatic, {
   prefix: "/",
 });
 
+server.setNotFoundHandler((request, reply) => {
+  reply.sendFile("404.html");
+});
+
 // 注册 multipart 插件用于文件上传
 server.register(fastifyMultipart, {
   limits: {

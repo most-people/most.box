@@ -3,13 +3,12 @@ import { AppHeader } from "@/components/AppHeader";
 import { useBack } from "@/hooks/useBack";
 import { Button, Container, Loader, Stack, Text } from "@mantine/core";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function PageNotFound() {
   const back = useBack();
   const pathname = usePathname();
-  const router = useRouter();
   const [inited, setInited] = useState(false);
 
   useEffect(() => {
@@ -23,7 +22,7 @@ export default function PageNotFound() {
           url.searchParams.delete("filename");
           url.searchParams.set("filename", filename);
         }
-        router.replace("/ipfs/?" + url.searchParams.toString());
+        window.location.replace("/ipfs/?" + url.searchParams.toString());
         return;
       }
     }
@@ -32,7 +31,7 @@ export default function PageNotFound() {
 
   return (
     <Container py="xl">
-      <AppHeader title={inited ? "404" : ""} />
+      <AppHeader title={inited ? "404" : "Loading..."} />
       {inited ? (
         <>
           <Image src="/img/404.svg" alt="404" width={300} height={225} />
@@ -45,8 +44,7 @@ export default function PageNotFound() {
         </>
       ) : (
         <Stack align="center">
-          <Loader size="lg" />
-          <Text>正在处理...</Text>
+          <Loader color="black" size="lg" type="bars" />
         </Stack>
       )}
     </Container>
