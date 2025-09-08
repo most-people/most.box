@@ -19,7 +19,7 @@ export const registerFiles = (server, ipfs) => {
     try {
       const stat = await ipfs.files.stat(fullPath);
       return stat.cid.toV1().toString();
-    } catch (error) {
+    } catch {
       return "";
     }
   });

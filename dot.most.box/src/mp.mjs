@@ -74,12 +74,8 @@ const initIP = () => {
     }
   }
   // 推送 IP 地址
-  postIP("https://sepolia.base.org").then(() => {
-    fetchDots('https://sepolia.base.org', 'testnetDots.json');
-  })
-  postIP('https://mainnet.base.org').then(() => {
-    fetchDots('https://mainnet.base.org', 'mainnetDots.json');
-  });
+  postIP("https://sepolia.base.org")
+  postIP('https://mainnet.base.org')
 };
 
 const getIP = () => {
@@ -138,26 +134,6 @@ const postIP = async (RPC) => {
     console.error(RPC, "更新节点信息失败:", error);
   }
 };
-
-const fetchDots = async (RPC, filename) => {
-  const provider = new ethers.JsonRpcProvider(RPC);
-  const dotContract = new ethers.Contract(CONTRACT_ADDRESS, DotContractABI, provider);
-  const [addresses, names, APIss, CIDss, updates] = await dotContract.getAllDots();
-  const dots = addresses.map((address, index) => {
-    return {
-      address,
-      name: names[index] || `节点 ${index + 1}`,
-      APIs: APIss[index] || [],
-      CIDs: CIDss[index] || [],
-      lastUpdate: Number(updates[index]),
-    };
-  });
-  const fs = await import('fs/promises');
-  const path = await import('path');
-  const cachePath = path.join(os.homedir(), 'most.box', filename);
-  await fs.mkdir(path.dirname(cachePath), { recursive: true });
-  await fs.writeFile(cachePath, JSON.stringify(dots, null, 2), 'utf8');
-}
 
 const isOwner = (token) => {
   const { PRIVATE_KEY } = process.env;

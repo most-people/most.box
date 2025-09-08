@@ -3,7 +3,6 @@ import rng from "rdrand-lite";
 import { exec } from "child_process";
 import { promisify } from "util";
 import path from "path";
-import os from "os";
 
 const execAsync = promisify(exec);
 const isRdrandSupported = rng.isRrdrandSupported();
@@ -17,18 +16,6 @@ export const registerApis = (server, __dirname) => {
   // 节点信息
   server.get("/api.dot", async () => {
     return mp.getIP();
-  });
-
-  // 全部节点
-  server.get("/api.dots", async (request) => {
-    let filename = 'mainnetDots.json';
-    if (request.query?.network == 'testnet') {
-      filename = 'testnetDots.json';
-    }
-    const fs = await import('fs/promises');
-    const cachePath = path.join(os.homedir(), 'most.box', filename);
-    const dots = await fs.readFile(cachePath, 'utf8');
-    return dots;
   });
 
   // 真随机数

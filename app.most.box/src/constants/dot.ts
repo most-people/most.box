@@ -40,7 +40,7 @@ export const randomRPC = () => RPCs[Math.floor(Math.random() * RPCs.length)];
 export const NETWORK_CONFIG = {
   mainnet: {
     chainId: 8453,
-    rpc: randomRPC(),
+    rpc: "https://mainnet.base.org",
     name: "Base 主网",
     color: "blue",
     explorer: "https://basescan.org",

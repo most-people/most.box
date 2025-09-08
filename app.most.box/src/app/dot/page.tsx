@@ -882,7 +882,7 @@ export default function PageDot() {
           href={Explorer + "/address/" + CONTRACT_ADDRESS}
           target="_blank"
         >
-          合约地址
+          节点合约 {mp.formatAddress(CONTRACT_ADDRESS)}
         </Anchor>
       </Group>
     </Container>
