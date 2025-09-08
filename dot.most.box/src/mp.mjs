@@ -1,7 +1,5 @@
 import { ethers } from "ethers";
 import os from "os";
-import fs from "fs";
-import path from "path";
 import DotContractABI from "./abi/DotContractABI.json" with { type: "json" };
 
 const PORT = 1976;
@@ -76,8 +74,12 @@ const initIP = () => {
     }
   }
   // 推送 IP 地址
-  postIP("https://sepolia.base.org");
-  postIP('https://mainnet.base.org').then(fetchDots('https://mainnet.base.org'));
+  postIP("https://sepolia.base.org").then(() => {
+    fetchDots('https://sepolia.base.org', 'testnetDots.json');
+  })
+  postIP('https://mainnet.base.org').then(() => {
+    fetchDots('https://mainnet.base.org', 'mainnetDots.json');
+  });
 };
 
 const getIP = () => {
@@ -137,11 +139,11 @@ const postIP = async (RPC) => {
   }
 };
 
-const fetchDots = async (RPC) => {
+const fetchDots = async (RPC, filename) => {
   const provider = new ethers.JsonRpcProvider(RPC);
   const dotContract = new ethers.Contract(CONTRACT_ADDRESS, DotContractABI, provider);
   const [addresses, names, APIss, CIDss, updates] = await dotContract.getAllDots();
-  const dotNodes = addresses.map((address, index) => {
+  const dots = addresses.map((address, index) => {
     return {
       address,
       name: names[index] || `节点 ${index + 1}`,
@@ -150,8 +152,11 @@ const fetchDots = async (RPC) => {
       lastUpdate: Number(updates[index]),
     };
   });
-  // ~/dotNodes.json
-  fs.promises.writeFile(path.join(os.homedir(), 'dotNodes.json'), JSON.stringify(dotNodes, null, 2), 'utf8');
+  const fs = await import('fs/promises');
+  const path = await import('path');
+  const cachePath = path.join(os.homedir(), 'most.box', filename);
+  await fs.mkdir(path.dirname(cachePath), { recursive: true });
+  await fs.writeFile(cachePath, JSON.stringify(dots, null, 2), 'utf8');
 }
 
 const isOwner = (token) => {
