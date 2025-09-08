@@ -32,7 +32,7 @@ const RPCs = [
 ];
 
 // 合约配置
-export const CONTRACT_ADDRESS = "0xdc82cef1a8416210afb87caeec908a4df843f016";
+export const CONTRACT_ADDRESS = "0xB67662F0d2BB106B055503062e1dba4f072f5781";
 
 export const randomRPC = () => RPCs[Math.floor(Math.random() * RPCs.length)];
 

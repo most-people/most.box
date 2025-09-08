@@ -91,7 +91,7 @@ const SignMessage = ({ dotApi }: { dotApi: string }) => {
     const message = Date.now().toString();
 
     // @ts-expect-error window.ethereum
-    const ethereum = window.ethereum;
+    const ethereum = window.okexchain || window.ethereum;
     if (ethereum) {
       try {
         if (type === "deploy") {
@@ -195,7 +195,7 @@ export default function PageDeploy() {
   // 连接钱包地址
   const connect = async () => {
     // @ts-expect-error window.ethereum
-    const ethereum = window.ethereum;
+    const ethereum = window.okexchain || window.ethereum;
     if (ethereum) {
       try {
         setConnectLoading(true);
@@ -223,7 +223,7 @@ export default function PageDeploy() {
   // 监听钱包地址变化
   const initAccount = async () => {
     // @ts-expect-error window.ethereum
-    const ethereum = window?.ethereum;
+    const ethereum = window.okexchain || window.ethereum;
     if (ethereum) {
       ethereum.on("accountsChanged", (accounts: string[]) => {
         if (accounts && accounts.length > 0) {

@@ -8,10 +8,10 @@ import { Box, Text, Stack, Paper, Flex, Anchor } from "@mantine/core";
 import Link from "next/link";
 import { useUserStore } from "@/stores/userStore";
 
-export default function PageIPFS() {
-  const searchParams = useSearchParams();
-  const cid = searchParams.get("cid");
-  const filename = searchParams.get("filename");
+const PageContent = () => {
+  const params = useSearchParams();
+  const cid = params.get("cid");
+  const filename = params.get("filename");
   const dotCID = useUserStore((state) => state.dotCID);
   const dotAPI = useUserStore((state) => state.dotAPI);
 
@@ -86,6 +86,14 @@ export default function PageIPFS() {
           </Anchor>
         </Box>
       </Stack>
+    </Suspense>
+  );
+};
+
+export default function PageIPFS() {
+  return (
+    <Suspense>
+      <PageContent />
     </Suspense>
   );
 }
