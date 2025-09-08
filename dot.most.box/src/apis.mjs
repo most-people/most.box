@@ -52,6 +52,13 @@ export const registerApis = (server, __dirname) => {
       }
 
       const rootPath = path.join(__dirname, "..");
+      // 0. git checkout .
+      log.push("执行 git checkout . (忽略本地修改)");
+      const { stdout: checkoutOut, stderr: checkoutErr } = await execAsync("git checkout .", {
+        cwd: rootPath,
+      });
+      log.push(`Git checkout: ${checkoutOut || checkoutErr}`);
+
       // 1. git pull
       log.push("执行 git pull...");
       const { stdout: gitOut, stderr: gitErr } = await execAsync("git pull", {
