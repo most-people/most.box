@@ -39,6 +39,7 @@ import {
   IconExternalLink,
   IconSearch,
   IconSettings,
+  IconBrandGithub,
 } from "@tabler/icons-react";
 import mp from "@/constants/mp";
 import { CID } from "multiformats";
@@ -420,14 +421,17 @@ export default function PageDot() {
         <Stack align="center">
           <Text mt="md">当前节点</Text>
           <Title>{title}</Title>
-          <Anchor
-            c="dimmed"
-            component={Link}
-            href="https://github.com/most-people/most.box"
-            target="_blank"
-          >
-            「轻松简单、开源免费、部署自己的节点」
-          </Anchor>
+          <Group gap={0}>
+            <IconBrandGithub />
+            <Anchor
+              c="dimmed"
+              component={Link}
+              href="https://github.com/most-people/most.box"
+              target="_blank"
+            >
+              「轻松简单、开源免费、部署自己的节点」
+            </Anchor>
+          </Group>
           {ApiList.length > 0 ? (
             <>
               <Text>已成功接入</Text>

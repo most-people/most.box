@@ -3,12 +3,13 @@ import { AppHeader } from "@/components/AppHeader";
 import { useBack } from "@/hooks/useBack";
 import { Button, Container, Loader, Stack, Text } from "@mantine/core";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function PageNotFound() {
   const back = useBack();
   const pathname = usePathname();
+  const router = useRouter();
   const [inited, setInited] = useState(false);
 
   useEffect(() => {
@@ -22,7 +23,7 @@ export default function PageNotFound() {
           url.searchParams.delete("filename");
           url.searchParams.set("filename", filename);
         }
-        window.location.replace("/ipfs/?" + url.searchParams.toString());
+        router.replace("/ipfs/?" + url.searchParams.toString());
         return;
       }
     }

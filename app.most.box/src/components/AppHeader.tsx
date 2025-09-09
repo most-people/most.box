@@ -3,6 +3,7 @@ import { Text, Group, ActionIcon, TextVariant } from "@mantine/core";
 import { Icon } from "@/components/Icon";
 import { useBack } from "@/hooks/useBack";
 import { notifications } from "@mantine/notifications";
+import { useDocumentTitle } from "@mantine/hooks";
 
 interface AppHeaderProps {
   title: string | string[];
@@ -12,7 +13,7 @@ interface AppHeaderProps {
 }
 export const AppHeader = ({ title, variant, right, left }: AppHeaderProps) => {
   const back = useBack();
-
+  useDocumentTitle(title as string);
   return (
     <Group className="app-header">
       {left ? (
