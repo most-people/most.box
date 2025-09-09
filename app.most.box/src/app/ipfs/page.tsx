@@ -21,34 +21,16 @@ import {
 } from "@mantine/core";
 import Link from "next/link";
 import { useUserStore } from "@/stores/userStore";
-import {
-  IconCopy,
-  IconQrcode,
-  IconShare2,
-  IconDownload,
-  IconFileDescription,
-  IconInfoCircle,
-} from "@tabler/icons-react";
-import { CID } from "multiformats";
+import { IconCopy, IconQrcode, IconInfoCircle } from "@tabler/icons-react";
 
 const PageContent = () => {
   const params = useSearchParams();
-  const cid = params.get("cid");
+  const isDir = params.get("type") === "dir";
+  const cid = params.get("cid") || "";
   const initFilename = params.get("filename") || "";
   const [filename, setFilename] = useState<string>(initFilename);
   const dotCID = useUserStore((state) => state.dotCID);
   const dotAPI = useUserStore((state) => state.dotAPI);
-
-  const isDirectory = useMemo(() => {
-    if (cid) {
-      try {
-        const parsedCid = CID.parse(cid);
-        // 基本检查：dag-pb格式通常用于UnixFS
-        return parsedCid.code === 0x70;
-      } catch {}
-    }
-    return false;
-  }, [cid]);
 
   const shareUrl = useMemo(() => {
     if (dotAPI && cid) {
@@ -84,7 +66,7 @@ const PageContent = () => {
       url.pathname = `/ipfs/${cid}`;
       url.searchParams.set("download", "true");
       if (filename) {
-        if (isDirectory) {
+        if (isDir) {
           url.searchParams.set("format", "tar");
           url.searchParams.set("filename", `${filename}.tar`);
         } else {
@@ -94,7 +76,7 @@ const PageContent = () => {
       return url.href;
     }
     return "";
-  }, [dotCID, cid, filename, isDirectory]);
+  }, [dotCID, cid, filename, isDir]);
 
   return (
     <Suspense>
@@ -113,8 +95,8 @@ const PageContent = () => {
 
           <Group justify="space-between" align="center">
             <Group gap={8}>
-              <IconFileDescription size={20} />
-              <Title order={4}>{isDirectory ? "目录" : "文件"}信息</Title>
+              {isDir ? "📁" : "📄"}
+              <Title order={4}>{isDir ? "文件夹" : "文件"}信息</Title>
             </Group>
             {initFilename && (
               <Text size="sm" c="dimmed">
@@ -123,11 +105,19 @@ const PageContent = () => {
             )}
           </Group>
 
-          <Stack gap="xs">
+          <Stack>
             <TextInput
               radius="md"
-              label={isDirectory ? "目录名" : "文件名"}
-              placeholder={isDirectory ? "目录名" : "文件名"}
+              label="CID"
+              placeholder="请输入 CID"
+              value={cid}
+              readOnly
+              variant="filled"
+            />
+            <TextInput
+              radius="md"
+              label={isDir ? "文件夹" : "文件名"}
+              placeholder={isDir ? "文件夹" : "文件名"}
               value={filename}
               onChange={(e) => setFilename(e.currentTarget.value)}
             />
@@ -135,7 +125,7 @@ const PageContent = () => {
 
           <Group justify="space-between">
             <Group gap={8}>
-              <IconShare2 size={20} />
+              📤
               <Title order={4}>分享本页</Title>
             </Group>
           </Group>
@@ -146,37 +136,11 @@ const PageContent = () => {
             </Alert>
           )}
 
-          {shareUrl && (
-            <Flex justify="center">
-              <Paper
-                radius="md"
-                p={12}
-                withBorder
-                style={{ backgroundColor: "white" }}
-              >
-                <Stack gap={9}>
-                  <Group justify="center" gap={6}>
-                    <IconQrcode size={18} />
-                    <Text size="sm" c="dimmed">
-                      扫码快速分享
-                    </Text>
-                  </Group>
-                  <QRCodeSVG
-                    value={shareUrl}
-                    size={200}
-                    bgColor="white"
-                    fgColor="#333"
-                    level="M"
-                  />
-                </Stack>
-              </Paper>
-            </Flex>
-          )}
-
           <TextInput
             radius="md"
             value={shareUrl || ""}
             readOnly
+            variant="filled"
             disabled={!shareUrl}
             placeholder="无可用链接"
             rightSection={
@@ -200,10 +164,38 @@ const PageContent = () => {
             }
           />
 
+          {shareUrl && (
+            <Flex justify="center">
+              <Paper
+                radius="md"
+                p={12}
+                withBorder
+                style={{ backgroundColor: "white" }}
+              >
+                <Stack gap={9}>
+                  <Group justify="center" gap={6}>
+                    <IconQrcode size={18} />
+                    <Text size="sm" c="dimmed">
+                      扫码快速分享
+                    </Text>
+                    <IconQrcode size={18} />
+                  </Group>
+                  <QRCodeSVG
+                    value={shareUrl}
+                    size={200}
+                    bgColor="white"
+                    fgColor="#333"
+                    level="M"
+                  />
+                </Stack>
+              </Paper>
+            </Flex>
+          )}
+
           <Group justify="space-between">
             <Group gap={8}>
-              <IconDownload size={20} />
-              <Title order={4}>预览下载</Title>
+              📖
+              <Title order={4}>查看 / 下载</Title>
             </Group>
           </Group>
 
@@ -217,6 +209,7 @@ const PageContent = () => {
             radius="md"
             value={previewUrl || ""}
             readOnly
+            variant="filled"
             disabled={!previewUrl}
             placeholder="无可用链接"
             rightSection={
@@ -248,7 +241,7 @@ const PageContent = () => {
               target="_blank"
               href={previewUrl}
             >
-              预览
+              查看
             </Button>
             {filename ? (
               <Button

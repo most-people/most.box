@@ -422,10 +422,9 @@ export default function PageDot() {
           <Title>{title}</Title>
           <Anchor
             c="dimmed"
-            onClick={() => {
-              localStorage.setItem("homeTab", "explore");
-              window.open("/");
-            }}
+            component={Link}
+            href="https://github.com/most-people/most.box"
+            target="_blank"
           >
             「轻松简单、开源免费、部署自己的节点」
           </Anchor>

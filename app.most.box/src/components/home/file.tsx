@@ -384,19 +384,29 @@ export default function HomeFile() {
 
   // 分享文件
   const handleShareFile = (item: FileItem) => {
-    const url = `/ipfs/?cid=${item.cid["/"]}&filename=${item.name}`;
+    const params = new URLSearchParams({
+      cid: item.cid["/"],
+      filename: item.name,
+    });
+    if (item.type === "directory") {
+      params.set("type", "dir");
+    }
+    const url = `/ipfs/?${params.toString()}`;
     window.open(url);
   };
 
   // 下载文件
   const formatDownload = (item: FileItem) => {
+    const params = new URLSearchParams({
+      download: "true",
+      filename: item.name,
+    });
+    // 文件夹压缩为 tar 下载
     if (item.type === "directory") {
-      // 文件夹压缩为 tar 下载
-      return `${dotCID}/ipfs/${item.cid["/"]}?download=true&format=tar&filename=${item.name}.tar`;
-    } else {
-      // 文件直接下载
-      return `${dotCID}/ipfs/${item.cid["/"]}?download=true&filename=${item.name}`;
+      params.set("format", "tar");
+      params.set("filename", `${item.name}.tar`);
     }
+    return `${dotCID}/ipfs/${item.cid["/"]}?${params.toString()}`;
   };
 
   useEffect(() => {
