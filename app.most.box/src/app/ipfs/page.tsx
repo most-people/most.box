@@ -53,7 +53,8 @@ const PageContent = () => {
   const shareUrl = useMemo(() => {
     if (dotAPI && cid) {
       const url = new URL(location.origin);
-      url.pathname = `/ipfs/${cid}`;
+      url.pathname = `/ipfs/`;
+      url.searchParams.set("cid", cid);
       if (filename) {
         url.searchParams.set("filename", filename);
       }
@@ -249,16 +250,22 @@ const PageContent = () => {
             >
               预览
             </Button>
-            <Button
-              variant="light"
-              color="blue"
-              w="100%"
-              component={Link}
-              target="_blank"
-              href={downloadUrl}
-            >
-              下载
-            </Button>
+            {filename ? (
+              <Button
+                variant="light"
+                color="blue"
+                w="100%"
+                component={Link}
+                target="_blank"
+                href={downloadUrl}
+              >
+                下载
+              </Button>
+            ) : (
+              <Button variant="light" color="blue" w="100%" disabled>
+                下载
+              </Button>
+            )}
           </Group>
         </Stack>
       </Container>

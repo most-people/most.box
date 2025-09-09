@@ -31,7 +31,7 @@
 
 https://cid.most.red/ipfs/bafkreihp5o7tdipf6ajkgkdxknnffkuxpeecwqydi4q5iqt4gko6r2agk4
 
-![Long March](https://cid.most.red/ipfs/bafkreihp5o7tdipf6ajkgkdxknnffkuxpeecwqydi4q5iqt4gko6r2agk4?filename=Long%20March.jpg)
+![Long March](https://cid.most.red/ipfs/bafkreihp5o7tdipf6ajkgkdxknnffkuxpeecwqydi4q5iqt4gko6r2agk4)
 
 我们可以把任意文件（如图片、视频、网站…）想象成一本书。把 IPFS 想象成一座图书馆。
 当我们把书在自己的图书馆后，当其它人得知你有这本书，就会把书复制一份带回自己的图书馆。
