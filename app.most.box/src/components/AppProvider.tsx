@@ -40,7 +40,8 @@ export default function AppProvider() {
     // 切换节点
     updateDot(dotAPI || location.origin).then((list) => {
       if (list === null) {
-        router.push("/dot");
+        // 默认节点
+        updateDot("https://dot.most.red");
       }
     });
     const dotCID = localStorage.getItem("dotCID");

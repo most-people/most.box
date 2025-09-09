@@ -16,6 +16,8 @@ import IPv6 from "@/assets/docs/IPv6.md";
 import RunDot from "@/assets/docs/run-dot.md";
 import "./explore.scss";
 import { useUserStore } from "@/stores/userStore";
+import { Icon } from "@/components/Icon";
+import Link from "next/link";
 
 export default function HomeExplore() {
   const [randomWord, setRandomWord] = useState("");
@@ -86,27 +88,22 @@ export default function HomeExplore() {
         <Accordion.Item value="DOT">
           <Accordion.Control icon="🦕">节点切换</Accordion.Control>
           <Accordion.Panel>
-            Crisp and refreshing fruit. Apples are known for their versatility
-            and nutritional benefits. They come in a variety of flavors and are
-            great for snacking, baking, or adding to salads.
+            点击左上角 <Icon name="Earth" size={24} /> 图标选择 IPFS 网关
           </Accordion.Panel>
         </Accordion.Item>
 
         <Accordion.Item value="NOTE">
           <Accordion.Control icon="✏️">笔记</Accordion.Control>
           <Accordion.Panel>
-            Crisp and refreshing fruit. Apples are known for their versatility
-            and nutritional benefits. They come in a variety of flavors and are
-            great for snacking, baking, or adding to salads.
+            点击底部 <Icon name="Note" size={24} /> 图标，创建 Markdown 笔记
           </Accordion.Panel>
         </Accordion.Item>
 
         <Accordion.Item value="IPFS">
           <Accordion.Control icon="📂">文件系统</Accordion.Control>
           <Accordion.Panel>
-            Crisp and refreshing fruit. Apples are known for their versatility
-            and nutritional benefits. They come in a variety of flavors and are
-            great for snacking, baking, or adding to salads.
+            点击左下角 <Icon name="File" size={24} /> 图标，打开 IPFS
+            星级文件系统
           </Accordion.Panel>
         </Accordion.Item>
       </Accordion>

@@ -13,7 +13,7 @@ export default function PageBuild() {
   const windowsElement = useRef<HTMLDivElement>(null);
   const nodeDark = useUserStore((state) => state.nodeDark);
   const markdown = useMarkdown();
-  const [os, setOs] = useState("linux"); // 'linux' or 'windows'
+  const [system, setSystem] = useState("windows"); // 'linux' or 'windows'
 
   const init = async () => {
     if (linuxElement.current) {
@@ -24,28 +24,41 @@ export default function PageBuild() {
       const viewer = await markdown.initViewer(windowsElement.current);
       viewer.setMarkdown(Windows);
     }
+
+    const params = new URLSearchParams(window.location.search);
+    setSystem(params.get("system") === "linux" ? "linux" : "windows");
   };
 
   useEffect(() => {
     init();
   }, []);
 
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("system", system);
+    window.history.replaceState(null, "", url.href);
+  }, [system]);
+
   return (
     <Container w="100%">
       <AppHeader title="部署教程" />
       <Divider my="md" />
       <SegmentedControl
-        value={os}
-        onChange={setOs}
+        value={system}
+        onChange={setSystem}
         data={[
           { label: "Linux", value: "linux" },
           { label: "Windows", value: "windows" },
         ]}
       />
       <Divider my="md" />
-      <Box hidden={os !== "linux"} className={nodeDark} ref={linuxElement} />
       <Box
-        hidden={os !== "windows"}
+        hidden={system !== "linux"}
+        className={nodeDark}
+        ref={linuxElement}
+      />
+      <Box
+        hidden={system !== "windows"}
         className={nodeDark}
         ref={windowsElement}
       />

@@ -2,4 +2,4 @@ Most.Box 节点是 IPFS 网关的开源封装。部署节点即可运行独立�
 
 [Windows 部署教程](/build/?system=windows) | [Linux 部署教程](/build/?system=linux)
 
-节点实现前后端分离，可以直接切换当前已部署的公开节点： [/dot](/dot)
+节点实现前后端分离，可以直接切换当前已部署的公开节点：[/dot](/dot)
