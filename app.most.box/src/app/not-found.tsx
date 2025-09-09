@@ -31,7 +31,7 @@ export default function PageNotFound() {
 
   return (
     <Container py="xl">
-      <AppHeader title={inited ? "404" : "Loading..."} />
+      <AppHeader title={inited ? "404" : ""} />
       {inited ? (
         <>
           <Image src="/img/404.svg" alt="404" width={300} height={225} />

@@ -384,21 +384,8 @@ export default function HomeFile() {
 
   // 分享文件
   const handleShareFile = (item: FileItem) => {
-    const url = `${dotCID}/ipfs/${item.cid["/"]}?filename=${item.name}`;
-
-    if (navigator.share) {
-      navigator.share({
-        title: `文件: ${item.name}`,
-        url,
-      });
-    } else {
-      navigator.clipboard.writeText(url).then(() => {
-        notifications.show({
-          color: "green",
-          message: "分享链接已复制到剪贴板",
-        });
-      });
-    }
+    const url = `/ipfs/?cid=${item.cid["/"]}&filename=${item.name}`;
+    window.open(url);
   };
 
   // 下载文件
