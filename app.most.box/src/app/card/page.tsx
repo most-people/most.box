@@ -74,7 +74,7 @@ const PageContent = () => {
 
   return (
     <Container py="lg" size="sm">
-      <AppHeader title="名片" />
+      <AppHeader title="我的地址" />
 
       <Stack align="center" gap="xl">
         <Avatar
@@ -88,23 +88,25 @@ const PageContent = () => {
         />
 
         <Stack align="center" gap="md">
-          <Text size="sm" c="dimmed" fw={500}>
-            我的名片
-          </Text>
-
           <Paper
             radius="md"
             p={10}
             withBorder
             style={{ display: "flex", backgroundColor: "white" }}
           >
-            <QRCodeSVG
-              value={uid}
-              size={180}
-              bgColor="white"
-              fgColor="#333"
-              level="M"
-            />
+            <Stack align="center" gap={4}>
+              <Text size="sm" c="dimmed" fw={500}>
+                {mp.formatAddress(uid)}
+              </Text>
+
+              <QRCodeSVG
+                value={uid}
+                size={180}
+                bgColor="white"
+                fgColor="#333"
+                level="M"
+              />
+            </Stack>
           </Paper>
 
           <Text
@@ -118,7 +120,7 @@ const PageContent = () => {
         </Stack>
 
         <Group gap="md" justify="center">
-          <Tooltip label="复制名片">
+          <Tooltip label="复制地址">
             <ActionIcon
               size="xl"
               radius="xl"
@@ -130,7 +132,7 @@ const PageContent = () => {
             </ActionIcon>
           </Tooltip>
 
-          <Tooltip label="分享名片">
+          <Tooltip label="分享本页">
             <ActionIcon
               size="xl"
               radius="xl"
@@ -143,12 +145,9 @@ const PageContent = () => {
           </Tooltip>
         </Group>
 
-        {/* 底部装饰 */}
-        <Box mt="xl">
-          <Text size="xs" c="dimmed" ta="center">
-            Powered by Most.Box
-          </Text>
-        </Box>
+        <Text size="xs" c="dimmed" ta="center">
+          Powered by Most.Box
+        </Text>
       </Stack>
     </Container>
   );

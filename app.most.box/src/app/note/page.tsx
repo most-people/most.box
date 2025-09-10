@@ -9,6 +9,7 @@ import {
   Loader,
   Center,
   Container,
+  TextInput,
 } from "@mantine/core";
 
 import { AppHeader } from "@/components/AppHeader";
@@ -22,6 +23,7 @@ import { api } from "@/constants/api";
 import { notifications } from "@mantine/notifications";
 import { mostDecode, mostEncode } from "@/constants/MostWallet";
 import Link from "next/link";
+import { modals } from "@mantine/modals";
 
 const PageContent = () => {
   const params = useSearchParams();
@@ -37,6 +39,8 @@ const PageContent = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [isSecret, setIsSecret] = useState(false);
   const [inited, setInited] = useState(false);
+
+  const [noteName, setNoteName] = useState("123123");
 
   const updateCid = (cid: string, uid?: string) => {
     const url = new URL(window.location.href);
@@ -125,6 +129,23 @@ const PageContent = () => {
       const name = params.get("name");
       if (name) {
         updateNote(name, newContent);
+      } else {
+        // https://mantine.dev/x/modals
+        modals.openConfirmModal({
+          centered: true,
+          title: "保存笔记",
+          children: (
+            <TextInput
+              placeholder="请输入笔记名称"
+              value={noteName}
+              onChange={(event) => setNoteName(event.currentTarget.value)}
+            />
+          ),
+          labels: { confirm: "保存", cancel: "取消" },
+          onConfirm: () => {
+            console.log(noteName);
+          },
+        });
       }
     }
     setIsEditing(false);
@@ -160,19 +181,15 @@ const PageContent = () => {
         if (cid) {
           updateCid(cid);
           fetchNote(cid);
-        } else {
-          const cid = params.get("cid");
-          if (cid) {
-            fetchNote(cid);
-          }
+          return;
         }
       } catch (error) {
         console.info(error);
-        const cid = params.get("cid");
-        if (cid) {
-          fetchNote(cid);
-        }
       }
+    }
+    const cid = params.get("cid");
+    if (cid) {
+      fetchNote(cid);
     }
   };
 
