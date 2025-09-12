@@ -32,7 +32,10 @@ const RPCs = [
 ];
 
 // 合约配置
-export const CONTRACT_ADDRESS = "0xB67662F0d2BB106B055503062e1dba4f072f5781";
+export const CONTRACT_ADDRESS_DOT =
+  "0xB67662F0d2BB106B055503062e1dba4f072f5781";
+export const CONTRACT_ADDRESS_NAME =
+  "0x61CD52a5D7147F3dc01076b8cc69717230aA3670";
 
 export const randomRPC = () => RPCs[Math.floor(Math.random() * RPCs.length)];
 
@@ -55,7 +58,7 @@ export const NETWORK_CONFIG = {
 };
 
 // DotContract ABI
-export const CONTRACT_ABI = [
+export const CONTRACT_ABI_DOT = [
   {
     inputs: [],
     name: "getAllDots",

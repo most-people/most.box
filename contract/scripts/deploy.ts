@@ -1,21 +1,20 @@
 import { ethers } from "hardhat";
 
-async function main() {
+const main = async (contractName: "NameContract" | "DotContract") => {
   // 获取合约工厂
-  const DotContract = await ethers.getContractFactory("DotContract");
+  const NameContract = await ethers.getContractFactory(contractName);
 
   // 部署合约并等待部署完成
-  const dotContract = await DotContract.deploy();
+  const nameContract = await NameContract.deploy();
 
   // 获取合约地址
-  // @ts-ignore
-  const address = await dotContract.getAddress();
+  const address = await nameContract.getAddress();
 
   // 输出合约地址
   console.log("Contract deployed to:", address);
-}
+};
 
-main().catch((error) => {
+main("NameContract").catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });

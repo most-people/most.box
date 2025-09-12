@@ -46,8 +46,8 @@ import { CID } from "multiformats";
 import Link from "next/link";
 import { DotNode, useUserStore } from "@/stores/userStore";
 import {
-  CONTRACT_ABI,
-  CONTRACT_ADDRESS,
+  CONTRACT_ABI_DOT,
+  CONTRACT_ADDRESS_DOT,
   NETWORK_CONFIG,
   randomRPC,
 } from "@/constants/dot";
@@ -260,7 +260,11 @@ export default function PageDot() {
 
       if (!validateNetwork(chainId)) return;
 
-      const contract = new Contract(CONTRACT_ADDRESS, CONTRACT_ABI, provider);
+      const contract = new Contract(
+        CONTRACT_ADDRESS_DOT,
+        CONTRACT_ABI_DOT,
+        provider
+      );
       const [addresses, names, APIss, CIDss, updates] =
         await contract.getAllDots();
       const nodes = addresses.map((address: string, index: number) => {
@@ -882,10 +886,10 @@ export default function PageDot() {
           size="sm"
           c="blue"
           component={Link}
-          href={Explorer + "/address/" + CONTRACT_ADDRESS}
+          href={Explorer + "/address/" + CONTRACT_ADDRESS_DOT}
           target="_blank"
         >
-          节点合约 {mp.formatAddress(CONTRACT_ADDRESS)}
+          节点合约 {mp.formatAddress(CONTRACT_ADDRESS_DOT)}
         </Anchor>
       </Group>
     </Container>

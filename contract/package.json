@@ -4,14 +4,15 @@
   "scripts": {
     "build": "hardhat compile",
     "test": "hardhat test",
-    "deploy:sepolia": "hardhat run scripts/deploy.ts --network BaseTestnetSepolia",
+    "deploy:testnet": "hardhat run scripts/deploy.ts --network BaseTestnetSepolia",
+    "deploy:mainnet": "hardhat run scripts/deploy.ts --network BaseMainnet",
     "clear": "rm -rf ./typechain-types && rm -rf ./artifacts && rm -rf ./cache",
     "npm": "npm i"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^6.1.0",
     "dotenv": "^17.2.2",
-    "hardhat": "2.26.2"
+    "hardhat": "2.26.3"
   },
   "dependencies": {
     "@nomicfoundation/hardhat-ethers": "3.1.0",

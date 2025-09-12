@@ -31,7 +31,7 @@ export default function PageWeb3() {
         </Text>
 
         <Anchor component={Link} href="/web3/tools">
-          <Text>工具集</Text>
+          <Text>导出钱包</Text>
         </Anchor>
 
         <Text size="lg" fw={500}>
