@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Container,
   Text,
@@ -14,10 +14,28 @@ import { AppHeader } from "@/components/AppHeader";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import Link from "next/link";
 import mp from "@/constants/mp";
+import { NETWORK_CONFIG } from "@/constants/dot";
+import { formatEther, JsonRpcProvider } from "ethers";
 
 export default function PageWeb3() {
   const wallet = useUserStore((state) => state.wallet);
   const [showX25519, setShowX25519] = useState(false);
+  const [balance, setBalance] = useState("-");
+
+  const fetchBalance = () => {
+    if (wallet) {
+      const RPC = NETWORK_CONFIG["mainnet"].rpc;
+      const provider = new JsonRpcProvider(RPC);
+      // 获取余额
+      provider.getBalance(wallet.address).then((balance) => {
+        setBalance(formatEther(balance));
+      });
+    }
+  };
+
+  useEffect(() => {
+    fetchBalance();
+  }, [wallet]);
 
   return (
     <Container py={20}>
@@ -37,7 +55,21 @@ export default function PageWeb3() {
         <Text size="lg" fw={500}>
           ETH 地址
         </Text>
-        <Text>{wallet?.address || "-"}</Text>
+
+        <Group>
+          <Text>{wallet?.address || "-"}</Text>
+          <Anchor
+            href={`https://basescan.org/address/${wallet?.address}`}
+            target="_blank"
+          >
+            查看
+          </Anchor>
+        </Group>
+
+        <Text size="lg" fw={500}>
+          余额
+        </Text>
+        <Text>{balance} Base ETH</Text>
 
         <Text size="lg" fw={500}>
           x25519 公钥

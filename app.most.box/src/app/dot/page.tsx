@@ -22,7 +22,7 @@ import {
   TextInput,
   Anchor,
 } from "@mantine/core";
-import { Contract, ethers } from "ethers";
+import { Contract, JsonRpcProvider } from "ethers";
 import { notifications } from "@mantine/notifications";
 import {
   IconCheck,
@@ -254,7 +254,7 @@ export default function PageDot() {
       setError(null);
 
       const rpcUrl = rpc || customRPC || RPC;
-      const provider = new ethers.JsonRpcProvider(rpcUrl);
+      const provider = new JsonRpcProvider(rpcUrl);
       const networkInfo = await provider.getNetwork();
       const chainId = Number(networkInfo.chainId);
 

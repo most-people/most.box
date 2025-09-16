@@ -75,7 +75,9 @@ const formatDate = (date: string | number) => {
   const input = dayjs(Number(date));
   const today = dayjs();
 
-  if (input.isSame(today, "day")) {
+  if (input.isSame(today, "minute")) {
+    return input.format("HH:mm:ss");
+  } else if (input.isSame(today, "day")) {
     // 当天显示时间
     return input.format("HH:mm");
   } else if (input.isSame(today.subtract(1, "day"), "day")) {
