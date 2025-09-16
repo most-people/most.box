@@ -51,18 +51,22 @@ interface State extends UserStore {
   setItem: <K extends keyof State>(key: K, value: State[K]) => void;
 }
 
-export const useUserStore = create<State>((set) => ({
+export const useUserStore = create<State>((set, get) => ({
   wallet: undefined,
   initWallet(fingerprint: string) {
     set({ fingerprint });
     const jwt = localStorage.getItem("jwt");
     if (jwt) {
-      const wallet = mp.verifyJWT(jwt);
-      if (wallet) {
-        mp.createToken(wallet);
-        set({ wallet });
-      } else {
-        // get().exit();
+      try {
+        const wallet = mp.verifyJWT(jwt);
+        if (wallet) {
+          mp.createToken(wallet);
+          set({ wallet });
+        }
+      } catch (error) {
+        notifications.show({ message: "登录过期", color: "red", });
+        console.warn("登录过期", error);
+        get().exit();
       }
     }
   },
@@ -109,6 +113,7 @@ export const useUserStore = create<State>((set) => ({
   fingerprint: "",
   exit() {
     set({ wallet: undefined, notes: undefined, files: undefined });
+    console.log('🌊', localStorage)
     localStorage.removeItem("jwt");
     localStorage.removeItem("token");
   },

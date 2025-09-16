@@ -22,7 +22,7 @@ export default function AppProvider() {
       sessionStorage.setItem("fingerprint", fingerprint);
       initWallet(fingerprint);
     } catch (error) {
-      console.warn("获取设备指纹失败:", error);
+      console.warn("登录失败:", error);
       return "";
     }
   };

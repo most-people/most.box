@@ -89,7 +89,7 @@ export const mostDecode = (
     new Uint8Array(getBytes(private_key))
   );
   if (!decrypted) {
-    console.info("解密失败");
+    console.info("无法解密");
     return "";
   }
   return new TextDecoder().decode(decrypted);
