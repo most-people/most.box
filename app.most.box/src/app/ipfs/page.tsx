@@ -125,6 +125,76 @@ const PageContent = () => {
 
           <Group justify="space-between">
             <Group gap={8}>
+              📖
+              <Title order={4}>查看 / 下载</Title>
+            </Group>
+          </Group>
+
+          {!dotCID && (
+            <Alert color="gray" radius="md" mb="sm">
+              未连接到 Dot 节点，下载链接将不可用。
+            </Alert>
+          )}
+
+          <TextInput
+            radius="md"
+            value={previewUrl || ""}
+            readOnly
+            variant="filled"
+            disabled={!previewUrl}
+            placeholder="无可用链接"
+            rightSection={
+              <CopyButton value={previewUrl || ""}>
+                {({ copied, copy }) => (
+                  <Tooltip
+                    label={copied ? "已复制" : "复制链接"}
+                    position="top"
+                  >
+                    <ActionIcon
+                      variant="subtle"
+                      color={copied ? "teal" : "gray"}
+                      onClick={copy}
+                      disabled={!previewUrl}
+                    >
+                      <IconCopy size={16} />
+                    </ActionIcon>
+                  </Tooltip>
+                )}
+              </CopyButton>
+            }
+          />
+
+          <Group wrap="nowrap">
+            <Button
+              color="green"
+              variant="light"
+              w="100%"
+              component={Link}
+              target="_blank"
+              href={previewUrl}
+            >
+              查看
+            </Button>
+            {filename ? (
+              <Button
+                variant="light"
+                color="blue"
+                w="100%"
+                component={Link}
+                target="_blank"
+                href={downloadUrl}
+              >
+                下载
+              </Button>
+            ) : (
+              <Button variant="light" color="blue" w="100%" disabled>
+                下载
+              </Button>
+            )}
+          </Group>
+
+          <Group justify="space-between">
+            <Group gap={8}>
               📤
               <Title order={4}>分享本页</Title>
             </Group>
@@ -176,7 +246,7 @@ const PageContent = () => {
                   <Group justify="center" gap={6}>
                     <IconQrcode size={18} />
                     <Text size="sm" c="dimmed">
-                      扫码快速分享
+                      扫码分享
                     </Text>
                     <IconQrcode size={18} />
                   </Group>
@@ -191,75 +261,6 @@ const PageContent = () => {
               </Paper>
             </Flex>
           )}
-
-          <Group justify="space-between">
-            <Group gap={8}>
-              📖
-              <Title order={4}>查看 / 下载</Title>
-            </Group>
-          </Group>
-
-          {!dotCID && (
-            <Alert color="gray" radius="md" mb="sm">
-              未连接到 Dot 节点，下载链接将不可用。
-            </Alert>
-          )}
-
-          <TextInput
-            radius="md"
-            value={previewUrl || ""}
-            readOnly
-            variant="filled"
-            disabled={!previewUrl}
-            placeholder="无可用链接"
-            rightSection={
-              <CopyButton value={previewUrl || ""}>
-                {({ copied, copy }) => (
-                  <Tooltip
-                    label={copied ? "已复制" : "复制链接"}
-                    position="top"
-                  >
-                    <ActionIcon
-                      variant="subtle"
-                      color={copied ? "teal" : "gray"}
-                      onClick={copy}
-                      disabled={!previewUrl}
-                    >
-                      <IconCopy size={16} />
-                    </ActionIcon>
-                  </Tooltip>
-                )}
-              </CopyButton>
-            }
-          />
-
-          <Group wrap="nowrap">
-            <Button
-              variant="light"
-              w="100%"
-              component={Link}
-              target="_blank"
-              href={previewUrl}
-            >
-              查看
-            </Button>
-            {filename ? (
-              <Button
-                variant="light"
-                color="blue"
-                w="100%"
-                component={Link}
-                target="_blank"
-                href={downloadUrl}
-              >
-                下载
-              </Button>
-            ) : (
-              <Button variant="light" color="blue" w="100%" disabled>
-                下载
-              </Button>
-            )}
-          </Group>
         </Stack>
       </Container>
     </Suspense>

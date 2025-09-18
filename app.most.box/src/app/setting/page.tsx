@@ -23,7 +23,7 @@ import {
   Stack,
   Badge,
 } from "@mantine/core";
-import "./setting.scss";
+
 import {
   CONTRACT_ABI_NAME,
   CONTRACT_ADDRESS_NAME,
@@ -51,40 +51,43 @@ const ThemeSwitcher = () => {
   }
 
   return (
-    <Group gap="xs">
-      <ActionIcon
-        onClick={() => setColorScheme("auto")}
-        variant={colorScheme === "auto" ? "filled" : "default"}
-        size="lg"
-        aria-label="跟随系统"
-      >
-        <IconDeviceDesktop size={18} />
-      </ActionIcon>
+    <Stack gap="xs">
+      <Text>主题</Text>
+      <Group gap="xs">
+        <ActionIcon
+          onClick={() => setColorScheme("auto")}
+          variant={colorScheme === "auto" ? "filled" : "default"}
+          size="lg"
+          aria-label="跟随系统"
+        >
+          <IconDeviceDesktop size={18} />
+        </ActionIcon>
 
-      <ActionIcon
-        onClick={() => setColorScheme("light")}
-        variant={colorScheme === "light" ? "filled" : "default"}
-        size="lg"
-        aria-label="亮色主题"
-        color={colorScheme === "light" ? "yellow" : "gray"}
-      >
-        <IconSun size={18} />
-      </ActionIcon>
+        <ActionIcon
+          onClick={() => setColorScheme("light")}
+          variant={colorScheme === "light" ? "filled" : "default"}
+          size="lg"
+          aria-label="亮色主题"
+          color={colorScheme === "light" ? "yellow" : "gray"}
+        >
+          <IconSun size={18} />
+        </ActionIcon>
 
-      <ActionIcon
-        onClick={() => setColorScheme("dark")}
-        variant={colorScheme === "dark" ? "filled" : "default"}
-        size="lg"
-        aria-label="暗色主题"
-        color={colorScheme === "dark" ? "blue" : "gray"}
-      >
-        <IconMoon size={18} />
-      </ActionIcon>
-    </Group>
+        <ActionIcon
+          onClick={() => setColorScheme("dark")}
+          variant={colorScheme === "dark" ? "filled" : "default"}
+          size="lg"
+          aria-label="暗色主题"
+          color={colorScheme === "dark" ? "blue" : "gray"}
+        >
+          <IconMoon size={18} />
+        </ActionIcon>
+      </Group>
+    </Stack>
   );
 };
 
-export default function PageSetting() {
+const UserName = () => {
   const wallet = useUserStore((state) => state.wallet);
 
   const [currentName, setCurrentName] = useState("");
@@ -97,7 +100,7 @@ export default function PageSetting() {
   const Explorer = NETWORK_CONFIG["mainnet"].explorer;
 
   const provider = useMemo(() => new JsonRpcProvider(RPC), [RPC]);
-  const contractRO = useMemo(
+  const contract = useMemo(
     () => new Contract(CONTRACT_ADDRESS_NAME, CONTRACT_ABI_NAME, provider),
     [provider]
   );
@@ -106,7 +109,7 @@ export default function PageSetting() {
     if (!wallet) return;
     try {
       setLoadingGet(true);
-      const name: string = await contractRO.getName(wallet.address);
+      const name: string = await contract.getName(wallet.address);
       setCurrentName(name);
       if (!nameInput && name) setNameInput(name);
     } catch (err) {
@@ -121,7 +124,7 @@ export default function PageSetting() {
   }, [wallet]);
 
   // 获取可用的 Signer
-  const getWritableContract = () => {
+  const getSigner = () => {
     try {
       if (wallet?.mnemonic) {
         const signer = HDNodeWallet.fromPhrase(wallet.mnemonic).connect(
@@ -153,8 +156,8 @@ export default function PageSetting() {
         color: "yellow",
       });
 
-    const writable = getWritableContract();
-    if (!writable) {
+    const signer = getSigner();
+    if (!signer) {
       notifications.show({
         message: "未检测到可用钱包，无法发起交易。请安装钱包或使用助记词登录。",
         color: "red",
@@ -172,7 +175,7 @@ export default function PageSetting() {
       if (gasPrice) {
         let gas: bigint = 0n;
         try {
-          gas = await (writable as any).estimateGas.setName(value);
+          gas = await (signer as any).estimateGas.setName(value);
         } catch {
           // 无法估算时，继续交由链上处理
         }
@@ -188,7 +191,7 @@ export default function PageSetting() {
         }
       }
 
-      const tx = await (writable as any).setName(value);
+      const tx = await (signer as any).setName(value);
       notifications.show({ message: "交易已提交，等待确认…", color: "blue" });
       await tx.wait();
       notifications.show({ message: "设置成功", color: "green" });
@@ -214,8 +217,8 @@ export default function PageSetting() {
         color: "yellow",
       });
 
-    const writable = getWritableContract();
-    if (!writable) {
+    const signer = getSigner();
+    if (!signer) {
       notifications.show({
         message: "未检测到可用钱包，无法发起交易。请安装钱包或使用助记词登录。",
         color: "red",
@@ -234,7 +237,7 @@ export default function PageSetting() {
       if (gasPrice) {
         let gas: bigint = 0n;
         try {
-          gas = await (writable as any).estimateGas.deleteName();
+          gas = await (signer as any).estimateGas.deleteName();
         } catch {
           // 无法估算时，继续交由链上处理
         }
@@ -250,7 +253,7 @@ export default function PageSetting() {
         }
       }
 
-      const tx = await (writable as any).deleteName();
+      const tx = await (signer as any).deleteName();
       notifications.show({ message: "交易已提交，等待确认…", color: "blue" });
       await tx.wait();
       notifications.show({ message: "删除成功", color: "green" });
@@ -289,67 +292,85 @@ export default function PageSetting() {
       onConfirm: onDeleteName,
     });
   };
-
   return (
-    <Container id="page-setting" py={20}>
-      <AppHeader title="设置" />
+    <Stack>
+      <Group align="center" gap="xs">
+        <Text>用户名</Text>
+        {loadingGet ? (
+          <Badge variant="light" color="gray">
+            加载中
+          </Badge>
+        ) : currentName ? (
+          <Badge style={{ cursor: "pointer" }} variant="light" color="blue">
+            {currentName}
+          </Badge>
+        ) : (
+          <Badge variant="light" color="gray">
+            {"未设置"}
+          </Badge>
+        )}
+      </Group>
 
-      <Text>主题</Text>
-      <ThemeSwitcher />
+      <TextInput
+        description="链上唯一，可修改或删除"
+        leftSection={<IconAt size={16} />}
+        variant="filled"
+        placeholder="请输入新用户名"
+        value={nameInput}
+        onChange={(e) => setNameInput(e.currentTarget.value)}
+        maxLength={32}
+        disabled={loadingSet || loadingDelete}
+      />
 
-      <Space h={20} />
-      <Stack>
-        <Group align="center" gap="xs">
-          <Text>用户名</Text>
-          {loadingGet ? (
-            <Badge variant="light" color="gray">
-              加载中
-            </Badge>
-          ) : (
-            <Badge variant="light" color={currentName ? "blue" : "gray"}>
-              {currentName || "未设置"}
-            </Badge>
-          )}
-        </Group>
-
-        <TextInput
-          description="链上唯一，可修改或删除"
-          leftSection={<IconAt size={16} />}
-          variant="filled"
-          placeholder="请输入新用户名"
-          value={nameInput}
-          onChange={(e) => setNameInput(e.currentTarget.value)}
-          maxLength={32}
-          disabled={loadingSet || loadingDelete}
-        />
-
-        <Group>
-          <Button
-            loading={loadingSet}
-            onClick={confirmSetName}
-            disabled={!wallet || currentName === nameInput}
-          >
-            保存
-          </Button>
-          <Button
-            variant="light"
-            loading={loadingDelete}
-            onClick={confirmDeleteName}
-            disabled={!wallet || !currentName}
-          >
-            删除
-          </Button>
-        </Group>
-
-        <Anchor
+      <Group>
+        <Button
+          loading={loadingSet}
+          onClick={confirmSetName}
+          disabled={!wallet || currentName === nameInput}
           size="sm"
-          c="blue"
-          component={Link}
-          href={Explorer + "/address/" + CONTRACT_ADDRESS_NAME}
-          target="_blank"
         >
-          合约地址 {mp.formatAddress(CONTRACT_ADDRESS_NAME)}
-        </Anchor>
+          上链
+        </Button>
+        <Button
+          variant="light"
+          loading={loadingDelete}
+          onClick={confirmDeleteName}
+          disabled={!wallet || !currentName}
+          size="sm"
+        >
+          删除
+        </Button>
+      </Group>
+
+      <Anchor
+        size="sm"
+        c="blue"
+        component={Link}
+        href={Explorer + "/address/" + CONTRACT_ADDRESS_NAME}
+        target="_blank"
+      >
+        合约地址 {mp.formatAddress(CONTRACT_ADDRESS_NAME)}
+      </Anchor>
+      <Anchor
+        size="sm"
+        c="blue"
+        component={Link}
+        href={"/@" + currentName}
+        target="_blank"
+      >
+        个人主页 {location.host}/@{currentName}
+      </Anchor>
+    </Stack>
+  );
+};
+
+export default function PageSetting() {
+  return (
+    <Container py={20}>
+      <AppHeader title="设置" />
+      <Stack gap={20}>
+        <ThemeSwitcher />
+        <UserName />
       </Stack>
     </Container>
   );
