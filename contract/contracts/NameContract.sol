@@ -11,8 +11,12 @@ contract NameContract {
     uint256 public constant MAX_NAME_LENGTH = 32;
     uint256 public constant MIN_NAME_LENGTH = 1;
 
+    // 存储每个地址的字符串数据
+    mapping(address => string) public Data;
     // 当设置或更改名字时触发的事件
     event NameSet(address indexed user, string oldName, string newName);
+    // 新增：当设置或更改 Data 时触发的事件
+    event DataSet(address indexed user, string oldData, string newData);
 
     /**
      * @dev 将字符串转换为小写
@@ -98,5 +102,31 @@ contract NameContract {
 
         // 事件中 oldName 统一转为小写
         emit NameSet(msg.sender, _toLower(oldName), "");
+    }
+
+    /**
+     * @dev 获取指定地址的 Data。
+     * @param _address 要查询的地址。
+     * @return 该地址的 Data 字符串。
+     */
+    function getData(address _address) external view returns (string memory) {
+        return Data[_address];
+    }
+
+    // 设置调用者自己的 Data
+    function setData(string calldata _data) external {
+        string memory old = Data[msg.sender];
+        Data[msg.sender] = _data;
+        emit DataSet(msg.sender, old, _data);
+    }
+
+    /**
+     * @dev 删除调用者的 Data。
+     */
+    function deleteData() external {
+        string memory old = Data[msg.sender];
+        require(bytes(old).length > 0, "Data not set");
+        delete Data[msg.sender];
+        emit DataSet(msg.sender, old, "");
     }
 }

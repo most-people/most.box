@@ -167,4 +167,39 @@ describe("NameContract", function () {
       ).to.equal(ethers.ZeroAddress);
     });
   });
+
+  describe("Data", function () {
+    it("getData: 对未设置的地址返回空字符串", async function () {
+      expect(await nameContract.getData(addr1.address)).to.equal("");
+    });
+
+    it("setData: 能设置并读取调用者的 Data", async function () {
+      await expect(nameContract.connect(addr1).setData("hello"))
+        .to.emit(nameContract, "DataSet")
+        .withArgs(addr1.address, "", "hello");
+      expect(await nameContract.getData(addr1.address)).to.equal("hello");
+    });
+
+    it("setData: 再次设置会触发事件并更新旧值", async function () {
+      await nameContract.connect(addr1).setData("v1");
+      await expect(nameContract.connect(addr1).setData("v2"))
+        .to.emit(nameContract, "DataSet")
+        .withArgs(addr1.address, "v1", "v2");
+      expect(await nameContract.getData(addr1.address)).to.equal("v2");
+    });
+
+    it("deleteData: 未设置时应 revert", async function () {
+      await expect(nameContract.connect(addr1).deleteData()).to.be.revertedWith(
+        "Data not set"
+      );
+    });
+
+    it("deleteData: 已设置则成功删除并触发事件", async function () {
+      await nameContract.connect(addr1).setData("payload");
+      await expect(nameContract.connect(addr1).deleteData())
+        .to.emit(nameContract, "DataSet")
+        .withArgs(addr1.address, "payload", "");
+      expect(await nameContract.getData(addr1.address)).to.equal("");
+    });
+  });
 });
