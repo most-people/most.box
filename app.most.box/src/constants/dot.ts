@@ -2,6 +2,8 @@
 // import rpcs from "@/assets/json/rpcs.json";
 // rpcs.find((e) => e.chainId === 8453).rpc.map((e: { url: string }) => e.url).filter((e: string) => e.startsWith("http"));
 
+import NameContractABI from "@/assets/json/NameContractABI.json";
+
 const RPCs = [
   "https://base.llamarpc.com",
   "https://mainnet.base.org",
@@ -35,7 +37,7 @@ const RPCs = [
 export const CONTRACT_ADDRESS_DOT =
   "0xB67662F0d2BB106B055503062e1dba4f072f5781";
 export const CONTRACT_ADDRESS_NAME =
-  "0x61CD52a5D7147F3dc01076b8cc69717230aA3670";
+  "0x15b28F5a471215221f4f28Fe9E2B7ac576278b81";
 
 export const randomRPC = () => RPCs[Math.floor(Math.random() * RPCs.length)];
 
@@ -93,3 +95,4 @@ export const CONTRACT_ABI_DOT = [
     type: "function",
   },
 ];
+export const CONTRACT_ABI_NAME = NameContractABI;
