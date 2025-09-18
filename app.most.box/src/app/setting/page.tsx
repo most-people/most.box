@@ -12,12 +12,12 @@ import {
   IconMoon,
   IconDeviceDesktop,
   IconAt,
+  IconUserBitcoin,
 } from "@tabler/icons-react";
 import { useEffect, useMemo, useState } from "react";
 import {
   Text,
   Container,
-  Space,
   TextInput,
   Button,
   Stack,
@@ -35,6 +35,7 @@ import { notifications } from "@mantine/notifications";
 import { modals } from "@mantine/modals";
 import Link from "next/link";
 import mp from "@/constants/mp";
+import { Icon } from "@/components/Icon";
 
 const ThemeSwitcher = () => {
   const { setColorScheme, colorScheme } = useMantineColorScheme();
@@ -97,7 +98,6 @@ const UserName = () => {
   const [loadingDelete, setLoadingDelete] = useState(false);
 
   const RPC = NETWORK_CONFIG["mainnet"].rpc;
-  const Explorer = NETWORK_CONFIG["mainnet"].explorer;
 
   const provider = useMemo(() => new JsonRpcProvider(RPC), [RPC]);
   const contract = useMemo(
@@ -346,15 +346,6 @@ const UserName = () => {
         size="sm"
         c="blue"
         component={Link}
-        href={Explorer + "/address/" + CONTRACT_ADDRESS_NAME}
-        target="_blank"
-      >
-        合约地址 {mp.formatAddress(CONTRACT_ADDRESS_NAME)}
-      </Anchor>
-      <Anchor
-        size="sm"
-        c="blue"
-        component={Link}
         href={"/@" + currentName}
         target="_blank"
       >
@@ -364,14 +355,58 @@ const UserName = () => {
   );
 };
 
+const UserData = () => {
+  return (
+    <Stack>
+      <Text>用户数据</Text>
+
+      <TextInput
+        description="默认节点"
+        leftSection={<Icon name="Earth" size={16} />}
+        variant="filled"
+        placeholder="请输入节点地址"
+      />
+      <TextInput
+        description="头像 CID"
+        leftSection={<IconUserBitcoin size={16} />}
+        variant="filled"
+        placeholder="请输入头像 CID"
+      />
+
+      <Group>
+        <Button size="sm" disabled>
+          上链
+        </Button>
+        <Button variant="light" size="sm" disabled>
+          删除
+        </Button>
+      </Group>
+    </Stack>
+  );
+};
+
 export default function PageSetting() {
+  const Explorer = NETWORK_CONFIG["mainnet"].explorer;
   return (
     <Container py={20}>
       <AppHeader title="设置" />
       <Stack gap={20}>
         <ThemeSwitcher />
         <UserName />
+        <UserData />
       </Stack>
+
+      <Group mt={100}>
+        <Anchor
+          size="sm"
+          c="blue"
+          component={Link}
+          href={Explorer + "/address/" + CONTRACT_ADDRESS_NAME}
+          target="_blank"
+        >
+          合约地址 {mp.formatAddress(CONTRACT_ADDRESS_NAME)}
+        </Anchor>
+      </Group>
     </Container>
   );
 }

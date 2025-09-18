@@ -5,12 +5,10 @@ import {
   CONTRACT_ADDRESS_NAME,
   NETWORK_CONFIG,
 } from "@/constants/dot";
-import mp from "@/constants/mp";
 import { useBack } from "@/hooks/useBack";
-import { Anchor, Button, Container, Loader, Stack, Text } from "@mantine/core";
+import { Button, Container, Loader, Stack, Text } from "@mantine/core";
 import { Contract, JsonRpcProvider } from "ethers";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
