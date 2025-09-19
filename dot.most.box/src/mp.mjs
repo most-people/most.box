@@ -79,17 +79,17 @@ const initIP = () => {
 };
 
 const getIP = () => {
-  const { DOT_NAME, API_URL, CID_URL } = process.env
+  const { DOT_NAME, API_URLS, CID_URLS } = process.env
   const dot = {
     name: DOT_NAME || '',
     APIs: network.ipv6.slice(1),
     CIDs: [],
   }
-  if (API_URL) {
-    dot.APIs.unshift(API_URL);
+  if (API_URLS) {
+    dot.APIs.unshift(...API_URLS.split(','));
   }
-  if (CID_URL) {
-    dot.CIDs.unshift(CID_URL);
+  if (CID_URLS) {
+    dot.CIDs.unshift(...CID_URLS.split(','));
   }
   return dot
 }

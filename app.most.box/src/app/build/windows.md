@@ -77,8 +77,8 @@ DOT_NAME=Test
 # 节点钱包私钥
 PRIVATE_KEY=0x0000000000000000000000000000000000000000000000000000000000000000
 # custom
-API_URL=http://xxx.xxx.xxx.xxx:1976
-CID_URL=
+API_URLS=http://xxx.xxx.xxx.xxx:1976
+CID_URLS=
 ```
 
 ## Caddy 域名配置
