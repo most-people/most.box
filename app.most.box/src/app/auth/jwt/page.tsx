@@ -10,12 +10,10 @@ import dayjs from "dayjs";
 import { useEffect } from "react";
 import mp from "@/constants/mp";
 import { useUserStore } from "@/stores/userStore";
-import { useRouter } from "next/navigation";
+import { Container, Loader, Stack } from "@mantine/core";
 
 export default function AuthJWT() {
-  const setItem = useUserStore((state) => state.setItem);
   const fingerprint = useUserStore((state) => state.fingerprint);
-  const router = useRouter();
 
   const initToken = () => {
     const params = new URLSearchParams(window.location.search);
@@ -30,14 +28,11 @@ export default function AuthJWT() {
       try {
         const wallet = JSON.parse(json) as MostWallet;
         mp.loginSave(wallet);
-        setTimeout(() => {
-          setItem("wallet", wallet);
-        }, 0);
       } catch (error) {
         console.error(error);
       }
     }
-    router.replace("/");
+    window.location.replace("/");
   };
 
   useEffect(() => {
@@ -46,5 +41,12 @@ export default function AuthJWT() {
     }
   }, [fingerprint]);
 
-  return <AppHeader title="Auth JWT"></AppHeader>;
+  return (
+    <Container py="xl">
+      <AppHeader title="Auth JWT" />
+      <Stack align="center">
+        <Loader color="black" size="lg" type="dots" />
+      </Stack>
+    </Container>
+  );
 }

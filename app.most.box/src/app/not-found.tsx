@@ -9,7 +9,7 @@ import { useBack } from "@/hooks/useBack";
 import { Button, Container, Loader, Stack, Text } from "@mantine/core";
 import { Contract, JsonRpcProvider } from "ethers";
 import Image from "next/image";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 const NotFound = () => {
@@ -58,7 +58,6 @@ const UserData = () => {
 
 export default function PageNotFound() {
   const pathname = usePathname();
-  const router = useRouter();
   const [type, setType] = useState("");
 
   useEffect(() => {
@@ -72,7 +71,7 @@ export default function PageNotFound() {
           url.searchParams.delete("filename");
           url.searchParams.set("filename", filename);
         }
-        router.replace("/ipfs/?" + url.searchParams.toString());
+        window.location.replace("/ipfs/?" + url.searchParams.toString());
         return;
       }
     } else if (pathname.startsWith("/@")) {
