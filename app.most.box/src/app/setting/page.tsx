@@ -349,7 +349,7 @@ const UserName = () => {
         href={"/@" + currentName}
         target="_blank"
       >
-        个人主页 {location.host}/@{currentName}
+        个人主页 /@{currentName}
       </Anchor>
     </Stack>
   );

@@ -17,7 +17,6 @@ import RunDot from "@/assets/docs/run-dot.md";
 import "./explore.scss";
 import { useUserStore } from "@/stores/userStore";
 import { Icon } from "@/components/Icon";
-import Link from "next/link";
 
 export default function HomeExplore() {
   const [randomWord, setRandomWord] = useState("");

@@ -66,8 +66,8 @@ export default function PageChat() {
   const [connectionStats, setConnectionStats] = useState<any>(null);
   // 本地音视频开关状态
   const [isMicOn, setIsMicOn] = useState<boolean>(true);
-  const [isCameraOn, setIsCameraOn] = useState<boolean>(true);
-  const [hasMic, setHasMic] = useState<boolean>(false);
+  const [isCameraOn, setIsCameraOn] = useState<boolean>(false);
+  // const [hasMic, setHasMic] = useState<boolean>(false);
   const [hasCamera, setHasCamera] = useState<boolean>(false);
   const esRef = useRef<EventSource | null>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
@@ -165,7 +165,7 @@ export default function PageChat() {
     // 初始化本地设备状态
     const a = stream.getAudioTracks();
     const v = stream.getVideoTracks();
-    setHasMic(a.length > 0);
+    // setHasMic(a.length > 0);
     setHasCamera(v.length > 0);
     setIsMicOn(a.length > 0 ? a.every((t) => t.enabled) : false);
     setIsCameraOn(v.length > 0 ? v.every((t) => t.enabled) : false);
@@ -453,7 +453,7 @@ export default function PageChat() {
         local.getTracks().forEach((t) => pc.addTrack(t, local));
         const a = local.getAudioTracks();
         const v = local.getVideoTracks();
-        setHasMic(a.length > 0);
+        // setHasMic(a.length > 0);
         setHasCamera(v.length > 0);
         setIsMicOn(a.length > 0 ? a.every((t) => t.enabled) : false);
         setIsCameraOn(v.length > 0 ? v.every((t) => t.enabled) : false);
@@ -643,7 +643,7 @@ export default function PageChat() {
     pendingCandidatesRef.current = [];
 
     // 重置本地设备状态
-    setHasMic(false);
+    // setHasMic(false);
     setHasCamera(false);
     setIsMicOn(false);
     setIsCameraOn(false);
@@ -687,7 +687,7 @@ export default function PageChat() {
       }
       const a = newStream.getAudioTracks();
       const v = newStream.getVideoTracks();
-      setHasMic(a.length > 0);
+      // setHasMic(a.length > 0);
       setHasCamera(v.length > 0);
       setIsMicOn(a.length > 0 ? a.every((t) => t.enabled) : false);
       setIsCameraOn(v.length > 0 ? v.every((t) => t.enabled) : false);
@@ -716,7 +716,7 @@ export default function PageChat() {
       }
       const a = newStream.getAudioTracks();
       const v = newStream.getVideoTracks();
-      setHasMic(a.length > 0);
+      // setHasMic(a.length > 0);
       setHasCamera(v.length > 0);
       setIsMicOn(a.length > 0 ? a.every((t) => t.enabled) : false);
       setIsCameraOn(v.length > 0 ? v.every((t) => t.enabled) : false);
@@ -942,7 +942,6 @@ export default function PageChat() {
                   }}
                 >
                   <Group gap="xs">
-                    <IconVideoOff size={18} />
                     <Text size="sm" c="dimmed">
                       摄像头已关闭
                     </Text>

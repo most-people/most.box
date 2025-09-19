@@ -36,7 +36,6 @@ import {
   IconWifiOff,
   IconWorldWww,
   IconSwitchHorizontal,
-  IconExternalLink,
   IconSearch,
   IconSettings,
   IconBrandGithub,
@@ -359,11 +358,6 @@ export default function PageDot() {
     setApiLoading(false);
   };
 
-  const openNode = async (node: DotNode) => {
-    const nodeAPI = node.APIs[0];
-    mp.openDot(nodeAPI);
-  };
-
   const switchNode = async (node: DotNode) => {
     setSwitchingNode(node.address);
     try {
@@ -445,9 +439,7 @@ export default function PageDot() {
                 {ApiList.map((url, index) => (
                   <Anchor
                     key={index}
-                    component={Link}
-                    href={url}
-                    target="_blank"
+                    onClick={() => mp.openDot(url)}
                     lineClamp={1}
                   >
                     {url}
@@ -727,9 +719,7 @@ export default function PageDot() {
                         <Anchor
                           key={apiIndex}
                           c="blue"
-                          component={Link}
-                          href={api}
-                          target="_blank"
+                          onClick={() => mp.openDot(api)}
                           lineClamp={1}
                         >
                           {api}
@@ -782,15 +772,6 @@ export default function PageDot() {
                 <Group>
                   <Button
                     flex={1}
-                    variant="light"
-                    color="blue"
-                    leftSection={<IconExternalLink size={16} />}
-                    onClick={() => openNode(node)}
-                  >
-                    打开节点
-                  </Button>
-                  <Button
-                    flex={1}
                     variant={isCurrentNode(node) ? "filled" : "light"}
                     color={isCurrentNode(node) ? "green" : "blue"}
                     leftSection={<IconSwitchHorizontal size={16} />}
@@ -798,7 +779,7 @@ export default function PageDot() {
                     loading={switchingNode === node.address}
                     disabled={isDisabledNode(node)}
                   >
-                    {isCurrentNode(node) ? "当前节点" : "选择节点"}
+                    {isCurrentNode(node) ? "当前节点" : "切换节点"}
                   </Button>
                 </Group>
               </Stack>

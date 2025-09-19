@@ -12,7 +12,6 @@ import {
   Group,
   ActionIcon,
   Tooltip,
-  Box,
 } from "@mantine/core";
 import { useSearchParams } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
