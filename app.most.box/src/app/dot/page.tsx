@@ -117,11 +117,16 @@ export default function PageDot() {
     return time === undefined ? "" : `${time}ms`;
   };
 
-  const defaultCID = (node: DotNode) => {
-    return node.APIs.find((api) => api.endsWith(":1976"))?.replace(
+  const getCIDs = (node: DotNode) => {
+    const CIDs = node.CIDs.map((url) => `${url}/ipfs`);
+    const defaultCID = node.APIs.find((api) => api.endsWith(":1976"))?.replace(
       ":1976",
       ":8080/ipfs"
     );
+    if (defaultCID) {
+      CIDs.push(defaultCID);
+    }
+    return [...new Set(CIDs)];
   };
 
   const isCurrentNode = (node: DotNode) => {
@@ -194,10 +199,7 @@ export default function PageDot() {
   const buildDetectionUrls = (): string[] => {
     const allUrls: string[] = [];
     dotNodes.forEach((node) => {
-      const gateways = [
-        ...node.CIDs.map((url) => `${url}/ipfs`),
-        defaultCID(node),
-      ].filter((url): url is string => !!url);
+      const gateways = getCIDs(node).filter((url): url is string => !!url);
 
       gateways.forEach((gatewayBase) => {
         allUrls.push(`${gatewayBase}/${customCid}`);
@@ -741,45 +743,38 @@ export default function PageDot() {
                       IPFS 网关
                     </Text>
                     <Stack gap="xs" align="flex-start">
-                      {[
-                        ...node.CIDs.map((url) => `${url}/ipfs`),
-                        defaultCID(node),
-                      ]
-                        .filter((url): url is string => !!url)
-                        .map((gatewayBase, index) => {
-                          const finalUrl = customCid
-                            ? `${gatewayBase}/${customCid}`
-                            : gatewayBase;
-                          const result = detectionResults[finalUrl];
+                      {getCIDs(node).map((gatewayBase, index) => {
+                        const finalUrl = customCid
+                          ? `${gatewayBase}/${customCid}`
+                          : gatewayBase;
+                        const result = detectionResults[finalUrl];
 
-                          return (
-                            <Stack key={index} gap="xs">
-                              <Anchor
-                                component={Link}
-                                c="blue"
-                                href={finalUrl}
-                                target="_blank"
-                                lineClamp={1}
-                              >
-                                {finalUrl}
-                              </Anchor>
-                              <Badge
-                                flex={1}
-                                size="sm"
-                                color={
-                                  result?.status === "success"
-                                    ? "green"
-                                    : "gray"
-                                }
-                                variant="light"
-                              >
-                                {result?.status || "CID"}
-                                {result?.responseTime != null &&
-                                  ` (${result?.responseTime}ms)`}
-                              </Badge>
-                            </Stack>
-                          );
-                        })}
+                        return (
+                          <Stack key={index} gap="xs">
+                            <Anchor
+                              component={Link}
+                              c="blue"
+                              href={finalUrl}
+                              target="_blank"
+                              lineClamp={1}
+                            >
+                              {finalUrl}
+                            </Anchor>
+                            <Badge
+                              flex={1}
+                              size="sm"
+                              color={
+                                result?.status === "success" ? "green" : "gray"
+                              }
+                              variant="light"
+                            >
+                              {result?.status || "CID"}
+                              {result?.responseTime != null &&
+                                ` (${result?.responseTime}ms)`}
+                            </Badge>
+                          </Stack>
+                        );
+                      })}
                     </Stack>
                   </Box>
                 </Stack>

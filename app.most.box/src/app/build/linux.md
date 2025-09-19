@@ -39,6 +39,9 @@ ipfs --version
 # 初始化 IPFS 仓库
 ipfs init
 
+# 设置 8080 端口
+ipfs config Addresses.Gateway /ip4/0.0.0.0/tcp/8080
+
 # 测试启动 IPFS
 ipfs daemon
 
