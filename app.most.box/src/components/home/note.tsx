@@ -372,7 +372,7 @@ export default function HomeNote() {
                   {[...grouped.entries()].map(([prefix, items]) => (
                     <Grid.Col
                       key={`group-${prefix}`}
-                      span={{ base: 12, xs: 12, sm: 6, md: 6, lg: 4, xl: 3 }}
+                      span={{ base: 12, xs: 6, sm: 4, md: 3, lg: 3, xl: 2 }}
                     >
                       <Card radius="md" withBorder>
                         <Group
@@ -395,7 +395,7 @@ export default function HomeNote() {
                                 gap={0}
                               >
                                 <Text
-                                  p={6}
+                                  py={6}
                                   className="mp-hover"
                                   flex={1}
                                   fw={500}

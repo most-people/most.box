@@ -25,16 +25,8 @@ body {
   min-height: 100%;
   position: relative;
   word-break: break-word;
-  font-family:
-    -apple-system,
-    SF UI Text,
-    PingFang SC,
-    Hiragino Sans GB,
-    Microsoft YaHei,
-    Helvetica Neue,
-    Helvetica,
-    Arial,
-    sans-serif;
+  font-family: -apple-system, SF UI Text, PingFang SC, Hiragino Sans GB,
+    Microsoft YaHei, Helvetica Neue, Helvetica, Arial, sans-serif;
 }
 body::after {
   pointer-events: none;
@@ -110,6 +102,6 @@ a {
 .mp-hover {
   border-radius: 6px;
   &:hover {
-    background-color: var(--mantine-color-gray-1);
+    background-color: var(--mantine-color-default-hover);
   }
 }
