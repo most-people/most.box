@@ -56,32 +56,37 @@ const UserData = () => {
   return <>用户地址： {owner}</>;
 };
 
+const IPFS = () => {
+  const pathname = usePathname();
+  const cid = pathname.split("/")[2];
+
+  useEffect(() => {
+    if (cid) {
+      const url = new URL(window.location.href);
+      const filename = url.searchParams.get("filename");
+      const type = url.searchParams.get("type");
+      console.log("🌊", filename, type);
+    }
+  }, []);
+
+  return <Stack align="center">{cid}</Stack>;
+};
+
 export default function PageNotFound() {
   const pathname = usePathname();
-  const [type, setType] = useState("");
+  const [type, setType] = useState<"ipfs" | "user" | "404" | "">("");
 
   useEffect(() => {
     if (pathname.startsWith("/ipfs/")) {
-      const cid = pathname.split("/")[2];
-      if (cid) {
-        const url = new URL(window.location.href);
-        const filename = url.searchParams.get("filename");
-        url.searchParams.set("cid", cid);
-        if (filename) {
-          url.searchParams.delete("filename");
-          url.searchParams.set("filename", filename);
-        }
-        window.location.replace("/ipfs/?" + url.searchParams.toString());
-        return;
-      }
+      setType("ipfs");
     } else if (pathname.startsWith("/@")) {
       const name = pathname.slice(2, -1);
       if (name) {
         setType("user");
-        return;
       }
+    } else {
+      setType("404");
     }
-    setType("not-found");
   }, [pathname]);
 
   return (
@@ -97,6 +102,11 @@ export default function PageNotFound() {
         <>
           <AppHeader title={pathname.slice(1, -1)} />
           <UserData />
+        </>
+      ) : type === "ipfs" ? (
+        <>
+          <AppHeader title={pathname.split("/")[2]} />
+          <IPFS />
         </>
       ) : (
         <>

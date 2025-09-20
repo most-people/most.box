@@ -13,7 +13,6 @@ import MineActive from "@/assets/icons/mine-active.svg";
 // https://www.flaticon.com/free-icon-font/add_15861077?page=1&position=1&term=add&origin=search&related_id=15861077
 import Add from "@/assets/icons/add.svg";
 import Arrow from "@/assets/icons/arrow.svg";
-import Camera from "@/assets/icons/camera.svg";
 // https://www.flaticon.com/free-icon-font/arrow-small-left_3916837?term=back&related_id=3916837
 import Back from "@/assets/icons/back.svg";
 // https://www.flaticon.com/free-icon-font/menu-dots_3917230?page=1&position=5&term=more&origin=search&related_id=3917230
@@ -52,7 +51,6 @@ const icons = {
   MineActive,
   Add,
   Arrow,
-  Camera,
   Back,
   More,
   QRCode,
