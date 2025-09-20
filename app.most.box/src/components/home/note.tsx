@@ -350,64 +350,162 @@ export default function HomeNote() {
           </Stack>
         ) : (
           <>
-            <Grid gutter="md">
-              {displayedNotes.map((note) => (
-                <Grid.Col
-                  key={note.name}
-                  span={{ base: 12, xs: 6, sm: 4, md: 3, lg: 3, xl: 2 }}
-                >
-                  <Card radius="md" withBorder>
-                    <Group justify="space-between" wrap="nowrap" gap={4}>
-                      <Text
-                        flex={1}
-                        fw={500}
-                        lineClamp={1}
-                        component={Link}
-                        href={shareUrl(note)}
-                      >
-                        {note.name}
-                      </Text>
-                      <Menu shadow="md" width={120}>
-                        <Menu.Target>
-                          <ActionIcon variant="subtle" color="gary">
-                            <IconDotsVertical size={14} />
-                          </ActionIcon>
-                        </Menu.Target>
+            {(() => {
+              // 构建分组：以第一个 "-" 之前的部分作为前缀
+              const grouped = new Map<string, Note[]>();
+              const ungrouped: Note[] = [];
 
-                        <Menu.Dropdown>
-                          <Menu.Item
-                            leftSection="📖"
-                            onClick={() => handleOpen(note)}
-                          >
-                            打开
-                          </Menu.Item>
-                          <Menu.Item
-                            leftSection="📤"
-                            onClick={() => handleShare(note)}
-                          >
-                            分享
-                          </Menu.Item>
-                          <Menu.Item
-                            leftSection="✏️"
-                            onClick={() => handleRename(note)}
-                          >
-                            重命名
-                          </Menu.Item>
-                          <Menu.Divider />
-                          <Menu.Item
-                            leftSection="🗑️"
-                            onClick={() => handleDelete(note)}
-                          >
-                            删除
-                          </Menu.Item>
-                        </Menu.Dropdown>
-                      </Menu>
-                    </Group>
-                  </Card>
-                </Grid.Col>
-              ))}
-            </Grid>
+              displayedNotes.forEach((note) => {
+                const idx = note.name.indexOf("-");
+                if (idx > 0) {
+                  const prefix = note.name.slice(0, idx);
+                  const arr = grouped.get(prefix) || [];
+                  arr.push(note);
+                  grouped.set(prefix, arr);
+                } else {
+                  ungrouped.push(note);
+                }
+              });
 
+              return (
+                <Grid gutter="md">
+                  {[...grouped.entries()].map(([prefix, items]) => (
+                    <Grid.Col
+                      key={`group-${prefix}`}
+                      span={{ base: 12, xs: 12, sm: 6, md: 6, lg: 4, xl: 3 }}
+                    >
+                      <Card radius="md" withBorder>
+                        <Group
+                          justify="space-between"
+                          wrap="nowrap"
+                          gap={4}
+                          mb="xs"
+                        >
+                          <Text fw={700}>{prefix}</Text>
+                          <Badge variant="light">{items.length}</Badge>
+                        </Group>
+                        <Stack gap={0}>
+                          {items.map((note) => {
+                            const subName = note.name.slice(prefix.length + 1);
+                            return (
+                              <Group
+                                key={note.name}
+                                justify="space-between"
+                                wrap="nowrap"
+                                gap={0}
+                              >
+                                <Text
+                                  p={6}
+                                  className="mp-hover"
+                                  flex={1}
+                                  fw={500}
+                                  lineClamp={1}
+                                  component={Link}
+                                  href={shareUrl(note)}
+                                >
+                                  {subName || note.name}
+                                </Text>
+                                <Menu shadow="md" width={120}>
+                                  <Menu.Target>
+                                    <ActionIcon variant="subtle" color="gary">
+                                      <IconDotsVertical size={14} />
+                                    </ActionIcon>
+                                  </Menu.Target>
+
+                                  <Menu.Dropdown>
+                                    <Menu.Item
+                                      leftSection="📖"
+                                      onClick={() => handleOpen(note)}
+                                    >
+                                      打开
+                                    </Menu.Item>
+                                    <Menu.Item
+                                      leftSection="📤"
+                                      onClick={() => handleShare(note)}
+                                    >
+                                      分享
+                                    </Menu.Item>
+                                    <Menu.Item
+                                      leftSection="✏️"
+                                      onClick={() => handleRename(note)}
+                                    >
+                                      重命名
+                                    </Menu.Item>
+                                    <Menu.Divider />
+                                    <Menu.Item
+                                      leftSection="🗑️"
+                                      onClick={() => handleDelete(note)}
+                                    >
+                                      删除
+                                    </Menu.Item>
+                                  </Menu.Dropdown>
+                                </Menu>
+                              </Group>
+                            );
+                          })}
+                        </Stack>
+                      </Card>
+                    </Grid.Col>
+                  ))}
+
+                  {ungrouped.map((note) => (
+                    <Grid.Col
+                      key={note.name}
+                      span={{ base: 12, xs: 6, sm: 4, md: 3, lg: 3, xl: 2 }}
+                    >
+                      <Card radius="md" withBorder>
+                        <Group justify="space-between" wrap="nowrap" gap={0}>
+                          <Text
+                            flex={1}
+                            fw={500}
+                            lineClamp={1}
+                            component={Link}
+                            href={shareUrl(note)}
+                          >
+                            {note.name}
+                          </Text>
+                          <Menu shadow="md" width={120}>
+                            <Menu.Target>
+                              <ActionIcon variant="subtle" color="gary">
+                                <IconDotsVertical size={14} />
+                              </ActionIcon>
+                            </Menu.Target>
+
+                            <Menu.Dropdown>
+                              <Menu.Item
+                                leftSection="📖"
+                                onClick={() => handleOpen(note)}
+                              >
+                                打开
+                              </Menu.Item>
+                              <Menu.Item
+                                leftSection="📤"
+                                onClick={() => handleShare(note)}
+                              >
+                                分享
+                              </Menu.Item>
+                              <Menu.Item
+                                leftSection="✏️"
+                                onClick={() => handleRename(note)}
+                              >
+                                重命名
+                              </Menu.Item>
+                              <Menu.Divider />
+                              <Menu.Item
+                                leftSection="🗑️"
+                                onClick={() => handleDelete(note)}
+                              >
+                                删除
+                              </Menu.Item>
+                            </Menu.Dropdown>
+                          </Menu>
+                        </Group>
+                      </Card>
+                    </Grid.Col>
+                  ))}
+                </Grid>
+              );
+            })()}
             {hasMore && (
               <Center>
                 <Button variant="light" onClick={loadMore} size="md">
