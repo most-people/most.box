@@ -59,7 +59,7 @@ export default function PageWeb3() {
         <Group>
           <Text>{wallet?.address || "-"}</Text>
           <Anchor
-            href={`https://basescan.org/address/${wallet?.address}`}
+            href={`https://basescan.org/address/${wallet?.address || ""}`}
             target="_blank"
           >
             查看

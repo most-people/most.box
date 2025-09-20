@@ -16,6 +16,8 @@ import {
   Menu,
   Badge,
   LoadingOverlay,
+  Breadcrumbs,
+  Anchor,
 } from "@mantine/core";
 import { api } from "@/constants/api";
 import "./file.scss";
@@ -54,6 +56,7 @@ export default function HomeFile() {
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [renamingItem, setRenamingItem] = useState<FileItem | null>(null);
   const [newName, setNewName] = useState("");
+  const [newDirPath, setNewDirPath] = useState("");
   const [renameLoading, setRenameLoading] = useState(false);
   const [newFolderModalOpen, setNewFolderModalOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
@@ -101,10 +104,10 @@ export default function HomeFile() {
     try {
       setNewFolderLoading(true);
       const path = filesPath ? `${filesPath}/${newFolderName}` : newFolderName;
-      const emptyFile = new Blob(["https://most.box"], { type: "text/plain" });
+      const emptyFile = new Blob(["MOST.BOX"], { type: "text/plain" });
       const formData = new FormData();
-      formData.append("file", emptyFile, "readme.txt");
-      formData.append("path", `${path}/readme.txt`);
+      formData.append("file", emptyFile, "hello.txt");
+      formData.append("path", `${path}/hello.txt`);
       await api.put("/files.upload", formData);
       notifications.show({
         message: "文件夹创建成功",
@@ -313,33 +316,43 @@ export default function HomeFile() {
   const handleRename = (item: FileItem) => {
     setRenamingItem(item);
     setNewName(item.name);
+    setNewDirPath(filesPath || "");
     setRenameModalOpen(true);
   };
 
   // 执行重命名
   const executeRename = async () => {
-    if (!renamingItem || !newName.trim() || newName === renamingItem.name) {
+    const normalize = (s: string) => (s || "").replace(/^\/+|\/+$/g, "");
+    if (!renamingItem || !newName.trim()) {
+      setRenameModalOpen(false);
+      return;
+    }
+
+    const oldPath = filesPath
+      ? `${filesPath}/${renamingItem.name}`
+      : renamingItem.name;
+
+    const targetDir = normalize(newDirPath || "");
+    const newPath = targetDir
+      ? `${targetDir}/${newName.trim()}`
+      : newName.trim();
+
+    const unchanged = normalize(oldPath) === normalize(newPath);
+    if (unchanged) {
       setRenameModalOpen(false);
       return;
     }
 
     setRenameLoading(true);
     try {
-      const oldPath = filesPath
-        ? `${filesPath}/${renamingItem.name}`
-        : renamingItem.name;
-      const newPath = filesPath
-        ? `${filesPath}/${newName.trim()}`
-        : newName.trim();
-
       await api.put("/files.rename", {
-        oldName: `/${oldPath}`,
-        newName: `/${newPath}`,
+        oldName: `/${normalize(oldPath)}`,
+        newName: `/${normalize(newPath)}`,
       });
 
       notifications.show({
         title: "重命名成功",
-        message: `新名称 "${newName.trim()}"`,
+        message: `新路径名称 "${normalize(newPath)}"`,
         color: "green",
       });
 
@@ -348,6 +361,7 @@ export default function HomeFile() {
       setRenameModalOpen(false);
       setRenamingItem(null);
       setNewName("");
+      setNewDirPath("");
     } catch (error) {
       console.error("重命名失败:", error);
       notifications.show({
@@ -367,11 +381,15 @@ export default function HomeFile() {
     fetchFiles(newPath);
   };
 
-  // 处理后退
-  const handleGoBack = () => {
-    const pathParts = filesPath.split("/");
-    pathParts.pop(); // 移除最后一个路径部分
-    const newPath = pathParts.join("/");
+  // 面包屑点击跳转
+  const handleBreadcrumbClick = (index: number) => {
+    const parts = (filesPath || "").split("/").filter(Boolean);
+    if (index < 0) {
+      setItem("filesPath", "");
+      fetchFiles("");
+      return;
+    }
+    const newPath = parts.slice(0, index + 1).join("/");
     setItem("filesPath", newPath);
     fetchFiles(newPath);
   };
@@ -414,6 +432,17 @@ export default function HomeFile() {
       fetchFiles(filesPath);
     }
   }, [wallet, files]);
+
+  const normalizePath = (s: string) => (s || "").replace(/^\/+|\/+$/g, "");
+  const oldPathForCompare = renamingItem
+    ? normalizePath(
+        filesPath ? `${filesPath}/${renamingItem.name}` : renamingItem.name
+      )
+    : "";
+  const newPathForCompare = normalizePath(
+    ((newDirPath ? `${newDirPath}/` : "") + newName).trim()
+  );
+  const isUnchangedRename = oldPathForCompare === newPathForCompare;
 
   return (
     <>
@@ -497,12 +526,25 @@ export default function HomeFile() {
           <>
             <Card radius="md" withBorder>
               <Group justify="space-between" wrap="nowrap" gap={4}>
-                <Group
-                  flex={1}
-                  style={{ cursor: filesPath ? "pointer" : "" }}
-                  onClick={filesPath ? handleGoBack : undefined}
-                >
-                  <Text fw={500}>📁 {filesPath ? ".." : "根目录"}</Text>
+                <Group gap={8} wrap="nowrap">
+                  <Text fw={500}>📁</Text>
+                  <Breadcrumbs separator="›">
+                    <Anchor fw={500} onClick={() => handleBreadcrumbClick(-1)}>
+                      根目录
+                    </Anchor>
+                    {(filesPath || "")
+                      .split("/")
+                      .filter(Boolean)
+                      .map((seg, idx) => (
+                        <Anchor
+                          key={idx}
+                          fw={500}
+                          onClick={() => handleBreadcrumbClick(idx)}
+                        >
+                          {seg}
+                        </Anchor>
+                      ))}
+                  </Breadcrumbs>
                 </Group>
                 <Menu shadow="md">
                   <Menu.Target>
@@ -523,7 +565,12 @@ export default function HomeFile() {
               </Group>
             </Card>
 
-            <Grid gutter="md">
+            <Grid gutter="md" pos="relative">
+              <LoadingOverlay
+                visible={fetchLoading}
+                overlayProps={{ backgroundOpacity: 0 }}
+                loaderProps={{ opacity: 0 }}
+              />
               {displayedFiles.map((item, index) => (
                 <Grid.Col
                   key={index}
@@ -765,13 +812,27 @@ export default function HomeFile() {
           setRenameModalOpen(false);
           setRenamingItem(null);
           setNewName("");
+          setNewDirPath("");
         }}
-        title="新名称"
+        title="重命名 / 移动"
         centered
       >
         <Stack gap="md">
           <TextInput
-            placeholder="请输入新的文件名"
+            label="目录路径"
+            placeholder="根目录留空，例如: foo/bar"
+            value={newDirPath}
+            onChange={(event) => setNewDirPath(event.currentTarget.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                executeRename();
+              }
+            }}
+            disabled={renameLoading}
+          />
+          <TextInput
+            label="文件/文件夹名称"
+            placeholder="请输入新的名称"
             value={newName}
             onChange={(event) => setNewName(event.currentTarget.value)}
             onKeyDown={(event) => {
@@ -789,6 +850,7 @@ export default function HomeFile() {
                 setRenameModalOpen(false);
                 setRenamingItem(null);
                 setNewName("");
+                setNewDirPath("");
               }}
               disabled={renameLoading}
             >
@@ -796,11 +858,7 @@ export default function HomeFile() {
             </Button>
             <Button
               onClick={executeRename}
-              disabled={
-                !newName.trim() ||
-                newName === renamingItem?.name ||
-                renameLoading
-              }
+              disabled={!newName.trim() || isUnchangedRename || renameLoading}
               loading={renameLoading}
             >
               确认

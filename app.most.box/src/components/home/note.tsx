@@ -176,6 +176,11 @@ export default function HomeNote() {
       return;
     }
 
+    if (name.includes("/")) {
+      setRenameError("不能包含字符 /");
+      return;
+    }
+
     if (name === currentNote.name) {
       closeRenameModal();
       return;
