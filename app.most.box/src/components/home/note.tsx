@@ -243,15 +243,12 @@ export default function HomeNote() {
     const url = shareUrl(note);
 
     if (navigator.share) {
-      navigator.share({
-        title: `笔记: ${note.name}`,
-        url,
-      });
+      navigator.share({ title: note.name, url });
     } else {
       navigator.clipboard.writeText(url).then(() => {
         notifications.show({
           color: "green",
-          message: "分享链接已复制到剪贴板",
+          message: "链接已复制",
         });
       });
     }

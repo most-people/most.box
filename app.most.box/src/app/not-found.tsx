@@ -1,18 +1,14 @@
 "use client";
 import { AppHeader } from "@/components/AppHeader";
-import {
-  CONTRACT_ABI_NAME,
-  CONTRACT_ADDRESS_NAME,
-  NETWORK_CONFIG,
-} from "@/constants/dot";
 import { useBack } from "@/hooks/useBack";
 import { Button, Container, Loader, Stack, Text } from "@mantine/core";
-import { Contract, JsonRpcProvider } from "ethers";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import PageIPFS from "@/components/not-found/ipfs";
+import PageUser from "@/components/not-found/user";
 
-const NotFound = () => {
+const Page404 = () => {
   const back = useBack();
   return (
     <>
@@ -25,51 +21,6 @@ const NotFound = () => {
       </Stack>
     </>
   );
-};
-
-const UserData = () => {
-  const pathname = usePathname();
-  const name = pathname.slice(2, -1);
-
-  const RPC = NETWORK_CONFIG["mainnet"].rpc;
-
-  const provider = useMemo(() => new JsonRpcProvider(RPC), [RPC]);
-  const contract = useMemo(
-    () => new Contract(CONTRACT_ADDRESS_NAME, CONTRACT_ABI_NAME, provider),
-    [provider]
-  );
-
-  const [owner, setOwner] = useState("");
-
-  useEffect(() => {
-    const fetchOwner = async () => {
-      try {
-        const owner = await contract.getOwner(name);
-        setOwner(owner);
-      } catch (err) {
-        console.warn("获取用户所有者失败", err);
-      }
-    };
-    fetchOwner();
-  }, [contract, name]);
-
-  return <>用户地址： {owner}</>;
-};
-
-const IPFS = () => {
-  const pathname = usePathname();
-  const cid = pathname.split("/")[2];
-
-  useEffect(() => {
-    if (cid) {
-      const url = new URL(window.location.href);
-      const filename = url.searchParams.get("filename");
-      const type = url.searchParams.get("type");
-      console.log("🌊", filename, type);
-    }
-  }, []);
-
-  return <Stack align="center">{cid}</Stack>;
 };
 
 export default function PageNotFound() {
@@ -89,30 +40,31 @@ export default function PageNotFound() {
     }
   }, [pathname]);
 
+  const title = useMemo(() => {
+    if (type === "") {
+      return "";
+    } else if (type === "ipfs") {
+      return pathname.split("/")[2];
+    } else if (type === "user") {
+      return pathname.slice(2, -1);
+    } else {
+      return "404";
+    }
+  }, [type, pathname]);
+
   return (
-    <Container py="xl">
+    <Container w="100%">
+      <AppHeader title={title} />
       {type === "" ? (
-        <>
-          <AppHeader title="" />
-          <Stack align="center">
-            <Loader color="black" size="lg" type="bars" />
-          </Stack>
-        </>
+        <Stack align="center">
+          <Loader color="black" size="lg" type="bars" />
+        </Stack>
       ) : type === "user" ? (
-        <>
-          <AppHeader title={pathname.slice(1, -1)} />
-          <UserData />
-        </>
+        <PageUser />
       ) : type === "ipfs" ? (
-        <>
-          <AppHeader title={pathname.split("/")[2]} />
-          <IPFS />
-        </>
+        <PageIPFS />
       ) : (
-        <>
-          <AppHeader title="404" />
-          <NotFound />
-        </>
+        <Page404 />
       )}
     </Container>
   );
