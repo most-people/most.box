@@ -1,10 +1,10 @@
 "use client";
-import { AppHeader } from "@/components/AppHeader";
+
 import { useBack } from "@/hooks/useBack";
 import { Button, Container, Loader, Stack, Text } from "@mantine/core";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import PageIPFS from "@/components/not-found/ipfs";
 import PageUser from "@/components/not-found/user";
 

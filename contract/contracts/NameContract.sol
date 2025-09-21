@@ -10,13 +10,11 @@ contract NameContract {
     // 名字长度限制
     uint256 public constant MAX_NAME_LENGTH = 32;
     uint256 public constant MIN_NAME_LENGTH = 1;
+    // Data 长度限制
+    uint256 public constant MAX_DATA_LENGTH = 1024;
 
     // 存储每个地址的字符串数据
     mapping(address => string) public Data;
-    // 当设置或更改名字时触发的事件
-    event NameSet(address indexed user, string oldName, string newName);
-    // 新增：当设置或更改 Data 时触发的事件
-    event DataSet(address indexed user, string oldData, string newData);
 
     /**
      * @dev 将字符串转换为小写
@@ -63,9 +61,6 @@ contract NameContract {
         // 设置新的名字
         names[msg.sender] = _newName;
         nameOwners[newNameLower] = msg.sender;
-
-        // 事件中 oldName 统一转为小写，保证读写大小写不敏感
-        emit NameSet(msg.sender, _toLower(oldName), _newName);
     }
 
     /**
@@ -99,9 +94,6 @@ contract NameContract {
         // 删除名字
         delete names[msg.sender];
         delete nameOwners[_toLower(oldName)];
-
-        // 事件中 oldName 统一转为小写
-        emit NameSet(msg.sender, _toLower(oldName), "");
     }
 
     /**
@@ -115,9 +107,8 @@ contract NameContract {
 
     // 设置调用者自己的 Data
     function setData(string calldata _data) external {
-        string memory old = Data[msg.sender];
+        require(bytes(_data).length <= MAX_DATA_LENGTH, "Data too long");
         Data[msg.sender] = _data;
-        emit DataSet(msg.sender, old, _data);
     }
 
     /**
@@ -127,6 +118,5 @@ contract NameContract {
         string memory old = Data[msg.sender];
         require(bytes(old).length > 0, "Data not set");
         delete Data[msg.sender];
-        emit DataSet(msg.sender, old, "");
     }
 }
