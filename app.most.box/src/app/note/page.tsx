@@ -176,7 +176,7 @@ const PageContent = () => {
     // 获取最新 CID
     if (uid && name) {
       try {
-        const res = await api.get(`/files.find.cid/${uid}/.note/${name}`);
+        const res = await api.get(`/files.cid/${uid}/.note/${name}`);
         const cid = res.data;
         if (cid) {
           updateCid(cid);

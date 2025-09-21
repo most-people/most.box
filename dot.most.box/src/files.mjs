@@ -4,6 +4,8 @@ import archiver from "archiver";
 // 解压 tar
 import tar from "tar-stream";
 
+const SystemDir = [".note"];
+
 /**
  * 注册文件相关的路由
  * @param {import('fastify').FastifyInstance} server - Fastify 服务器实例
@@ -12,10 +14,17 @@ import tar from "tar-stream";
  */
 export const registerFiles = (server, ipfs) => {
   // 查找 MFS 文件路径 CID
-  server.get("/files.find.cid/:uid/*", async (request) => {
+  server.get("/files.cid/:uid/:dir/:name", async (request) => {
     const address = request.params["uid"] || "";
-    const path = request.params["*"] || "";
-    const fullPath = "/" + address.toLowerCase() + "/" + path;
+    const dir = request.params["dir"] || "";
+    if (!SystemDir.includes(dir)) {
+      return "";
+    }
+    const name = request.params["name"] || "";
+    if (!name) {
+      return "";
+    }
+    const fullPath = "/" + address.toLowerCase() + "/" + dir + "/" + name;
     try {
       const stat = await ipfs.files.stat(fullPath);
       return stat.cid.toV1().toString();
