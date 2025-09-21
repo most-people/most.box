@@ -23,10 +23,12 @@ import Link from "next/link";
 import { useUserStore } from "@/stores/userStore";
 import { IconCopy, IconQrcode, IconInfoCircle } from "@tabler/icons-react";
 
+type CidType = "dir" | "note" | "file";
+
 const PageContent = () => {
   const pathname = usePathname();
   const params = useSearchParams();
-  const isDir = params.get("type") === "dir";
+  const cidType = (params.get("type") || "file") as CidType;
   const cid = pathname.split("/")[2] || "";
   const initFilename = params.get("filename") || "";
   const [filename, setFilename] = useState<string>(initFilename);
@@ -36,10 +38,10 @@ const PageContent = () => {
   const shareUrl = useMemo(() => {
     if (dotAPI && cid) {
       const url = new URL(location.origin);
-      url.pathname = `/ipfs/`;
-      url.searchParams.set("cid", cid);
+      url.pathname = `/ipfs/${cid}`;
       if (filename) {
         url.searchParams.set("filename", filename);
+        url.searchParams.set("type", cidType);
       }
       try {
         url.hash = new URL(dotAPI).host;
@@ -67,7 +69,7 @@ const PageContent = () => {
       url.pathname = `/ipfs/${cid}`;
       url.searchParams.set("download", "true");
       if (filename) {
-        if (isDir) {
+        if (cidType === "dir" || cidType === "note") {
           url.searchParams.set("format", "tar");
           url.searchParams.set("filename", `${filename}.tar`);
         } else {
@@ -77,7 +79,7 @@ const PageContent = () => {
       return url.href;
     }
     return "";
-  }, [dotCID, cid, filename, isDir]);
+  }, [dotCID, cid, filename, cidType]);
 
   return (
     <Container p="md">
@@ -91,8 +93,8 @@ const PageContent = () => {
 
         <Group justify="space-between" align="center">
           <Group gap={8}>
-            {isDir ? "📁" : "📄"}
-            <Title order={4}>{isDir ? "文件夹" : "文件"}信息</Title>
+            {cidType === "dir" ? "📁" : "📄"}
+            <Title order={4}>{cidType === "dir" ? "文件夹" : "文件"}信息</Title>
           </Group>
           {initFilename && (
             <Text size="sm" c="dimmed">
@@ -112,8 +114,8 @@ const PageContent = () => {
           />
           <TextInput
             radius="md"
-            label={isDir ? "文件夹" : "文件名"}
-            placeholder={isDir ? "文件夹" : "文件名"}
+            label={cidType === "dir" ? "文件夹" : "文件名"}
+            placeholder={cidType === "dir" ? "文件夹" : "文件名"}
             value={filename}
             onChange={(e) => setFilename(e.currentTarget.value)}
           />
@@ -185,6 +187,15 @@ const PageContent = () => {
             </Button>
           )}
         </Group>
+        <Button
+          variant="light"
+          w="100%"
+          component={Link}
+          href={`/note/?cid=${cid}&name=${filename}`}
+          target="_blank"
+        >
+          打开笔记
+        </Button>
 
         <Group justify="space-between">
           <Group gap={8}>

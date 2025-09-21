@@ -262,18 +262,7 @@ export default function HomeNote() {
 
   // 分享笔记函数
   const handleShare = (note: Note) => {
-    const url = shareUrl(note);
-
-    if (navigator.share) {
-      navigator.share({ title: note.name, url });
-    } else {
-      navigator.clipboard.writeText(url).then(() => {
-        notifications.show({
-          color: "green",
-          message: "链接已复制",
-        });
-      });
-    }
+    window.open(`/ipfs/${note.cid}/?filename=${note.name}&type=note`);
   };
 
   // 重置弹窗状态
