@@ -21,6 +21,7 @@ import {
   Flex,
   TextInput,
   Anchor,
+  Radio,
 } from "@mantine/core";
 import { Contract, JsonRpcProvider } from "ethers";
 import { notifications } from "@mantine/notifications";
@@ -79,6 +80,10 @@ export default function PageDot() {
   const [checkingConnectivity, setCheckingConnectivity] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [switchingNode, setSwitchingNode] = useState<string | null>(null);
+  // 每个节点的选中 API（默认第一个）
+  const [selectedApiByNode, setSelectedApiByNode] = useState<
+    Record<string, string>
+  >({});
 
   // ===== 网络和RPC状态 =====
   const [network, setNetwork] = useState<NetworkType>("mainnet");
@@ -136,6 +141,15 @@ export default function PageDot() {
         return false;
       }
     });
+  };
+  const isRadioDisabled = (node: DotNode, api: string) => {
+    if (isCurrentNode(node)) {
+      return true;
+    }
+    if (window.location.protocol === "https:" && api.startsWith("http:")) {
+      return true;
+    }
+    return false;
   };
 
   const isDisabledNode = (node: DotNode) => {
@@ -361,7 +375,8 @@ export default function PageDot() {
   const switchNode = async (node: DotNode) => {
     setSwitchingNode(node.address);
     try {
-      const nodeAPI = node.APIs[0];
+      // 使用当前单选中的 API 值，默认取第一个
+      const nodeAPI = selectedApiByNode[node.address] || node.APIs[0];
       const list = await updateDot(nodeAPI);
       if (list) {
         setApiList(list);
@@ -714,20 +729,36 @@ export default function PageDot() {
                   </Group>
 
                   {node.APIs.length > 0 && (
-                    <Stack gap={2} align="flex-start">
-                      {node.APIs.map((api, apiIndex) => (
-                        <Anchor
-                          key={apiIndex}
-                          c="blue"
-                          onClick={() => mp.openDot(api)}
-                          lineClamp={1}
-                        >
-                          {api}
-                        </Anchor>
-                      ))}
-                    </Stack>
+                    <Radio.Group
+                      size="xs"
+                      value={selectedApiByNode[node.address] || node.APIs[0]}
+                      onChange={(val) =>
+                        setSelectedApiByNode((prev) => ({
+                          ...prev,
+                          [node.address]: val,
+                        }))
+                      }
+                    >
+                      <Stack gap={2} align="flex-start">
+                        {node.APIs.map((api, apiIndex) => (
+                          <Group key={apiIndex} gap="xs" wrap="nowrap">
+                            <Radio
+                              disabled={isRadioDisabled(node, api)}
+                              value={api}
+                            />
+                            <Anchor
+                              key={apiIndex}
+                              c="blue"
+                              onClick={() => mp.openDot(api)}
+                              lineClamp={1}
+                            >
+                              {api}
+                            </Anchor>
+                          </Group>
+                        ))}
+                      </Stack>
+                    </Radio.Group>
                   )}
-
                   <Box>
                     <Text size="xs" fw={500} mb={4} c="gray">
                       IPFS 网关
