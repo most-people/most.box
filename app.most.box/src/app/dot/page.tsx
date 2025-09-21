@@ -454,8 +454,13 @@ export default function PageDot() {
                 {ApiList.map((url, index) => (
                   <Anchor
                     key={index}
-                    onClick={() => mp.openDot(url)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      mp.openDot(url);
+                    }}
                     lineClamp={1}
+                    component={Link}
+                    href={url}
                   >
                     {url}
                   </Anchor>
@@ -749,8 +754,13 @@ export default function PageDot() {
                             <Anchor
                               key={apiIndex}
                               c="blue"
-                              onClick={() => mp.openDot(api)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                mp.openDot(api);
+                              }}
                               lineClamp={1}
+                              component={Link}
+                              href={api}
                             >
                               {api}
                             </Anchor>
