@@ -15,6 +15,7 @@ export default function PageWebsite() {
   const pathname = usePathname();
   const uid = pathname.split("/")[1].slice(1);
   const RPC = NETWORK_CONFIG["mainnet"].rpc;
+  const Explorer = NETWORK_CONFIG["mainnet"].explorer;
 
   const provider = useMemo(() => new JsonRpcProvider(RPC), [RPC]);
   const contract = useMemo(
@@ -23,12 +24,13 @@ export default function PageWebsite() {
   );
 
   const [owner, setOwner] = useState("");
-  const [username, setUsername] = useState("");
+  const [name, setName] = useState("");
 
   const fetchOwner = async (name: string) => {
     try {
       const owner = await contract.getOwner(name);
       setOwner(owner);
+      fetchName(owner);
     } catch (err) {
       console.warn("获取地址失败", err);
     }
@@ -36,7 +38,7 @@ export default function PageWebsite() {
   const fetchName = async (address: string) => {
     try {
       const name = await contract.getName(address);
-      setUsername(name);
+      setName(name);
     } catch (err) {
       console.warn("获取用户名失败", err);
     }
@@ -48,16 +50,15 @@ export default function PageWebsite() {
       fetchName(uid);
     } else {
       fetchOwner(uid);
+      setName(uid);
     }
   }, [contract, uid]);
 
-  const Explorer = NETWORK_CONFIG["mainnet"].explorer;
-
   return (
     <Stack>
-      <AppHeader title={username || mp.formatAddress(owner)} />
-      <Text>用户名： {username}</Text>
-      <Text>地址： {owner}</Text>
+      <AppHeader title={name || mp.formatAddress(owner)} />
+      <Text>用户名：{name}</Text>
+      <Text>地址：{owner}</Text>
       <Group>
         <Anchor
           size="sm"
