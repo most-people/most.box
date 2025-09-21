@@ -6,12 +6,12 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import PageIPFS from "@/components/not-found/ipfs";
-import PageUser from "@/components/not-found/user";
+import PageWebsite from "@/components/not-found/website";
 
 const Page404 = () => {
   const back = useBack();
   return (
-    <Container>
+    <>
       <Image src="/img/404.svg" alt="404" width={300} height={225} />
       <Stack gap="md" align="center">
         <Text c="dimmed">抱歉，你要找的页面不见了</Text>
@@ -19,13 +19,13 @@ const Page404 = () => {
           返回
         </Button>
       </Stack>
-    </Container>
+    </>
   );
 };
 
 export default function PageNotFound() {
   const pathname = usePathname();
-  const [type, setType] = useState<"ipfs" | "user" | "404" | "">("");
+  const [type, setType] = useState<"ipfs" | "website" | "404" | "">("");
 
   useEffect(() => {
     if (pathname.startsWith("/ipfs/")) {
@@ -33,22 +33,26 @@ export default function PageNotFound() {
     } else if (pathname.startsWith("/@")) {
       const name = pathname.slice(2, -1);
       if (name) {
-        setType("user");
+        setType("website");
       }
     } else {
       setType("404");
     }
   }, [pathname]);
 
-  return type === "" ? (
-    <Stack align="center">
-      <Loader color="black" size="lg" type="bars" />
-    </Stack>
-  ) : type === "user" ? (
-    <PageUser />
-  ) : type === "ipfs" ? (
-    <PageIPFS />
-  ) : (
-    <Page404 />
+  return (
+    <Container w="100%" p="md">
+      {type === "" ? (
+        <Stack align="center">
+          <Loader color="black" size="lg" type="bars" />
+        </Stack>
+      ) : type === "website" ? (
+        <PageWebsite />
+      ) : type === "ipfs" ? (
+        <PageIPFS />
+      ) : (
+        <Page404 />
+      )}
+    </Container>
   );
 }

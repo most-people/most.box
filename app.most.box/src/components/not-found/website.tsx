@@ -3,17 +3,17 @@ import {
   CONTRACT_ADDRESS_NAME,
   NETWORK_CONFIG,
 } from "@/constants/dot";
-import { Anchor, Container, Group, Text } from "@mantine/core";
-import { Contract, JsonRpcProvider } from "ethers";
+import { Anchor, Group, Stack, Text } from "@mantine/core";
+import { Contract, isAddress, JsonRpcProvider } from "ethers";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
 import Link from "next/link";
 import mp from "@/constants/mp";
 
-export default function PageNotFound() {
+export default function PageWebsite() {
   const pathname = usePathname();
-  const name = pathname.split("/")[1].slice(1);
+  const uid = pathname.split("/")[1].slice(1);
   const RPC = NETWORK_CONFIG["mainnet"].rpc;
 
   const provider = useMemo(() => new JsonRpcProvider(RPC), [RPC]);
@@ -23,25 +23,41 @@ export default function PageNotFound() {
   );
 
   const [owner, setOwner] = useState("");
+  const [username, setUsername] = useState("");
+
+  const fetchOwner = async (name: string) => {
+    try {
+      const owner = await contract.getOwner(name);
+      setOwner(owner);
+    } catch (err) {
+      console.warn("获取地址失败", err);
+    }
+  };
+  const fetchName = async (address: string) => {
+    try {
+      const name = await contract.getName(address);
+      setUsername(name);
+    } catch (err) {
+      console.warn("获取用户名失败", err);
+    }
+  };
 
   useEffect(() => {
-    const fetchOwner = async () => {
-      try {
-        const owner = await contract.getOwner(name);
-        setOwner(owner);
-      } catch (err) {
-        console.warn("获取用户所有者失败", err);
-      }
-    };
-    fetchOwner();
-  }, [contract, name]);
+    if (isAddress(uid)) {
+      setOwner(uid);
+      fetchName(uid);
+    } else {
+      fetchOwner(uid);
+    }
+  }, [contract, uid]);
 
   const Explorer = NETWORK_CONFIG["mainnet"].explorer;
 
   return (
-    <Container p="md">
-      <AppHeader title={name} />
-      <Text>用户地址： {owner}</Text>
+    <Stack>
+      <AppHeader title={username || mp.formatAddress(owner)} />
+      <Text>用户名： {username}</Text>
+      <Text>地址： {owner}</Text>
       <Group>
         <Anchor
           size="sm"
@@ -53,6 +69,6 @@ export default function PageNotFound() {
           合约地址 {mp.formatAddress(CONTRACT_ADDRESS_NAME)}
         </Anchor>
       </Group>
-    </Container>
+    </Stack>
   );
 }

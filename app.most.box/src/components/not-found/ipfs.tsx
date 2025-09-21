@@ -9,7 +9,6 @@ import {
   Stack,
   Paper,
   Flex,
-  Container,
   Group,
   Title,
   CopyButton,
@@ -82,7 +81,7 @@ const PageContent = () => {
   }, [dotCID, cid, filename, cidType]);
 
   return (
-    <Container p="md" w="100%">
+    <>
       <AppHeader title={filename || cid || "CID"} />
       <Stack gap="lg">
         {!cid && (
@@ -266,7 +265,7 @@ const PageContent = () => {
           </Flex>
         )}
       </Stack>
-    </Container>
+    </>
   );
 };
 export default function PageIPFS() {
