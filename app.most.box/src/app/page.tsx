@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { ActionIcon, Tabs, Text } from "@mantine/core";
 import { Icon } from "@/components/Icon";
 import HomeMine from "@/components/home/mine";

@@ -50,7 +50,6 @@ export default function HomeNote() {
     name: string;
     cid: string;
   } | null>(null);
-  const [newNoteName, setNewNoteName] = useState("");
   const [renameError, setRenameError] = useState("");
   const [renameLoading, setRenameLoading] = useState(false);
   const [renameGroup, setRenameGroup] = useState("");
@@ -176,7 +175,6 @@ export default function HomeNote() {
       setRenameGroup("");
       setRenameBaseName(note.name);
     }
-    setNewNoteName(note.name);
     openRenameModal();
   };
 
@@ -276,7 +274,6 @@ export default function HomeNote() {
   // 重置重命名弹窗状态
   const closeRenameModalAndReset = () => {
     setCurrentNote(null);
-    setNewNoteName("");
     setRenameGroup("");
     setRenameBaseName("");
     setRenameError("");
