@@ -22,7 +22,7 @@ export default function HomeMine() {
         <Group wrap="nowrap">
           <Avatar
             component={Link}
-            href={`/profile/?address=${address}`}
+            href="/profile"
             size="md"
             radius="sm"
             src={
@@ -36,12 +36,7 @@ export default function HomeMine() {
             <Text size="lg" fw={500} lineClamp={2}>
               {wallet?.username || "Most.Box"}
             </Text>
-            <Text
-              size="sm"
-              c="dimmed"
-              component={Link}
-              href={`/profile/?address=${address}`}
-            >
+            <Text size="sm" c="dimmed" component={Link} href="/profile">
               地址: {mp.formatAddress(address)}
             </Text>
           </Box>

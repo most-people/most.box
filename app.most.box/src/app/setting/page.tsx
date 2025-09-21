@@ -1,22 +1,10 @@
 "use client";
 
 import { AppHeader } from "@/components/AppHeader";
-import {
-  ActionIcon,
-  Anchor,
-  Group,
-  useMantineColorScheme,
-} from "@mantine/core";
+import { ActionIcon, Group, useMantineColorScheme } from "@mantine/core";
 import { IconSun, IconMoon, IconDeviceDesktop } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
-import {
-  Text,
-  Container,
-  TextInput,
-  Button,
-  Stack,
-  Badge,
-} from "@mantine/core";
+import { Text, Container, Stack } from "@mantine/core";
 
 const ThemeSwitcher = () => {
   const { setColorScheme, colorScheme } = useMantineColorScheme();

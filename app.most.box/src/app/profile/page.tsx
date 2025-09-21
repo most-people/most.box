@@ -1,21 +1,9 @@
 "use client";
 
 import { AppHeader } from "@/components/AppHeader";
-import {
-  ActionIcon,
-  Anchor,
-  Avatar,
-  Group,
-  useMantineColorScheme,
-} from "@mantine/core";
-import {
-  IconSun,
-  IconMoon,
-  IconDeviceDesktop,
-  IconAt,
-  IconUserBitcoin,
-} from "@tabler/icons-react";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Anchor, Avatar, Group } from "@mantine/core";
+import { IconAt, IconUserBitcoin } from "@tabler/icons-react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Text,
   Container,
@@ -97,12 +85,12 @@ const UserName = () => {
       return notifications.show({ message: "请输入用户名", color: "yellow" });
     if (value.length < 1)
       return notifications.show({
-        message: "用户名太短（至少3个字符）",
+        message: "用户名太短（至少1个字符）",
         color: "yellow",
       });
     if (value.length > 32)
       return notifications.show({
-        message: "用户名太长（最多36个字符）",
+        message: "用户名太长（最多32个字符）",
         color: "yellow",
       });
 
@@ -244,17 +232,19 @@ const UserName = () => {
   };
   return (
     <Stack>
-      {wallet && (
-        <Avatar
-          size={100}
-          radius="lg"
-          src={mp.avatar(wallet.address)}
-          alt="头像"
-          style={{
-            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)",
-          }}
-        />
-      )}
+      <Avatar
+        size={100}
+        radius="lg"
+        src={
+          wallet?.address ? mp.avatar(wallet.address) : "/icons/pwa-512x512.png"
+        }
+        alt="头像"
+        style={{
+          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)",
+        }}
+      />
+      <Text>{wallet?.address || mp.ZeroAddress}</Text>
+
       <Group align="center" gap="xs">
         <Text>用户名</Text>
         {loadingGet ? (
@@ -287,7 +277,7 @@ const UserName = () => {
         <Button
           loading={loadingSet}
           onClick={confirmSetName}
-          disabled={!wallet || currentName === nameInput}
+          disabled={!nameInput || !wallet || currentName === nameInput}
           size="sm"
         >
           上链
@@ -350,25 +340,23 @@ const UserData = () => {
 export default function PageProfile() {
   const Explorer = NETWORK_CONFIG["mainnet"].explorer;
   return (
-    <Suspense>
-      <Container p="md" w="100%">
-        <AppHeader title="个人资料" />
-        <Stack>
-          <UserName />
-          <UserData />
-          <Group>
-            <Anchor
-              size="sm"
-              c="blue"
-              component={Link}
-              href={Explorer + "/address/" + CONTRACT_ADDRESS_NAME}
-              target="_blank"
-            >
-              合约地址 {mp.formatAddress(CONTRACT_ADDRESS_NAME)}
-            </Anchor>
-          </Group>
-        </Stack>
-      </Container>
-    </Suspense>
+    <Container p="md" w="100%">
+      <AppHeader title="个人资料" />
+      <Stack>
+        <UserName />
+        <UserData />
+        <Group>
+          <Anchor
+            size="sm"
+            c="blue"
+            component={Link}
+            href={Explorer + "/address/" + CONTRACT_ADDRESS_NAME}
+            target="_blank"
+          >
+            合约地址 {mp.formatAddress(CONTRACT_ADDRESS_NAME)}
+          </Anchor>
+        </Group>
+      </Stack>
+    </Container>
   );
 }
