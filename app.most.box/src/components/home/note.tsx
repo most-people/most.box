@@ -37,6 +37,7 @@ export default function HomeNote() {
     useDisclosure(false);
 
   const [noteName, setNoteName] = useState("");
+  const [noteGroup, setNoteGroup] = useState("");
   const [noteNameError, setNoteNameError] = useState("");
   const [createLoading, setCreateLoading] = useState(false);
 
@@ -52,6 +53,8 @@ export default function HomeNote() {
   const [newNoteName, setNewNoteName] = useState("");
   const [renameError, setRenameError] = useState("");
   const [renameLoading, setRenameLoading] = useState(false);
+  const [renameGroup, setRenameGroup] = useState("");
+  const [renameBaseName, setRenameBaseName] = useState("");
 
   const shareUrl = (note: Note) => {
     const shareUrl = new URL(window.location.href);
@@ -103,17 +106,21 @@ export default function HomeNote() {
 
   // 创建笔记函数
   const createNote = async () => {
-    const name = noteName.trim();
+    const group = noteGroup.trim();
+    const base = noteName.trim();
+
     // 验证笔记名称
-    if (!name) {
+    if (!base) {
       setNoteNameError("请输入笔记名称");
       return;
     }
 
-    if (name.includes("/")) {
+    if (group.includes("/") || base.includes("/")) {
       setNoteNameError("不能包含字符 /");
       return;
     }
+
+    const name = group ? `${group}-${base}` : base;
 
     // 检查是否已存在同名笔记
     if (notes?.some((note) => note.name === name)) {
@@ -138,10 +145,11 @@ export default function HomeNote() {
           message: "笔记创建成功",
         });
 
+        closeNoteModal();
         // 重新获取笔记列表
         await fetchNotes();
-        closeNoteModal();
         setNoteName("");
+        setNoteGroup("");
       }
     } catch (error) {
       notifications.show({
@@ -156,8 +164,19 @@ export default function HomeNote() {
   // 重命名笔记函数
   const handleRename = (note: Note) => {
     setCurrentNote(note);
-    setNewNoteName(note.name);
     setRenameError("");
+    // 解析当前名称为 分组-名称 的结构
+    const idx = note.name.indexOf("-");
+    if (idx > 0) {
+      const g = note.name.slice(0, idx);
+      const n = note.name.slice(idx + 1);
+      setRenameGroup(g);
+      setRenameBaseName(n);
+    } else {
+      setRenameGroup("");
+      setRenameBaseName(note.name);
+    }
+    setNewNoteName(note.name);
     openRenameModal();
   };
 
@@ -170,16 +189,20 @@ export default function HomeNote() {
   const executeRename = async () => {
     if (!currentNote) return;
 
-    const name = newNoteName.trim();
-    if (!name) {
-      setRenameError("请输入笔记名称");
+    const group = renameGroup.trim();
+    const base = renameBaseName.trim();
+
+    if (!base) {
+      setRenameError("请输入名称");
       return;
     }
 
-    if (name.includes("/")) {
+    if (group.includes("/") || base.includes("/")) {
       setRenameError("不能包含字符 /");
       return;
     }
+
+    const name = group ? `${group}-${base}` : base;
 
     if (name === currentNote.name) {
       closeRenameModal();
@@ -193,7 +216,6 @@ export default function HomeNote() {
 
     try {
       setRenameLoading(true);
-      // 这里添加重命名的API调用
       await api.put("/files.rename", {
         oldName: `/.note/${currentNote.name}`,
         newName: `/.note/${name}`,
@@ -204,8 +226,8 @@ export default function HomeNote() {
         message: "重命名成功",
       });
 
-      await fetchNotes();
       closeRenameModal();
+      await fetchNotes();
     } catch (error) {
       notifications.show({
         color: "red",
@@ -257,6 +279,7 @@ export default function HomeNote() {
   // 重置弹窗状态
   const closeModal = () => {
     setNoteName("");
+    setNoteGroup("");
     setNoteNameError("");
     closeNoteModal();
   };
@@ -265,6 +288,8 @@ export default function HomeNote() {
   const closeRenameModalAndReset = () => {
     setCurrentNote(null);
     setNewNoteName("");
+    setRenameGroup("");
+    setRenameBaseName("");
     setRenameError("");
     closeRenameModal();
   };
@@ -309,6 +334,7 @@ export default function HomeNote() {
                   filteredNotes.length
                 } (总共 ${notes?.length || 0})`
               : `显示 ${displayedNotes.length} / ${notes?.length || 0}`}{" "}
+            {""}
             个笔记
           </Badge>
           <Group>
@@ -531,6 +557,15 @@ export default function HomeNote() {
       >
         <Stack gap="md">
           <TextInput
+            label="分组（可选）"
+            value={noteGroup}
+            onChange={(e) => {
+              const g = e.currentTarget.value;
+              setNoteGroup(g);
+              setNoteNameError("");
+            }}
+          />
+          <TextInput
             placeholder="请输入笔记名称"
             value={noteName}
             onChange={(event) => {
@@ -552,25 +587,33 @@ export default function HomeNote() {
         </Stack>
       </Modal>
 
-      {/* 重命名弹窗 */}
       <Modal
         opened={renameModalOpened}
         onClose={closeRenameModalAndReset}
-        title="重命名笔记"
+        title="笔记重命名"
         centered
       >
         <Stack gap="md">
           <TextInput
-            placeholder="请输入新的笔记名称"
-            value={newNoteName}
-            onChange={(event) => {
-              setNewNoteName(event.currentTarget.value);
+            label="分组（可选）"
+            value={renameGroup}
+            onChange={(e) => {
+              const g = e.currentTarget.value;
+              setRenameGroup(g);
+              setRenameError("");
+            }}
+          />
+          <TextInput
+            label="名称"
+            placeholder="请输入名称"
+            value={renameBaseName}
+            onChange={(e) => {
+              const n = e.currentTarget.value;
+              setRenameBaseName(n);
               setRenameError("");
             }}
             error={renameError}
-            autoFocus
           />
-
           <Group justify="flex-end">
             <Button variant="default" onClick={closeRenameModalAndReset}>
               取消
