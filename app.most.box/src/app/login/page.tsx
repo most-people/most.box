@@ -84,7 +84,7 @@ export default function PageLogin() {
 
   const login = () => {
     if (!username) {
-      notifications.show({ message: "请输入用户名" });
+      notifications.show({ message: "请输入昵称" });
       return;
     }
     if (!password) {
@@ -294,7 +294,7 @@ export default function PageLogin() {
         <Stack gap="md">
           <Input
             autoFocus
-            placeholder="用户名"
+            placeholder="昵称"
             value={username}
             onChange={(event) => setUsername(event.currentTarget.value)}
             onKeyUp={(event) => {

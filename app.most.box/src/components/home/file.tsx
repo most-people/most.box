@@ -402,14 +402,12 @@ export default function HomeFile() {
 
   // 分享文件
   const handleShareFile = (item: FileItem) => {
-    const params = new URLSearchParams({
-      cid: item.cid["/"],
-      filename: item.name,
-    });
+    const cid = item.cid["/"];
+    const params = new URLSearchParams({ filename: item.name });
     if (item.type === "directory") {
       params.set("type", "dir");
     }
-    const url = `/ipfs/?${params.toString()}`;
+    const url = `/ipfs/${cid}/?${params.toString()}`;
     window.open(url);
   };
 

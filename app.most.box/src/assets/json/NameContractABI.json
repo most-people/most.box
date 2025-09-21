@@ -1,55 +1,5 @@
 [
     {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "internalType": "address",
-                "name": "user",
-                "type": "address"
-            },
-            {
-                "indexed": false,
-                "internalType": "string",
-                "name": "oldData",
-                "type": "string"
-            },
-            {
-                "indexed": false,
-                "internalType": "string",
-                "name": "newData",
-                "type": "string"
-            }
-        ],
-        "name": "DataSet",
-        "type": "event"
-    },
-    {
-        "anonymous": false,
-        "inputs": [
-            {
-                "indexed": true,
-                "internalType": "address",
-                "name": "user",
-                "type": "address"
-            },
-            {
-                "indexed": false,
-                "internalType": "string",
-                "name": "oldName",
-                "type": "string"
-            },
-            {
-                "indexed": false,
-                "internalType": "string",
-                "name": "newName",
-                "type": "string"
-            }
-        ],
-        "name": "NameSet",
-        "type": "event"
-    },
-    {
         "inputs": [
             {
                 "internalType": "address",
@@ -63,6 +13,19 @@
                 "internalType": "string",
                 "name": "",
                 "type": "string"
+            }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+    },
+    {
+        "inputs": [],
+        "name": "MAX_DATA_LENGTH",
+        "outputs": [
+            {
+                "internalType": "uint256",
+                "name": "",
+                "type": "uint256"
             }
         ],
         "stateMutability": "view",

@@ -37,7 +37,7 @@ const RPCs = [
 export const CONTRACT_ADDRESS_DOT =
   "0xB67662F0d2BB106B055503062e1dba4f072f5781";
 export const CONTRACT_ADDRESS_NAME =
-  "0x15b28F5a471215221f4f28Fe9E2B7ac576278b81";
+  "0x1bcB1bD1c669e154c1d69D7c7C2Ab5D19C9109DB";
 
 export const randomRPC = () => RPCs[Math.floor(Math.random() * RPCs.length)];
 

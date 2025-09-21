@@ -22,10 +22,7 @@ describe("NameContract", function () {
   describe("setName", function () {
     it("应该成功设置一个新名字", async function () {
       const newName = "Alice";
-      await expect(nameContract.connect(addr1).setName(newName))
-        .to.emit(nameContract, "NameSet")
-        .withArgs(addr1.address, "", newName);
-
+      await nameContract.connect(addr1).setName(newName);
       expect(await nameContract.getName(addr1.address)).to.equal(newName);
       expect(await nameContract.getOwner(newName)).to.equal(addr1.address);
     });
@@ -35,9 +32,7 @@ describe("NameContract", function () {
       const newName = "Alicia";
 
       await nameContract.connect(addr1).setName(oldName);
-      await expect(nameContract.connect(addr1).setName(newName))
-        .to.emit(nameContract, "NameSet")
-        .withArgs(addr1.address, oldName.toLowerCase(), newName);
+      await nameContract.connect(addr1).setName(newName);
 
       expect(await nameContract.getName(addr1.address)).to.equal(newName);
       expect(await nameContract.getOwner(oldName)).to.equal(ethers.ZeroAddress);
@@ -105,9 +100,7 @@ describe("NameContract", function () {
       const name = "Eve";
       await nameContract.connect(addr1).setName(name);
 
-      await expect(nameContract.connect(addr1).deleteName())
-        .to.emit(nameContract, "NameSet")
-        .withArgs(addr1.address, name.toLowerCase(), "");
+      await nameContract.connect(addr1).deleteName();
 
       expect(await nameContract.getName(addr1.address)).to.equal("");
       expect(await nameContract.getOwner(name)).to.equal(ethers.ZeroAddress);
@@ -174,17 +167,13 @@ describe("NameContract", function () {
     });
 
     it("setData: 能设置并读取调用者的 Data", async function () {
-      await expect(nameContract.connect(addr1).setData("hello"))
-        .to.emit(nameContract, "DataSet")
-        .withArgs(addr1.address, "", "hello");
+      await nameContract.connect(addr1).setData("hello");
       expect(await nameContract.getData(addr1.address)).to.equal("hello");
     });
 
-    it("setData: 再次设置会触发事件并更新旧值", async function () {
+    it("setData: 再次设置会更新旧值", async function () {
       await nameContract.connect(addr1).setData("v1");
-      await expect(nameContract.connect(addr1).setData("v2"))
-        .to.emit(nameContract, "DataSet")
-        .withArgs(addr1.address, "v1", "v2");
+      await nameContract.connect(addr1).setData("v2");
       expect(await nameContract.getData(addr1.address)).to.equal("v2");
     });
 
@@ -194,12 +183,17 @@ describe("NameContract", function () {
       );
     });
 
-    it("deleteData: 已设置则成功删除并触发事件", async function () {
+    it("deleteData: 已设置则成功删除", async function () {
       await nameContract.connect(addr1).setData("payload");
-      await expect(nameContract.connect(addr1).deleteData())
-        .to.emit(nameContract, "DataSet")
-        .withArgs(addr1.address, "payload", "");
+      await nameContract.connect(addr1).deleteData();
       expect(await nameContract.getData(addr1.address)).to.equal("");
+    });
+
+    it("setData: 超过最大长度应 revert", async function () {
+      const tooLong = "a".repeat(1025);
+      await expect(
+        nameContract.connect(addr1).setData(tooLong)
+      ).to.be.revertedWith("Data too long");
     });
   });
 });
