@@ -11,7 +11,7 @@ import PageUser from "@/components/not-found/user";
 const Page404 = () => {
   const back = useBack();
   return (
-    <>
+    <Container>
       <Image src="/img/404.svg" alt="404" width={300} height={225} />
       <Stack gap="md" align="center">
         <Text c="dimmed">抱歉，你要找的页面不见了</Text>
@@ -19,7 +19,7 @@ const Page404 = () => {
           返回
         </Button>
       </Stack>
-    </>
+    </Container>
   );
 };
 
@@ -40,32 +40,15 @@ export default function PageNotFound() {
     }
   }, [pathname]);
 
-  const title = useMemo(() => {
-    if (type === "") {
-      return "";
-    } else if (type === "ipfs") {
-      return pathname.split("/")[2];
-    } else if (type === "user") {
-      return pathname.slice(2, -1);
-    } else {
-      return "404";
-    }
-  }, [type, pathname]);
-
-  return (
-    <Container w="100%">
-      <AppHeader title={title} />
-      {type === "" ? (
-        <Stack align="center">
-          <Loader color="black" size="lg" type="bars" />
-        </Stack>
-      ) : type === "user" ? (
-        <PageUser />
-      ) : type === "ipfs" ? (
-        <PageIPFS />
-      ) : (
-        <Page404 />
-      )}
-    </Container>
+  return type === "" ? (
+    <Stack align="center">
+      <Loader color="black" size="lg" type="bars" />
+    </Stack>
+  ) : type === "user" ? (
+    <PageUser />
+  ) : type === "ipfs" ? (
+    <PageIPFS />
+  ) : (
+    <Page404 />
   );
 }

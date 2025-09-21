@@ -7,11 +7,11 @@ import { Container, Text } from "@mantine/core";
 import { Contract, JsonRpcProvider } from "ethers";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { AppHeader } from "@/components/AppHeader";
 
 export default function PageNotFound() {
   const pathname = usePathname();
-  const name = pathname.slice(2, -1);
-
+  const name = pathname.split("/")[1].slice(1);
   const RPC = NETWORK_CONFIG["mainnet"].rpc;
 
   const provider = useMemo(() => new JsonRpcProvider(RPC), [RPC]);
@@ -36,6 +36,7 @@ export default function PageNotFound() {
 
   return (
     <Container p="md">
+      <AppHeader title={name} />
       <Text>用户地址： {owner}</Text>
     </Container>
   );

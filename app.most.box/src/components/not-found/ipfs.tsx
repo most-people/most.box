@@ -82,7 +82,7 @@ const PageContent = () => {
   }, [dotCID, cid, filename, cidType]);
 
   return (
-    <Container p="md">
+    <Container p="md" w="100%">
       <AppHeader title={filename || cid || "CID"} />
       <Stack gap="lg">
         {!cid && (
@@ -187,15 +187,18 @@ const PageContent = () => {
             </Button>
           )}
         </Group>
-        <Button
-          variant="light"
-          w="100%"
-          component={Link}
-          href={`/note/?cid=${cid}&name=${filename}`}
-          target="_blank"
-        >
-          打开笔记
-        </Button>
+
+        {cidType === "note" && (
+          <Button
+            variant="light"
+            w="100%"
+            component={Link}
+            href={`/note/?cid=${cid}&name=${filename}`}
+            target="_blank"
+          >
+            打开笔记
+          </Button>
+        )}
 
         <Group justify="space-between">
           <Group gap={8}>
