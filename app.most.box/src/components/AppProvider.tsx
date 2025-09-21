@@ -63,6 +63,10 @@ export default function AppProvider() {
         if (window.location.hash.includes("=")) {
           return;
         }
+        // 个人主页 不处理
+        if (pathname.startsWith("/@")) {
+          return;
+        }
         const url = new URL(window.location.href);
         const dot = new URL(dotAPI);
         if (url.hash !== "#" + dot.host) {

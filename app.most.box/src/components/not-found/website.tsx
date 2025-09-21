@@ -38,10 +38,18 @@ export default function PageWebsite() {
   const fetchName = async (address: string) => {
     try {
       const name = await contract.getName(address);
-      setName(name);
+      updateName(name);
     } catch (err) {
       console.warn("获取用户名失败", err);
     }
+  };
+  const updateName = (name: string) => {
+    setName(name);
+    const list = pathname.split("/");
+    list[1] = "@" + name;
+    const url = new URL(window.location.href);
+    url.pathname = list.join("/");
+    window.history.replaceState(null, "", url.href);
   };
 
   useEffect(() => {
@@ -61,13 +69,12 @@ export default function PageWebsite() {
       <Text>地址：{owner}</Text>
       <Group>
         <Anchor
-          size="sm"
           c="blue"
           component={Link}
           href={Explorer + "/address/" + CONTRACT_ADDRESS_NAME}
           target="_blank"
         >
-          合约地址 {mp.formatAddress(CONTRACT_ADDRESS_NAME)}
+          合约地址：{mp.formatAddress(CONTRACT_ADDRESS_NAME)}
         </Anchor>
       </Group>
     </Stack>
