@@ -3,11 +3,13 @@ import {
   CONTRACT_ADDRESS_NAME,
   NETWORK_CONFIG,
 } from "@/constants/dot";
-import { Container, Text } from "@mantine/core";
+import { Anchor, Container, Group, Text } from "@mantine/core";
 import { Contract, JsonRpcProvider } from "ethers";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
+import Link from "next/link";
+import mp from "@/constants/mp";
 
 export default function PageNotFound() {
   const pathname = usePathname();
@@ -34,10 +36,23 @@ export default function PageNotFound() {
     fetchOwner();
   }, [contract, name]);
 
+  const Explorer = NETWORK_CONFIG["mainnet"].explorer;
+
   return (
     <Container p="md">
       <AppHeader title={name} />
       <Text>用户地址： {owner}</Text>
+      <Group>
+        <Anchor
+          size="sm"
+          c="blue"
+          component={Link}
+          href={Explorer + "/address/" + CONTRACT_ADDRESS_NAME}
+          target="_blank"
+        >
+          合约地址 {mp.formatAddress(CONTRACT_ADDRESS_NAME)}
+        </Anchor>
+      </Group>
     </Container>
   );
 }

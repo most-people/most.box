@@ -9,13 +9,11 @@ import "@/app/page.scss";
 import HomeNote from "@/components/home/note";
 import HomeExplore from "@/components/home/explore";
 import { AppHeader } from "@/components/AppHeader";
-import { useUserStore } from "@/stores/userStore";
 import Link from "next/link";
 import HomeMore from "@/components/home/more";
 
 export default function PageHome() {
   const [homeTab, setHomeTab] = useState<string | null>(null);
-  const dotAPI = useUserStore((state) => state.dotAPI);
 
   const tabChange = (value: string | null) => {
     setHomeTab(value);
@@ -27,18 +25,10 @@ export default function PageHome() {
     setHomeTab(activeTab || "explore");
   }, []);
 
-  const title = useMemo(() => {
-    try {
-      return new URL(dotAPI).host.toUpperCase();
-    } catch {
-      return "MOST.BOX";
-    }
-  }, [dotAPI]);
-
   return (
     <>
       <AppHeader
-        title={title}
+        title="Most.Box - 如影随形"
         left={
           <ActionIcon
             variant="transparent"

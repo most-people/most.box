@@ -54,6 +54,7 @@ export default function HomeMine() {
       </Box>
       <Stack className="menu-list" mb="xs" gap={0}>
         <MenuItem icon="Web3" label="Web3" link="/web3" />
+        <MenuItem icon="Website" label="个人主页" link={`/@${address}`} />
         <MenuItem icon="Earth" label="节点" link="/dot" />
         <MenuItem icon="Chat" label="聊天" link="/chat/?id=001" />
       </Stack>

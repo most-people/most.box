@@ -527,7 +527,11 @@ export default function HomeFile() {
                 <Group gap={8} wrap="nowrap">
                   <Text fw={500}>📁</Text>
                   <Breadcrumbs separator="›">
-                    <Anchor fw={500} onClick={() => handleBreadcrumbClick(-1)}>
+                    <Anchor
+                      fw={500}
+                      onClick={() => handleBreadcrumbClick(-1)}
+                      underline="never"
+                    >
                       根目录
                     </Anchor>
                     {(filesPath || "")
@@ -538,6 +542,7 @@ export default function HomeFile() {
                           key={idx}
                           fw={500}
                           onClick={() => handleBreadcrumbClick(idx)}
+                          underline="never"
                         >
                           {seg}
                         </Anchor>

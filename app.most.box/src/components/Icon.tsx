@@ -11,7 +11,6 @@ import ExploreActive from "@/assets/icons/explore-active.svg";
 import Mine from "@/assets/icons/mine.svg";
 import MineActive from "@/assets/icons/mine-active.svg";
 // https://www.flaticon.com/free-icon-font/add_15861077?page=1&position=1&term=add&origin=search&related_id=15861077
-import Add from "@/assets/icons/add.svg";
 import Arrow from "@/assets/icons/arrow.svg";
 // https://www.flaticon.com/free-icon-font/arrow-small-left_3916837?term=back&related_id=3916837
 import Back from "@/assets/icons/back.svg";
@@ -25,6 +24,8 @@ import Web3 from "@/assets/icons/web3.svg";
 import About from "@/assets/icons/about.svg";
 import Join from "@/assets/icons/join.svg";
 import Setting from "@/assets/icons/setting.svg";
+
+import Website from "@/assets/icons/website.svg";
 
 // https://www.flaticon.com/free-icon-font/earth-americas_9585915?page=1&position=2&term=earth&origin=search&related_id=9585915
 import Earth from "@/assets/icons/earth.svg";
@@ -49,7 +50,6 @@ const icons = {
   ExploreActive,
   Mine,
   MineActive,
-  Add,
   Arrow,
   Back,
   More,
@@ -58,6 +58,7 @@ const icons = {
   // complex
   Exit,
   Web3,
+  Website,
   About,
   Join,
   Setting,
