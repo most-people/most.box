@@ -51,6 +51,8 @@ import {
   NETWORK_CONFIG,
   randomRPC,
 } from "@/constants/dot";
+import { useRouter } from "next/navigation";
+import { useBack } from "@/hooks/useBack";
 
 // ===== 常量定义 =====
 const TIMEOUT = 2000;
@@ -372,6 +374,7 @@ export default function PageDot() {
     setApiLoading(false);
   };
 
+  const back = useBack();
   const switchNode = async (node: DotNode) => {
     setSwitchingNode(node.address);
     try {
@@ -381,6 +384,9 @@ export default function PageDot() {
       if (list) {
         setApiList(list);
         showNotification("节点切换成功", `已切换到 ${node.name}`, "green");
+        if (window.location.search.includes("back")) {
+          back();
+        }
       }
     } catch (error) {
       console.error(error);
@@ -434,8 +440,7 @@ export default function PageDot() {
       {/* 当前节点信息区域 */}
       <Box mb="lg">
         <Stack align="center">
-          <Text mt="md">当前节点</Text>
-          <Title>{title}</Title>
+          <Title mt="md">{title}</Title>
           <Group gap={0}>
             <IconBrandGithub />
             <Anchor

@@ -21,7 +21,7 @@ const ThemeSwitcher = () => {
   }
 
   return (
-    <Stack gap="xs">
+    <Stack gap="xs" align="center">
       <Text>主题</Text>
       <Group gap="xs">
         <ActionIcon
