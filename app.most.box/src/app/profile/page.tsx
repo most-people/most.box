@@ -70,11 +70,10 @@ const UserName = () => {
         );
         return new Contract(CONTRACT_ADDRESS_NAME, CONTRACT_ABI_NAME, signer);
       }
-      return null;
     } catch (err) {
       console.warn("获取签名器失败", err);
-      return null;
     }
+    return null;
   };
 
   const onSetName = async () => {

@@ -3,19 +3,20 @@ import {
   CONTRACT_ADDRESS_NAME,
   NETWORK_CONFIG,
 } from "@/constants/dot";
-import { Anchor, Group, Stack, Text } from "@mantine/core";
+import { Box, Stack, Text } from "@mantine/core";
 import { Contract, isAddress, JsonRpcProvider } from "ethers";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
-import Link from "next/link";
 import mp from "@/constants/mp";
+import { api } from "@/constants/api";
+import { useUserStore } from "@/stores/userStore";
+import { useMarkdown } from "@/hooks/useMarkdown";
 
 export default function PageWebsite() {
   const pathname = usePathname();
   const uid = pathname.split("/")[1].slice(1);
   const RPC = NETWORK_CONFIG["mainnet"].rpc;
-  const Explorer = NETWORK_CONFIG["mainnet"].explorer;
 
   const provider = useMemo(() => new JsonRpcProvider(RPC), [RPC]);
   const contract = useMemo(
@@ -24,7 +25,7 @@ export default function PageWebsite() {
   );
 
   const [owner, setOwner] = useState("");
-  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
 
   const fetchOwner = async (name: string) => {
     try {
@@ -44,7 +45,7 @@ export default function PageWebsite() {
     }
   };
   const updateName = (name: string) => {
-    setName(name);
+    setUsername(name);
     const list = pathname.split("/");
     list[1] = "@" + name;
     const url = new URL(window.location.href);
@@ -58,25 +59,43 @@ export default function PageWebsite() {
       fetchName(uid);
     } else {
       fetchOwner(uid);
-      setName(uid);
+      setUsername(uid);
     }
   }, [contract, uid]);
 
+  const dotCID = useUserStore((state) => state.dotCID);
+  const nodeDark = useUserStore((state) => state.nodeDark);
+  const profileElement = useRef<HTMLDivElement>(null);
+  const markdown = useMarkdown();
+  const fetchNote = async (uid: string) => {
+    try {
+      const res = await api.get(`/files.cid/${uid}/.note/.profile`);
+      const cid = res.data;
+      if (cid) {
+        const response = await fetch(`${dotCID}/ipfs/${cid}/index.md`);
+        const content = await response.text();
+        if (content && profileElement.current) {
+          const viewer = await markdown.initViewer(profileElement.current);
+          viewer.setMarkdown(content);
+        }
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (owner) {
+      fetchNote(owner);
+    }
+  }, [owner]);
+
   return (
     <Stack>
-      <AppHeader title={name || mp.formatAddress(owner)} />
-      <Text>用户名：{name}</Text>
+      <AppHeader title={username || mp.formatAddress(owner)} />
+      <Text>用户名：{username}</Text>
       <Text>地址：{owner}</Text>
-      <Group>
-        <Anchor
-          c="blue"
-          component={Link}
-          href={Explorer + "/address/" + CONTRACT_ADDRESS_NAME}
-          target="_blank"
-        >
-          合约地址：{mp.formatAddress(CONTRACT_ADDRESS_NAME)}
-        </Anchor>
-      </Group>
+      <Box className={nodeDark} ref={profileElement} />
     </Stack>
   );
 }
