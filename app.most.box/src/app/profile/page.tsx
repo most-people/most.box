@@ -307,6 +307,7 @@ const UserName = () => {
 };
 
 const UserData = () => {
+  const dotCID = useUserStore((state) => state.dotCID);
   return (
     <Stack>
       <Text>用户数据</Text>
@@ -315,13 +316,8 @@ const UserData = () => {
         description="默认节点"
         leftSection={<Icon name="Earth" size={16} />}
         variant="filled"
+        value={dotCID}
         placeholder="请输入节点地址"
-      />
-      <TextInput
-        description="头像 CID"
-        leftSection={<IconUserBitcoin size={16} />}
-        variant="filled"
-        placeholder="请输入头像 CID"
       />
 
       <Group>
