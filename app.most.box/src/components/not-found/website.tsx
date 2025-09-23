@@ -3,7 +3,7 @@ import {
   CONTRACT_ADDRESS_NAME,
   NETWORK_CONFIG,
 } from "@/constants/dot";
-import { Box, Stack, Text } from "@mantine/core";
+import { ActionIcon, Box, Menu, Stack, Text } from "@mantine/core";
 import { Contract, isAddress, JsonRpcProvider } from "ethers";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -12,6 +12,8 @@ import mp from "@/constants/mp";
 import { api } from "@/constants/api";
 import { useUserStore } from "@/stores/userStore";
 import { useMarkdown } from "@/hooks/useMarkdown";
+import { Icon } from "../Icon";
+import Link from "next/link";
 
 export default function PageWebsite() {
   const pathname = usePathname();
@@ -92,7 +94,29 @@ export default function PageWebsite() {
 
   return (
     <Stack>
-      <AppHeader title={username || mp.formatAddress(owner)} />
+      <AppHeader
+        title={username || mp.formatAddress(owner)}
+        right={
+          <Menu shadow="md">
+            <Menu.Target>
+              <ActionIcon variant="transparent" color="--text-color">
+                <Icon name="More" size={24} />
+              </ActionIcon>
+            </Menu.Target>
+
+            <Menu.Dropdown>
+              <Menu.Item
+                leftSection="✏️"
+                component={Link}
+                href={`/note/?uid=${owner}&name=.profile`}
+                target="_blank"
+              >
+                编辑
+              </Menu.Item>
+            </Menu.Dropdown>
+          </Menu>
+        }
+      />
       <Text>用户名：{username}</Text>
       <Text>地址：{owner}</Text>
       <Box className={nodeDark} ref={profileElement} />
