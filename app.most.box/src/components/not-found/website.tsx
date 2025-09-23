@@ -10,15 +10,19 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
 import mp from "@/constants/mp";
 import { api } from "@/constants/api";
-import { useUserStore } from "@/stores/userStore";
+import { Dot, useUserStore } from "@/stores/userStore";
 import { useMarkdown } from "@/hooks/useMarkdown";
 import { Icon } from "../Icon";
 import Link from "next/link";
+import { notifications } from "@mantine/notifications";
 
 export default function PageWebsite() {
   const pathname = usePathname();
   const uid = pathname.split("/")[1].slice(1);
   const RPC = NETWORK_CONFIG["mainnet"].rpc;
+
+  const [dotAPI, setDotAPI] = useState("");
+  const [dotCID, setDotCID] = useState("");
 
   const provider = useMemo(() => new JsonRpcProvider(RPC), [RPC]);
   const contract = useMemo(
@@ -65,13 +69,14 @@ export default function PageWebsite() {
     }
   }, [contract, uid]);
 
-  const dotCID = useUserStore((state) => state.dotCID);
   const nodeDark = useUserStore((state) => state.nodeDark);
   const profileElement = useRef<HTMLDivElement>(null);
   const markdown = useMarkdown();
-  const fetchNote = async (uid: string) => {
+  const fetchNote = async (uid: string, dotAPI: string, dotCID: string) => {
     try {
-      const res = await api.get(`/files.cid/${uid}/.note/.profile`);
+      const res = await api.get(`/files.cid/${uid}/.note/.profile`, {
+        baseURL: dotAPI,
+      });
       const cid = res.data;
       if (cid) {
         const response = await fetch(`${dotCID}/ipfs/${cid}/index.md`);
@@ -86,9 +91,37 @@ export default function PageWebsite() {
     }
   };
 
+  const fetchData = async (owner: string) => {
+    try {
+      const json = await contract.getData(owner);
+      if (json) {
+        const data = JSON.parse(json);
+        if (data?.dot) {
+          setDotAPI(data.dot);
+          const res = await api.get("/api.dot", { baseURL: data.dot });
+          const dot = res.data as Dot;
+          if (dot) {
+            let dotCID = dot.CIDs[0];
+            if (dotAPI.endsWith(":1976")) {
+              dotCID = dotAPI.slice(0, -5) + ":8080";
+            }
+            setDotCID(dotCID);
+            fetchNote(owner, data.dot, dotCID);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("获取数据失败", err);
+      notifications.show({
+        message: "获取数据失败",
+        color: "red",
+      });
+    }
+  };
+
   useEffect(() => {
     if (owner) {
-      fetchNote(owner);
+      fetchData(owner);
     }
   }, [owner]);
 
@@ -119,6 +152,7 @@ export default function PageWebsite() {
       />
       <Text>用户名：{username}</Text>
       <Text>地址：{owner}</Text>
+      <Text>节点：{dotAPI}</Text>
       <Box className={nodeDark} ref={profileElement} />
     </Stack>
   );

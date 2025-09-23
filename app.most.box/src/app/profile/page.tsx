@@ -308,14 +308,14 @@ const UserName = () => {
 
 const UserData = () => {
   const wallet = useUserStore((state) => state.wallet);
-  const dotCID = useUserStore((state) => state.dotCID);
+  const dotAPI = useUserStore((state) => state.dotAPI);
   const [loadingSetData, setLoadingSetData] = useState(false);
   const [loadingDeleteData, setLoadingDeleteData] = useState(false);
   const [currentData, setCurrentData] = useState("");
 
   const RPC = NETWORK_CONFIG["mainnet"].rpc;
   const provider = useMemo(() => new JsonRpcProvider(RPC), [RPC]);
-  const readContract = useMemo(
+  const contract = useMemo(
     () => new Contract(CONTRACT_ADDRESS_NAME, CONTRACT_ABI_NAME, provider),
     [provider]
   );
@@ -339,7 +339,7 @@ const UserData = () => {
   const fetchData = async () => {
     if (!wallet) return;
     try {
-      const str: string = await (readContract as any).getData(wallet.address);
+      const str: string = await contract.getData(wallet.address);
       setCurrentData(str || "");
     } catch (err) {
       console.warn("获取用户数据失败", err);
@@ -375,7 +375,7 @@ const UserData = () => {
       return;
     }
 
-    const data = JSON.stringify({ dot: dotCID });
+    const data = JSON.stringify({ dot: dotAPI });
 
     try {
       setLoadingSetData(true);
@@ -498,7 +498,7 @@ const UserData = () => {
           description="当前节点"
           leftSection={<Icon name="Earth" size={16} />}
           variant="filled"
-          value={dotCID}
+          value={dotAPI}
           readOnly
         />
 
@@ -512,7 +512,7 @@ const UserData = () => {
           size="sm"
           loading={loadingSetData}
           onClick={onSetData}
-          disabled={!wallet || !dotCID || currentDot === dotCID}
+          disabled={!wallet || !dotAPI || currentDot === dotAPI}
         >
           上链
         </Button>
