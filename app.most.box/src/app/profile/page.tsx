@@ -307,24 +307,222 @@ const UserName = () => {
 };
 
 const UserData = () => {
+  const wallet = useUserStore((state) => state.wallet);
   const dotCID = useUserStore((state) => state.dotCID);
+  const [loadingSetData, setLoadingSetData] = useState(false);
+  const [loadingDeleteData, setLoadingDeleteData] = useState(false);
+  const [currentData, setCurrentData] = useState("");
+
+  const RPC = NETWORK_CONFIG["mainnet"].rpc;
+  const provider = useMemo(() => new JsonRpcProvider(RPC), [RPC]);
+  const readContract = useMemo(
+    () => new Contract(CONTRACT_ADDRESS_NAME, CONTRACT_ABI_NAME, provider),
+    [provider]
+  );
+
+  // 获取可用的 Signer（与用户名模块保持一致）
+  const getSigner = () => {
+    try {
+      if (wallet?.mnemonic) {
+        const signer = HDNodeWallet.fromPhrase(wallet.mnemonic).connect(
+          provider
+        );
+        return new Contract(CONTRACT_ADDRESS_NAME, CONTRACT_ABI_NAME, signer);
+      }
+    } catch (err) {
+      console.warn("获取签名器失败", err);
+    }
+    return null;
+  };
+
+  // 读取链上数据
+  const fetchData = async () => {
+    if (!wallet) return;
+    try {
+      const str: string = await (readContract as any).getData(wallet.address);
+      setCurrentData(str || "");
+    } catch (err) {
+      console.warn("获取用户数据失败", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [wallet]);
+
+  // 解析链上 JSON 的 dot 地址
+  const currentDot = useMemo(() => {
+    if (!currentData) return "";
+    try {
+      const data = JSON.parse(currentData);
+      if (data?.dot) {
+        return data.dot;
+      }
+    } catch {}
+    return "";
+  }, [currentData]);
+
+  const onSetData = async () => {
+    if (!wallet)
+      return notifications.show({ message: "请先登录", color: "red" });
+
+    const signer = getSigner();
+    if (!signer) {
+      notifications.show({
+        message: "未检测到可用钱包，无法发起交易。请安装钱包或使用助记词登录。",
+        color: "red",
+      });
+      return;
+    }
+
+    const data = JSON.stringify({ dot: dotCID });
+
+    try {
+      setLoadingSetData(true);
+      // 交易前检查余额是否足够支付 Gas（运行时估算）
+      const [balance, fee] = await Promise.all([
+        provider.getBalance(wallet.address),
+        provider.getFeeData(),
+      ]);
+      const gasPrice = fee.maxFeePerGas ?? fee.gasPrice;
+      if (gasPrice) {
+        let gas: bigint = 0n;
+        try {
+          gas = await (signer as any).estimateGas.setData(data);
+        } catch {
+          // 无法估算时，继续交由链上处理
+        }
+        if (gas > 0n) {
+          const cost = gas * gasPrice;
+          if (balance < cost) {
+            notifications.show({
+              message: "余额不足以支付 Gas，请先充值",
+              color: "red",
+            });
+            throw new Error("余额不足以支付 Gas，请先充值");
+          }
+        }
+      }
+
+      const tx = await (signer as any).setData(data);
+      notifications.show({
+        message: "交易已提交，等待确认…",
+        color: "blue",
+      });
+      await tx.wait();
+      notifications.show({ message: "设置成功", color: "green" });
+      setCurrentData(data);
+    } catch (err: any) {
+      console.warn(err);
+      notifications.show({
+        message: err?.shortMessage || err?.message || "设置失败",
+        color: "red",
+      });
+    } finally {
+      setLoadingSetData(false);
+    }
+  };
+
+  const onDeleteData = async () => {
+    if (!wallet)
+      return notifications.show({ message: "请先登录", color: "red" });
+    if (!currentDot)
+      return notifications.show({ message: "当前未设置节点", color: "yellow" });
+
+    const signer = getSigner();
+    if (!signer) {
+      notifications.show({
+        message: "未检测到可用钱包，无法发起交易。请安装钱包或使用助记词登录。",
+        color: "red",
+      });
+      return;
+    }
+
+    try {
+      setLoadingDeleteData(true);
+      // 交易前检查余额是否足够支付 Gas（运行时估算）
+      const [balance, fee] = await Promise.all([
+        provider.getBalance(wallet.address),
+        provider.getFeeData(),
+      ]);
+      const gasPrice = fee.maxFeePerGas ?? fee.gasPrice;
+      if (gasPrice) {
+        let gas: bigint = 0n;
+        try {
+          gas = await (signer as any).estimateGas.deleteData();
+        } catch {}
+        if (gas > 0n) {
+          const cost = gas * gasPrice;
+          if (balance < cost) {
+            notifications.show({
+              message: "余额不足以支付 Gas，请先充值",
+              color: "red",
+            });
+            throw new Error("余额不足以支付 Gas，请先充值");
+          }
+        }
+      }
+
+      const tx = await (signer as any).deleteData();
+      notifications.show({ message: "交易已提交，等待确认…", color: "blue" });
+      await tx.wait();
+      notifications.show({ message: "删除成功", color: "green" });
+      setCurrentData("");
+    } catch (err: any) {
+      console.warn(err);
+      notifications.show({
+        message: err?.shortMessage || err?.message || "删除失败",
+        color: "red",
+      });
+    } finally {
+      setLoadingDeleteData(false);
+    }
+  };
+
   return (
     <Stack>
       <Text>用户数据</Text>
 
       <TextInput
-        description="默认节点"
+        description="默认节点，个人主页使用该节点查询数据"
         leftSection={<Icon name="Earth" size={16} />}
         variant="filled"
-        value={dotCID}
-        placeholder="请输入节点地址"
+        placeholder="请设置默认节点"
+        value={currentDot}
+        disabled
       />
 
+      <Group align="flex-end">
+        <TextInput
+          flex={1}
+          description="当前节点"
+          leftSection={<Icon name="Earth" size={16} />}
+          variant="filled"
+          value={dotCID}
+          readOnly
+        />
+
+        <Button component={Link} href={"/dot/?back"}>
+          切换节点
+        </Button>
+      </Group>
+
       <Group>
-        <Button size="sm" disabled>
+        <Button
+          size="sm"
+          loading={loadingSetData}
+          onClick={onSetData}
+          disabled={!wallet || !dotCID || currentDot === dotCID}
+        >
           上链
         </Button>
-        <Button variant="light" size="sm" disabled>
+        <Button
+          variant="light"
+          size="sm"
+          loading={loadingDeleteData}
+          onClick={onDeleteData}
+          disabled={!wallet || !currentDot}
+        >
           删除
         </Button>
       </Group>
