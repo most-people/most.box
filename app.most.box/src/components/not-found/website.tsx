@@ -21,7 +21,7 @@ export default function PageWebsite() {
   const uid = pathname.split("/")[1].slice(1);
   const RPC = NETWORK_CONFIG["mainnet"].rpc;
 
-  const [dotAPI, setDotAPI] = useState("");
+  const [API, setAPI] = useState("");
 
   const provider = useMemo(() => new JsonRpcProvider(RPC), [RPC]);
   const contract = useMemo(
@@ -48,7 +48,13 @@ export default function PageWebsite() {
   const fetchName = async (address: string) => {
     try {
       const name = await contract.getName(address);
-      updateName(name);
+      if (name) {
+        updateName(name);
+      } else {
+        notifications.show({
+          message: `没有绑定用户名`,
+        });
+      }
     } catch (err) {
       console.warn("获取用户名失败", err);
     }
@@ -63,25 +69,33 @@ export default function PageWebsite() {
   };
 
   useEffect(() => {
-    if (isAddress(uid)) {
-      setOwner(uid);
-      fetchName(uid);
-    } else {
-      fetchOwner(uid);
-      setUsername(uid);
+    if (uid) {
+      if (isAddress(uid)) {
+        setOwner(uid);
+        fetchName(uid);
+      } else {
+        fetchOwner(uid);
+        setUsername(uid);
+      }
     }
-  }, [contract, uid]);
+  }, [uid]);
 
   const nodeDark = useUserStore((state) => state.nodeDark);
+  const dotAPI = useUserStore((state) => state.dotAPI);
+  const updateDot = useUserStore((state) => state.updateDot);
   const profileElement = useRef<HTMLDivElement>(null);
   const markdown = useMarkdown();
   const noteName = pathname.split("/")[2] || ".profile";
 
   const [cid, setCid] = useState("");
-  const fetchNote = async (uid: string, dotAPI: string, dotCID: string) => {
+  const fetchNote = async (uid: string, url: string, dotCID: string) => {
+    // 没有节点 自动切换
+    if (!dotAPI) {
+      updateDot(url);
+    }
     try {
       const res = await api.get(`/files.cid/${uid}/.note/${noteName}`, {
-        baseURL: dotAPI,
+        baseURL: url,
       });
       const cid = res.data;
       if (cid) {
@@ -110,7 +124,7 @@ export default function PageWebsite() {
       if (json) {
         const data = JSON.parse(json);
         if (data?.dot) {
-          setDotAPI(data.dot);
+          setAPI(data.dot);
           const res = await api.get("/api.dot", { baseURL: data.dot });
           const dot = res.data as Dot;
           if (dot) {
@@ -170,7 +184,7 @@ export default function PageWebsite() {
       />
       <Text>用户名：{username}</Text>
       <Text>地址：{owner}</Text>
-      <Text>节点：{dotAPI}</Text>
+      <Text>节点：{API}</Text>
       <Text>CID：{cid}</Text>
       <Box className={nodeDark} ref={profileElement} />
     </Stack>

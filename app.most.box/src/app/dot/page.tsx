@@ -370,6 +370,8 @@ export default function PageDot() {
     if (list) {
       setApiList(list);
       showNotification("节点切换成功", list[0], "green");
+    } else {
+      showNotification("节点切换失败", "无法连接到该节点", "red");
     }
     setApiLoading(false);
   };
@@ -387,10 +389,12 @@ export default function PageDot() {
         if (window.location.search.includes("back")) {
           back();
         }
+      } else {
+        showNotification("节点切换失败", "无法连接到该节点", "red");
       }
     } catch (error) {
       console.error(error);
-      showNotification("切换失败", "无法连接到该节点", "red");
+      showNotification("节点切换失败", "无法连接到该节点", "red");
     } finally {
       setSwitchingNode(null);
     }

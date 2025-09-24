@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { api } from "@/constants/api";
 import { useComputedColorScheme, useMantineColorScheme } from "@mantine/core";
 import { usePathname, useRouter } from "next/navigation";
+import { notifications } from "@mantine/notifications";
 
 export default function AppProvider() {
   const initWallet = useUserStore((state) => state.initWallet);
@@ -46,6 +47,7 @@ export default function AppProvider() {
       }
       // 节点不可用 跳转
       if (list === null) {
+        notifications.show({ message: "节点不可用", color: "red" });
         router.push("/dot/?back");
       }
     });

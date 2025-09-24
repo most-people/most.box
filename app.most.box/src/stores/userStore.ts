@@ -90,10 +90,6 @@ export const useUserStore = create<State>((set, get) => ({
       set({ notes: undefined, files: undefined });
       return dot.APIs;
     } catch (error) {
-      notifications.show({
-        message: "节点不可用",
-        color: "red",
-      });
       console.info(error);
       set({ dotAPI: api.defaults.baseURL || "" });
     }
