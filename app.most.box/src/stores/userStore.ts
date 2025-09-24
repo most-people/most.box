@@ -64,7 +64,7 @@ export const useUserStore = create<State>((set, get) => ({
           set({ wallet });
         }
       } catch (error) {
-        notifications.show({ message: "登录过期", color: "red", });
+        notifications.show({ message: "登录过期", color: "red" });
         console.warn("登录过期", error);
         get().exit();
       }
@@ -92,7 +92,6 @@ export const useUserStore = create<State>((set, get) => ({
     } catch (error) {
       notifications.show({
         message: "节点不可用",
-        // message: url || (error as Error).message,
         color: "red",
       });
       console.info(error);
@@ -113,7 +112,6 @@ export const useUserStore = create<State>((set, get) => ({
   fingerprint: "",
   exit() {
     set({ wallet: undefined, notes: undefined, files: undefined });
-    console.log('🌊', localStorage)
     localStorage.removeItem("jwt");
     localStorage.removeItem("token");
   },

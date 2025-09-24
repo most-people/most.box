@@ -11,6 +11,7 @@ export default function AppProvider() {
   const setItem = useUserStore((state) => state.setItem);
   const dotAPI = useUserStore((state) => state.dotAPI);
   const updateDot = useUserStore((state) => state.updateDot);
+  const pathname = usePathname();
   const router = useRouter();
 
   const initFinger = async () => {
@@ -39,6 +40,11 @@ export default function AppProvider() {
     if (dotAPI) api.defaults.baseURL = dotAPI;
     // 切换节点
     updateDot(dotAPI || location.origin).then((list) => {
+      // 个人主页 不处理
+      if (pathname.startsWith("/@")) {
+        return;
+      }
+      // 节点不可用 跳转
       if (list === null) {
         router.push("/dot/?back");
       }
@@ -52,8 +58,6 @@ export default function AppProvider() {
     initFinger();
     sessionStorage.firstPath = window.location.pathname;
   }, []);
-
-  const pathname = usePathname();
 
   useEffect(() => {
     if (pathname && dotAPI) {
