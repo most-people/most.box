@@ -1,6 +1,6 @@
 .toastui-editor-contents {
   font-size: 16px;
-  font-family: initial;
+  font-family: inherit;
   width: 100%;
   word-break: break-word;
 
@@ -257,7 +257,7 @@
   height: auto;
 }
 .toastui-editor-defaultUI {
-  font-family: initial;
+  font-family: inherit;
   border: 0;
   .toastui-editor-popup-add-image .toastui-editor-file-select-button {
     width: auto;
@@ -271,7 +271,7 @@
 
 .ProseMirror {
   font-size: 16px;
-  font-family: initial;
+  font-family: inherit;
 }
 
 .toastui-editor-dark {

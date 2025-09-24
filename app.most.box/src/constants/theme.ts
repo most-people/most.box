@@ -17,9 +17,9 @@ const mostColor: MantineColorsTuple = [
 export const theme = createTheme({
   primaryColor: "mostColor",
   colors: { mostColor },
-  // fontFamily: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-  //   "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
-  //   "Segoe UI Symbol"`,
+  fontFamily: `"Work Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol"`,
   defaultGradient: {
     from: "orange",
     to: "red",
