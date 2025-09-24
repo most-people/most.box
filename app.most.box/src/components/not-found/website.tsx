@@ -22,7 +22,6 @@ export default function PageWebsite() {
   const RPC = NETWORK_CONFIG["mainnet"].rpc;
 
   const [dotAPI, setDotAPI] = useState("");
-  const [dotCID, setDotCID] = useState("");
 
   const provider = useMemo(() => new JsonRpcProvider(RPC), [RPC]);
   const contract = useMemo(
@@ -40,6 +39,10 @@ export default function PageWebsite() {
       fetchName(owner);
     } catch (err) {
       console.warn("获取地址失败", err);
+      notifications.show({
+        message: `获取地址失败`,
+        color: "red",
+      });
     }
   };
   const fetchName = async (address: string) => {
@@ -72,22 +75,32 @@ export default function PageWebsite() {
   const nodeDark = useUserStore((state) => state.nodeDark);
   const profileElement = useRef<HTMLDivElement>(null);
   const markdown = useMarkdown();
+  const noteName = pathname.split("/")[2] || ".profile";
+
+  const [cid, setCid] = useState("");
   const fetchNote = async (uid: string, dotAPI: string, dotCID: string) => {
     try {
-      const res = await api.get(`/files.cid/${uid}/.note/.profile`, {
+      const res = await api.get(`/files.cid/${uid}/.note/${noteName}`, {
         baseURL: dotAPI,
       });
       const cid = res.data;
       if (cid) {
+        setCid(cid);
         const response = await fetch(`${dotCID}/ipfs/${cid}/index.md`);
         const content = await response.text();
         if (content && profileElement.current) {
           const viewer = await markdown.initViewer(profileElement.current);
           viewer.setMarkdown(content);
         }
+      } else {
+        throw new Error(`cid 不存在`);
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.warn("获取笔记失败", error);
+      notifications.show({
+        message: `获取笔记 ${noteName} 失败`,
+        color: "red",
+      });
     }
   };
 
@@ -105,10 +118,15 @@ export default function PageWebsite() {
             if (dotAPI.endsWith(":1976")) {
               dotCID = dotAPI.slice(0, -5) + ":8080";
             }
-            setDotCID(dotCID);
             fetchNote(owner, data.dot, dotCID);
+          } else {
+            throw new Error("获取 api.dot 失败");
           }
+        } else {
+          throw new Error("获取 data.dot 失败");
         }
+      } else {
+        throw new Error("获取 data 失败");
       }
     } catch (err) {
       console.warn("获取数据失败", err);
@@ -141,7 +159,7 @@ export default function PageWebsite() {
               <Menu.Item
                 leftSection="✏️"
                 component={Link}
-                href={`/note/?uid=${owner}&name=.profile`}
+                href={`/note/?uid=${owner}&name=${noteName}&cid=${cid}`}
                 target="_blank"
               >
                 编辑
@@ -153,6 +171,7 @@ export default function PageWebsite() {
       <Text>用户名：{username}</Text>
       <Text>地址：{owner}</Text>
       <Text>节点：{dotAPI}</Text>
+      <Text>CID：{cid}</Text>
       <Box className={nodeDark} ref={profileElement} />
     </Stack>
   );
