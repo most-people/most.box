@@ -105,6 +105,10 @@ export default function PageWeb3() {
           <Text>黑白棋</Text>
         </Anchor>
 
+        <Anchor component={Link} href="/game/21">
+          <Text>二十一点</Text>
+        </Anchor>
+
         <Text>{mp.formatTime(Date.now())}</Text>
       </Stack>
     </Container>
