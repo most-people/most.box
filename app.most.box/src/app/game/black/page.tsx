@@ -13,7 +13,6 @@ import {
   Stack,
   Text,
   Tooltip,
-  ColorInput,
 } from "@mantine/core";
 
 // ======= Types & Constants =======
@@ -163,13 +162,11 @@ function Cell({
   isValid,
   onClick,
   isLastMove,
-  boardColor,
 }: {
   value: number;
   isValid?: boolean;
   onClick?: () => void;
   isLastMove?: boolean;
-  boardColor?: string;
 }) {
   return (
     <Box
@@ -178,7 +175,7 @@ function Cell({
         cursor: isValid ? "pointer" : "default",
         width: "100%",
         height: "100%",
-        backgroundColor: boardColor || "#a6d8ff",
+        backgroundColor: "#DCC39E",
         border: "1px solid rgba(0,0,0,0.2)",
         display: "flex",
         alignItems: "center",
@@ -337,7 +334,6 @@ export default function PageGameBlack() {
                   isValid={isValid}
                   isLastMove={isLast ?? undefined}
                   onClick={() => onCellClick(r, c)}
-                  boardColor={boardColor}
                 />
               </Box>
             </Tooltip>
@@ -346,7 +342,7 @@ export default function PageGameBlack() {
       }
     }
     return rows;
-  }, [board, validMoves, lastMove, boardColor]);
+  }, [board, validMoves, lastMove]);
 
   return (
     <Container py={20}>
@@ -377,15 +373,6 @@ export default function PageGameBlack() {
                   { label: "玩家执黑", value: "black" },
                   { label: "玩家执白", value: "white" },
                 ]}
-              />
-              <ColorInput
-                size="sm"
-                label="棋盘颜色"
-                value={boardColor}
-                onChange={setBoardColor}
-                placeholder="#DCC39E"
-                // withinPortal 属性不存在于 ColorInput，已移除
-                style={{ width: 160 }}
               />
               <Button onClick={resetGame} variant="light">
                 重开
