@@ -14,6 +14,7 @@ import {
   Text,
   Tooltip,
 } from "@mantine/core";
+import "@/app/game/black/Black and white chess.scss";
 
 // ======= Types & Constants =======
 const BOARD_SIZE = 8;
@@ -171,41 +172,14 @@ function Cell({
   return (
     <Box
       onClick={onClick}
-      style={{
-        cursor: isValid ? "pointer" : "default",
-        width: "100%",
-        height: "100%",
-        backgroundColor: "#DCC39E",
-        border: "1px solid rgba(0,0,0,0.2)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        position: "relative",
-      }}
+      className={`othello-cell${isValid ? " is-valid" : ""}`}
     >
-      {isValid && value === 0 && (
-        <Box
-          style={{
-            width: "28%",
-            height: "28%",
-            borderRadius: "50%",
-            backgroundColor: "rgba(255,255,255,0.4)",
-            outline: "2px dashed rgba(255,255,255,0.7)",
-            zIndex: 1,
-          }}
-        />
-      )}
+      {isValid && value === 0 && <Box className="othello-cell__hint" />}
       {value !== 0 && (
         <Box
-          style={{
-            width: "80%",
-            height: "80%",
-            borderRadius: "50%",
-            backgroundColor: value === 1 ? "#111" : "#f3f3f3",
-            boxShadow: "inset 0 2px 6px rgba(0,0,0,0.4)",
-            outline: isLastMove ? "3px solid #ffcc00" : undefined,
-            zIndex: 2,
-          }}
+          className={`othello-disc ${
+            value === 1 ? "othello-disc--black" : "othello-disc--white"
+          }${isLastMove ? " is-last" : ""}`}
         />
       )}
     </Box>
@@ -224,6 +198,13 @@ export default function PageGameBlack() {
   const [autoPassInfo, setAutoPassInfo] = useState<string | null>(null);
   const aiTimerRef = useRef<number | null>(null);
   const [boardColor, setBoardColor] = useState<string>("#DCC39E");
+  const [history, setHistory] = useState<
+    {
+      board: Board;
+      current: Player;
+      lastMove: { r: number; c: number } | null;
+    }[]
+  >([]);
 
   const validMoves = useMemo(
     () => listValidMoves(board, current),
@@ -241,6 +222,7 @@ export default function PageGameBlack() {
       const moves = listValidMoves(board, ai);
       if (moves.length === 0) {
         // AI has no moves, auto-pass to human
+        setHistory((h) => [...h, { board, current, lastMove }]);
         setAutoPassInfo(`${toLabel(ai)}方无可落子，自动跳过回合`);
         setCurrent(getOpp(current));
         return;
@@ -250,6 +232,7 @@ export default function PageGameBlack() {
       aiTimerRef.current = window.setTimeout(() => {
         const picked = pickAiMove(board, ai);
         if (picked) {
+          setHistory((h) => [...h, { board, current, lastMove }]);
           const nb = applyMove(board, picked, ai);
           setBoard(nb);
           setLastMove({ r: picked.r, c: picked.c });
@@ -278,6 +261,7 @@ export default function PageGameBlack() {
     if (current !== human) return; // not human's turn
     const move = validMoves.find((m) => m.r === r && m.c === c);
     if (!move) return;
+    setHistory((h) => [...h, { board, current, lastMove }]);
     const nb = applyMove(board, move, human);
     setBoard(nb);
     setLastMove({ r, c });
@@ -290,6 +274,7 @@ export default function PageGameBlack() {
     setLastMove(null);
     setAiThinking(false);
     setAutoPassInfo(null);
+    setHistory([]);
   }
 
   // Handle cases where current player has no valid moves (auto-pass)
@@ -297,10 +282,30 @@ export default function PageGameBlack() {
     if (gameOver) return;
     const moves = listValidMoves(board, current);
     if (moves.length === 0) {
+      if (current !== ai) {
+        setHistory((h) => [...h, { board, current, lastMove }]);
+      }
       setAutoPassInfo(`${toLabel(current)}方无可落子，自动跳过回合`);
       setCurrent(getOpp(current));
     }
-  }, [board, current, gameOver]);
+  }, [board, current, gameOver, ai]);
+
+  function undoMove() {
+    if (aiTimerRef.current) {
+      window.clearTimeout(aiTimerRef.current);
+      aiTimerRef.current = null;
+    }
+    setAiThinking(false);
+    setAutoPassInfo(null);
+    setHistory((h) => {
+      if (h.length === 0) return h;
+      const prev = h[h.length - 1];
+      setBoard(prev.board);
+      setCurrent(prev.current);
+      setLastMove(prev.lastMove);
+      return h.slice(0, -1);
+    });
+  }
 
   const winnerLabel = useMemo(() => {
     if (!gameOver) return null;
@@ -318,17 +323,14 @@ export default function PageGameBlack() {
         const isValid = movesMap.has(key);
         const isLast = lastMove && lastMove.r === r && lastMove.c === c;
         rows.push(
-          <Box key={key} style={{ width: "100%", height: "100%" }}>
+          <Box key={key} className="cell-wrapper">
             <Tooltip
               label={
                 isValid ? "可落子" : val === 0 ? "" : toLabel(val as Player)
               }
               openDelay={200}
             >
-              <Box
-                onClick={() => onCellClick(r, c)}
-                style={{ width: "100%", height: "100%" }}
-              >
+              <Box onClick={() => onCellClick(r, c)} className="cell-inner">
                 <Cell
                   value={val}
                   isValid={isValid}
@@ -345,7 +347,7 @@ export default function PageGameBlack() {
   }, [board, validMoves, lastMove]);
 
   return (
-    <Container py={20}>
+    <Container py={20} id="page-game-black">
       <AppHeader title="黑白棋（Othello）" />
 
       <Stack gap="md">
@@ -377,6 +379,13 @@ export default function PageGameBlack() {
               <Button onClick={resetGame} variant="light">
                 重开
               </Button>
+              <Button
+                onClick={undoMove}
+                variant="outline"
+                disabled={history.length === 0}
+              >
+                悔棋
+              </Button>
             </Group>
           </Group>
           <Group mt="sm" gap="xs">
@@ -390,28 +399,8 @@ export default function PageGameBlack() {
         </Paper>
 
         {/* Board */}
-        <Box
-          style={{
-            width: "100%",
-            maxWidth: 560,
-            margin: "0 auto",
-            aspectRatio: "1",
-          }}
-        >
-          <Box
-            style={{
-              display: "grid",
-              gridTemplateColumns: `repeat(${BOARD_SIZE}, 1fr)`,
-              gridTemplateRows: `repeat(${BOARD_SIZE}, 1fr)`,
-              width: "100%",
-              height: "100%",
-              borderRadius: 12,
-              overflow: "hidden",
-              boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
-            }}
-          >
-            {boardGrid}
-          </Box>
+        <Box className="board-container">
+          <Box className="board-grid">{boardGrid}</Box>
         </Box>
 
         {/* Hints */}

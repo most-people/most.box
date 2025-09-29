@@ -1,0 +1,76 @@
+#page-game-black {
+  // Board container
+  .board-container {
+    width: 100%;
+    max-width: 560px;
+    margin: 0 auto;
+    aspect-ratio: 1;
+  }
+
+  // Grid board
+  .board-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  }
+
+  // Cell wrappers to fill grid area
+  .cell-wrapper,
+  .cell-inner {
+    width: 100%;
+    height: 100%;
+  }
+
+  // Single cell styles
+  .othello-cell {
+    cursor: default;
+    width: 100%;
+    height: 100%;
+    background-color: #dcc39e;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+
+    &.is-valid {
+      cursor: pointer;
+    }
+  }
+
+  // Valid move hint
+  .othello-cell__hint {
+    width: 28%;
+    height: 28%;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.4);
+    outline: 2px dashed rgba(255, 255, 255, 0.7);
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  // Disc styles
+  .othello-disc {
+    width: 80%;
+    height: 80%;
+    border-radius: 50%;
+    box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.4);
+    z-index: 2;
+
+    &.othello-disc--black {
+      background-color: #111;
+    }
+    &.othello-disc--white {
+      background-color: #f3f3f3;
+    }
+
+    &.is-last {
+      outline: 3px solid #ffcc00;
+    }
+  }
+}
