@@ -1,11 +1,11 @@
 "use client";
 
 import { AppHeader } from "@/components/AppHeader";
-import { Anchor, Stack, Text, Box, Button, Group } from "@mantine/core";
+import { Stack, Text, Box, Button, Group } from "@mantine/core";
 import dayjs from "dayjs";
 import { ethers } from "ethers";
-import Link from "next/link";
 import { useEffect, useState } from "react";
+import "./5.scss";
 
 export default function PageWeb3Ethers() {
   useEffect(() => {
@@ -25,6 +25,9 @@ export default function PageWeb3Ethers() {
   const [current, setCurrent] = useState<Cell>(1); // 黑子先行
   const [winner, setWinner] = useState<Cell | 0>(0);
   const [lastMove, setLastMove] = useState<[number, number] | null>(null);
+  const [moves, setMoves] = useState<
+    Array<{ r: number; c: number; player: Cell }>
+  >([]);
 
   const checkWinFrom = (r: number, c: number, target: Cell): boolean => {
     const dirs: Array<[number, number]> = [
@@ -76,6 +79,8 @@ export default function PageWeb3Ethers() {
       next[r][c] = current;
       return next;
     });
+    // 记录走子历史与最新一步坐标
+    setMoves((prev) => [...prev, { r, c, player: current }]);
     setLastMove([r, c]);
     const won = checkWinFrom(r, c, current);
     if (won) {
@@ -85,11 +90,38 @@ export default function PageWeb3Ethers() {
     }
   };
 
+  // 新增悔棋功能
+  const undoMove = () => {
+    setMoves((prevMoves) => {
+      if (prevMoves.length === 0) return prevMoves;
+      const last = prevMoves[prevMoves.length - 1];
+
+      setBoard((prevBoard) => {
+        const next = prevBoard.map((row) => row.slice());
+        next[last.r][last.c] = 0;
+        return next;
+      });
+
+      setCurrent(last.player);
+      setWinner(0);
+
+      const newMoves = prevMoves.slice(0, prevMoves.length - 1);
+      setLastMove(
+        newMoves.length
+          ? [newMoves[newMoves.length - 1].r, newMoves[newMoves.length - 1].c]
+          : null
+      );
+
+      return newMoves;
+    });
+  };
+
   const resetGame = () => {
     setBoard(createEmptyBoard());
     setCurrent(1);
     setWinner(0);
     setLastMove(null);
+    setMoves([]);
   };
 
   const statusText = winner
@@ -97,99 +129,52 @@ export default function PageWeb3Ethers() {
     : `${current === 1 ? "黑" : "白"}子回合`;
 
   return (
-    <Box
-      style={{
-        position: "fixed",
-        top: 64,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 16,
-      }}
-    >
+    <Box className="gomoku-container">
       <AppHeader title="五子棋" />
       <Stack gap={12}>
         <Group justify="space-between">
           <Text fw={600}>{statusText}</Text>
-          <Button
-            onClick={resetGame}
-            variant="light"
-            color="blue"
-            radius="md"
-            w={120}
-          >
-            重新开始
-          </Button>
+          <Group>
+            <Button
+              onClick={undoMove}
+              variant="light"
+              color="gray"
+              radius="md"
+              w={120}
+              disabled={moves.length === 0}
+            >
+              悔棋
+            </Button>
+            <Button
+              onClick={resetGame}
+              variant="light"
+              color="blue"
+              radius="md"
+              w={120}
+            >
+              重新开始
+            </Button>
+          </Group>
         </Group>
-        <Box
-          style={{
-            width: "min(95vw, 85vmin, 1000px)",
-            margin: "0 auto",
-            aspectRatio: "1 / 1",
-            border: "2px solid #b58863",
-            borderRadius: 12,
-            background: "#f0d9b5",
-            boxShadow: "0 6px 24px rgba(0,0,0,0.08)",
-            display: "grid",
-            gridTemplateColumns: `repeat(${SIZE}, 1fr)`,
-            gridTemplateRows: `repeat(${SIZE}, 1fr)`,
-            overflow: "hidden",
-          }}
-        >
+        <Box className="gomoku-board">
           {Array.from({ length: SIZE }).map((_, r) =>
             Array.from({ length: SIZE }).map((_, c) => (
               <Box
                 key={`${r}-${c}`}
                 onClick={() => handleCellClick(r, c)}
-                style={{
-                  position: "relative",
-                  cursor: winner
-                    ? "default"
-                    : board[r][c] === 0
-                    ? "pointer"
-                    : "default",
-                  // 内部网格线：避免双重线条，仅绘制上/左边
-                  borderTop: r === 0 ? "none" : "1px solid #b58863",
-                  borderLeft: c === 0 ? "none" : "1px solid #b58863",
-                  transition: "background 160ms ease",
-                }}
+                className={`gomoku-cell${
+                  !winner && board[r][c] === 0 ? " clickable" : ""
+                }`}
               >
                 {board[r][c] !== 0 && (
                   <Box
-                    style={{
-                      width: "80%",
-                      height: "80%",
-                      borderRadius: "50%",
-                      position: "absolute",
-                      top: "50%",
-                      left: "50%",
-                      transform: "translate(-50%, -50%)",
-                      background: board[r][c] === 1 ? "#222" : "#fff",
-                      border: board[r][c] === 2 ? "1px solid #ddd" : "none",
-                      boxShadow: "0 4px 10px rgba(0,0,0,0.25)",
-                    }}
+                    className={`gomoku-stone ${
+                      board[r][c] === 1 ? "black" : "white"
+                    }`}
                   />
                 )}
                 {lastMove && lastMove[0] === r && lastMove[1] === c && (
-                  <Box
-                    style={{
-                      width: "88%",
-                      height: "88%",
-                      borderRadius: "50%",
-                      position: "absolute",
-                      top: "50%",
-                      left: "50%",
-                      transform: "translate(-50%, -50%)",
-                      outline: "2px solid #ff5252",
-                      outlineOffset: "-4px",
-                      pointerEvents: "none",
-                    }}
-                  />
+                  <Box className="gomoku-last-move" />
                 )}
               </Box>
             ))
