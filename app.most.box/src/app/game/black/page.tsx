@@ -1,6 +1,6 @@
 "use client";
 
-import { JSX, useEffect, useMemo, useRef, useState } from "react";
+import { JSX, useEffect, useMemo, useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
 import {
   Badge,
@@ -9,7 +9,6 @@ import {
   Container,
   Group,
   Paper,
-  SegmentedControl,
   Stack,
   Text,
   Tooltip,
@@ -189,14 +188,11 @@ function Cell({
 export default function PageGameBlack() {
   const [board, setBoard] = useState<Board>(() => createInitialBoard());
   const [current, setCurrent] = useState<Player>(1); // Black starts
-  const [human, setHuman] = useState<Player>(1); // default human as Black
-  const ai = getOpp(human);
+  // removed AI-related states: human/ai/aiThinking/aiTimerRef
   const [lastMove, setLastMove] = useState<{ r: number; c: number } | null>(
     null
   );
-  const [aiThinking, setAiThinking] = useState(false);
   const [autoPassInfo, setAutoPassInfo] = useState<string | null>(null);
-  const aiTimerRef = useRef<number | null>(null);
   const [boardColor, setBoardColor] = useState<string>("#DCC39E");
   const [history, setHistory] = useState<
     {
@@ -216,53 +212,18 @@ export default function PageGameBlack() {
   const gameOver = useMemo(() => isGameOver(board), [board]);
 
   useEffect(() => {
-    // AI turn handler
-    if (gameOver) return;
-    if (current === ai) {
-      const moves = listValidMoves(board, ai);
-      if (moves.length === 0) {
-        // AI has no moves, auto-pass to human
-        setHistory((h) => [...h, { board, current, lastMove }]);
-        setAutoPassInfo(`${toLabel(ai)}方无可落子，自动跳过回合`);
-        setCurrent(getOpp(current));
-        return;
-      }
-      setAiThinking(true);
-      // Simulate thinking delay
-      aiTimerRef.current = window.setTimeout(() => {
-        const picked = pickAiMove(board, ai);
-        if (picked) {
-          setHistory((h) => [...h, { board, current, lastMove }]);
-          const nb = applyMove(board, picked, ai);
-          setBoard(nb);
-          setLastMove({ r: picked.r, c: picked.c });
-          setCurrent(getOpp(current));
-        }
-        setAiThinking(false);
-      }, 400);
-    }
-    return () => {
-      if (aiTimerRef.current) {
-        window.clearTimeout(aiTimerRef.current);
-        aiTimerRef.current = null;
-      }
-    };
-  }, [current, ai, board, gameOver]);
-
-  useEffect(() => {
     if (!autoPassInfo) return;
     const t = window.setTimeout(() => setAutoPassInfo(null), 1200);
     return () => window.clearTimeout(t);
   }, [autoPassInfo]);
 
-  // Handle human click
+  // Handle human click (now both sides are controlled by human)
   function onCellClick(r: number, c: number) {
     if (gameOver) return;
-    if (current !== human) return; // not human's turn
     const move = validMoves.find((m) => m.r === r && m.c === c);
     if (!move) return;
     setHistory((h) => [...h, { board, current, lastMove }]);
-    const nb = applyMove(board, move, human);
+    const nb = applyMove(board, move, current);
     setBoard(nb);
     setLastMove({ r, c });
     setCurrent(getOpp(current));
@@ -272,30 +233,22 @@ export default function PageGameBlack() {
     setBoard(createInitialBoard());
     setCurrent(1);
     setLastMove(null);
-    setAiThinking(false);
     setAutoPassInfo(null);
     setHistory([]);
   }
 
-  // Handle cases where current player has no valid moves (auto-pass)
+  // Auto-pass when current player has no valid moves
   useEffect(() => {
     if (gameOver) return;
     const moves = listValidMoves(board, current);
     if (moves.length === 0) {
-      if (current !== ai) {
-        setHistory((h) => [...h, { board, current, lastMove }]);
-      }
+      setHistory((h) => [...h, { board, current, lastMove }]);
       setAutoPassInfo(`${toLabel(current)}方无可落子，自动跳过回合`);
       setCurrent(getOpp(current));
     }
-  }, [board, current, gameOver, ai]);
+  }, [board, current, gameOver]);
 
   function undoMove() {
-    if (aiTimerRef.current) {
-      window.clearTimeout(aiTimerRef.current);
-      aiTimerRef.current = null;
-    }
-    setAiThinking(false);
     setAutoPassInfo(null);
     setHistory((h) => {
       if (h.length === 0) return h;
@@ -362,20 +315,6 @@ export default function PageGameBlack() {
               </Badge>
             </Group>
             <Group>
-              <SegmentedControl
-                value={human === 1 ? "black" : "white"}
-                onChange={(v) => {
-                  const nextHuman = v === "black" ? 1 : -1;
-                  setHuman(nextHuman as Player);
-                  if (current !== nextHuman) {
-                    setCurrent(getOpp(nextHuman as Player));
-                  }
-                }}
-                data={[
-                  { label: "玩家执黑", value: "black" },
-                  { label: "玩家执白", value: "white" },
-                ]}
-              />
               <Button onClick={resetGame} variant="light">
                 重开
               </Button>
@@ -392,17 +331,15 @@ export default function PageGameBlack() {
             <Badge color={current === 1 ? "dark" : "gray"} variant="filled">
               当前回合：{toLabel(current)}
             </Badge>
-            {aiThinking && <Badge color="indigo">AI思考中…</Badge>}
+            {/* removed AI thinking badge */}
             {autoPassInfo && <Badge color="orange">{autoPassInfo}</Badge>}
             {gameOver && <Badge color="green">{winnerLabel}</Badge>}
           </Group>
         </Paper>
-
         {/* Board */}
         <Box className="board-container">
           <Box className="board-grid">{boardGrid}</Box>
         </Box>
-
         {/* Hints */}
         <Paper withBorder p="md" radius="md">
           <Text size="sm" c="dimmed">
