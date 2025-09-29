@@ -2,17 +2,11 @@
 
 import { AppHeader } from "@/components/AppHeader";
 import { Stack, Text, Box, Button, Group } from "@mantine/core";
-import dayjs from "dayjs";
-import { ethers } from "ethers";
-import { useEffect, useState } from "react";
+
+import { useState } from "react";
 import "./5.scss";
 
-export default function PageWeb3Ethers() {
-  useEffect(() => {
-    (window as any).ethers = ethers;
-    (window as any).dayjs = dayjs;
-  }, []);
-
+export default function PageGame5() {
   // 五子棋逻辑
   const SIZE = 15;
   type Cell = 0 | 1 | 2; // 0: 空, 1: 黑, 2: 白
