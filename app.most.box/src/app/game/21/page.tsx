@@ -32,6 +32,7 @@ type Player = {
   hand: CardType[];
   status: "pending" | "bust" | "stand" | "blackjack";
   result?: "win" | "lose" | "push"; // 结算后显示
+  score?: number; // 累计分数
 };
 
 const MAX_PLAYERS = 6;
@@ -172,7 +173,10 @@ export default function PageGame21() {
     setPlayers((ps) => {
       if (ps.length >= MAX_PLAYERS) return ps;
       const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-      return [...ps, { id, name: n.trim(), hand: [], status: "pending" }];
+      return [
+        ...ps,
+        { id, name: n.trim(), hand: [], status: "pending", score: 0 },
+      ];
     });
     setName("");
   }
@@ -192,6 +196,7 @@ export default function PageGame21() {
           name: `玩家${ps.length + i + 1}`,
           hand: [],
           status: "pending",
+          score: 0,
         });
       }
       return [...ps, ...next];
@@ -243,9 +248,15 @@ export default function PageGame21() {
       // 庄家黑杰克直接结算
       const dv = calculateHandValue(initDealer.hand).total;
       const resolved = initPlayers.map((p) => {
-        const pv = calculateHandValue(p.hand).total;
-        const pr = calculateHandValue(p.hand).isBlackjack ? "push" : "lose";
-        return { ...p, status: p.status, result: pr };
+        const pv = calculateHandValue(p.hand);
+        const pr = pv.isBlackjack ? "push" : "lose";
+        const delta = 0;
+        return {
+          ...p,
+          status: p.status,
+          result: pr,
+          score: (p.score ?? 0) + delta,
+        };
       });
       setPlayers(resolved as Player[]);
       setDealer({ ...initDealer, hideHole: false });
@@ -328,7 +339,8 @@ export default function PageGame21() {
           else if (pv < dv.total) result = "lose";
           else result = "push";
         }
-        return { ...p, result };
+        const delta = result === "win" ? 1 : result === "lose" ? -1 : 0;
+        return { ...p, result, score: (p.score ?? 0) + delta };
       });
     });
 
@@ -352,6 +364,9 @@ export default function PageGame21() {
               <Group justify="space-between" mb={8}>
                 <Group gap={8}>
                   <Text fw={700}>{p.name}</Text>
+                  <Badge color="grape" variant="light">
+                    分数：{p.score ?? 0}
+                  </Badge>
                   {isActive && <Badge color="blue">当前操作</Badge>}
                 </Group>
                 <Group gap={8}>
@@ -466,6 +481,14 @@ export default function PageGame21() {
             leftSection={<IconPlayerPlay size={16} stroke={2} />}
           >
             开始游戏
+          </Button>
+          <Button
+            color="orange"
+            onClick={startGame}
+            disabled={players.length === 0 || !roundFinished}
+            leftSection={<IconRefresh size={16} stroke={2} />}
+          >
+            再来一次
           </Button>
           <Button
             variant="outline"
