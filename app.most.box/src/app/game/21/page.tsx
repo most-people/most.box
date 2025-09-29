@@ -16,6 +16,7 @@ import {
   TextInput,
   Title,
 } from "@mantine/core";
+import { IconPlayerPlay, IconRefresh, IconUserPlus } from "@tabler/icons-react";
 import { useMemo, useState } from "react";
 
 type Suit = "♠" | "♥" | "♦" | "♣";
@@ -441,7 +442,7 @@ export default function PageGame21() {
               onClick={() =>
                 quickAddPlayers(typeof quickCount === "number" ? quickCount : 1)
               }
-              leftSection={<span>👤</span>}
+              leftSection={<IconUserPlus size={16} stroke={2} />}
               disabled={players.length >= MAX_PLAYERS}
             >
               快速添加
@@ -457,7 +458,7 @@ export default function PageGame21() {
           <Button
             onClick={startGame}
             disabled={!canStart}
-            leftSection={<span>▶</span>}
+            leftSection={<IconPlayerPlay size={16} stroke={2} />}
           >
             开始游戏
           </Button>
@@ -465,7 +466,7 @@ export default function PageGame21() {
             variant="outline"
             color="gray"
             onClick={resetAll}
-            leftSection={<span>🔁</span>}
+            leftSection={<IconRefresh size={16} stroke={2} />}
           >
             重置
           </Button>
