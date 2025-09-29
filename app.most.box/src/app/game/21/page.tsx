@@ -138,6 +138,7 @@ export default function PageGame21() {
   const [name, setName] = useState("");
   const [quickCount, setQuickCount] = useState<number | "">(1);
   const [roundFinished, setRoundFinished] = useState(false);
+  const [actionLock, setActionLock] = useState(false); // 防止要牌被短时间内触发两次
 
   const canStart =
     players.length > 0 &&
@@ -156,6 +157,14 @@ export default function PageGame21() {
       cards.push(c);
     }
     return cards;
+  }
+
+  // 从当前状态牌堆抽一张，并更新牌堆状态（避免在 setState 回调中产生副作用导致双执行）
+  function drawFromDeckOnce(): CardType {
+    const newDeck = [...deck];
+    const [card] = drawOne(newDeck);
+    setDeck(newDeck);
+    return card;
   }
 
   function addPlayerByName(n: string) {
@@ -264,27 +273,23 @@ export default function PageGame21() {
   }
 
   function onHit() {
-    if (activeIndex < 0) return;
-    setPlayers((ps) => {
-      const copy = [...ps];
-      const p = { ...copy[activeIndex] };
-      const newDeck = [...deck];
-      p.hand.push(...drawOne(newDeck));
-      copy[activeIndex] = p;
-      setDeck(newDeck);
-      const v = calculateHandValue(p.hand).total;
-      if (v > 21) {
-        p.status = "bust";
-      } else if (v === 21) {
-        p.status = "stand";
-      }
-      return copy;
-    });
+    if (activeIndex < 0 || actionLock) return;
+    setActionLock(true);
+    const card = drawFromDeckOnce();
+    const copy = [...players];
+    const p = { ...copy[activeIndex] };
+    p.hand = [...p.hand, card];
+    const v = calculateHandValue(p.hand).total;
+    if (v > 21) p.status = "bust";
+    else if (v === 21) p.status = "stand";
+    copy[activeIndex] = p;
+    setPlayers(copy);
     // 状态更新后进入下一个玩家
     setTimeout(() => {
-      const cur = players[activeIndex];
-      const v = calculateHandValue(cur?.hand ?? []).total;
-      if (v >= 21 || cur?.status !== "pending") goNextPlayer();
+      const cur = copy[activeIndex];
+      const vv = calculateHandValue(cur?.hand ?? []).total;
+      if (vv >= 21 || cur?.status !== "pending") goNextPlayer();
+      setActionLock(false);
     }, 0);
   }
 
@@ -385,7 +390,7 @@ export default function PageGame21() {
                 <Text c="gray.4">点数：{v.total}</Text>
                 {isActive && !roundFinished && (
                   <Group>
-                    <Button onClick={onHit} color="red">
+                    <Button onClick={onHit} color="red" disabled={actionLock}>
                       要牌
                     </Button>
                     <Button onClick={onStand} color="blue">
