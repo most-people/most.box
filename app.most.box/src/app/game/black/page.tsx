@@ -14,7 +14,7 @@ import {
   Text,
   Tooltip,
 } from "@mantine/core";
-import "@/app/game/black/Black and white chess.scss";
+import "@/app/game/black/black-and-white-chess.scss";
 
 // ======= Types & Constants =======
 const BOARD_SIZE = 8;
