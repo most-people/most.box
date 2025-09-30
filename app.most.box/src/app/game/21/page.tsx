@@ -39,6 +39,8 @@ type Player = {
   isOut?: boolean; // 金币归零后出局
 };
 
+type RoundStage = "betting" | "playing" | "settled"; // 回合阶段
+
 const MAX_PLAYERS = 6;
 const DECKS = 2; // 使用2副牌，避免多人时牌不够
 
@@ -142,7 +144,7 @@ export default function PageGame21() {
   const [activeIndex, setActiveIndex] = useState<number>(-1);
   const [name, setName] = useState("");
   const [quickCount, setQuickCount] = useState<number | "">(1);
-  const [roundFinished, setRoundFinished] = useState(false);
+  const [roundStage, setRoundStage] = useState<RoundStage>("betting");
   const [actionLock, setActionLock] = useState(false); // 防止要牌被短时间内触发两次
   const [dealerPlayerId, setDealerPlayerId] = useState<string | null>(null); // 当前庄家
   const [dealerTurn, setDealerTurn] = useState(false); // 庄家手动回合
@@ -158,8 +160,8 @@ export default function PageGame21() {
   }
 
   const canStart =
+    roundStage === "betting" &&
     players.filter((p) => !p.isOut).length >= 2 &&
-    (roundFinished || players.every((p) => p.hand.length === 0)) &&
     allValidBets();
 
   const dealerValue = useMemo(
@@ -239,7 +241,7 @@ export default function PageGame21() {
     setDealer({ hand: [], hideHole: true });
     setDeck([]);
     setActiveIndex(-1);
-    setRoundFinished(false);
+    setRoundStage("betting");
     setDealerPlayerId(null);
     setDealerTurn(false);
   }
@@ -288,7 +290,7 @@ export default function PageGame21() {
 
     setPlayers(initPlayers as Player[]);
     setDealer(initDealer);
-    setRoundFinished(false);
+    setRoundStage("playing");
 
     if (dealerHasBJ) {
       // 庄家黑杰克直接结算（非庄家玩家：黑杰克则平，否则输）
@@ -321,7 +323,7 @@ export default function PageGame21() {
       });
       setDealer({ ...initDealer, hideHole: false });
       setActiveIndex(-1);
-      setRoundFinished(true);
+      setRoundStage("settled");
       setDealerTurn(false);
       return;
     }
@@ -332,6 +334,24 @@ export default function PageGame21() {
     );
     setActiveIndex(first);
     setDealerTurn(false);
+  }
+
+  // 新回合：清空手牌与状态，进入下注阶段（保留金币与出局状态）
+  function newRound() {
+    setPlayers((ps) =>
+      ps.map((p) => ({
+        ...p,
+        hand: [],
+        status: "pending",
+        result: undefined,
+        // 保留 bet，允许在下注阶段继续调整
+      }))
+    );
+    setDealer({ hand: [], hideHole: true });
+    setDeck([]);
+    setActiveIndex(-1);
+    setDealerTurn(false);
+    setRoundStage("betting");
   }
 
   function goNextPlayer() {
@@ -428,7 +448,7 @@ export default function PageGame21() {
         } as Player;
       });
     });
-    setRoundFinished(true);
+    setRoundStage("settled");
     setDealerTurn(false);
   }
 
@@ -512,39 +532,11 @@ export default function PageGame21() {
 
                 <Group justify="space-between" mt="sm">
                   <Text c="gray.4">点数：{v.total}</Text>
-                  {/* 下注输入：仅在未开局时显示 */}
-                  {dealer.hand.length === 0 && !roundFinished && !p.isOut && (
-                    <Group>
-                      <NumberInput
-                        value={p.bet ?? 0}
-                        onChange={(val) => {
-                          const num =
-                            typeof val === "number" ? val : Number(val);
-                          setPlayers((ps) =>
-                            ps.map((pp) =>
-                              pp.id === p.id
-                                ? {
-                                    ...pp,
-                                    bet: Math.max(
-                                      0,
-                                      Math.min(num || 0, pp.coins)
-                                    ),
-                                  }
-                                : pp
-                            )
-                          );
-                        }}
-                        min={0}
-                        max={p.coins}
-                        clampBehavior="blur"
-                        hideControls
-                        inputMode="numeric"
-                        style={{ width: 120 }}
-                      />
-                      <Text c="gray.5">下注</Text>
-                    </Group>
+                  {/* 下注阶段控件 */}
+                  {roundStage === "betting" && !p.isOut && (
+                    <BetControls player={p} />
                   )}
-                  {isActive && !roundFinished && !p.isOut && (
+                  {isActive && roundStage === "playing" && !p.isOut && (
                     <Group>
                       <Button onClick={onHit} color="red" disabled={actionLock}>
                         要牌
@@ -559,6 +551,62 @@ export default function PageGame21() {
             );
           })}
       </SimpleGrid>
+    );
+  }
+
+  // 下注控件（独立组件，增强交互流畅度）
+  function BetControls({ player }: { player: Player }) {
+    const setBet = (val: number) => {
+      setPlayers((ps) =>
+        ps.map((pp) =>
+          pp.id === player.id
+            ? {
+                ...pp,
+                bet: Math.max(1, Math.min(Math.floor(val) || 0, pp.coins)),
+              }
+            : pp
+        )
+      );
+    };
+    return (
+      <Group gap="xs" wrap="nowrap">
+        <NumberInput
+          value={player.bet ?? 0}
+          onChange={(val) => {
+            const num = typeof val === "number" ? val : Number(val);
+            setBet(num);
+          }}
+          min={1}
+          max={player.coins}
+          clampBehavior="strict"
+          inputMode="numeric"
+          style={{ width: 120 }}
+        />
+        <Group gap={4} wrap="nowrap">
+          <Button size="xs" variant="light" onClick={() => setBet(10)}>
+            10
+          </Button>
+          <Button size="xs" variant="light" onClick={() => setBet(50)}>
+            50
+          </Button>
+          <Button
+            size="xs"
+            variant="light"
+            onClick={() => setBet(Math.max(1, player.coins))}
+          >
+            最大
+          </Button>
+          <Button
+            size="xs"
+            variant="outline"
+            color="gray"
+            onClick={() => setBet(1)}
+          >
+            最小
+          </Button>
+        </Group>
+        <Text c="gray.5">下注</Text>
+      </Group>
     );
   }
 
@@ -625,8 +673,8 @@ export default function PageGame21() {
           </Button>
           <Button
             color="orange"
-            onClick={startGame}
-            disabled={players.length === 0 || !roundFinished}
+            onClick={newRound}
+            disabled={players.length === 0 || roundStage !== "settled"}
             leftSection={<IconRefresh size={16} stroke={2} />}
           >
             再来一次
@@ -696,7 +744,7 @@ export default function PageGame21() {
               return <CardView key={i} card={c} />;
             })}
           </Group>
-          {dealerTurn && !roundFinished && (
+          {dealerTurn && roundStage !== "settled" && (
             <Group mt="sm">
               <Button onClick={onDealerHit} color="red" disabled={actionLock}>
                 庄家要牌
