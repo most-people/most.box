@@ -32,7 +32,10 @@ type Player = {
   hand: CardType[];
   status: "pending" | "bust" | "stand" | "blackjack";
   result?: "win" | "lose" | "push"; // 结算后显示
-  score?: number; // 累计分数
+  score?: number; // 累计分数（保留，但不再用于结算）
+  coins: number; // 金币
+  bet?: number; // 本局下注
+  isDealer?: boolean; // 是否为庄家
 };
 
 const MAX_PLAYERS = 6;
@@ -140,10 +143,24 @@ export default function PageGame21() {
   const [quickCount, setQuickCount] = useState<number | "">(1);
   const [roundFinished, setRoundFinished] = useState(false);
   const [actionLock, setActionLock] = useState(false); // 防止要牌被短时间内触发两次
+  const [dealerPlayerId, setDealerPlayerId] = useState<string | null>(null); // 当前庄家
+  const [gameOver, setGameOver] = useState(false); // 任意玩家金币归零则游戏结束
+
+  // 是否所有非庄家玩家下注有效
+  function allValidBets() {
+    const nonDealer = players.filter((p) => !p.isDealer);
+    if (nonDealer.length === 0) return false;
+    return nonDealer.every((p) => {
+      const b = typeof p.bet === "number" ? p.bet : 0;
+      return b > 0 && b <= p.coins;
+    });
+  }
 
   const canStart =
-    players.length > 0 &&
-    (roundFinished || players.every((p) => p.hand.length === 0));
+    players.length >= 2 &&
+    !gameOver &&
+    (roundFinished || players.every((p) => p.hand.length === 0)) &&
+    allValidBets();
 
   const dealerValue = useMemo(
     () => calculateHandValue(dealer.hand),
@@ -175,7 +192,16 @@ export default function PageGame21() {
       const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       return [
         ...ps,
-        { id, name: n.trim(), hand: [], status: "pending", score: 0 },
+        {
+          id,
+          name: n.trim(),
+          hand: [],
+          status: "pending",
+          score: 0,
+          coins: 100,
+          bet: 0,
+          isDealer: false,
+        },
       ];
     });
     setName("");
@@ -197,6 +223,9 @@ export default function PageGame21() {
           hand: [],
           status: "pending",
           score: 0,
+          coins: 100,
+          bet: 0,
+          isDealer: false,
         });
       }
       return [...ps, ...next];
@@ -209,26 +238,38 @@ export default function PageGame21() {
     setDeck([]);
     setActiveIndex(-1);
     setRoundFinished(false);
+    setDealerPlayerId(null);
+    setGameOver(false);
   }
 
   function startGame() {
-    if (players.length === 0) return;
+    if (players.length < 2) return; // 至少两人才能开始（包含庄家）
+    if (!allValidBets()) return;
 
     const newDeck = createDeck();
     setDeck(newDeck);
     // 初始化手牌
+    // 随机选择庄家
+    const dealerIndex = Math.floor(Math.random() * players.length);
+    const dealerId = players[dealerIndex].id;
+    setDealerPlayerId(dealerId);
+
     const initPlayers = players.map((p) => ({
       ...p,
       hand: [] as CardType[],
       status: "pending",
       result: undefined,
+      isDealer: p.id === dealerId,
     }));
     const initDealer = { hand: [] as CardType[], hideHole: true };
 
     // 发两张牌（轮发）
     for (let i = 0; i < 2; i++) {
       for (let pi = 0; pi < initPlayers.length; pi++) {
-        initPlayers[pi].hand.push(...drawOne(newDeck));
+        // 非庄家才发玩家手牌
+        if (!initPlayers[pi].isDealer) {
+          initPlayers[pi].hand.push(...drawOne(newDeck));
+        }
       }
       initDealer.hand.push(...drawOne(newDeck));
     }
@@ -236,6 +277,7 @@ export default function PageGame21() {
     // 处理黑杰克
     const dealerHasBJ = calculateHandValue(initDealer.hand).isBlackjack;
     for (const p of initPlayers) {
+      if (p.isDealer) continue; // 庄家不参与玩家黑杰克判定
       const pv = calculateHandValue(p.hand);
       if (pv.isBlackjack) p.status = "blackjack";
     }
@@ -245,35 +287,37 @@ export default function PageGame21() {
     setRoundFinished(false);
 
     if (dealerHasBJ) {
-      // 庄家黑杰克直接结算
-
-      const resolved = initPlayers.map((p) => {
-        const pv = calculateHandValue(p.hand);
-        const pr = pv.isBlackjack ? "push" : "lose";
-        const delta = 0;
-        return {
-          ...p,
-          status: p.status,
-          result: pr,
-          score: (p.score ?? 0) + delta,
-        };
+      // 庄家黑杰克直接结算（非庄家玩家：黑杰克则平，否则输）
+      setPlayers((ps) => {
+        const resolved = initPlayers.map((p) => {
+          if (p.isDealer) return { ...p };
+          const pv = calculateHandValue(p.hand);
+          const pr = pv.isBlackjack ? "push" : "lose";
+          const bet = Math.max(0, Math.min(p.bet ?? 0, p.coins));
+          const coins = pr === "lose" ? Math.max(0, p.coins - bet) : p.coins;
+          return { ...p, status: p.status, result: pr, coins };
+        });
+        const zero = resolved.some((pp) => !pp.isDealer && pp.coins <= 0);
+        setGameOver(zero);
+        return resolved as Player[];
       });
-      setPlayers(resolved as Player[]);
       setDealer({ ...initDealer, hideHole: false });
       setActiveIndex(-1);
       setRoundFinished(true);
       return;
     }
 
-    // 找到第一个可操作玩家
-    const first = initPlayers.findIndex((p) => p.status === "pending");
+    // 找到第一个可操作的非庄家玩家
+    const first = initPlayers.findIndex(
+      (p) => p.status === "pending" && !p.isDealer
+    );
     setActiveIndex(first);
   }
 
   function goNextPlayer() {
     setActiveIndex((idx) => {
       const next = players.findIndex(
-        (p, i) => i > idx && p.status === "pending"
+        (p, i) => i > idx && p.status === "pending" && !p.isDealer
       );
       if (next === -1) {
         dealerPlay();
@@ -328,7 +372,11 @@ export default function PageGame21() {
 
     // 结算
     setPlayers((ps) => {
-      return ps.map((p) => {
+      const updated = ps.map((p) => {
+        if (p.isDealer) {
+          // 庄家不参与金币结算，仅记录结果为空
+          return { ...p, result: undefined };
+        }
         const pv = calculateHandValue(p.hand).total;
         let result: Player["result"] | undefined = undefined;
         if (p.status === "bust") result = "lose";
@@ -339,84 +387,131 @@ export default function PageGame21() {
           else if (pv < dv.total) result = "lose";
           else result = "push";
         }
-        const delta = result === "win" ? 1 : result === "lose" ? -1 : 0;
-        return { ...p, result, score: (p.score ?? 0) + delta };
+        const bet = Math.max(0, Math.min(p.bet ?? 0, p.coins));
+        const coins =
+          result === "win"
+            ? p.coins + bet
+            : result === "lose"
+            ? Math.max(0, p.coins - bet)
+            : p.coins;
+        return { ...p, result, coins };
       });
+      const zero = updated.some((pp) => !pp.isDealer && pp.coins <= 0);
+      setGameOver(zero);
+      return updated;
     });
 
     setRoundFinished(true);
+    // 检查是否有人金币归零
+    setGameOver((prev) => {
+      const zero = players.some((p) => !p.isDealer && p.coins <= 0);
+      return prev || zero;
+    });
   }
 
   function PlayersGrid() {
     return (
       <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
-        {players.map((p, idx) => {
-          const v = calculateHandValue(p.hand);
-          const isActive = idx === activeIndex;
-          return (
-            <Card
-              key={p.id}
-              shadow={isActive ? "md" : "sm"}
-              radius="md"
-              p="md"
-              withBorder
-            >
-              <Group justify="space-between" mb={8}>
-                <Group gap={8}>
-                  <Text fw={700}>{p.name}</Text>
-                  <Badge color="grape" variant="light">
-                    分数：{p.score ?? 0}
-                  </Badge>
-                  {isActive && <Badge color="blue">当前操作</Badge>}
-                </Group>
-                <Group gap={8}>
-                  {p.status === "bust" && <Badge color="red">爆了</Badge>}
-                  {p.status === "blackjack" && (
-                    <Badge color="green">黑杰克</Badge>
-                  )}
-                  {p.status === "stand" && <Badge color="gray">停牌</Badge>}
-                  {p.result && (
-                    <Badge
-                      color={
-                        p.result === "win"
-                          ? "green"
-                          : p.result === "lose"
-                          ? "red"
-                          : "yellow"
-                      }
-                    >
-                      {p.result === "win"
-                        ? "胜"
-                        : p.result === "lose"
-                        ? "负"
-                        : "平"}
+        {players
+          .filter((pp) => !pp.isDealer)
+          .map((p) => {
+            const v = calculateHandValue(p.hand);
+            const isActive =
+              players.findIndex((pp) => pp.id === p.id) === activeIndex;
+            return (
+              <Card
+                key={p.id}
+                shadow={isActive ? "md" : "sm"}
+                radius="md"
+                p="md"
+                withBorder
+              >
+                <Group justify="space-between" mb={8}>
+                  <Group gap={8}>
+                    <Text fw={700}>{p.name}</Text>
+                    <Badge color="yellow" variant="light">
+                      金币：{p.coins}
                     </Badge>
+                    {isActive && <Badge color="blue">当前操作</Badge>}
+                  </Group>
+                  <Group gap={8}>
+                    {p.status === "bust" && <Badge color="red">爆了</Badge>}
+                    {p.status === "blackjack" && (
+                      <Badge color="green">黑杰克</Badge>
+                    )}
+                    {p.status === "stand" && <Badge color="gray">停牌</Badge>}
+                    {p.result && (
+                      <Badge
+                        color={
+                          p.result === "win"
+                            ? "green"
+                            : p.result === "lose"
+                            ? "red"
+                            : "yellow"
+                        }
+                      >
+                        {p.result === "win"
+                          ? "胜"
+                          : p.result === "lose"
+                          ? "负"
+                          : "平"}
+                      </Badge>
+                    )}
+                  </Group>
+                </Group>
+
+                <Group>
+                  {p.hand.map((c, i) => (
+                    <CardView key={i} card={c} />
+                  ))}
+                </Group>
+
+                <Group justify="space-between" mt="sm">
+                  <Text c="gray.4">点数：{v.total}</Text>
+                  {/* 下注输入：仅在未开局时显示 */}
+                  {dealer.hand.length === 0 && !roundFinished && (
+                    <Group>
+                      <NumberInput
+                        value={p.bet ?? 0}
+                        onChange={(val) => {
+                          const num =
+                            typeof val === "number" ? val : Number(val);
+                          setPlayers((ps) =>
+                            ps.map((pp) =>
+                              pp.id === p.id
+                                ? {
+                                    ...pp,
+                                    bet: Math.max(
+                                      0,
+                                      Math.min(num || 0, pp.coins)
+                                    ),
+                                  }
+                                : pp
+                            )
+                          );
+                        }}
+                        min={0}
+                        max={p.coins}
+                        clampBehavior="strict"
+                        style={{ width: 120 }}
+                      />
+                      <Text c="gray.5">下注</Text>
+                    </Group>
+                  )}
+                  {isActive && !roundFinished && (
+                    <Group>
+                      <Button onClick={onHit} color="red" disabled={actionLock}>
+                        要牌
+                      </Button>
+                      <Button onClick={onStand} color="blue">
+                        停牌
+                      </Button>
+                    </Group>
                   )}
                 </Group>
-              </Group>
-
-              <Group>
-                {p.hand.map((c, i) => (
-                  <CardView key={i} card={c} />
-                ))}
-              </Group>
-
-              <Group justify="space-between" mt="sm">
-                <Text c="gray.4">点数：{v.total}</Text>
-                {isActive && !roundFinished && (
-                  <Group>
-                    <Button onClick={onHit} color="red" disabled={actionLock}>
-                      要牌
-                    </Button>
-                    <Button onClick={onStand} color="blue">
-                      停牌
-                    </Button>
-                  </Group>
-                )}
-              </Group>
-            </Card>
-          );
-        })}
+              </Card>
+            );
+          })}
       </SimpleGrid>
     );
   }
@@ -471,7 +566,7 @@ export default function PageGame21() {
         </SimpleGrid>
 
         <Text mt="sm" c="gray.5">
-          已添加 {players.length}/{MAX_PLAYERS} 名
+          已添加 {players.length}/{MAX_PLAYERS} 名；每人初始金币 100。
         </Text>
 
         <Group mt="md">
@@ -485,7 +580,7 @@ export default function PageGame21() {
           <Button
             color="orange"
             onClick={startGame}
-            disabled={players.length === 0 || !roundFinished}
+            disabled={players.length === 0 || !roundFinished || gameOver}
             leftSection={<IconRefresh size={16} stroke={2} />}
           >
             再来一次
@@ -498,6 +593,11 @@ export default function PageGame21() {
           >
             重置
           </Button>
+          {gameOver && (
+            <Badge color="red" ml="sm">
+              有玩家金币归零，游戏已结束
+            </Badge>
+          )}
         </Group>
       </Card>
 
@@ -507,7 +607,14 @@ export default function PageGame21() {
       <Stack>
         <Card withBorder radius="md" p="md">
           <Group justify="space-between" mb={8}>
-            <Text fw={700}>庄家</Text>
+            <Text fw={700}>
+              庄家
+              {dealerPlayerId
+                ? `：${
+                    players.find((p) => p.id === dealerPlayerId)?.name ?? ""
+                  }`
+                : ""}
+            </Text>
             {!dealer.hideHole && (
               <Badge color={dealerValue.total > 21 ? "red" : "gray"}>
                 点数：{dealerValue.total}
