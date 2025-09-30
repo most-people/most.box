@@ -149,9 +149,35 @@ export default function PageGame21() {
   const [dealerPlayerId, setDealerPlayerId] = useState<string | null>(null); // 当前庄家
   const [dealerTurn, setDealerTurn] = useState(false); // 庄家手动回合
 
+  // 选择下一任庄家（根据玩家列表顺序轮换，跳过已出局）
+  function selectNextDealer(
+    currentPlayers: Player[],
+    prevDealerId: string | null
+  ): string | null {
+    const eligible = currentPlayers.filter((p) => !p.isOut);
+    if (eligible.length === 0) return null;
+    // 若无上一任庄家，则选择列表中的第一个未出局玩家
+    if (!prevDealerId) return eligible[0].id;
+    const order = currentPlayers.map((p) => p.id);
+    const startIdx = Math.max(0, order.indexOf(prevDealerId));
+    let i = startIdx + 1;
+    for (let step = 0; step < order.length; step++) {
+      const id = order[i % order.length];
+      const p = currentPlayers.find((pp) => pp.id === id);
+      if (p && !p.isOut) return p.id;
+      i++;
+    }
+    // 兜底：返回第一个未出局玩家
+    return eligible[0].id;
+  }
+
   // 是否所有未出局的非庄家玩家下注有效
   function allValidBets() {
-    const nonDealerActive = players.filter((p) => !p.isDealer && !p.isOut);
+    // 下注阶段根据下一任庄家来判断，确保非庄家都已下注
+    const nextDealerId = selectNextDealer(players, dealerPlayerId);
+    const nonDealerActive = players.filter(
+      (p) => p.id !== nextDealerId && !p.isOut
+    );
     if (nonDealerActive.length === 0) return false;
     return nonDealerActive.every((p) => {
       const b = typeof p.bet === "number" ? p.bet : 0;
@@ -254,10 +280,9 @@ export default function PageGame21() {
     const newDeck = createDeck();
     setDeck(newDeck);
     // 初始化手牌
-    // 随机选择庄家（不选出局玩家）
-    const eligibleIds = eligible.map((p) => p.id);
-    const dealerIndex = Math.floor(Math.random() * eligibleIds.length);
-    const dealerId = eligibleIds[dealerIndex];
+    // 轮换选择庄家（跳过出局玩家）
+    const dealerId = selectNextDealer(players, dealerPlayerId);
+    if (!dealerId) return;
     setDealerPlayerId(dealerId);
 
     const initPlayers = players.map((p) => ({
@@ -344,6 +369,7 @@ export default function PageGame21() {
         hand: [],
         status: "pending",
         result: undefined,
+        isDealer: false, // 新回合先清空庄家标记，下注阶段按轮换确定下一任庄家
         // 保留 bet，允许在下注阶段继续调整
       }))
     );
