@@ -14,9 +14,13 @@ import {
   Stack,
   Text,
   TextInput,
-  Title,
 } from "@mantine/core";
-import { IconPlayerPlay, IconRefresh, IconUserPlus } from "@tabler/icons-react";
+import {
+  IconArrowAutofitDown,
+  IconPlayerPlay,
+  IconRefresh,
+  IconUserPlus,
+} from "@tabler/icons-react";
 import { useMemo, useState } from "react";
 
 type Suit = "♠" | "♥" | "♦" | "♣";
@@ -101,22 +105,21 @@ function formatCard(card: CardType) {
 function CardView({ card }: { card: CardType }) {
   const isRed = card.suit === "♥" || card.suit === "♦";
   return (
-    <Box
+    <Card
       style={{
         width: 52,
         height: 72,
         borderRadius: 8,
-        border: "1px solid var(--mantine-color-dark-4)",
-        background: "var(--mantine-color-dark-6)",
+        background: "var(--mantine-color-6)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
       }}
     >
-      <Text c={isRed ? "red" : "gray.0"} fw={700} size="lg">
+      <Text c={isRed ? "red" : "black"} fw={700} size="lg">
         {formatCard(card)}
       </Text>
-    </Box>
+    </Card>
   );
 }
 
@@ -432,12 +435,6 @@ export default function PageGame21() {
     goNextPlayer();
   }
 
-  function dealerPlay() {
-    // 改为：仅亮牌并进入庄家手动回合（要牌/停牌按钮）
-    setDealer((d) => ({ ...d, hideHole: false }));
-    setDealerTurn(true);
-  }
-
   function settleRound() {
     const dv = calculateHandValue(dealer.hand).total;
     setPlayers((ps) => {
@@ -570,10 +567,15 @@ export default function PageGame21() {
                   )}
                   {isActive && roundStage === "playing" && !p.isOut && (
                     <Group>
-                      <Button onClick={onHit} color="red" disabled={actionLock}>
+                      <Button
+                        onClick={onHit}
+                        color="rgba(37, 132, 186, 0.8)"
+                        size="sm"
+                        disabled={actionLock}
+                      >
                         要牌
                       </Button>
-                      <Button onClick={onStand} color="blue">
+                      <Button onClick={onStand} variant="gradient" size="sm">
                         停牌
                       </Button>
                     </Group>
@@ -601,22 +603,28 @@ export default function PageGame21() {
       );
     };
     return (
-      <Group gap="xs" wrap="nowrap">
-        <NumberInput
-          value={player.bet ?? 0}
-          onChange={(val) => {
-            const num = typeof val === "number" ? val : Number(val);
-            setBet(num);
-          }}
-          min={1}
-          max={player.coins}
-          clampBehavior="strict"
-          inputMode="numeric"
-          style={{ width: 120 }}
-        />
-        <Group gap={4} wrap="nowrap">
+      <Stack gap={6} style={{ width: "100%" }}>
+        <Group gap="xs" wrap="nowrap">
+          <Text c="gray.5">下注</Text>
+          <NumberInput
+            value={player.bet ?? 0}
+            onChange={(val) => {
+              const num = typeof val === "number" ? val : Number(val);
+              setBet(num);
+            }}
+            min={1}
+            max={player.coins}
+            clampBehavior="strict"
+            inputMode="numeric"
+            style={{ width: 120 }}
+          />
+        </Group>
+        <Group gap={4} wrap="wrap">
           <Button size="xs" variant="light" onClick={() => setBet(10)}>
             10
+          </Button>
+          <Button size="xs" variant="light" onClick={() => setBet(20)}>
+            20
           </Button>
           <Button size="xs" variant="light" onClick={() => setBet(50)}>
             50
@@ -624,32 +632,27 @@ export default function PageGame21() {
           <Button
             size="xs"
             variant="light"
-            onClick={() => setBet(Math.max(1, player.coins))}
+            onClick={() => setBet(Math.min(player.coins, 100))}
           >
             最大
           </Button>
-          <Button
-            size="xs"
-            variant="outline"
-            color="gray"
-            onClick={() => setBet(1)}
-          >
-            最小
-          </Button>
         </Group>
-        <Text c="gray.5">下注</Text>
-      </Group>
+      </Stack>
     );
   }
 
   return (
-    <Container py={20}>
+    <Container py={20} w="100%">
       <AppHeader title="二十一点" />
 
       <Card radius="md" withBorder mt="md" p="md">
-        <Title order={3} c="blue.4" mb={6}>
-          添加玩家
-        </Title>
+        <Group align="center" gap="xs" mb="sm">
+          <IconUserPlus size={18} color="var(--mantine-color-blue-5)" />
+          <Text>添加玩家</Text>
+          <Badge variant="light" color="blue" radius="sm" size="sm">
+            {players.length}/{MAX_PLAYERS}
+          </Badge>
+        </Group>
         <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
           <Group>
             <TextInput
@@ -659,16 +662,16 @@ export default function PageGame21() {
               style={{ flex: 1 }}
             />
             <Button
-              color="red"
+              size="sm"
               onClick={() => addPlayerByName(name)}
+              leftSection={<IconUserPlus size={16} />}
               disabled={players.length >= MAX_PLAYERS}
             >
-              + 添加
+              添加
             </Button>
           </Group>
 
           <Group>
-            <Text c="gray.4">快速添加人数</Text>
             <NumberInput
               value={quickCount}
               onChange={(v) =>
@@ -680,10 +683,12 @@ export default function PageGame21() {
               style={{ width: 120 }}
             />
             <Button
+              size="sm"
+              variant="light"
               onClick={() =>
                 quickAddPlayers(typeof quickCount === "number" ? quickCount : 1)
               }
-              leftSection={<IconUserPlus size={16} stroke={2} />}
+              leftSection={<IconUserPlus size={16} />}
               disabled={players.length >= MAX_PLAYERS}
             >
               快速添加
@@ -695,22 +700,24 @@ export default function PageGame21() {
           已添加 {players.length}/{MAX_PLAYERS} 名；每人初始金币 100。
         </Text>
 
-        <Group mt="md">
-          <Button
-            onClick={startGame}
-            disabled={!canStart}
-            leftSection={<IconPlayerPlay size={16} stroke={2} />}
-          >
-            开始游戏
-          </Button>
-          <Button
-            color="orange"
-            onClick={newRound}
-            disabled={players.length === 0 || roundStage !== "settled"}
-            leftSection={<IconRefresh size={16} stroke={2} />}
-          >
-            再来一次
-          </Button>
+        <Group mt="md" justify="space-between">
+          <Group>
+            <Button
+              onClick={startGame}
+              disabled={!canStart}
+              leftSection={<IconPlayerPlay size={16} stroke={2} />}
+            >
+              开始游戏
+            </Button>
+            <Button
+              color="orange"
+              onClick={newRound}
+              disabled={players.length === 0 || roundStage !== "settled"}
+              leftSection={<IconArrowAutofitDown size={16} stroke={2} />}
+            >
+              下一局
+            </Button>
+          </Group>
           <Button
             variant="outline"
             color="gray"
@@ -722,11 +729,16 @@ export default function PageGame21() {
         </Group>
       </Card>
 
-      <Divider my="md" />
+      <Divider
+        variant="dashed"
+        labelPosition="center"
+        my="md"
+        label="游戏区域"
+      />
 
       {/* 游戏区域 */}
       <Stack>
-        <Card withBorder radius="md" p="md">
+        <Card shadow="md" withBorder radius="md" p="md">
           <Group justify="space-between" mb={8}>
             <Group gap={8}>
               <Text fw={700}>
