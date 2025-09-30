@@ -2,7 +2,7 @@
 
 import { AppHeader } from "@/components/AppHeader";
 import { Anchor, Avatar, Group } from "@mantine/core";
-import { IconAt, IconUserBitcoin } from "@tabler/icons-react";
+
 import { useEffect, useMemo, useState } from "react";
 import {
   Text,
@@ -25,6 +25,7 @@ import { modals } from "@mantine/modals";
 import Link from "next/link";
 import mp from "@/constants/mp";
 import { Icon } from "@/components/Icon";
+import { IconAt } from "@tabler/icons-react";
 
 const UserName = () => {
   const wallet = useUserStore((state) => state.wallet);

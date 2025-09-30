@@ -34,17 +34,6 @@ const DIRECTIONS = [
   { dr: 1, dc: 1 },
 ];
 
-const POSITION_WEIGHTS: number[][] = [
-  [120, -20, 20, 5, 5, 20, -20, 120],
-  [-20, -40, -5, -5, -5, -5, -40, -20],
-  [20, -5, 15, 3, 3, 15, -5, 20],
-  [5, -5, 3, 3, 3, 3, -5, 5],
-  [5, -5, 3, 3, 3, 3, -5, 5],
-  [20, -5, 15, 3, 3, 15, -5, 20],
-  [-20, -40, -5, -5, -5, -5, -40, -20],
-  [120, -20, 20, 5, 5, 20, -20, 120],
-];
-
 // ======= Helpers =======
 function inBounds(r: number, c: number) {
   return r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE;
@@ -123,31 +112,6 @@ function isGameOver(board: Board) {
   );
 }
 
-function pickAiMove(board: Board, ai: Player): Move | null {
-  const moves = listValidMoves(board, ai);
-  if (moves.length === 0) return null;
-  // Heuristic: corner > edge > high flips > weighted position
-  let best: Move | null = null;
-  let bestScore = -Infinity;
-  for (const m of moves) {
-    const base = m.flips.length * 10; // prioritize captures
-    const posWeight = POSITION_WEIGHTS[m.r][m.c];
-    // Corner bonus
-    const isCorner =
-      (m.r === 0 && m.c === 0) ||
-      (m.r === 0 && m.c === BOARD_SIZE - 1) ||
-      (m.r === BOARD_SIZE - 1 && m.c === 0) ||
-      (m.r === BOARD_SIZE - 1 && m.c === BOARD_SIZE - 1);
-    const cornerBonus = isCorner ? 200 : 0;
-    const score = base + posWeight + cornerBonus;
-    if (score > bestScore) {
-      bestScore = score;
-      best = m;
-    }
-  }
-  return best;
-}
-
 function toLabel(player: Player) {
   return player === 1 ? "黑" : "白";
 }
@@ -193,7 +157,7 @@ export default function PageGameBlack() {
     null
   );
   const [autoPassInfo, setAutoPassInfo] = useState<string | null>(null);
-  const [boardColor, setBoardColor] = useState<string>("#DCC39E");
+
   const [history, setHistory] = useState<
     {
       board: Board;

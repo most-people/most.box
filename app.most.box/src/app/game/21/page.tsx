@@ -246,7 +246,7 @@ export default function PageGame21() {
 
     if (dealerHasBJ) {
       // 庄家黑杰克直接结算
-      const dv = calculateHandValue(initDealer.hand).total;
+
       const resolved = initPlayers.map((p) => {
         const pv = calculateHandValue(p.hand);
         const pr = pv.isBlackjack ? "push" : "lose";
@@ -316,8 +316,8 @@ export default function PageGame21() {
 
   function dealerPlay() {
     // 庄家亮牌并抽至至少17点（站在软17）
-    let newDeck = [...deck];
-    let dh = [...dealer.hand];
+    const newDeck = [...deck];
+    const dh = [...dealer.hand];
     let dv = calculateHandValue(dh);
     while (dv.total < 17) {
       dh.push(...drawOne(newDeck));

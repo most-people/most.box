@@ -51,7 +51,6 @@ import {
   NETWORK_CONFIG,
   randomRPC,
 } from "@/constants/dot";
-import { useRouter } from "next/navigation";
 import { useBack } from "@/hooks/useBack";
 
 // ===== 常量定义 =====
