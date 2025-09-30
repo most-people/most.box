@@ -239,13 +239,18 @@ export default function PageGameBlack() {
         const val = board[r][c];
         const isValid = movesMap.has(key);
         const isLast = lastMove && lastMove.r === r && lastMove.c === c;
+        const tooltipLabel = isValid
+          ? "可落子"
+          : val === 0
+          ? null
+          : toLabel(val as Player);
+
         rows.push(
           <Box key={key} className="cell-wrapper">
             <Tooltip
-              label={
-                isValid ? "可落子" : val === 0 ? "" : toLabel(val as Player)
-              }
+              label={tooltipLabel}
               openDelay={200}
+              disabled={!tooltipLabel}
             >
               <Box onClick={() => onCellClick(r, c)} className="cell-inner">
                 <Cell
