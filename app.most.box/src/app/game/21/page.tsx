@@ -292,18 +292,32 @@ export default function PageGame21() {
 
     if (dealerHasBJ) {
       // 庄家黑杰克直接结算（非庄家玩家：黑杰克则平，否则输）
-      setPlayers((ps) => {
-        const resolved = initPlayers.map((p) => {
+      setPlayers(() => {
+        let dealerDelta = 0;
+        const afterPlayers = initPlayers.map((p) => {
           if (p.isDealer) return { ...p };
           if (p.isOut) return { ...p };
           const pv = calculateHandValue(p.hand);
           const pr = pv.isBlackjack ? "push" : "lose";
           const bet = Math.max(0, Math.min(p.bet ?? 0, p.coins));
+          if (pr === "lose") dealerDelta += bet; // 庄家赢下注
           const coins = pr === "lose" ? Math.max(0, p.coins - bet) : p.coins;
           const isOut = coins <= 0 ? true : p.isOut;
           return { ...p, status: p.status, result: pr, coins, isOut };
         });
-        return resolved as Player[];
+        const final = afterPlayers.map((p) => {
+          if (!p.isDealer) return p as Player;
+          const newCoins = Math.max(0, p.coins + dealerDelta);
+          const dealerRes: Player["result"] =
+            dealerDelta > 0 ? "win" : dealerDelta < 0 ? "lose" : "push";
+          return {
+            ...p,
+            coins: newCoins,
+            result: dealerRes,
+            isOut: newCoins <= 0 ? true : p.isOut,
+          } as Player;
+        });
+        return final as Player[];
       });
       setDealer({ ...initDealer, hideHole: false });
       setActiveIndex(-1);
@@ -374,9 +388,10 @@ export default function PageGame21() {
 
   function settleRound() {
     const dv = calculateHandValue(dealer.hand).total;
-    setPlayers((ps) =>
-      ps.map((p) => {
-        if (p.isDealer) return { ...p, result: undefined };
+    setPlayers((ps) => {
+      let dealerDelta = 0;
+      const updated = ps.map((p) => {
+        if (p.isDealer) return { ...p };
         if (p.isOut) return { ...p, result: undefined };
         const pv = calculateHandValue(p.hand).total;
         let result: Player["result"] | undefined = undefined;
@@ -389,6 +404,8 @@ export default function PageGame21() {
           else result = "push";
         }
         const bet = Math.max(0, Math.min(p.bet ?? 0, p.coins));
+        if (result === "win") dealerDelta -= bet;
+        else if (result === "lose") dealerDelta += bet;
         const coins =
           result === "win"
             ? p.coins + bet
@@ -396,9 +413,21 @@ export default function PageGame21() {
             ? Math.max(0, p.coins - bet)
             : p.coins;
         const isOut = coins <= 0 ? true : p.isOut;
-        return { ...p, result, coins, isOut };
-      })
-    );
+        return { ...p, result, coins, isOut } as Player;
+      });
+      return updated.map((p) => {
+        if (!p.isDealer) return p;
+        const newCoins = Math.max(0, p.coins + dealerDelta);
+        const dealerRes: Player["result"] =
+          dealerDelta > 0 ? "win" : dealerDelta < 0 ? "lose" : "push";
+        return {
+          ...p,
+          coins: newCoins,
+          result: dealerRes,
+          isOut: newCoins <= 0 ? true : p.isOut,
+        } as Player;
+      });
+    });
     setRoundFinished(true);
     setDealerTurn(false);
   }
@@ -507,7 +536,9 @@ export default function PageGame21() {
                         }}
                         min={0}
                         max={p.coins}
-                        clampBehavior="strict"
+                        clampBehavior="blur"
+                        hideControls
+                        inputMode="numeric"
                         style={{ width: 120 }}
                       />
                       <Text c="gray.5">下注</Text>
@@ -617,14 +648,42 @@ export default function PageGame21() {
       <Stack>
         <Card withBorder radius="md" p="md">
           <Group justify="space-between" mb={8}>
-            <Text fw={700}>
-              庄家
-              {dealerPlayerId
-                ? `：${
-                    players.find((p) => p.id === dealerPlayerId)?.name ?? ""
-                  }`
-                : ""}
-            </Text>
+            <Group gap={8}>
+              <Text fw={700}>
+                庄家
+                {dealerPlayerId
+                  ? `：${
+                      players.find((p) => p.id === dealerPlayerId)?.name ?? ""
+                    }`
+                  : ""}
+              </Text>
+              {dealerPlayerId && (
+                <Badge color="yellow" variant="light">
+                  金币：
+                  {players.find((p) => p.id === dealerPlayerId)?.coins ?? 0}
+                </Badge>
+              )}
+              {dealerPlayerId &&
+                (() => {
+                  const dr = players.find(
+                    (p) => p.id === dealerPlayerId
+                  )?.result;
+                  if (!dr) return null;
+                  return (
+                    <Badge
+                      color={
+                        dr === "win"
+                          ? "green"
+                          : dr === "lose"
+                          ? "red"
+                          : "yellow"
+                      }
+                    >
+                      {dr === "win" ? "胜" : dr === "lose" ? "负" : "平"}
+                    </Badge>
+                  );
+                })()}
+            </Group>
             {!dealer.hideHole && (
               <Badge color={dealerValue.total > 21 ? "red" : "gray"}>
                 点数：{dealerValue.total}
