@@ -173,10 +173,11 @@ export default function PageGame21() {
 
   // 是否所有未出局的非庄家玩家下注有效
   function allValidBets() {
-    // 下注阶段根据下一任庄家来判断，确保非庄家都已下注
-    const nextDealerId = selectNextDealer(players, dealerPlayerId);
+    // 下注阶段根据“当前轮到的庄家”来判断，确保非庄家都已下注
+    const targetDealerId =
+      dealerPlayerId ?? selectNextDealer(players, dealerPlayerId);
     const nonDealerActive = players.filter(
-      (p) => p.id !== nextDealerId && !p.isOut
+      (p) => p.id !== targetDealerId && !p.isOut
     );
     if (nonDealerActive.length === 0) return false;
     return nonDealerActive.every((p) => {
@@ -281,7 +282,9 @@ export default function PageGame21() {
     setDeck(newDeck);
     // 初始化手牌
     // 轮换选择庄家（跳过出局玩家）
-    const dealerId = selectNextDealer(players, dealerPlayerId);
+    // 若在“再来一次”阶段已预先确定庄家，则沿用；否则按顺序选择
+    const dealerId =
+      dealerPlayerId ?? selectNextDealer(players, dealerPlayerId);
     if (!dealerId) return;
     setDealerPlayerId(dealerId);
 
@@ -363,13 +366,16 @@ export default function PageGame21() {
 
   // 新回合：清空手牌与状态，进入下注阶段（保留金币与出局状态）
   function newRound() {
+    // 预先轮换庄家，使上一轮的庄家可以参与下注
+    const nextDealerId = selectNextDealer(players, dealerPlayerId);
+    setDealerPlayerId(nextDealerId);
     setPlayers((ps) =>
       ps.map((p) => ({
         ...p,
         hand: [],
         status: "pending",
         result: undefined,
-        isDealer: false, // 新回合先清空庄家标记，下注阶段按轮换确定下一任庄家
+        isDealer: p.id === nextDealerId, // 在下注阶段就标记下一任庄家
         // 保留 bet，允许在下注阶段继续调整
       }))
     );
