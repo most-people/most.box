@@ -36,6 +36,7 @@ type Player = {
   coins: number; // 金币
   bet?: number; // 本局下注
   isDealer?: boolean; // 是否为庄家
+  isOut?: boolean; // 金币归零后出局
 };
 
 const MAX_PLAYERS = 6;
@@ -144,21 +145,20 @@ export default function PageGame21() {
   const [roundFinished, setRoundFinished] = useState(false);
   const [actionLock, setActionLock] = useState(false); // 防止要牌被短时间内触发两次
   const [dealerPlayerId, setDealerPlayerId] = useState<string | null>(null); // 当前庄家
-  const [gameOver, setGameOver] = useState(false); // 任意玩家金币归零则游戏结束
+  const [dealerTurn, setDealerTurn] = useState(false); // 庄家手动回合
 
-  // 是否所有非庄家玩家下注有效
+  // 是否所有未出局的非庄家玩家下注有效
   function allValidBets() {
-    const nonDealer = players.filter((p) => !p.isDealer);
-    if (nonDealer.length === 0) return false;
-    return nonDealer.every((p) => {
+    const nonDealerActive = players.filter((p) => !p.isDealer && !p.isOut);
+    if (nonDealerActive.length === 0) return false;
+    return nonDealerActive.every((p) => {
       const b = typeof p.bet === "number" ? p.bet : 0;
       return b > 0 && b <= p.coins;
     });
   }
 
   const canStart =
-    players.length >= 2 &&
-    !gameOver &&
+    players.filter((p) => !p.isOut).length >= 2 &&
     (roundFinished || players.every((p) => p.hand.length === 0)) &&
     allValidBets();
 
@@ -201,6 +201,7 @@ export default function PageGame21() {
           coins: 100,
           bet: 0,
           isDealer: false,
+          isOut: false,
         },
       ];
     });
@@ -226,6 +227,7 @@ export default function PageGame21() {
           coins: 100,
           bet: 0,
           isDealer: false,
+          isOut: false,
         });
       }
       return [...ps, ...next];
@@ -239,19 +241,21 @@ export default function PageGame21() {
     setActiveIndex(-1);
     setRoundFinished(false);
     setDealerPlayerId(null);
-    setGameOver(false);
+    setDealerTurn(false);
   }
 
   function startGame() {
-    if (players.length < 2) return; // 至少两人才能开始（包含庄家）
+    const eligible = players.filter((p) => !p.isOut);
+    if (eligible.length < 2) return; // 至少两人才能开始（包含庄家）
     if (!allValidBets()) return;
 
     const newDeck = createDeck();
     setDeck(newDeck);
     // 初始化手牌
-    // 随机选择庄家
-    const dealerIndex = Math.floor(Math.random() * players.length);
-    const dealerId = players[dealerIndex].id;
+    // 随机选择庄家（不选出局玩家）
+    const eligibleIds = eligible.map((p) => p.id);
+    const dealerIndex = Math.floor(Math.random() * eligibleIds.length);
+    const dealerId = eligibleIds[dealerIndex];
     setDealerPlayerId(dealerId);
 
     const initPlayers = players.map((p) => ({
@@ -266,8 +270,8 @@ export default function PageGame21() {
     // 发两张牌（轮发）
     for (let i = 0; i < 2; i++) {
       for (let pi = 0; pi < initPlayers.length; pi++) {
-        // 非庄家才发玩家手牌
-        if (!initPlayers[pi].isDealer) {
+        // 非庄家且未出局才发玩家手牌
+        if (!initPlayers[pi].isDealer && !initPlayers[pi].isOut) {
           initPlayers[pi].hand.push(...drawOne(newDeck));
         }
       }
@@ -277,7 +281,7 @@ export default function PageGame21() {
     // 处理黑杰克
     const dealerHasBJ = calculateHandValue(initDealer.hand).isBlackjack;
     for (const p of initPlayers) {
-      if (p.isDealer) continue; // 庄家不参与玩家黑杰克判定
+      if (p.isDealer || p.isOut) continue; // 庄家或出局玩家不参与黑杰克判定
       const pv = calculateHandValue(p.hand);
       if (pv.isBlackjack) p.status = "blackjack";
     }
@@ -291,36 +295,40 @@ export default function PageGame21() {
       setPlayers((ps) => {
         const resolved = initPlayers.map((p) => {
           if (p.isDealer) return { ...p };
+          if (p.isOut) return { ...p };
           const pv = calculateHandValue(p.hand);
           const pr = pv.isBlackjack ? "push" : "lose";
           const bet = Math.max(0, Math.min(p.bet ?? 0, p.coins));
           const coins = pr === "lose" ? Math.max(0, p.coins - bet) : p.coins;
-          return { ...p, status: p.status, result: pr, coins };
+          const isOut = coins <= 0 ? true : p.isOut;
+          return { ...p, status: p.status, result: pr, coins, isOut };
         });
-        const zero = resolved.some((pp) => !pp.isDealer && pp.coins <= 0);
-        setGameOver(zero);
         return resolved as Player[];
       });
       setDealer({ ...initDealer, hideHole: false });
       setActiveIndex(-1);
       setRoundFinished(true);
+      setDealerTurn(false);
       return;
     }
 
-    // 找到第一个可操作的非庄家玩家
+    // 找到第一个可操作的非庄家且未出局玩家
     const first = initPlayers.findIndex(
-      (p) => p.status === "pending" && !p.isDealer
+      (p) => p.status === "pending" && !p.isDealer && !p.isOut
     );
     setActiveIndex(first);
+    setDealerTurn(false);
   }
 
   function goNextPlayer() {
     setActiveIndex((idx) => {
       const next = players.findIndex(
-        (p, i) => i > idx && p.status === "pending" && !p.isDealer
+        (p, i) => i > idx && p.status === "pending" && !p.isDealer && !p.isOut
       );
       if (next === -1) {
-        dealerPlay();
+        // 全部玩家完成，进入庄家手动回合
+        setDealer((d) => ({ ...d, hideHole: false }));
+        setDealerTurn(true);
         return -1;
       }
       return next;
@@ -359,32 +367,25 @@ export default function PageGame21() {
   }
 
   function dealerPlay() {
-    // 庄家亮牌并抽至至少17点（站在软17）
-    const newDeck = [...deck];
-    const dh = [...dealer.hand];
-    let dv = calculateHandValue(dh);
-    while (dv.total < 17) {
-      dh.push(...drawOne(newDeck));
-      dv = calculateHandValue(dh);
-    }
-    setDealer({ hand: dh, hideHole: false });
-    setDeck(newDeck);
+    // 改为：仅亮牌并进入庄家手动回合（要牌/停牌按钮）
+    setDealer((d) => ({ ...d, hideHole: false }));
+    setDealerTurn(true);
+  }
 
-    // 结算
-    setPlayers((ps) => {
-      const updated = ps.map((p) => {
-        if (p.isDealer) {
-          // 庄家不参与金币结算，仅记录结果为空
-          return { ...p, result: undefined };
-        }
+  function settleRound() {
+    const dv = calculateHandValue(dealer.hand).total;
+    setPlayers((ps) =>
+      ps.map((p) => {
+        if (p.isDealer) return { ...p, result: undefined };
+        if (p.isOut) return { ...p, result: undefined };
         const pv = calculateHandValue(p.hand).total;
         let result: Player["result"] | undefined = undefined;
         if (p.status === "bust") result = "lose";
         else {
-          if (dv.total > 21) result = "win"; // 庄家爆
-          else if (p.status === "blackjack" && dv.total !== 21) result = "win";
-          else if (pv > dv.total) result = "win";
-          else if (pv < dv.total) result = "lose";
+          if (dv > 21) result = "win";
+          else if (p.status === "blackjack" && dv !== 21) result = "win";
+          else if (pv > dv) result = "win";
+          else if (pv < dv) result = "lose";
           else result = "push";
         }
         const bet = Math.max(0, Math.min(p.bet ?? 0, p.coins));
@@ -394,19 +395,32 @@ export default function PageGame21() {
             : result === "lose"
             ? Math.max(0, p.coins - bet)
             : p.coins;
-        return { ...p, result, coins };
-      });
-      const zero = updated.some((pp) => !pp.isDealer && pp.coins <= 0);
-      setGameOver(zero);
-      return updated;
-    });
-
+        const isOut = coins <= 0 ? true : p.isOut;
+        return { ...p, result, coins, isOut };
+      })
+    );
     setRoundFinished(true);
-    // 检查是否有人金币归零
-    setGameOver((prev) => {
-      const zero = players.some((p) => !p.isDealer && p.coins <= 0);
-      return prev || zero;
-    });
+    setDealerTurn(false);
+  }
+
+  function onDealerHit() {
+    if (!dealerTurn || actionLock) return;
+    setActionLock(true);
+    const card = drawFromDeckOnce();
+    const dh = [...dealer.hand, card];
+    setDealer({ hand: dh, hideHole: false });
+    const dv = calculateHandValue(dh);
+    setTimeout(() => {
+      if (dv.total > 21 || dv.total === 21) {
+        settleRound();
+      }
+      setActionLock(false);
+    }, 0);
+  }
+
+  function onDealerStand() {
+    if (!dealerTurn) return;
+    settleRound();
   }
 
   function PlayersGrid() {
@@ -432,6 +446,7 @@ export default function PageGame21() {
                     <Badge color="yellow" variant="light">
                       金币：{p.coins}
                     </Badge>
+                    {p.isOut && <Badge color="red">出局</Badge>}
                     {isActive && <Badge color="blue">当前操作</Badge>}
                   </Group>
                   <Group gap={8}>
@@ -469,7 +484,7 @@ export default function PageGame21() {
                 <Group justify="space-between" mt="sm">
                   <Text c="gray.4">点数：{v.total}</Text>
                   {/* 下注输入：仅在未开局时显示 */}
-                  {dealer.hand.length === 0 && !roundFinished && (
+                  {dealer.hand.length === 0 && !roundFinished && !p.isOut && (
                     <Group>
                       <NumberInput
                         value={p.bet ?? 0}
@@ -498,7 +513,7 @@ export default function PageGame21() {
                       <Text c="gray.5">下注</Text>
                     </Group>
                   )}
-                  {isActive && !roundFinished && (
+                  {isActive && !roundFinished && !p.isOut && (
                     <Group>
                       <Button onClick={onHit} color="red" disabled={actionLock}>
                         要牌
@@ -580,7 +595,7 @@ export default function PageGame21() {
           <Button
             color="orange"
             onClick={startGame}
-            disabled={players.length === 0 || !roundFinished || gameOver}
+            disabled={players.length === 0 || !roundFinished}
             leftSection={<IconRefresh size={16} stroke={2} />}
           >
             再来一次
@@ -593,11 +608,6 @@ export default function PageGame21() {
           >
             重置
           </Button>
-          {gameOver && (
-            <Badge color="red" ml="sm">
-              有玩家金币归零，游戏已结束
-            </Badge>
-          )}
         </Group>
       </Card>
 
@@ -627,6 +637,16 @@ export default function PageGame21() {
               return <CardView key={i} card={c} />;
             })}
           </Group>
+          {dealerTurn && !roundFinished && (
+            <Group mt="sm">
+              <Button onClick={onDealerHit} color="red" disabled={actionLock}>
+                庄家要牌
+              </Button>
+              <Button onClick={onDealerStand} color="blue">
+                庄家停牌
+              </Button>
+            </Group>
+          )}
           {dealer.hideHole && (
             <Text c="gray.5" mt="xs">
               第二张牌未揭示
