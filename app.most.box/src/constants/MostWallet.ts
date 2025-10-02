@@ -17,6 +17,9 @@ export interface MostWallet {
   public_key: string;
   private_key: string;
   mnemonic: string;
+  // Ed25519 key pair for IPNS publishing
+  ed_public_key: string;
+  ed_private_key: string;
 }
 
 export const mostWallet = (
@@ -37,6 +40,11 @@ export const mostWallet = (
   const public_key = hexlify(keyPair.publicKey);
   const private_key = hexlify(keyPair.secretKey);
 
+  // Ed25519 key pair
+  const EdKeyPair = nacl.sign.keyPair.fromSeed(seed);
+  const ed_public_key = hexlify(EdKeyPair.publicKey);
+  const ed_private_key = hexlify(EdKeyPair.secretKey);
+
   // wallet all in one
   const mnemonic = Mnemonic.entropyToPhrase(bytes);
   const wallet = HDNodeWallet.fromPhrase(mnemonic);
@@ -48,6 +56,8 @@ export const mostWallet = (
     public_key,
     private_key,
     mnemonic: isDanger ? mnemonic : "",
+    ed_public_key,
+    ed_private_key,
   };
   return mostWallet;
 };
