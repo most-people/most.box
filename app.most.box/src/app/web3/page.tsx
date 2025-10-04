@@ -78,7 +78,7 @@ export default function PageWeb3() {
         <Group>
           <Text>{wallet?.ed_public_key || "-"}</Text>
           <Anchor href="/web3/ed25519" component={Link}>
-            查看
+            PEM 格式
           </Anchor>
         </Group>
 
@@ -102,7 +102,7 @@ export default function PageWeb3() {
         </Group>
         <Text>{showX25519 ? wallet?.private_key || "-" : "-"}</Text>
 
-        <Divider my="md" />
+        <Divider variant="dashed" labelPosition="center" my="md" />
 
         <Anchor component={Link} href="/web3/ethers">
           <Text>Ethers</Text>

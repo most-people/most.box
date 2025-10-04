@@ -148,20 +148,22 @@ export default function PageWeb3Ed25519() {
   };
 
   return (
-    <Container py={20} w="100%" pt="xl">
+    <Container py={20} pt="xl">
       <AppHeader title="Ed25519 密钥转换为 PKCS#8 PEM 格式" />
 
       <Stack gap="md">
         <Stack gap="sm">
           <Text fw={500}>
-            私钥 (PKCS#8 PEM 格式): {wallet?.username || "-"}.pem
+            Ed25519 公钥 (PEM 格式): {wallet?.username || "-"}.pub
           </Text>
-          <Textarea value={privateKeyPEM} readOnly autosize minRows={3} />
+          <Textarea value={publicKeyPEM} readOnly autosize minRows={3} />
         </Stack>
 
         <Stack gap="sm">
-          <Text fw={500}>公钥 (PEM 格式): {wallet?.username || "-"}.pub</Text>
-          <Textarea value={publicKeyPEM} readOnly autosize minRows={3} />
+          <Text fw={500}>
+            Ed25519 私钥 (PKCS#8 PEM 格式): {wallet?.username || "-"}.pem
+          </Text>
+          <Textarea value={privateKeyPEM} readOnly autosize minRows={3} />
         </Stack>
 
         <Divider
@@ -172,12 +174,17 @@ export default function PageWeb3Ed25519() {
         />
 
         <Stack gap="sm">
-          <Text>公钥 (hex):</Text>
+          <Text>ETH 地址 (IPNS key):</Text>
+          <Text>{wallet?.address || "-"}</Text>
+        </Stack>
+
+        <Stack gap="sm">
+          <Text>Ed25519 公钥 (hex):</Text>
           <Text>{wallet?.ed_public_key || "-"}</Text>
         </Stack>
 
         <Stack gap="sm">
-          <Text>私钥 (hex):</Text>
+          <Text>Ed25519 私钥 (hex):</Text>
           <Text>{wallet?.private_key || "-"}</Text>
         </Stack>
       </Stack>
