@@ -8,6 +8,7 @@ import {
   ActionIcon,
   Group,
   Divider,
+  Code,
 } from "@mantine/core";
 import { useUserStore } from "@/stores/userStore";
 import { AppHeader } from "@/components/AppHeader";
@@ -74,12 +75,12 @@ export default function PageWeb3() {
         <Text size="lg" fw={500}>
           Ed25519 公钥
         </Text>
-        <Text>{wallet?.ed_public_key || "-"}</Text>
-
-        <Text size="lg" fw={500}>
-          Ed25519 私钥
-        </Text>
-        <Text>{wallet?.private_key.slice(0, 66) || "-"}</Text>
+        <Group>
+          <Text>{wallet?.ed_public_key || "-"}</Text>
+          <Anchor href="/web3/ed25519" component={Link}>
+            查看
+          </Anchor>
+        </Group>
 
         <Text size="lg" fw={500}>
           x25519 公钥
@@ -88,7 +89,7 @@ export default function PageWeb3() {
 
         <Group align="center" gap="xs">
           <Text size="lg" fw={500}>
-            x25519 私钥
+            x25519 & Ed25519 私钥
           </Text>
           <ActionIcon
             variant="subtle"
