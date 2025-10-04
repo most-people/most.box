@@ -72,6 +72,16 @@ export default function PageWeb3() {
         <Text>{balance} Base ETH</Text>
 
         <Text size="lg" fw={500}>
+          Ed25519 公钥
+        </Text>
+        <Text>{wallet?.ed_public_key || "-"}</Text>
+
+        <Text size="lg" fw={500}>
+          Ed25519 私钥
+        </Text>
+        <Text>{wallet?.private_key.slice(0, 66) || "-"}</Text>
+
+        <Text size="lg" fw={500}>
           x25519 公钥
         </Text>
         <Text>{wallet?.public_key || "-"}</Text>

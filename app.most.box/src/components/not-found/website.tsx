@@ -18,7 +18,7 @@ import { notifications } from "@mantine/notifications";
 
 export default function PageWebsite() {
   const pathname = usePathname();
-  const uid = pathname.split("/")[1].slice(1);
+  const [uid, setUid] = useState("");
   const RPC = NETWORK_CONFIG["mainnet"].rpc;
 
   const [API, setAPI] = useState("");
@@ -31,6 +31,10 @@ export default function PageWebsite() {
 
   const [owner, setOwner] = useState("");
   const [username, setUsername] = useState("");
+
+  useEffect(() => {
+    setUid(pathname.split("/")[1].slice(1));
+  }, [pathname]);
 
   const fetchOwner = async (name: string) => {
     try {

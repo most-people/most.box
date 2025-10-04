@@ -19,7 +19,6 @@ export interface MostWallet {
   mnemonic: string;
   // Ed25519 key pair for IPNS publishing
   ed_public_key: string;
-  ed_private_key: string;
 }
 
 export const mostWallet = (
@@ -43,7 +42,6 @@ export const mostWallet = (
   // Ed25519 key pair
   const EdKeyPair = nacl.sign.keyPair.fromSeed(seed);
   const ed_public_key = hexlify(EdKeyPair.publicKey);
-  const ed_private_key = hexlify(EdKeyPair.secretKey);
 
   // wallet all in one
   const mnemonic = Mnemonic.entropyToPhrase(bytes);
@@ -57,7 +55,6 @@ export const mostWallet = (
     private_key,
     mnemonic: isDanger ? mnemonic : "",
     ed_public_key,
-    ed_private_key,
   };
   return mostWallet;
 };

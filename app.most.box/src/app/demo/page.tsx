@@ -2,8 +2,16 @@
 
 import { AppHeader } from "@/components/AppHeader";
 import { useUserStore } from "@/stores/userStore";
-import { Container, Text, Code, Stack, Button, Textarea } from "@mantine/core";
+import {
+  Container,
+  Text,
+  Stack,
+  Button,
+  Textarea,
+  Center,
+} from "@mantine/core";
 import { getBytes } from "ethers";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import nacl from "tweetnacl";
 
@@ -114,21 +122,22 @@ function ed25519PublicKeyToPEM(publicKey: Uint8Array): string {
 
 export default function PageDemo() {
   const wallet = useUserStore((state) => state.wallet);
-  const [privateKeyPEM, setPrivateKeyPEM] = useState<string>("");
-  const [publicKeyPEM, setPublicKeyPEM] = useState<string>("");
-  const [keyPair, setKeyPair] = useState<nacl.SignKeyPair | null>(null);
+  const [privateKeyPEM, setPrivateKeyPEM] = useState("");
+  const [publicKeyPEM, setPublicKeyPEM] = useState("");
 
   useEffect(() => {
     if (wallet) {
       // 从十六进制私钥字符串转换为 Uint8Array
-      const secretKey = new Uint8Array(getBytes(wallet.ed_private_key));
+      const secretKey = new Uint8Array(
+        getBytes(wallet.private_key + wallet.ed_public_key.slice(2))
+      );
       // 使用私钥重新构建密钥对
       const EdKeyPair = nacl.sign.keyPair.fromSecretKey(secretKey);
-      setKeyPair(EdKeyPair);
+      convertToPEM(EdKeyPair);
     }
   }, [wallet]);
 
-  const convertToPEM = () => {
+  const convertToPEM = (keyPair: nacl.SignKeyPair) => {
     if (keyPair) {
       const privatePEM = ed25519ToPKCS8PEM(keyPair.secretKey);
       const publicPEM = ed25519PublicKeyToPEM(keyPair.publicKey);
@@ -138,81 +147,28 @@ export default function PageDemo() {
   };
 
   return (
-    <Container py={20}>
+    <Container py={20} w="100%" pt="xl">
       <AppHeader title="Ed25519 密钥转换为 PKCS#8 PEM 格式" />
 
-      <Stack gap="md" mt="xl">
-        {wallet && keyPair && (
-          <>
-            <Text size="sm" c="dimmed">
-              检测到 Ed25519 密钥对，点击下方按钮转换为 PKCS#8 PEM 格式
-            </Text>
+      <Stack gap="md">
+        <Stack gap="sm">
+          <Text fw={500}>私钥 (PKCS#8 PEM 格式):</Text>
+          <Textarea value={privateKeyPEM} readOnly autosize minRows={4} />
+        </Stack>
 
-            <Button onClick={convertToPEM} variant="filled">
-              转换为 PEM 格式
-            </Button>
-
-            {privateKeyPEM && (
-              <Stack gap="sm">
-                <Text fw={500}>私钥 (PKCS#8 PEM 格式):</Text>
-                <Textarea
-                  value={privateKeyPEM}
-                  readOnly
-                  autosize
-                  minRows={8}
-                  maxRows={12}
-                  styles={{
-                    input: {
-                      fontFamily: "monospace",
-                      fontSize: "12px",
-                    },
-                  }}
-                />
-              </Stack>
-            )}
-
-            {publicKeyPEM && (
-              <Stack gap="sm">
-                <Text fw={500}>公钥 (PEM 格式):</Text>
-                <Textarea
-                  value={publicKeyPEM}
-                  readOnly
-                  autosize
-                  minRows={6}
-                  maxRows={10}
-                  styles={{
-                    input: {
-                      fontFamily: "monospace",
-                      fontSize: "12px",
-                    },
-                  }}
-                />
-              </Stack>
-            )}
-
-            <Stack gap="xs">
-              <Text size="sm" fw={500}>
-                原始密钥信息:
-              </Text>
-              <Code block>
-                私钥长度: {keyPair.secretKey.length} 字节{"\n"}
-                公钥长度: {keyPair.publicKey.length} 字节{"\n"}
-                私钥 (hex):{" "}
-                {Array.from(keyPair.secretKey.slice(0, 32))
-                  .map((b) => b.toString(16).padStart(2, "0"))
-                  .join("")}
-                {"\n"}
-                公钥 (hex):{" "}
-                {Array.from(keyPair.publicKey)
-                  .map((b) => b.toString(16).padStart(2, "0"))
-                  .join("")}
-              </Code>
-            </Stack>
-          </>
-        )}
-
-        {!wallet && <Text c="dimmed">请先连接钱包以获取 Ed25519 密钥</Text>}
+        <Stack gap="sm">
+          <Text fw={500}>公钥 (PEM 格式):</Text>
+          <Textarea value={publicKeyPEM} readOnly autosize minRows={4} />
+        </Stack>
       </Stack>
+
+      {!wallet && (
+        <Center mt="xl">
+          <Button variant="gradient" component={Link} href="/login">
+            去登录
+          </Button>
+        </Center>
+      )}
     </Container>
   );
 }

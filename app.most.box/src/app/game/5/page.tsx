@@ -119,33 +119,26 @@ export default function PageGame5() {
   };
 
   const statusText = winner
-    ? `${winner === 1 ? "黑" : "白"}方获胜！`
-    : `${current === 1 ? "黑" : "白"}子回合`;
+    ? `${winner === 1 ? "黑" : "白"}棋获胜！`
+    : `${current === 1 ? "黑" : "白"}棋落子`;
 
   return (
     <Box className="gomoku-container">
       <AppHeader title="五子棋" />
       <Stack gap={12}>
         <Group justify="space-between">
-          <Text fw={600}>{statusText}</Text>
+          <Text variant="gradient" size="md">
+            {statusText}
+          </Text>
           <Group>
             <Button
               onClick={undoMove}
-              variant="light"
-              color="gray"
-              radius="md"
-              w={120}
+              variant="outline"
               disabled={moves.length === 0}
             >
               悔棋
             </Button>
-            <Button
-              onClick={resetGame}
-              variant="light"
-              color="blue"
-              radius="md"
-              w={120}
-            >
+            <Button onClick={resetGame} variant="light">
               重新开始
             </Button>
           </Group>
