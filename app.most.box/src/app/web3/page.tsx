@@ -8,7 +8,6 @@ import {
   ActionIcon,
   Group,
   Divider,
-  Code,
 } from "@mantine/core";
 import { useUserStore } from "@/stores/userStore";
 import { AppHeader } from "@/components/AppHeader";
