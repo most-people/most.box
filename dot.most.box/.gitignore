@@ -1,6 +1,7 @@
 # 依赖目录
 /node_modules
 .env
+/ipfs/service.json
 
 # 系统文件
 .DS_Store

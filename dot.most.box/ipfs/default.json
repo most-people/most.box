@@ -5,7 +5,9 @@
     "leave_on_shutdown": false,
     "listen_multiaddress": [
       "/ip4/0.0.0.0/tcp/9096",
-      "/ip4/0.0.0.0/udp/9096/quic"
+      "/ip4/0.0.0.0/udp/9096/quic",
+      "/ip6/::/tcp/9096",
+      "/ip6/::/udp/9096/quic"
     ],
     "announce_multiaddress": [],
     "no_announce_multiaddress": [],
@@ -13,7 +15,7 @@
     "connection_manager": {
       "high_water": 400,
       "low_water": 100,
-      "grace_period": "2m0s"
+      "grace_period": "3m0s"
     },
     "resource_manager": {
       "enabled": true,
@@ -28,18 +30,19 @@
       "history_length": 6,
       "flood_publish": false
     },
-    "dial_peer_timeout": "3s",
-    "state_sync_interval": "5m0s",
-    "pin_recover_interval": "12m0s",
-    "replication_factor_min": -1,
-    "replication_factor_max": -1,
-    "monitor_ping_interval": "15s",
-    "peer_watch_interval": "5s",
-    "mdns_interval": "10s",
-    "pin_only_on_trusted_peers": false,
+    "dial_peer_timeout": "10s",
+    "state_sync_interval": "10m0s",
+    "pin_recover_interval": "30m0s",
+    "replication_factor_min": 1,
+    "replication_factor_max": 2,
+    "monitor_ping_interval": "30s",
+    "peer_watch_interval": "10s",
+    "mdns_interval": "30s",
+    "pin_only_on_trusted_peers": true,
     "pin_only_on_untrusted_peers": false,
     "disable_repinning": true,
-    "peer_addresses": []
+    "peer_addresses": [],
+    "bootstrap": []
   },
   "consensus": {
     "crdt": {

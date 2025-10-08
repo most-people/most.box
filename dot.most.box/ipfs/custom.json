@@ -1,0 +1,29 @@
+{
+  "cluster": {
+    "peername": "DOT",
+    "announce_multiaddress": [
+      "/ip4/YOUR_PUBLIC_IP/tcp/9096",
+      "/ip4/YOUR_PUBLIC_IP/udp/9096/quic",
+      "/dns6/YOUR_NODE_DOMAIN/tcp/9096",
+      "/dns6/YOUR_NODE_DOMAIN/udp/9096/quic"
+    ],
+    "peer_addresses": [
+      "/ip4/PEER1_IP/tcp/9096/p2p/12D3KooWPeer1ID",
+      "/ip4/PEER2_IP/tcp/9096/p2p/12D3KooWPeer2ID",
+      "/dns6/peer2.example.com/tcp/9096/p2p/12D3KooWPeer2ID"
+    ],
+    "bootstrap": [
+      "/ip4/BOOTSTRAP_IP/tcp/9096/p2p/12D3KooWBootstrapID",
+      "/dns6/bootstrap.example.com/tcp/9096/p2p/12D3KooWBootstrapID"
+    ]
+  },
+  "consensus": {
+    "crdt": {
+      "trusted_peers": [
+        "12D3KooWRr6fHdy7G1BywyizVzyWjMwVYJf7fxnXa8ijumJ4N5uL",
+        "12D3KooWCWcWuGpp4fFWAfEcMhkuYNXYkayENEgaUySgeuy2TCkz",
+        "12D3KooWMj7b6vDJm2DppdwAuWxEbdKH7aJgnUDJGkhzkbwQpddU"
+      ]
+    }
+  }
+}
