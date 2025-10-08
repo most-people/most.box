@@ -1,81 +1,64 @@
-# [IPFS 集群](https://ipfscluster.io)
+# [IPFS Cluster 集群](https://ipfscluster.io) 部署指南
 
-CRDT 模式
+使用 CRDT 模式部署 IPFS 集群
 
-**每台服务器** 打开 管理员：Windows PowerShell
+## Windows PowerShell 部署
 
-1. 获取节点 id
-
-```bash
-# 打开 http://localhost:5001
-# 控制台输入：
-fetch('http://localhost:5001/api/v0/id',{method:'POST'})
-```
-
-2. 开放防火墙端口 9096
-
-Windows
+### 1. 开放防火墙 9096 端口
 
 ```powershell
 netsh advfirewall firewall add rule name="IPFS Cluster 9096" dir=in action=allow protocol=TCP localport=9096
 ```
 
-Linux
+### 2. 初始化并启动集群
+
+```powershell
+# 引导节点
+ipfs-cluster-service init --consensus crdt
+ipfs-cluster-service daemon
+
+# 查看节点信息
+type ~\.ipfs-cluster\identity.json
+```
+
+## Linux 部署
+
+### 1. 开放防火墙端口
 
 ```bash
 sudo ufw allow 9096
 ```
 
-3. 生成并统一设置 Cluster Secret（在第一台生成，然后在三台都设置相同的值）
-
-```powershell
-$b = New-Object byte[] 32
-
-[Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b)
-
-($b | ForEach-Object { $_.ToString('x2') }) -join ''
-```
-
-在每台服务器的当前终端会话设置同一个值（上一步输出）
-
-Windows PowerShell
-
-```powershell
-set CLUSTER_SECRET=f9fbb797e54bb741a31658aa176ed21b0cb488e35478814f5ceda259d6636228
-```
-
-Linux
+### 2. 初始化并启动集群
 
 ```bash
-export CLUSTER_SECRET=f9fbb797e54bb741a31658aa176ed21b0cb488e35478814f5ceda259d6636228
-```
-
-4. 在“引导节点”（第一台）初始化并启动（CRDT）
-
-```powershell
+# 引导节点（第一台）
 ipfs-cluster-service init --consensus crdt
 ipfs-cluster-service daemon
+
+# 查看节点信息
+nano ~/.ipfs-cluster/identity.json
 ```
 
-记录本机 Cluster Peer ID
+## 集群状态检查
 
-```powershell
-type ~\.ipfs-cluster\identity.json
-type ~\.ipfs-cluster\service.json
-```
+- 健康检查：http://localhost:9094/health/graph
 
-```json
-{
-  "peername": "DOT",
-  "secret": "037a9bb5e4e13916dfa24911a2495074a690e1085eb0fb74cd46192489c977a0",
-  "trusted_peers": [
-    "12D3KooWRr6fHdy7G1BywyizVzyWjMwVYJf7fxnXa8ijumJ4N5uL",
-    "12D3KooWCWcWuGpp4fFWAfEcMhkuYNXYkayENEgaUySgeuy2TCkz",
-    "12D3KooWMj7b6vDJm2DppdwAuWxEbdKH7aJgnUDJGkhzkbwQpddU"
-  ]
-}
-```
+## 配置准备
 
-通过 HTTP API 检查 IPFS 集群状态
+1. 获取 IPFS 节点 ID
 
-http://localhost:9094/health/graph
+   - 打开 http://localhost:5001
+   - 在浏览器控制台执行：`fetch('http://localhost:5001/api/v0/id',{method:'POST'})`
+
+2. 生成集群密钥（所有节点需使用相同密钥）
+
+   ```powershell
+   $b = New-Object byte[] 32
+
+   [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($b)
+
+   ($b | ForEach-Object { $_.ToString('x2') }) -join ''
+
+   # 示例：f9fbb797e54bb741a31658aa176ed21b0cb488e35478814f5ceda259d6636228
+   ```
