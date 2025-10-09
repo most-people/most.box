@@ -9,7 +9,7 @@ import "./cid.scss";
 
 export default function PageDemo() {
   const shareUrl =
-    "https://most.box/ipfs/bafybeied7xalprkqtzq3leeyo3jfvt6qqeljtstv6alsjue3eiu5a5tprq?filename=HEU_KMS_Activator_v63.2.0.exe";
+    "https://most.box/ipns/k51qzi5uqu5dmdudfnx05uaaehyo5yceivmvhjehy2isy7o3nj5coyw9ycy2qv";
 
   return (
     <Container py={20}>
@@ -27,11 +27,11 @@ export default function PageDemo() {
         </div>
         <div className="line"></div>
         <div className="info">
-          <div className="name">node-v24.8.0-x64.msi</div>
+          <div className="name">HEU KMS Activator</div>
 
-          <div className="website">www.most-people.com</div>
+          <div className="website">most.box</div>
           <div className="address">
-            /ipfs/bafybeied7xalprkqtzq3leeyo3jfvt6qqeljtstv6alsjue3eiu5a5tprq
+            /ipns/k51qzi5uqu5dmdudfnx05uaaehyo5yceivmvhjehy2isy7o3nj5coyw9ycy2qv
           </div>
         </div>
       </div>
