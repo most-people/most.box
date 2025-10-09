@@ -42,34 +42,6 @@ git clone https://github.com/most-people/most.box.git
 git clone https://gitee.com/most-people/most.box.git
 ```
 
-## PM2
-
-```bash
-# 安装 PM2
-npm install -g pm2
-
-# 进入目录
-cd ./dot.most.box/
-
-# 安装依赖
-npm install
-
-# 启动应用
-pm2 start src/index.mjs --name dot
-
-# 保存当前进程列表
-pm2 save
-
-# Windows 设置开机启动
-npm install pm2-windows-startup -g
-
-# 初始化
-pm2-startup install
-
-# Ubuntu 设置开机启动
-pm2 startup
-```
-
 ## 配置文件 .env
 
 ```bash
@@ -120,4 +92,28 @@ caddy start --config C:\caddy\Caddyfile
 查看当前配置
 http://localhost:2019/config/
 
-> 注：每次开机都需要启动 caddy start
+## PM2 开机启动
+
+```bash
+# 安装 PM2
+npm install -g pm2
+
+# 进入目录
+cd ./dot.most.box/
+
+# 安装依赖
+npm install
+
+# 启动应用
+pm2 start src/index.mjs --name dot
+pm2 start "C:\caddy\caddy.exe" --name caddy -- run --config "C:\caddy\Caddyfile"
+
+# 保存当前进程列表
+pm2 save
+
+# Windows 设置开机启动
+npm install pm2-windows-startup -g
+
+# 初始化
+pm2-startup install
+```

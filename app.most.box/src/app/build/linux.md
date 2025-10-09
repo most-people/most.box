@@ -1,4 +1,6 @@
-## Ubuntu 安装 Node.js
+> Ubuntu 22.04
+
+## Node.js 安装
 
 ```bash
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
@@ -8,11 +10,9 @@ sudo apt-get install -y nodejs
 node -v
 
 npm -v
-
-npm i -g pm2
 ```
 
-## Ubuntu 安装 IPFS
+## IPFS 安装
 
 文档 https://docs.ipfs.tech/install/command-line/#install-official-binary-distributions
 
@@ -52,7 +52,7 @@ nohup ipfs daemon > /home/ubuntu/ipfs.log 2>&1 &
 ipfs shutdown
 ```
 
-### 开机启动 IPFS
+### IPFS 开机启动
 
 ```bash
 # 1. 创建一个 systemd 服务文件
@@ -84,7 +84,7 @@ sudo systemctl enable ipfs.service
 sudo systemctl start ipfs.service
 ```
 
-## Ubuntu 安装 Caddy
+## Caddy 域名配置
 
 文档 https://caddyserver.com/docs/install#debian-ubuntu-raspbian
 
@@ -99,13 +99,11 @@ sudo apt install caddy
 # 查看版本
 caddy --version
 
-# 编辑
+# 编辑 Caddyfile
 sudo nano /etc/caddy/Caddyfile
 ```
 
-### Caddyfile
-
-文件末尾添加
+**Caddyfile** 文件末尾添加
 
 ```
 cid.most.box {
@@ -128,4 +126,26 @@ sudo caddy fmt --overwrite /etc/caddy/Caddyfile
 sudo systemctl reload caddy
 # 查看
 sudo systemctl status caddy
+```
+
+## PM2 开机启动
+
+```bash
+# 安装 PM2
+npm install -g pm2
+
+# 进入目录
+cd ./dot.most.box/
+
+# 安装依赖
+npm install
+
+# 启动应用（命名为 dot）
+pm2 start src/index.mjs --name dot
+
+# 保存当前进程列表
+pm2 save
+
+# Linux 设置开机启动
+pm2 startup
 ```
