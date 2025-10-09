@@ -1,9 +1,9 @@
 "use client";
 
 import { AppHeader } from "@/components/AppHeader";
-import { useUserStore } from "@/stores/userStore";
+
 import { Container } from "@mantine/core";
-import { useEffect } from "react";
+
 import { QRCodeSVG } from "qrcode.react";
 import "./cid.scss";
 
@@ -15,14 +15,16 @@ export default function PageDemo() {
     <Container py={20}>
       <AppHeader title="CID 二维码" />
       <div className="cid-qrcode">
-        <QRCodeSVG
-          className="qrcode"
-          value={shareUrl}
-          size={150}
-          bgColor="transparent"
-          fgColor="#FFF"
-          level="M"
-        />
+        <div className="qrcode-frame">
+          <QRCodeSVG
+            className="qrcode"
+            value={shareUrl}
+            size={138}
+            bgColor="transparent"
+            fgColor="#FFF"
+            level="M"
+          />
+        </div>
         <div className="line"></div>
         <div className="info">
           <div className="name">node-v24.8.0-x64.msi</div>
