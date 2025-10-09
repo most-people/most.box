@@ -6,7 +6,8 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import PageIPFS from "@/components/not-found/ipfs";
-import PageWebsite from "@/components/not-found/website";
+import PageIPNS from "@/components/not-found/ipns";
+import PageUser from "@/components/not-found/user";
 
 const Page404 = () => {
   const back = useBack();
@@ -23,15 +24,17 @@ const Page404 = () => {
 
 export default function PageNotFound() {
   const pathname = usePathname();
-  const [type, setType] = useState<"ipfs" | "website" | "404" | "">("");
+  const [type, setType] = useState<"ipfs" | "ipns" | "user" | "404" | "">("");
 
   useEffect(() => {
     if (pathname.startsWith("/ipfs/")) {
       setType("ipfs");
+    } else if (pathname.startsWith("/ipns/")) {
+      setType("ipns");
     } else if (pathname.startsWith("/@")) {
       const name = pathname.slice(2, -1);
       if (name) {
-        setType("website");
+        setType("user");
       }
     } else {
       setType("404");
@@ -44,10 +47,12 @@ export default function PageNotFound() {
         <Stack align="center">
           <Loader color="black" size="lg" type="bars" />
         </Stack>
-      ) : type === "website" ? (
-        <PageWebsite />
+      ) : type === "user" ? (
+        <PageUser />
       ) : type === "ipfs" ? (
         <PageIPFS />
+      ) : type === "ipns" ? (
+        <PageIPNS />
       ) : (
         <Page404 />
       )}

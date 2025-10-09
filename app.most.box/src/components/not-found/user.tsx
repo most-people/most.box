@@ -16,7 +16,7 @@ import { Icon } from "../Icon";
 import Link from "next/link";
 import { notifications } from "@mantine/notifications";
 
-export default function PageWebsite() {
+export default function PageUser() {
   const pathname = usePathname();
   const [uid, setUid] = useState("");
   const RPC = NETWORK_CONFIG["mainnet"].rpc;
