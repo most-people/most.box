@@ -21,20 +21,23 @@ export default function PageWeb3() {
   const wallet = useUserStore((state) => state.wallet);
   const [showX25519, setShowX25519] = useState(false);
   const [balance, setBalance] = useState("-");
+  const [ipns, setIPNS] = useState("-");
 
-  const fetchBalance = () => {
-    if (wallet) {
-      const RPC = NETWORK_CONFIG["mainnet"].rpc;
-      const provider = new JsonRpcProvider(RPC);
-      // 获取余额
-      provider.getBalance(wallet.address).then((balance) => {
-        setBalance(formatEther(balance));
-      });
-    }
+  const fetchBalance = (address: string) => {
+    const RPC = NETWORK_CONFIG["mainnet"].rpc;
+    const provider = new JsonRpcProvider(RPC);
+    // 获取余额
+    provider.getBalance(address).then((balance) => {
+      setBalance(formatEther(balance));
+    });
   };
 
   useEffect(() => {
-    fetchBalance();
+    if (wallet) {
+      fetchBalance(wallet.address);
+      const ipns = mp.getIPNS(wallet.private_key, wallet.ed_public_key);
+      setIPNS(ipns);
+    }
   }, [wallet]);
 
   return (
@@ -101,6 +104,11 @@ export default function PageWeb3() {
         </Group>
         <Text>{showX25519 ? wallet?.private_key || "-" : "-"}</Text>
 
+        <Text size="lg" fw={500}>
+          IPNS ID
+        </Text>
+        <Text>{ipns}</Text>
+
         <Divider variant="dashed" labelPosition="center" my="md" />
 
         <Anchor component={Link} href="/web3/ethers">
@@ -119,8 +127,8 @@ export default function PageWeb3() {
           <Text>二十一点</Text>
         </Anchor>
 
-        <Anchor component={Link} href="/cid">
-          <Text>CID 二维码</Text>
+        <Anchor component={Link} href="/ipns">
+          <Text>IPNS 二维码</Text>
         </Anchor>
 
         <Text>{mp.formatTime(Date.now())}</Text>

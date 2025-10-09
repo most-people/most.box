@@ -1,6 +1,7 @@
 "use client";
 
 import { AppHeader } from "@/components/AppHeader";
+import mp from "@/constants/mp";
 import { useUserStore } from "@/stores/userStore";
 import {
   Container,
@@ -11,18 +12,16 @@ import {
   Center,
   Divider,
 } from "@mantine/core";
-import { getBytes } from "ethers";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import nacl from "tweetnacl";
 
 // Base64 编码函数
-function base64Encode(bytes: Uint8Array): string {
+const base64Encode = (bytes: Uint8Array): string => {
   return btoa(String.fromCharCode(...bytes));
-}
+};
 
 // 将 Ed25519 私钥转换为 PKCS#8 PEM 格式
-function ed25519ToPKCS8PEM(privateKey: Uint8Array): string {
+const ed25519ToPKCS8PEM = (privateKey: Uint8Array): string => {
   // Ed25519 私钥的 ASN.1 DER 编码结构
   // PKCS#8 私钥信息结构:
   // SEQUENCE {
@@ -77,10 +76,10 @@ function ed25519ToPKCS8PEM(privateKey: Uint8Array): string {
     ?.join("\n")}\n-----END PRIVATE KEY-----`;
 
   return pem;
-}
+};
 
 // 将 Ed25519 公钥转换为 PKCS#8 PEM 格式
-function ed25519PublicKeyToPEM(publicKey: Uint8Array): string {
+const ed25519PublicKeyToPEM = (publicKey: Uint8Array): string => {
   // Ed25519 公钥的 ASN.1 DER 编码结构
   const ed25519AlgorithmIdentifier = new Uint8Array([
     0x30,
@@ -119,33 +118,30 @@ function ed25519PublicKeyToPEM(publicKey: Uint8Array): string {
     ?.join("\n")}\n-----END PUBLIC KEY-----`;
 
   return pem;
-}
+};
 
 export default function PageWeb3Ed25519() {
   const wallet = useUserStore((state) => state.wallet);
   const [privateKeyPEM, setPrivateKeyPEM] = useState("");
   const [publicKeyPEM, setPublicKeyPEM] = useState("");
+  const [ipns, setIPNS] = useState("");
 
   useEffect(() => {
     if (wallet) {
-      // 从十六进制私钥字符串转换为 Uint8Array
-      const secretKey = new Uint8Array(
-        getBytes(wallet.private_key + wallet.ed_public_key.slice(2))
+      const EdKeyPair = mp.getEdKeyPair(
+        wallet.private_key,
+        wallet.ed_public_key
       );
-      // 使用私钥重新构建密钥对
-      const EdKeyPair = nacl.sign.keyPair.fromSecretKey(secretKey);
-      convertToPEM(EdKeyPair);
+      if (EdKeyPair) {
+        const privatePEM = ed25519ToPKCS8PEM(EdKeyPair.secretKey);
+        const publicPEM = ed25519PublicKeyToPEM(EdKeyPair.publicKey);
+        setPrivateKeyPEM(privatePEM);
+        setPublicKeyPEM(publicPEM);
+      }
+      const ipns = mp.getIPNS(wallet.private_key, wallet.ed_public_key);
+      setIPNS(ipns);
     }
   }, [wallet]);
-
-  const convertToPEM = (keyPair: nacl.SignKeyPair) => {
-    if (keyPair) {
-      const privatePEM = ed25519ToPKCS8PEM(keyPair.secretKey);
-      const publicPEM = ed25519PublicKeyToPEM(keyPair.publicKey);
-      setPrivateKeyPEM(privatePEM);
-      setPublicKeyPEM(publicPEM);
-    }
-  };
 
   return (
     <Container py={20} pt="xl">
@@ -170,12 +166,21 @@ export default function PageWeb3Ed25519() {
           variant="dashed"
           labelPosition="center"
           my="md"
+          label="IPNS ID"
+        />
+
+        <Center>{ipns || "-"}</Center>
+
+        <Divider
+          variant="dashed"
+          labelPosition="center"
+          my="md"
           label="原始密钥信息"
         />
 
         <Stack gap="sm">
           <Text>ETH 地址 (IPNS key):</Text>
-          <Text>{wallet?.address || "-"}</Text>
+          <Text>{wallet?.address.toLowerCase() || "-"}</Text>
         </Stack>
 
         <Stack gap="sm">

@@ -5,6 +5,7 @@ import {
   toUtf8String,
   ZeroAddress,
   HDNodeWallet,
+  getBytes,
 } from "ethers";
 import { createAvatar } from "@dicebear/core";
 import { botttsNeutral, icons } from "@dicebear/collection";
@@ -20,6 +21,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/zh-cn";
 
 import isoWeek from "dayjs/plugin/isoWeek";
+import nacl from "tweetnacl";
 dayjs.extend(isoWeek);
 
 dayjs.extend(relativeTime);
@@ -225,6 +227,84 @@ const openDot = (dot: string) => {
   window.open(url.href);
 };
 
+// Ed25519 变长整型编码（protobuf varint）
+const encodeVarint = (value: number): number[] => {
+  const bytes: number[] = [];
+  while (value >= 0x80) {
+    bytes.push((value & 0x7f) | 0x80);
+    value >>= 7;
+  }
+  bytes.push(value);
+  return bytes;
+};
+// Ed25519 libp2p-protobuf-cleartext 公钥
+const marshalLibp2pPublicKeyEd25519 = (publicKey: Uint8Array): Uint8Array => {
+  const header = new Uint8Array([
+    0x08,
+    0x01,
+    0x12,
+    ...encodeVarint(publicKey.length),
+  ]);
+  const out = new Uint8Array(header.length + publicKey.length);
+  out.set(header, 0);
+  out.set(publicKey, header.length);
+  return out;
+};
+// Ed25519 通用 BaseX 编码（用于 base58btc / base36）
+const baseXEncode = (bytes: Uint8Array, alphabet: string): string => {
+  if (bytes.length === 0) return "";
+  const base = alphabet.length;
+  // 统计前导 0（对应编码中的首字符）
+  let zeros = 0;
+  while (zeros < bytes.length && bytes[zeros] === 0) zeros++;
+
+  // 256 -> base 的进制转换
+  const digits: number[] = [0];
+  for (let i = zeros; i < bytes.length; i++) {
+    let carry = bytes[i];
+    for (let j = 0; j < digits.length; j++) {
+      const val = digits[j] * 256 + carry;
+      digits[j] = val % base;
+      carry = Math.floor(val / base);
+    }
+    while (carry > 0) {
+      digits.push(carry % base);
+      carry = Math.floor(carry / base);
+    }
+  }
+
+  // 构造字符串（注意前导零）
+  let result = "";
+  for (let i = 0; i < zeros; i++) result += alphabet[0];
+  for (let i = digits.length - 1; i >= 0; i--) result += alphabet[digits[i]];
+  return result;
+};
+// Ed25519 获取密钥对
+const getEdKeyPair = (private_key: string, ed_public_key: string) => {
+  const public_key = ed_public_key.slice(2);
+  // 从十六进制私钥字符串转换为 Uint8Array
+  const secretKey = new Uint8Array(getBytes(private_key + public_key));
+  // 使用私钥重新构建密钥对
+  const EdKeyPair = nacl.sign.keyPair.fromSecretKey(secretKey);
+  return EdKeyPair;
+};
+// Ed25519 获取 IPNS 地址
+const getIPNS = (private_key: string, ed_public_key: string) => {
+  const EdKeyPair = getEdKeyPair(private_key, ed_public_key);
+  const pubProto = marshalLibp2pPublicKeyEd25519(EdKeyPair.publicKey);
+  const mh = new Uint8Array(2 + pubProto.length);
+  mh[0] = 0x00; // identity
+  mh[1] = 0x24; // 36 bytes
+  mh.set(pubProto, 2);
+  const cidHeader = new Uint8Array([0x01, 0x72]);
+  const cidBytes = new Uint8Array(cidHeader.length + mh.length);
+  cidBytes.set(cidHeader, 0);
+  cidBytes.set(mh, cidHeader.length);
+  const BASE36_LC = "0123456789abcdefghijklmnopqrstuvwxyz";
+  const ipnsId = "k" + baseXEncode(cidBytes, BASE36_LC);
+  return ipnsId;
+};
+
 const mp = {
   avatar,
   avatarCID,
@@ -241,6 +321,8 @@ const mp = {
   createToken,
   pinyin,
   openDot,
+  getEdKeyPair,
+  getIPNS,
 };
 
 export default mp;
