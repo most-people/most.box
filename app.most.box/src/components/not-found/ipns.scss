@@ -1,5 +1,6 @@
 #page-ipns {
   .ipns-qrcode {
+    margin-top: 30px;
     width: 550px;
     height: 300px;
     background-image: url("/img/black-texture.jpg");
@@ -8,6 +9,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.6), 0 6px 12px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 0 0 1px rgba(232, 201, 155, 0.18);
 
     .qrcode-frame {
       display: flex;
