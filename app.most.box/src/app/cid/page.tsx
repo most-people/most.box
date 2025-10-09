@@ -21,7 +21,7 @@ export default function PageDemo() {
             value={shareUrl}
             size={138}
             bgColor="transparent"
-            fgColor="#FFF"
+            fgColor="#000"
             level="M"
           />
         </div>

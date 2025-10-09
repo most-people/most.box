@@ -12,7 +12,7 @@
     align-items: center;
     justify-content: center;
     padding: 6px;
-    border: 6px solid #ffffff;
+    border: 6px solid #000;
     border-radius: 10px;
 
     margin-right: 20px;
@@ -25,15 +25,16 @@
   .line {
     width: 5px;
     height: 170px;
-    background-color: #ffffff;
+    background-color: #000000;
   }
 
   .info {
     margin-left: 20px;
-    color: #ffffff;
+    color: #000000;
     .name {
       font-size: 24px;
       text-transform: uppercase;
+      font-weight: 500;
     }
 
     .address {
