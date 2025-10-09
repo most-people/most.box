@@ -1,4 +1,3 @@
-
 # Most.Box - Linux 安装教程
 
 操作系统：Ubuntu Server 24.04
@@ -58,6 +57,7 @@ nohup ipfs daemon --enable-gc > /home/ubuntu/ipfs.log 2>&1 &
 # 关闭 IPFS
 ipfs shutdown
 ```
+
 （替换为服务器 IP）
 IPFS 测试访问：http://119.91.211.100:8080
 
@@ -168,3 +168,31 @@ sudo systemctl status caddy
 （替换为正确域名）
 IPFS 测试访问：https://x-cid.most.box
 Most.Box 测试访问：https://x.most.box
+
+## 6. 发布 Most.Box 节点
+
+```bash
+# 进入目录
+cd ~/most.box/dot.most.box
+
+# 节点配置
+nano .env
+
+# 配置文件 .env
+
+DOT_NAME=Test
+# 节点钱包私钥 https://most.box/web3/tools/ （需要一些 Base ETH Gas）
+PRIVATE_KEY=0x0000000000000000000000000000000000000000000000000000000000000000
+# 节点 IP 和 网址
+API_URLS=https://x.most.box,http://xxx.xxx.xxx.xxx:1976
+CID_URLS=https://x-cid.most.box
+
+
+
+# （Ctrl + o 保存 -> 回车 -> Ctrl + x 退出
+
+# 重启节点
+pm2 restart dot
+```
+
+https://dot.most.box 查看已发布的节点
