@@ -1,0 +1,28 @@
+.cid-qrcode {
+  width: 500px;
+  height: 300px;
+  border: 1px solid #d2efff;
+  background-color: #aae9fd;
+  border-radius: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .qrcode {
+    flex-shrink: 0;
+  }
+
+  .line {
+    width: 1px;
+    height: 250px;
+    background-color: #ffffff;
+  }
+
+  .info {
+    color: #413131;
+
+    .address {
+      text-transform: uppercase;
+    }
+  }
+}
