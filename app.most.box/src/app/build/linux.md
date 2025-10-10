@@ -85,7 +85,7 @@ sudo npm install -g pm2
 pm2 -v
 # 6.0.13
 
-# 启动应用（命名为 dot）
+# 启动 Most.Box（命名为 dot）
 pm2 start ./src/index.mjs --name dot
 
 # 保存当前进程列表
@@ -106,7 +106,7 @@ which ipfs
 # /usr/local/bin/ipfs
 
 # 启动 IPFS 服务
-pm2 start /usr/local/bin/ipfs --name ipfs -- daemon --enable-gc
+pm2 start /usr/local/bin/ipfs --name ipfs --interpreter none -- daemon --enable-gc
 
 # 配置
 sudo env PATH=$PATH pm2 startup systemd -u ubuntu --hp /home/ubuntu
@@ -196,3 +196,64 @@ pm2 restart dot
 ```
 
 https://dot.most.box 查看已发布的节点
+
+## 7. IPFS Cluster 集群配置
+
+安装包：https://dist.ipfs.tech/#ipfs-cluster-service
+遥控器：https://dist.ipfs.tech/#ipfs-cluster-ctl
+
+```bash
+# 查看系统架构
+dpkg --print-architecture
+# amd64
+
+# 下载 ipfs-cluster-service
+wget https://dist.ipfs.tech/ipfs-cluster-service/v1.1.4/ipfs-cluster-service_v1.1.4_linux-amd64.tar.gz
+# 也可以使用 IPNS 下载
+wget http://129.226.147.127:8080/ipns/dist.ipfs.tech/ipfs-cluster-service/v1.1.4/ipfs-cluster-service_v1.1.4_linux-amd64.tar.gz
+
+# 下载 ipfs-cluster-ctl
+wget https://dist.ipfs.tech/ipfs-cluster-ctl/v1.1.4/ipfs-cluster-ctl_v1.1.4_linux-amd64.tar.gz
+# 也可以使用 IPNS 下载
+wget http://129.226.147.127:8080/ipns/dist.ipfs.tech/ipfs-cluster-ctl/v1.1.4/ipfs-cluster-ctl_v1.1.4_linux-amd64.tar.gz
+
+# 解压
+tar -xvzf ipfs-cluster-ctl_v1.1.4_linux-amd64.tar.gz
+tar -xvzf ipfs-cluster-service_v1.1.4_linux-amd64.tar.gz
+
+# 安装 ipfs-cluster-service
+sudo install -m 0755 ipfs-cluster-service/ipfs-cluster-service /usr/local/bin/ipfs-cluster-service
+
+# 验证安装
+ipfs-cluster-service -v
+# ipfs-cluster-service version 1.1.4
+
+# 安装 ipfs-cluster-ctl
+sudo install -m 0755 ipfs-cluster-ctl/ipfs-cluster-ctl /usr/local/bin/ipfs-cluster-ctl
+
+# 验证安装
+ipfs-cluster-ctl -v
+# ipfs-cluster-ctl version 1.1.4
+
+# 初始化
+ipfs-cluster-service init --consensus crdt
+
+# 测试启动
+ipfs-cluster-service daemon
+
+# 查看节点信息
+nano ~/.ipfs-cluster/identity.json
+
+# 查找 ipfs-cluster-service 安装路径
+which ipfs-cluster-service
+# /usr/local/bin/ipfs-cluster-service
+
+# 启动 IPFS 集群
+pm2 start /usr/local/bin/ipfs-cluster-service --name ipfs-cluster --interpreter none -- daemon
+
+# 保存当前进程列表
+pm2 save
+
+# Linux 设置开机启动
+pm2 startup
+```
