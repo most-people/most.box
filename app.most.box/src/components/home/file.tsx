@@ -64,6 +64,8 @@ export default function HomeFile() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
 
+  const [rootCid, setRootCid] = useState("");
+
   const fetchFiles = async (path: string) => {
     try {
       setFetchLoading(true);
@@ -75,6 +77,16 @@ export default function HomeFile() {
       // notifications.show({ message: (error as Error).message, color: "red" });
     } finally {
       setFetchLoading(false);
+    }
+
+    // 获取 MFS 根目录 CID
+    if (path === "") {
+      api.post("/files.cid").then((res) => {
+        const cid = res.data;
+        if (cid) {
+          setRootCid(cid);
+        }
+      });
     }
   };
 
@@ -104,7 +116,7 @@ export default function HomeFile() {
     try {
       setNewFolderLoading(true);
       const path = filesPath ? `${filesPath}/${newFolderName}` : newFolderName;
-      const emptyFile = new Blob(["MOST.BOX"], { type: "text/plain" });
+      const emptyFile = new Blob(["Most.Box"], { type: "text/plain" });
       const formData = new FormData();
       formData.append("file", emptyFile, "hello.txt");
       formData.append("path", `${path}/hello.txt`);
@@ -396,8 +408,16 @@ export default function HomeFile() {
 
   // 打开文件
   const handleOpenFile = (item: FileItem) => {
-    const url = `${dotCID}/ipfs/${item.cid["/"]}?filename=${item.name}`;
-    window.open(url, "_blank");
+    try {
+      const url = new URL(dotCID);
+      url.pathname = `/ipfs/${item.cid["/"]}`;
+      if (item.name) {
+        url.searchParams.set("filename", item.name);
+      }
+      window.open(url.toString(), "_blank");
+    } catch (error) {
+      console.error("打开失败", error);
+    }
   };
 
   // 分享文件
@@ -562,6 +582,20 @@ export default function HomeFile() {
                       disabled={!wallet}
                     >
                       新建文件夹
+                    </Menu.Item>
+                    <Menu.Item
+                      onClick={() =>
+                        handleOpenFile({
+                          name: "root",
+                          type: "directory",
+                          cid: { "/": rootCid },
+                          size: 0,
+                        })
+                      }
+                      leftSection="🌐"
+                      disabled={!wallet}
+                    >
+                      根目录 CID
                     </Menu.Item>
                   </Menu.Dropdown>
                 </Menu>

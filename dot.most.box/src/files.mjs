@@ -33,6 +33,21 @@ export const registerFiles = (server, ipfs) => {
     }
   });
 
+  // 查找 MFS 根目录 CID
+  server.post("/files.cid", async (request) => {
+    const address = mp.getAddress(request.headers.authorization);
+    if (!address) {
+      return reply.code(400).send("token 无效");
+    }
+    const fullPath = "/" + address.toLowerCase();
+    try {
+      const stat = await ipfs.files.stat(fullPath);
+      return stat.cid.toV1().toString();
+    } catch {
+      return "";
+    }
+  });
+
   // 查看文件/目录
   server.post("/files/*", async (request, reply) => {
     const address = mp.getAddress(request.headers.authorization);
