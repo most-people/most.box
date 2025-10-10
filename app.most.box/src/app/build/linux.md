@@ -265,4 +265,16 @@ ipfs-cluster-ctl -v
 # 查看节点 ID
 ipfs-cluster-ctl id
 # 12D3KooWK4ScGSEZYKvvRho9VJabKHLLjD7jNy8unNv7LcqfrzHE | VM-8-8-ubuntu | Sees 0 other peers
+
+# 查看健康状态
+curl http://localhost:9094/health/graph
+
+# 修改配置文件
+nano ~/.ipfs-cluster/service.json
+
+# 重启
+pm2 restart ipfs-cluster
+
+# 查看节点信息
+ipfs-cluster-ctl id
 ```

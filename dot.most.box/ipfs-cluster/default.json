@@ -1,7 +1,7 @@
 {
   "cluster": {
-    "peername": "DOT",
-    "secret": "245ac086ea60e909a85d74bbecae19c674af15e6811a51b28665a9589132e81e",
+    "peername": "Most.Box",
+    "secret": "0000000000000000000000000000000000000000000000000000000000000000",
     "leave_on_shutdown": false,
     "listen_multiaddress": [
       "/ip4/0.0.0.0/tcp/9096",
@@ -76,12 +76,8 @@
       "basic_auth_credentials": null,
       "http_log_file": "",
       "headers": {},
-      "cors_allowed_origins": [
-        "*"
-      ],
-      "cors_allowed_methods": [
-        "GET"
-      ],
+      "cors_allowed_origins": ["*"],
+      "cors_allowed_methods": ["GET"],
       "cors_allowed_headers": [],
       "cors_exposed_headers": [
         "Content-Type",
@@ -102,12 +98,8 @@
       "basic_auth_credentials": null,
       "http_log_file": "",
       "headers": {},
-      "cors_allowed_origins": [
-        "*"
-      ],
-      "cors_allowed_methods": [
-        "GET"
-      ],
+      "cors_allowed_origins": ["*"],
+      "cors_allowed_methods": ["GET"],
       "cors_allowed_headers": [],
       "cors_exposed_headers": [
         "Content-Type",
@@ -144,10 +136,7 @@
   },
   "allocator": {
     "balanced": {
-      "allocate_by": [
-        "tag:group",
-        "freespace"
-      ]
+      "allocate_by": ["tag:group", "freespace"]
     }
   },
   "informer": {
