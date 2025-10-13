@@ -107,13 +107,18 @@ npm install
 # 启动应用
 pm2 start src/index.mjs --name dot
 pm2 start "C:\caddy\caddy.exe" --name caddy -- run --config "C:\caddy\Caddyfile"
+pm2 start "C:\caddy\ipfs-cluster-service.exe" --name ipfs-cluster -- daemon
 
 # 保存当前进程列表
 pm2 save
+```
 
-# Windows 设置开机启动
-npm install pm2-windows-startup -g
+开机恢复进程 - 打开启动文件夹
 
-# 初始化
-pm2-startup install
+C:\Users\<用户名>\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup
+
+写入 pm2-resurrect.bat 文件
+
+```bat
+pm2 resurrect
 ```

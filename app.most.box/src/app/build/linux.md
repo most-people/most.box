@@ -276,5 +276,5 @@ nano ~/.ipfs-cluster/service.json
 pm2 restart ipfs-cluster
 
 # 查看节点信息
-ipfs-cluster-ctl id
+ipfs-cluster-ctl peers ls
 ```
