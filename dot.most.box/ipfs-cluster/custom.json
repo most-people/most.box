@@ -1,7 +1,6 @@
 {
   "cluster": {
     "peername": "DOT",
-    "secret": "0000000000000000000000000000000000000000000000000000000000000000",
     "announce_multiaddress": [
       "/ip4/119.91.213.99/tcp/9096",
       "/ip4/119.91.213.99/udp/9096/quic",
@@ -9,16 +8,30 @@
       "/dns4/dot.most.red/udp/9096/quic"
     ],
     "peer_addresses": [
-      "/ip4/119.91.213.99/tcp/9096/p2p/12D3KooWK4ScGSEZYKvvRho9VJabKHLLjD7jNy8unNv7LcqfrzHE",
-      "/ip4/119.91.213.99/udp/9096/quic/p2p/12D3KooWK4ScGSEZYKvvRho9VJabKHLLjD7jNy8unNv7LcqfrzHE",
-      "/dns6/m1.most.box/tcp/9096/p2p/12D3KooWCWcWuGpp4fFWAfEcMhkuYNXYkayENEgaUySgeuy2TCkz",
-      "/dns6/m1.most.box/udp/9096/quic/p2p/12D3KooWCWcWuGpp4fFWAfEcMhkuYNXYkayENEgaUySgeuy2TCkz"
-    ],
-    "bootstrap": [
+      "/ip4/129.226.147.127/tcp/9096/p2p/12D3KooWC2u7HXRFE2nA6UVQTcGYAv8oHvnykh6VWcgYdKSjfKqZ",
+      "/ip4/129.226.147.127/udp/9096/quic/p2p/12D3KooWC2u7HXRFE2nA6UVQTcGYAv8oHvnykh6VWcgYdKSjfKqZ",
+      "/dns4/sg1.most-people.com/tcp/9096/p2p/12D3KooWC2u7HXRFE2nA6UVQTcGYAv8oHvnykh6VWcgYdKSjfKqZ",
+      "/dns4/sg1.most-people.com/udp/9096/quic/p2p/12D3KooWC2u7HXRFE2nA6UVQTcGYAv8oHvnykh6VWcgYdKSjfKqZ",
+
       "/ip4/119.91.213.99/tcp/9096/p2p/12D3KooWK4ScGSEZYKvvRho9VJabKHLLjD7jNy8unNv7LcqfrzHE",
       "/ip4/119.91.213.99/udp/9096/quic/p2p/12D3KooWK4ScGSEZYKvvRho9VJabKHLLjD7jNy8unNv7LcqfrzHE",
       "/dns4/dot.most.red/tcp/9096/p2p/12D3KooWK4ScGSEZYKvvRho9VJabKHLLjD7jNy8unNv7LcqfrzHE",
       "/dns4/dot.most.red/udp/9096/quic/p2p/12D3KooWK4ScGSEZYKvvRho9VJabKHLLjD7jNy8unNv7LcqfrzHE",
+
+      "/dns6/m1.most.box/tcp/9096/p2p/12D3KooWCWcWuGpp4fFWAfEcMhkuYNXYkayENEgaUySgeuy2TCkz",
+      "/dns6/m1.most.box/udp/9096/quic/p2p/12D3KooWCWcWuGpp4fFWAfEcMhkuYNXYkayENEgaUySgeuy2TCkz"
+    ],
+    "bootstrap": [
+      "/ip4/129.226.147.127/tcp/9096/p2p/12D3KooWC2u7HXRFE2nA6UVQTcGYAv8oHvnykh6VWcgYdKSjfKqZ",
+      "/ip4/129.226.147.127/udp/9096/quic/p2p/12D3KooWC2u7HXRFE2nA6UVQTcGYAv8oHvnykh6VWcgYdKSjfKqZ",
+      "/dns4/sg1.most-people.com/tcp/9096/p2p/12D3KooWC2u7HXRFE2nA6UVQTcGYAv8oHvnykh6VWcgYdKSjfKqZ",
+      "/dns4/sg1.most-people.com/udp/9096/quic/p2p/12D3KooWC2u7HXRFE2nA6UVQTcGYAv8oHvnykh6VWcgYdKSjfKqZ",
+
+      "/ip4/119.91.213.99/tcp/9096/p2p/12D3KooWK4ScGSEZYKvvRho9VJabKHLLjD7jNy8unNv7LcqfrzHE",
+      "/ip4/119.91.213.99/udp/9096/quic/p2p/12D3KooWK4ScGSEZYKvvRho9VJabKHLLjD7jNy8unNv7LcqfrzHE",
+      "/dns4/dot.most.red/tcp/9096/p2p/12D3KooWK4ScGSEZYKvvRho9VJabKHLLjD7jNy8unNv7LcqfrzHE",
+      "/dns4/dot.most.red/udp/9096/quic/p2p/12D3KooWK4ScGSEZYKvvRho9VJabKHLLjD7jNy8unNv7LcqfrzHE",
+
       "/dns6/m1.most.box/tcp/9096/p2p/12D3KooWCWcWuGpp4fFWAfEcMhkuYNXYkayENEgaUySgeuy2TCkz",
       "/dns6/m1.most.box/udp/9096/quic/p2p/12D3KooWCWcWuGpp4fFWAfEcMhkuYNXYkayENEgaUySgeuy2TCkz"
     ]
@@ -26,6 +39,7 @@
   "consensus": {
     "crdt": {
       "trusted_peers": [
+        "12D3KooWC2u7HXRFE2nA6UVQTcGYAv8oHvnykh6VWcgYdKSjfKqZ",
         "12D3KooWK4ScGSEZYKvvRho9VJabKHLLjD7jNy8unNv7LcqfrzHE",
         "12D3KooWCWcWuGpp4fFWAfEcMhkuYNXYkayENEgaUySgeuy2TCkz"
       ]

@@ -2,6 +2,7 @@
 /node_modules
 .env
 /ipfs-cluster/service.json
+/ipfs-cluster/secret.json
 
 # 系统文件
 .DS_Store

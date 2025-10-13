@@ -3,6 +3,8 @@
 操作系统：Ubuntu Server 24.04
 连接服务器：ssh ubuntu@119.91.211.100
 
+打开防火墙：1976,8080,9096
+
 ## 1. Node.js 安装
 
 ```bash
@@ -41,6 +43,7 @@ sudo bash install.sh
 
 # 验证安装
 ipfs --version
+# ipfs version 0.38.1
 
 # 初始化 IPFS 仓库
 ipfs init
@@ -52,7 +55,7 @@ ipfs config Addresses.Gateway /ip4/0.0.0.0/tcp/8080
 ipfs daemon --enable-gc
 
 # 静默启动 IPFS
-nohup ipfs daemon --enable-gc > /home/ubuntu/ipfs.log 2>&1 &
+# nohup ipfs daemon --enable-gc > /home/ubuntu/ipfs.log 2>&1 &
 
 # 关闭 IPFS
 ipfs shutdown
@@ -78,6 +81,20 @@ cd ~/most.box/dot.most.box
 # 安装依赖
 npm install
 
+# 测试启动 Most.Box
+node ./src/index.mjs
+```
+
+（替换为服务器 IP）
+Most.Box 测试访问：http://119.91.211.100:1976
+
+## 4. Most.Box 开机启动
+
+```bash
+# 查找 IPFS 安装路径
+which ipfs
+# /usr/local/bin/ipfs
+
 # 安装 pm2
 sudo npm install -g pm2
 
@@ -85,28 +102,11 @@ sudo npm install -g pm2
 pm2 -v
 # 6.0.13
 
-# 启动 Most.Box（命名为 dot）
-pm2 start ./src/index.mjs --name dot
-
-# 保存当前进程列表
-pm2 save
-
-# Linux 设置开机启动
-pm2 startup
-```
-
-（替换为服务器 IP）
-Most.Box 测试访问：http://119.91.211.100:1976
-
-## 4. IPFS 开机启动（可选）
-
-```bash
-# 查找 IPFS 安装路径
-which ipfs
-# /usr/local/bin/ipfs
-
 # 启动 IPFS 服务
 pm2 start /usr/local/bin/ipfs --name ipfs --interpreter none -- daemon --enable-gc
+
+# 启动 Most.Box（命名为 dot）
+pm2 start ./src/index.mjs --name dot
 
 # 配置
 sudo env PATH=$PATH pm2 startup systemd -u ubuntu --hp /home/ubuntu
@@ -224,7 +224,7 @@ ipfs-cluster-service -v
 # 初始化
 ipfs-cluster-service init --consensus crdt
 
-# 测试启动
+# 测试启动 IPFS 集群
 ipfs-cluster-service daemon
 
 # 查看节点信息
@@ -269,12 +269,26 @@ ipfs-cluster-ctl id
 # 查看健康状态
 curl http://localhost:9094/health/graph
 
-# 修改配置文件
+# 覆盖配置文件
 nano ~/.ipfs-cluster/service.json
 
 # 重启
 pm2 restart ipfs-cluster
 
-# 查看节点信息
+# 查看所有节点信息
 ipfs-cluster-ctl peers ls
 ```
+
+可以看到 IPFS 集群中所有节点的信息，包括节点 ID、节点状态、节点 IP 地址等。
+
+大功告成！
+
+通过以上配置，我们可以通过域名访问 Most.Box 前端和 IPFS 网关。
+
+Most.Box 前端
+https://x.most.box
+http://xxx.xxx.xxx.xxx:1976
+
+IPFS 网关
+https://x-cid.most.box
+http://xxx.xxx.xxx.xxx:8080
