@@ -1,7 +1,7 @@
 # 依赖目录
 /node_modules
 .env
-/ipfs-cluster/service.json
+/ipfs-cluster/service
 /ipfs-cluster/secret.json
 
 # 系统文件
