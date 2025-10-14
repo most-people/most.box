@@ -199,27 +199,37 @@ https://dot.most.box 查看已发布的节点
 
 ## 7. IPFS Cluster 集群配置
 
-最新安装包：https://dist.ipfs.tech/#ipfs-cluster-service
+最新安装包
+IPFS Cluster 服务端：https://dist.ipfs.tech/#ipfs-cluster-service
+IPFS Cluster 遥控器：https://dist.ipfs.tech/#ipfs-cluster-ctl
 
 ```bash
 # 查看系统架构
 dpkg --print-architecture
 # amd64
 
-# 下载 ipfs-cluster-service
+# 下载
 wget https://dist.ipfs.tech/ipfs-cluster-service/v1.1.4/ipfs-cluster-service_v1.1.4_linux-amd64.tar.gz
+wget https://dist.ipfs.tech/ipfs-cluster-ctl/v1.1.4/ipfs-cluster-ctl_v1.1.4_linux-amd64.tar.gz
+
 # 也可以使用 IPNS 下载
 wget http://129.226.147.127:8080/ipns/dist.ipfs.tech/ipfs-cluster-service/v1.1.4/ipfs-cluster-service_v1.1.4_linux-amd64.tar.gz
+wget http://129.226.147.127:8080/ipns/dist.ipfs.tech/ipfs-cluster-ctl/v1.1.4/ipfs-cluster-ctl_v1.1.4_linux-amd64.tar.gz
 
 # 解压
 tar -xvzf ipfs-cluster-service_v1.1.4_linux-amd64.tar.gz
+tar -xvzf ipfs-cluster-ctl_v1.1.4_linux-amd64.tar.gz
 
-# 安装 ipfs-cluster-service
+# 安装
 sudo install -m 0755 ipfs-cluster-service/ipfs-cluster-service /usr/local/bin/ipfs-cluster-service
+sudo install -m 0755 ipfs-cluster-ctl/ipfs-cluster-ctl /usr/local/bin/ipfs-cluster-ctl
 
 # 验证安装
 ipfs-cluster-service -v
 # ipfs-cluster-service version 1.1.4
+
+ipfs-cluster-ctl -v
+# ipfs-cluster-ctl version 1.1.4
 
 # 初始化
 ipfs-cluster-service init --consensus crdt
@@ -244,24 +254,11 @@ pm2 save
 pm2 startup
 ```
 
-最新安装包：https://dist.ipfs.tech/#ipfs-cluster-ctl
+发送邮件到 app.most.box@gmail.com 获取 `service.json` 配置文件
+
+覆盖配置文件 `~/.ipfs-cluster/service.json`
 
 ```bash
-# 下载 ipfs-cluster-ctl
-wget https://dist.ipfs.tech/ipfs-cluster-ctl/v1.1.4/ipfs-cluster-ctl_v1.1.4_linux-amd64.tar.gz
-# 也可以使用 IPNS 下载
-wget http://129.226.147.127:8080/ipns/dist.ipfs.tech/ipfs-cluster-ctl/v1.1.4/ipfs-cluster-ctl_v1.1.4_linux-amd64.tar.gz
-
-
-tar -xvzf ipfs-cluster-ctl_v1.1.4_linux-amd64.tar.gz
-
-# 安装 ipfs-cluster-ctl
-sudo install -m 0755 ipfs-cluster-ctl/ipfs-cluster-ctl /usr/local/bin/ipfs-cluster-ctl
-
-# 验证安装
-ipfs-cluster-ctl -v
-# ipfs-cluster-ctl version 1.1.4
-
 # 查看节点 ID
 ipfs-cluster-ctl id
 # 12D3KooWK4ScGSEZYKvvRho9VJabKHLLjD7jNy8unNv7LcqfrzHE | VM-8-8-ubuntu | Sees 0 other peers

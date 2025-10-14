@@ -264,9 +264,13 @@ ipfs-cluster-ctl id
 ipfs-cluster-ctl peers ls
 ```
 
+发送邮件到 app.most.box@gmail.com 获取 `service.json` 配置文件
+
 覆盖配置文件 `C:\Users\Administrator\.ipfs-cluster\service.json`
 
-开机启动
+---
+
+**开机启动**
 
 打开启动文件夹
 
