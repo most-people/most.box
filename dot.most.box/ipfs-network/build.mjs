@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 // 通过合并角色模板与节点清单生成 IPFS 配置
 // 输入：custom.json、dhtclient.json、dhtserver.json
-// 输出：从本地 IPFS API 获取当前配置与 Peer ID，按 custom.json 与角色模板进行细粒度合并，写入到 .ipfs/config
+// 输出：从本地 IPFS 仓库磁盘读取当前配置与 Peer ID，按 custom.json 与角色模板进行细粒度合并，写入到 .ipfs/config
 
 import fs from "fs/promises";
 import path from "path";
+import os from "os";
 import { fileURLToPath } from "url";
-import axios from "axios";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,7 +37,7 @@ function addTcp(base, port = DEFAULT_PORT) {
 }
 
 function addUdpQuic(base, port = DEFAULT_PORT) {
-  return `${base}/udp/${port}/quic`;
+  return `${base}/udp/${port}/quic-v1`;
 }
 
 function addP2pTcp(base, peerId, port = DEFAULT_PORT) {
@@ -214,7 +214,7 @@ function mergeBaseWithExtras(
     cfg.Routing.Type = roleCfg.Routing.Type;
   }
 
-  // 细粒度合并：将角色模板中的 Swarm / Pubsub / Reprovider 合并到当前配置
+  // 细粒度合并：将角色模板中的 Swarm / Pubsub / Provide 合并到当前配置
   if (roleCfg) {
     if (roleCfg.Swarm) {
       cfg.Swarm = mergeObjects(cfg.Swarm || {}, roleCfg.Swarm);
@@ -222,49 +222,51 @@ function mergeBaseWithExtras(
     if (roleCfg.Pubsub) {
       cfg.Pubsub = mergeObjects(cfg.Pubsub || {}, roleCfg.Pubsub);
     }
-    if (roleCfg.Reprovider) {
-      cfg.Reprovider = mergeObjects(cfg.Reprovider || {}, roleCfg.Reprovider);
+    if (roleCfg.Provide) {
+      cfg.Provide = mergeObjects(cfg.Provide || {}, roleCfg.Provide);
     }
   }
+  delete cfg.Reprovider;
 
   return cfg;
 }
 
-async function fetchJson(url) {
-  try {
-    const res = await axios.post(url, null, {
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      responseType: "json",
-      // 如需允许自签名或非严格校验，可在此调整；默认保持安全。
-      // 通过 validateStatus 允许我们显式处理所有状态码。
-      validateStatus: () => true,
-    });
-    if (res.status < 200 || res.status >= 300) {
-      throw new Error(`HTTP 状态 ${res.status}：${url}`);
-    }
-    return res.data;
-  } catch (err) {
-    // 归一化错误信息
-    const msg = err && err.message ? err.message : String(err);
-    throw new Error(`请求失败：${url}：${msg}`);
-  }
+// 仅从磁盘读取本地 IPFS 仓库配置，以保留 Identity.PrivKey
+function getIpfsRepoPath() {
+  const envPath = (process.env.IPFS_PATH || process.env.IPFS_REPO || "").trim();
+  if (envPath) return envPath;
+  return path.join(os.homedir(), ".ipfs");
 }
 
-async function getCurrentIpfsInfo(apiBase = "http://127.0.0.1:5001") {
-  const cfgUrl = new URL("/api/v0/config/show", apiBase).toString();
-  const idUrl = new URL("/api/v0/id", apiBase).toString();
-  const [config, idResp] = await Promise.all([
-    fetchJson(cfgUrl),
-    fetchJson(idUrl),
-  ]);
-  const peerId = idResp && (idResp.ID || idResp.Id || idResp.id);
+async function getIpfsInfoFromDisk(repoPath = getIpfsRepoPath()) {
+  const cfgFile = path.join(repoPath, "config");
+  const config = await readJson(cfgFile);
+  const peerId =
+    (config &&
+      config.Identity &&
+      (config.Identity.PeerID ||
+        config.Identity.Id ||
+        config.Identity.PeerId)) ||
+    null;
   if (!peerId) {
-    throw new Error("无法从 IPFS API /api/v0/id 获取 Peer ID");
+    throw new Error("无法从磁盘配置读取 Peer ID（Identity.PeerID 缺失）");
   }
-  return { config, peerId };
+  const hasPrivKey = !!(
+    config &&
+    config.Identity &&
+    typeof config.Identity.PrivKey === "string" &&
+    config.Identity.PrivKey.length > 0
+  );
+  if (!hasPrivKey) {
+    console.warn(
+      "警告：磁盘配置中未发现 Identity.PrivKey。若你使用了外部密钥或不同仓库路径，请设置 IPFS_PATH 或 IPFS_REPO 环境变量指向正确的仓库。"
+    );
+  }
+  return { config, peerId, source: "disk", repoPath };
+}
+
+async function getCurrentIpfsInfo() {
+  return await getIpfsInfoFromDisk(getIpfsRepoPath());
 }
 
 async function main() {
@@ -286,9 +288,7 @@ async function main() {
 
   // 仅默认模式：获取当前 IPFS 配置与 peer id，按 custom.json 与角色模板进行更细粒度合并
   try {
-    const { config: currentCfg, peerId } = await getCurrentIpfsInfo(
-      process.env.IPFS_API_BASE || "http://127.0.0.1:5001"
-    );
+    const { config: currentCfg, peerId, repoPath } = await getCurrentIpfsInfo();
 
     const matched = custom.find((n) => n.id === peerId);
     const roleCfg =
@@ -320,8 +320,9 @@ async function main() {
       }）\n` +
         `Bootstrap 条目数：${bootstrapAddrs.length}，Peering 固定邻居数：${peeringPeers.length}，Announce 条目数：${announceAddrs.length}`
     );
+    console.log(`配置源：磁盘（${repoPath}）`);
   } catch (err) {
-    console.error("错误：从 IPFS API 获取当前配置 / Peer ID 失败。", err);
+    console.error("错误：从磁盘读取 IPFS 配置 / Peer ID 失败。", err);
     process.exit(1);
   }
 }

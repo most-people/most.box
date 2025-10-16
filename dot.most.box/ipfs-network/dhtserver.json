@@ -14,5 +14,8 @@
     "EnableAutoRelay": false
   },
   "Pubsub": { "Enabled": true, "Router": "gossipsub" },
-  "Reprovider": { "Strategy": "pinned", "Interval": "6h" }
+  "Provide": {
+    "Strategy": "pinned",
+    "DHT": { "Interval": "6h" }
+  }
 }

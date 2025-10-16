@@ -34,11 +34,5 @@
     "type": "dhtclient",
     "id": "12D3KooWPen5b7dvQm9C2nmnVXad51FaxLWrwQch2H8fVNFfhoGW",
     "ip": ["/ip4/123.206.203.234", "/dns4/zx-dot.most.red"]
-  },
-  {
-    "name": "4u",
-    "type": "dhtclient",
-    "id": "12D3KooWSZePAz2z1bXdJeSBSpdW7anGa8Tuh9XGPC57oh7i4w9x",
-    "ip": []
   }
 ]

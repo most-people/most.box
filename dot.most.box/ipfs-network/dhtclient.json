@@ -14,5 +14,8 @@
     "ConnMgr": { "LowWater": 100, "HighWater": 200, "GracePeriod": "2m" }
   },
   "Pubsub": { "Enabled": true, "Router": "gossipsub" },
-  "Reprovider": { "Strategy": "pinned", "Interval": "12h" }
+  "Provide": {
+    "Strategy": "pinned",
+    "DHT": { "Interval": "12h" }
+  }
 }
