@@ -12,12 +12,126 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const NETWORK_ROOT = __dirname;
-const OUT_SINGLE_ROOT = path.join(NETWORK_ROOT, ".ipfs");
 // 环境变量调参（为 100 节点规模提供合理默认值）
 const DEFAULT_PORT = Number(process.env.DEFAULT_PORT || 4001);
 const BOOTSTRAP_K = Number(process.env.BOOTSTRAP_K || 8); // 作为 Bootstrap 的 dhtserver 数量
 const PEERING_RING = Number(process.env.PEERING_RING || 3); // 环形邻居左右各多少个
 const PEERING_RANDOM = Number(process.env.PEERING_RANDOM || 3); // 额外随机邻居数量
+
+// HTTP API 相关：支持 IPFS Desktop 与 Kubo 默认端口；允许通过环境变量覆盖
+const API_CANDIDATE_PORTS = (process.env.IPFS_API_PORTS || "5001,45005")
+  .split(",")
+  .map((s) => Number(s.trim()))
+  .filter((n) => Number.isFinite(n) && n > 0);
+
+function trimSlash(urlBase) {
+  return String(urlBase || "").replace(/\/+$/, "");
+}
+
+function multiaddrToHttp(addr) {
+  // 支持 /ip4/127.0.0.1/tcp/5001 或 /dns4/localhost/tcp/5001
+  if (!addr || typeof addr !== "string") return null;
+  if (/^https?:\/\//i.test(addr)) return trimSlash(addr);
+  const m = addr.match(
+    /^\/(ip4|ip6|dns|dns4|dns6|dnsaddr)\/([^/]+)\/tcp\/(\d+)(?:\/.*)?$/i
+  );
+  if (m) {
+    const host = m[2];
+    const port = Number(m[3]);
+    if (Number.isFinite(port)) return `http://${host}:${port}`;
+  }
+  return null;
+}
+
+function parseApiFromEnv() {
+  const envRaw = (
+    process.env.IPFS_API ||
+    process.env.KUBO_API ||
+    process.env.IPFS_HTTP_API ||
+    ""
+  ).trim();
+  if (!envRaw) return null;
+  const parsed = multiaddrToHttp(envRaw) || trimSlash(envRaw);
+  return parsed || null;
+}
+
+async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const t = setTimeout(
+    () => controller.abort(new Error(`请求超时 ${timeoutMs}ms: ${url}`)),
+    timeoutMs
+  );
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    return res;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+async function fetchJsonPOST(url, body = undefined, timeoutMs = 8000) {
+  const res = await fetchWithTimeout(url, { method: "POST", body }, timeoutMs);
+  const text = await res.text();
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${text}`);
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    throw new Error(
+      `解析 JSON 失败：${e.message} | 响应片段：${text.slice(0, 200)}`
+    );
+  }
+}
+
+async function isApiAlive(base) {
+  try {
+    const res = await fetchWithTimeout(
+      `${base}/api/v0/version`,
+      { method: "POST" },
+      1500
+    );
+    return res.ok;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function detectApiBase() {
+  const envBase = parseApiFromEnv();
+  const candidates = [];
+  if (envBase) candidates.push(envBase);
+  // 常见默认端口（Kubo 默认 5001，IPFS Desktop 常见 45005）
+  for (const p of API_CANDIDATE_PORTS) candidates.push(`http://127.0.0.1:${p}`);
+  // 去重
+  const list = dedupe(candidates);
+  for (const base of list) {
+    if (await isApiAlive(base)) return base;
+  }
+  return null;
+}
+
+async function getIpfsInfoFromHttp(apiBase) {
+  const cfg = await fetchJsonPOST(`${apiBase}/api/v0/config/show`);
+  const id = await fetchJsonPOST(`${apiBase}/api/v0/id`);
+  const peerId = id && (id.ID || id.Id || id.PeerID || id.PeerId);
+  if (!peerId) throw new Error("HTTP API 的 /id 未返回 Peer ID");
+  return { config: cfg, peerId, source: "http", apiBase };
+}
+
+async function applyConfigViaHttp(apiBase, finalCfg) {
+  const form = new FormData();
+  const blob = new Blob([JSON.stringify(finalCfg, null, 2) + "\n"], {
+    type: "application/json",
+  });
+  form.append("file", blob, "config");
+  const res = await fetchWithTimeout(
+    `${apiBase}/api/v0/config/replace`,
+    { method: "POST", body: form },
+    12000
+  );
+  const text = await res.text();
+  if (!res.ok) throw new Error(`配置替换失败：HTTP ${res.status}: ${text}`);
+  return text;
+}
 
 async function readJson(filePath) {
   const text = await fs.readFile(filePath, "utf8");
@@ -266,7 +380,15 @@ async function getIpfsInfoFromDisk(repoPath = getIpfsRepoPath()) {
 }
 
 async function getCurrentIpfsInfo() {
-  return await getIpfsInfoFromDisk(getIpfsRepoPath());
+  // 仅在检测到 HTTP API 时才继续；否则直接停止
+  const apiBase = await detectApiBase();
+  if (!apiBase) {
+    throw new Error(
+      "未检测到可用的 IPFS HTTP API（常见端口 5001 或 IPFS Desktop 端口 45005）。请确保守护进程已开启 HTTP API。"
+    );
+  }
+  // 通过 HTTP API 获取当前运行的配置与 Peer ID
+  return await getIpfsInfoFromHttp(apiBase);
 }
 
 async function main() {
@@ -288,7 +410,8 @@ async function main() {
 
   // 仅默认模式：获取当前 IPFS 配置与 peer id，按 custom.json 与角色模板进行更细粒度合并
   try {
-    const { config: currentCfg, peerId, repoPath } = await getCurrentIpfsInfo();
+    const info = await getCurrentIpfsInfo();
+    const { config: currentCfg, peerId } = info;
 
     const matched = custom.find((n) => n.id === peerId);
     const roleCfg =
@@ -307,20 +430,30 @@ async function main() {
       roleCfg,
     });
 
-    await ensureDir(OUT_SINGLE_ROOT);
-    const outFile = path.join(OUT_SINGLE_ROOT, "config");
-    await fs.writeFile(
-      outFile,
-      JSON.stringify(finalCfg, null, 2) + "\n",
-      "utf8"
-    );
+    let appliedViaHttp = false;
+    if (info && info.source === "http" && info.apiBase) {
+      try {
+        await applyConfigViaHttp(info.apiBase, finalCfg);
+        appliedViaHttp = true;
+        console.log(
+          `已通过 HTTP API (${info.apiBase}) 替换正在运行的 IPFS 配置。`
+        );
+      } catch (e) {
+        console.error(
+          `通过 HTTP API 替换失败：${e.message}\n` +
+            `已停止执行（不再尝试磁盘写入或其他方式）。`
+        );
+        process.exit(1);
+      }
+    }
+
     console.log(
-      `已生成 ${path.relative(NETWORK_ROOT, outFile)}，本地 Peer：${peerId}（${
-        matched ? matched.name : "未知"
-      }）\n` +
+      `本地 Peer：${peerId}（${matched ? matched.name : "未知"}）\n` +
         `Bootstrap 条目数：${bootstrapAddrs.length}，Peering 固定邻居数：${peeringPeers.length}，Announce 条目数：${announceAddrs.length}`
     );
-    console.log(`配置源：磁盘（${repoPath}）`);
+    if (info && info.source === "http") {
+      console.log(`配置源：HTTP API（${info.apiBase}）。`);
+    }
   } catch (err) {
     console.error("错误：从磁盘读取 IPFS 配置 / Peer ID 失败。", err);
     process.exit(1);
