@@ -3,7 +3,7 @@
 操作系统：Ubuntu Server 24.04
 连接服务器：ssh ubuntu@119.91.211.100
 
-打开防火墙：1976,8080,9096
+打开防火墙：1976,8080,4001
 
 ## 1. Node.js 安装
 
@@ -196,87 +196,6 @@ pm2 restart dot
 ```
 
 https://dot.most.box 查看已发布的节点
-
-## 7. IPFS Cluster 集群配置
-
-最新安装包
-IPFS Cluster 服务端：https://dist.ipfs.tech/#ipfs-cluster-service
-IPFS Cluster 遥控器：https://dist.ipfs.tech/#ipfs-cluster-ctl
-
-```bash
-# 查看系统架构
-dpkg --print-architecture
-# amd64
-
-# 下载
-wget https://dist.ipfs.tech/ipfs-cluster-service/v1.1.4/ipfs-cluster-service_v1.1.4_linux-amd64.tar.gz
-wget https://dist.ipfs.tech/ipfs-cluster-ctl/v1.1.4/ipfs-cluster-ctl_v1.1.4_linux-amd64.tar.gz
-
-# 也可以使用 IPNS 下载
-wget http://129.226.147.127:8080/ipns/dist.ipfs.tech/ipfs-cluster-service/v1.1.4/ipfs-cluster-service_v1.1.4_linux-amd64.tar.gz
-wget http://129.226.147.127:8080/ipns/dist.ipfs.tech/ipfs-cluster-ctl/v1.1.4/ipfs-cluster-ctl_v1.1.4_linux-amd64.tar.gz
-
-# 解压
-tar -xvzf ipfs-cluster-service_v1.1.4_linux-amd64.tar.gz
-tar -xvzf ipfs-cluster-ctl_v1.1.4_linux-amd64.tar.gz
-
-# 安装
-sudo install -m 0755 ipfs-cluster-service/ipfs-cluster-service /usr/local/bin/ipfs-cluster-service
-sudo install -m 0755 ipfs-cluster-ctl/ipfs-cluster-ctl /usr/local/bin/ipfs-cluster-ctl
-
-# 验证安装
-ipfs-cluster-service -v
-# ipfs-cluster-service version 1.1.4
-
-ipfs-cluster-ctl -v
-# ipfs-cluster-ctl version 1.1.4
-
-# 初始化
-ipfs-cluster-service init --consensus crdt
-
-# 测试启动 IPFS 集群
-ipfs-cluster-service daemon
-
-# 查看节点信息
-nano ~/.ipfs-cluster/identity.json
-
-# 查找 ipfs-cluster-service 安装路径
-which ipfs-cluster-service
-# /usr/local/bin/ipfs-cluster-service
-
-# 启动 IPFS 集群
-pm2 start /usr/local/bin/ipfs-cluster-service --name ipfs-cluster --interpreter none -- daemon
-
-# 保存当前进程列表
-pm2 save
-
-# Linux 设置开机启动
-pm2 startup
-```
-
-发送邮件到 app.most.box@gmail.com 获取 `service.json` 配置文件
-
-覆盖配置文件 `~/.ipfs-cluster/service.json`
-
-```bash
-# 查看节点 ID
-ipfs-cluster-ctl id
-# 12D3KooWK4ScGSEZYKvvRho9VJabKHLLjD7jNy8unNv7LcqfrzHE | VM-8-8-ubuntu | Sees 0 other peers
-
-# 查看健康状态
-curl http://localhost:9094/health/graph
-
-# 覆盖配置文件
-nano ~/.ipfs-cluster/service.json
-
-# 重启
-pm2 restart ipfs-cluster
-
-# 查看所有节点信息
-ipfs-cluster-ctl peers ls
-```
-
-可以看到 IPFS 集群中所有节点的信息，包括节点 ID、节点状态、节点 IP 地址等。
 
 大功告成！
 

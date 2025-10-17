@@ -4,7 +4,7 @@
 远程桌面连接：119.91.211.100
 用户名：Administrator
 
-打开防火墙：1976,8080,9096
+打开防火墙：1976,8080,4001
 
 ## 1. Node.js 安装
 
@@ -220,77 +220,6 @@ pm2 restart dot
 ```
 
 https://dot.most.box 查看已发布的节点
-
-## 7. IPFS Cluster 集群配置
-
-最新安装包：https://dist.ipfs.tech/#ipfs-cluster-service
-
-IPFS Cluster 服务端：https://dist.ipfs.tech/ipfs-cluster-service/v1.1.4/ipfs-cluster-service_v1.1.4_windows-amd64.zip
-IPFS Cluster 遥控器：https://dist.ipfs.tech/ipfs-cluster-ctl/v1.1.4/ipfs-cluster-ctl_v1.1.4_windows-amd64.zip
-
-也可以使用 IPNS 下载
-IPFS Cluster 服务端：http://129.226.147.127:8080/ipns/dist.ipfs.tech/ipfs-cluster-service/v1.1.4/ipfs-cluster-service_v1.1.4_windows-amd64.zip
-IPFS Cluster 遥控器：http://129.226.147.127:8080/ipns/dist.ipfs.tech/ipfs-cluster-ctl/v1.1.4/ipfs-cluster-ctl_v1.1.4_windows-amd64.zip
-
-解压 ipfs-cluster-service_v1.1.4_windows-amd64.zip 到 C:\Program Files\ipfs-cluster-service
-解压 ipfs-cluster-ctl_v1.1.4_windows-amd64.zip 到 C:\Program Files\ipfs-cluster-ctl
-
-添加环境变量：
-
-搜索 高级系统设置 -> 环境变量 -> Path -> 编辑 -> 新建 -> 输入 C:\Program Files\ipfs-cluster-service
-搜索 高级系统设置 -> 环境变量 -> Path -> 编辑 -> 新建 -> 输入 C:\Program Files\ipfs-cluster-ctl
-
-打开 终端 运行以下命令
-
-```bash
-# 验证安装
-ipfs-cluster-service --version
-# ipfs-cluster-service version 1.1.4
-
-ipfs-cluster-ctl --version
-# ipfs-cluster-ctl version 1.1.4
-
-# 初始化
-ipfs-cluster-service init --consensus crdt
-
-# 测试启动 IPFS 集群
-ipfs-cluster-service daemon
-
-# 查看节点 ID
-ipfs-cluster-ctl id
-# 12D3KooWK4ScGSEZYKvvRho9VJabKHLLjD7jNy8unNv7LcqfrzHE | VM-8-8-ubuntu | Sees 0 other peers
-
-# 查看所有节点信息
-ipfs-cluster-ctl peers ls
-```
-
-发送邮件到 app.most.box@gmail.com 获取 `service.json` 配置文件
-
-覆盖配置文件 `C:\Users\Administrator\.ipfs-cluster\service.json`
-
----
-
-**开机启动**
-
-打开启动文件夹
-
-`%HOMEPATH%\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup`
-
-创建 `ipfs-cluster.bat` 文件
-
-写入以下内容
-
-```bat
-@echo off
-cd /d C:\Program Files\ipfs-cluster-service
-start "" /b ipfs-cluster-service daemon
-```
-
-启动 ipfs-cluster.bat
-
-打开 http://localhost:9094/health/graph 查看健康状态
-
-可以看到 IPFS 集群中所有节点的信息，包括节点 ID、节点状态、节点 IP 地址等。
 
 大功告成！
 
