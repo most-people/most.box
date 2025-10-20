@@ -34,7 +34,7 @@ const UserName = () => {
   const [nameInput, setNameInput] = useState("");
   const [loadingGet, setLoadingGet] = useState(false);
   const [loadingSet, setLoadingSet] = useState(false);
-  const [loadingDelete, setLoadingDelete] = useState(false);
+  const [loadingDel, setLoadingDel] = useState(false);
 
   const RPC = NETWORK_CONFIG["mainnet"].rpc;
 
@@ -146,7 +146,7 @@ const UserName = () => {
     }
   };
 
-  const onDeleteName = async () => {
+  const onDelName = async () => {
     if (!wallet)
       return notifications.show({ message: "请先登录", color: "red" });
     if (!currentName)
@@ -165,7 +165,7 @@ const UserName = () => {
     }
 
     try {
-      setLoadingDelete(true);
+      setLoadingDel(true);
       // 交易前检查余额是否足够支付 Gas（运行时估算）
       const [balance, fee] = await Promise.all([
         provider.getBalance(wallet.address),
@@ -175,7 +175,7 @@ const UserName = () => {
       if (gasPrice) {
         let gas: bigint = 0n;
         try {
-          gas = await (signer as any).estimateGas.deleteName();
+          gas = await (signer as any).estimateGas.delName();
         } catch {
           // 无法估算时，继续交由链上处理
         }
@@ -191,7 +191,7 @@ const UserName = () => {
         }
       }
 
-      const tx = await (signer as any).deleteName();
+      const tx = await (signer as any).delName();
       notifications.show({ message: "交易已提交，等待确认…", color: "blue" });
       await tx.wait();
       notifications.show({ message: "删除成功", color: "green" });
@@ -205,7 +205,7 @@ const UserName = () => {
         color: "red",
       });
     } finally {
-      setLoadingDelete(false);
+      setLoadingDel(false);
     }
   };
 
@@ -221,13 +221,13 @@ const UserName = () => {
   };
 
   // 二次确认：删除用户名
-  const confirmDeleteName = () => {
+  const confirmDelName = () => {
     modals.openConfirmModal({
       centered: true,
       title: "确认操作",
       children: <Text c="dimmed">是否继续删除用户名？</Text>,
       labels: { confirm: "继续", cancel: "取消" },
-      onConfirm: onDeleteName,
+      onConfirm: onDelName,
     });
   };
   return (
@@ -270,7 +270,7 @@ const UserName = () => {
         value={nameInput}
         onChange={(e) => setNameInput(e.currentTarget.value)}
         maxLength={32}
-        disabled={loadingSet || loadingDelete}
+        disabled={loadingSet || loadingDel}
       />
 
       <Group>
@@ -284,8 +284,8 @@ const UserName = () => {
         </Button>
         <Button
           variant="light"
-          loading={loadingDelete}
-          onClick={confirmDeleteName}
+          loading={loadingDel}
+          onClick={confirmDelName}
           disabled={!wallet || !currentName}
           size="sm"
         >
@@ -311,7 +311,7 @@ const UserData = () => {
   const wallet = useUserStore((state) => state.wallet);
   const dotAPI = useUserStore((state) => state.dotAPI);
   const [loadingSetData, setLoadingSetData] = useState(false);
-  const [loadingDeleteData, setLoadingDeleteData] = useState(false);
+  const [loadingDelData, setLoadingDelData] = useState(false);
   const [currentData, setCurrentData] = useState("");
 
   const RPC = NETWORK_CONFIG["mainnet"].rpc;
@@ -424,7 +424,7 @@ const UserData = () => {
     }
   };
 
-  const onDeleteData = async () => {
+  const onDelData = async () => {
     if (!wallet)
       return notifications.show({ message: "请先登录", color: "red" });
     if (!currentDot)
@@ -440,7 +440,7 @@ const UserData = () => {
     }
 
     try {
-      setLoadingDeleteData(true);
+      setLoadingDelData(true);
       // 交易前检查余额是否足够支付 Gas（运行时估算）
       const [balance, fee] = await Promise.all([
         provider.getBalance(wallet.address),
@@ -450,7 +450,7 @@ const UserData = () => {
       if (gasPrice) {
         let gas: bigint = 0n;
         try {
-          gas = await (signer as any).estimateGas.deleteData();
+          gas = await (signer as any).estimateGas.delData();
         } catch {}
         if (gas > 0n) {
           const cost = gas * gasPrice;
@@ -464,7 +464,7 @@ const UserData = () => {
         }
       }
 
-      const tx = await (signer as any).deleteData();
+      const tx = await (signer as any).delData();
       notifications.show({ message: "交易已提交，等待确认…", color: "blue" });
       await tx.wait();
       notifications.show({ message: "删除成功", color: "green" });
@@ -476,7 +476,7 @@ const UserData = () => {
         color: "red",
       });
     } finally {
-      setLoadingDeleteData(false);
+      setLoadingDelData(false);
     }
   };
 
@@ -520,8 +520,8 @@ const UserData = () => {
         <Button
           variant="light"
           size="sm"
-          loading={loadingDeleteData}
-          onClick={onDeleteData}
+          loading={loadingDelData}
+          onClick={onDelData}
           disabled={!wallet || !currentDot}
         >
           删除
