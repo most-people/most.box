@@ -4,17 +4,15 @@ pragma solidity ^0.8.24;
 contract NameContract {
     // 从地址到名字的映射
     mapping(address => string) public names;
+
     // 从名字到地址的映射，用于检查唯一性
     mapping(string => address) public nameOwners;
 
-    // 名字长度限制
-    uint256 public constant MAX_NAME_LENGTH = 32;
-    uint256 public constant MIN_NAME_LENGTH = 1;
-    // Data 长度限制
-    uint256 public constant MAX_DATA_LENGTH = 1024;
-
     // 存储每个地址的字符串数据
     mapping(address => string) public Data;
+
+    // 存储每个地址的 CID
+    mapping(address => string) public CIDs;
 
     /**
      * @dev 将字符串转换为小写
@@ -38,8 +36,8 @@ contract NameContract {
      */
     function setName(string calldata _newName) external {
         // 检查名字长度
-        require(bytes(_newName).length >= MIN_NAME_LENGTH, "Name too short");
-        require(bytes(_newName).length <= MAX_NAME_LENGTH, "Name too long");
+        require(bytes(_newName).length >= 1, "Name too short");
+        require(bytes(_newName).length <= 63, "Name too long");
 
         string memory newNameLower = _toLower(_newName);
 
@@ -84,7 +82,7 @@ contract NameContract {
     /**
      * @dev 删除用户的名字。
      */
-    function deleteName() external {
+    function delName() external {
         // 获取发送者的当前名字
         string memory oldName = names[msg.sender];
 
@@ -107,16 +105,43 @@ contract NameContract {
 
     // 设置调用者自己的 Data
     function setData(string calldata _data) external {
-        require(bytes(_data).length <= MAX_DATA_LENGTH, "Data too long");
+        require(bytes(_data).length <= 1024, "Data too long");
         Data[msg.sender] = _data;
     }
 
     /**
      * @dev 删除调用者的 Data。
      */
-    function deleteData() external {
+    function delData() external {
         string memory old = Data[msg.sender];
         require(bytes(old).length > 0, "Data not set");
         delete Data[msg.sender];
+    }
+
+    /**
+     * @dev 设置调用者自己的 CID。
+     * @param _cid 要设置的 CID。
+     */
+    function setCID(string calldata _cid) external {
+        require(bytes(_cid).length <= 140, "CID too long");
+        CIDs[msg.sender] = _cid;
+    }
+
+    /**
+     * @dev 获取指定地址的 CID。
+     * @param _address 要查询的地址。
+     * @return 该地址的 CID 字符串。
+     */
+    function getCID(address _address) external view returns (string memory) {
+        return CIDs[_address];
+    }
+
+    /**
+     * @dev 删除调用者的 CID。
+     */
+    function delCID() external {
+        string memory old = CIDs[msg.sender];
+        require(bytes(old).length > 0, "CID not set");
+        delete CIDs[msg.sender];
     }
 }

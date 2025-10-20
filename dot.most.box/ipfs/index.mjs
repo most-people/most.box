@@ -441,7 +441,7 @@ async function main() {
       } catch (e) {
         console.error(
           `通过 HTTP API 替换失败：${e.message}\n` +
-            `已停止执行（不再尝试磁盘写入或其他方式）。`
+          `已停止执行（不再尝试磁盘写入或其他方式）。`
         );
         process.exit(1);
       }
@@ -449,7 +449,7 @@ async function main() {
 
     console.log(
       `本地 Peer：${peerId}（${matched ? matched.name : "未知"}）\n` +
-        `Bootstrap 条目数：${bootstrapAddrs.length}，Peering 固定邻居数：${peeringPeers.length}，Announce 条目数：${announceAddrs.length}`
+      `Bootstrap 条目数：${bootstrapAddrs.length}，Peering 固定邻居数：${peeringPeers.length}，Announce 条目数：${announceAddrs.length}`
     );
     if (info && info.source === "http") {
       console.log(`配置源：HTTP API（${info.apiBase}）。`);

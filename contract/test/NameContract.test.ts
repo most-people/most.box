@@ -10,7 +10,7 @@ describe("NameContract", function () {
   let addr2: SignerWithAddress;
 
   const MIN_NAME_LENGTH = 1;
-  const MAX_NAME_LENGTH = 32;
+  const MAX_NAME_LENGTH = 63;
 
   beforeEach(async function () {
     [owner, addr1, addr2] = await ethers.getSigners();
@@ -95,19 +95,19 @@ describe("NameContract", function () {
     });
   });
 
-  describe("deleteName", function () {
+  describe("delName", function () {
     it("应该成功删除一个已有的名字", async function () {
       const name = "Eve";
       await nameContract.connect(addr1).setName(name);
 
-      await nameContract.connect(addr1).deleteName();
+      await nameContract.connect(addr1).delName();
 
       expect(await nameContract.getName(addr1.address)).to.equal("");
       expect(await nameContract.getOwner(name)).to.equal(ethers.ZeroAddress);
     });
 
     it("当用户没有名字时应该失败", async function () {
-      await expect(nameContract.connect(addr1).deleteName()).to.be.revertedWith(
+      await expect(nameContract.connect(addr1).delName()).to.be.revertedWith(
         "Name not set"
       );
     });
@@ -153,7 +153,7 @@ describe("NameContract", function () {
 
       // 即使旧名字的大小写不同，也应该能正确删除
       const oldNameFromContract = await nameContract.getName(addr1.address);
-      await nameContract.connect(addr1).deleteName();
+      await nameContract.connect(addr1).delName();
 
       expect(
         await nameContract.getOwner(oldNameFromContract.toLowerCase())
@@ -177,15 +177,15 @@ describe("NameContract", function () {
       expect(await nameContract.getData(addr1.address)).to.equal("v2");
     });
 
-    it("deleteData: 未设置时应 revert", async function () {
-      await expect(nameContract.connect(addr1).deleteData()).to.be.revertedWith(
+    it("delData: 未设置时应 revert", async function () {
+      await expect(nameContract.connect(addr1).delData()).to.be.revertedWith(
         "Data not set"
       );
     });
 
-    it("deleteData: 已设置则成功删除", async function () {
+    it("delData: 已设置则成功删除", async function () {
       await nameContract.connect(addr1).setData("payload");
-      await nameContract.connect(addr1).deleteData();
+      await nameContract.connect(addr1).delData();
       expect(await nameContract.getData(addr1.address)).to.equal("");
     });
 
@@ -194,6 +194,50 @@ describe("NameContract", function () {
       await expect(
         nameContract.connect(addr1).setData(tooLong)
       ).to.be.revertedWith("Data too long");
+    });
+  });
+
+  // 新增 CID 相关测试
+  describe("CID", function () {
+    it("getCID: 对未设置的地址返回空字符串", async function () {
+      expect(await nameContract.getCID(addr1.address)).to.equal("");
+    });
+
+    it("setCID: 能设置并读取调用者的 CID", async function () {
+      await nameContract.connect(addr1).setCID("cid-v1");
+      expect(await nameContract.getCID(addr1.address)).to.equal("cid-v1");
+    });
+
+    it("setCID: 再次设置会更新旧值", async function () {
+      await nameContract.connect(addr1).setCID("cid-v1");
+      await nameContract.connect(addr1).setCID("cid-v2");
+      expect(await nameContract.getCID(addr1.address)).to.equal("cid-v2");
+    });
+
+    it("setCID: 超过最大长度应 revert (140)", async function () {
+      const tooLongCID = "a".repeat(141);
+      await expect(
+        nameContract.connect(addr1).setCID(tooLongCID)
+      ).to.be.revertedWith("CID too long");
+    });
+
+    it("setCID: 边界长度 140 应成功", async function () {
+      const boundaryCID = "a".repeat(140);
+      await expect(nameContract.connect(addr1).setCID(boundaryCID)).to.not.be
+        .reverted;
+      expect(await nameContract.getCID(addr1.address)).to.equal(boundaryCID);
+    });
+
+    it("delCID: 未设置时应 revert", async function () {
+      await expect(nameContract.connect(addr1).delCID()).to.be.revertedWith(
+        "CID not set"
+      );
+    });
+
+    it("delCID: 已设置则成功删除", async function () {
+      await nameContract.connect(addr1).setCID("cid-v1");
+      await nameContract.connect(addr1).delCID();
+      expect(await nameContract.getCID(addr1.address)).to.equal("");
     });
   });
 });
