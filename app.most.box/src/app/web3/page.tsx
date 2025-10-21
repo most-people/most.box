@@ -18,6 +18,8 @@ import { formatEther, JsonRpcProvider } from "ethers";
 
 export default function PageWeb3() {
   const wallet = useUserStore((state) => state.wallet);
+  const Explorer = useUserStore((state) => state.Explorer);
+  const network = useUserStore((state) => state.network);
   const RPC = useUserStore((state) => state.RPC);
   const [showX25519, setShowX25519] = useState(false);
   const [balance, setBalance] = useState("-");
@@ -58,20 +60,23 @@ export default function PageWeb3() {
           ETH 地址
         </Text>
 
+        <Text>{wallet?.address || "-"}</Text>
+
+        <Text size="lg" fw={500}>
+          余额
+        </Text>
+
         <Group>
-          <Text>{wallet?.address || "-"}</Text>
+          <Text>
+            {balance} Base {network} ETH
+          </Text>
           <Anchor
-            href={`https://basescan.org/address/${wallet?.address || ""}`}
+            href={`${Explorer}/address/${wallet?.address || ""}`}
             target="_blank"
           >
             查看
           </Anchor>
         </Group>
-
-        <Text size="lg" fw={500}>
-          余额
-        </Text>
-        <Text>{balance} Base ETH</Text>
 
         <Text size="lg" fw={500}>
           Ed25519 公钥
@@ -127,11 +132,11 @@ export default function PageWeb3() {
         </Anchor>
 
         <Anchor component={Link} href="/ipns">
-          <Text>IPNS 二维码</Text>
+          <Text>IPFS 二维码</Text>
         </Anchor>
 
         <Anchor component={Link} href="/dot/status">
-          <Text>IPFS 节点状态</Text>
+          <Text>IPFS 本地节点状态</Text>
         </Anchor>
 
         <Text>{mp.formatTime(Date.now())}</Text>

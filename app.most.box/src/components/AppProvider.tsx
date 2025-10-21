@@ -10,7 +10,7 @@ import { notifications } from "@mantine/notifications";
 export default function AppProvider() {
   const initWallet = useUserStore((state) => state.initWallet);
   const setItem = useUserStore((state) => state.setItem);
-  const dotAPI = useUserStore((state) => state.dotAPI);
+  const setNetwork = useUserStore((state) => state.setNetwork);
   const updateDot = useUserStore((state) => state.updateDot);
   const pathname = usePathname();
   const router = useRouter();
@@ -59,6 +59,9 @@ export default function AppProvider() {
     initDot();
     initFinger();
     sessionStorage.firstPath = window.location.pathname;
+    const network =
+      localStorage.getItem("network") === "mainnet" ? "mainnet" : "testnet";
+    setNetwork(network);
   }, []);
 
   const { colorScheme } = useMantineColorScheme();

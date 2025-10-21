@@ -51,6 +51,7 @@ interface UserStore {
   updateCID: () => Promise<string[] | null>;
   // 区块链网络
   network: NETWORK_TYPE;
+  setNetwork: (network: NETWORK_TYPE) => void;
   RPC: string;
   Explorer: string;
   // 退出
@@ -125,15 +126,10 @@ export const useUserStore = create<State>((set, get) => ({
     localStorage.removeItem("jwt");
     localStorage.removeItem("token");
   },
-  // 网络相关状态和方法
-  network: (localStorage.getItem("network") as NETWORK_TYPE) || "mainnet",
-  RPC: NETWORK_CONFIG[
-    (localStorage.getItem("network") as NETWORK_TYPE) || "mainnet"
-  ].rpc,
-  Explorer:
-    NETWORK_CONFIG[
-      (localStorage.getItem("network") as NETWORK_TYPE) || "mainnet"
-    ].explorer,
+  // 网络相关状态
+  network: "testnet",
+  RPC: NETWORK_CONFIG["testnet"].rpc,
+  Explorer: NETWORK_CONFIG["testnet"].explorer,
   setNetwork(network: NETWORK_TYPE) {
     const config = NETWORK_CONFIG[network];
     set({

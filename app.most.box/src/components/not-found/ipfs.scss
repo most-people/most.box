@@ -1,60 +1,67 @@
-.ipfs-qrcode {
-  margin-top: 30px;
-  padding: 45px 37.5px 45px 37.5px;
-  background-image: url("/img/black-texture.jpg");
-  background-size: cover;
-  border-radius: 25px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.6), 0 6px 12px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.18);
-
-  .qrcode-frame {
+#page-ipfs {
+  .ipfs-qrcode {
+    margin-top: 30px;
+    padding: 45px 37.5px 45px 37.5px;
+    background-image: url("/img/black-texture.jpg");
+    background-size: cover;
+    border-radius: 25px;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 6px;
-    border: 6px solid rgba(255, 255, 255, 0.94);
-    border-radius: 10px;
-  }
+    box-shadow:
+      0 14px 30px rgba(0, 0, 0, 0.6),
+      0 6px 12px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+      0 0 0 1px rgba(0, 0, 0, 0.18);
 
-  .qrcode {
-    flex-shrink: 0;
-  }
+    .qrcode-frame {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      border: 6px solid rgba(255, 255, 255, 0.94);
+      border-radius: 10px;
+    }
 
-  .line {
-    width: 3px;
-    height: 210px;
-    background-color: rgba(232, 201, 155, 0.94);
-    margin: 0 30px 0 30px;
-  }
+    .qrcode {
+      flex-shrink: 0;
+    }
 
-  .info {
-    width: 250px;
-    color: rgba(255, 255, 255, 0.94);
-    font-size: 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+    .line {
+      width: 3px;
+      height: 210px;
+      background-color: rgba(232, 201, 155, 0.94);
+      margin: 0 30px 0 30px;
+    }
 
-    .name {
-      font-size: 25px;
-      font-weight: 600;
-      color: rgba(232, 201, 155, 1);
+    .info {
+      width: 250px;
+      color: rgba(255, 255, 255, 0.94);
+      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+
+      .name {
+        font-size: 25px;
+        font-weight: 600;
+        color: rgba(232, 201, 155, 1);
+      }
     }
   }
 }
 
 @media (max-width: 1024px) {
-  .ipfs-qrcode {
-    flex-direction: column;
-    padding: 55px 37.5px 55px 37.5px;
+  #page-ipfs {
+    .ipfs-qrcode {
+      flex-direction: column;
+      padding: 55px 37.5px 55px 37.5px;
 
-    .line {
-      height: 3px;
-      width: 210px;
-      margin: 30px 0 20px 0;
+      .line {
+        height: 3px;
+        width: 210px;
+        margin: 30px 0 20px 0;
+      }
     }
   }
 }

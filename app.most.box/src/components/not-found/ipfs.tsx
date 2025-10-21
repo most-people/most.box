@@ -16,10 +16,11 @@ import {
   Tooltip,
   Button,
   Center,
+  Box,
 } from "@mantine/core";
 import Link from "next/link";
 import { useUserStore } from "@/stores/userStore";
-import { IconCopy, IconQrcode, IconInfoCircle } from "@tabler/icons-react";
+import { IconCopy, IconInfoCircle } from "@tabler/icons-react";
 import "./ipfs.scss";
 
 type CidType = "dir" | "note" | "file";
@@ -83,9 +84,10 @@ const PageContent = () => {
   const host = "https://most.box/ipns/";
   const ipns = "k51qzi5uqu5dmdudfnx05uaaehyo5yceivmvhjehy2isy7o3nj5coyw9ycy2qv";
   const path = "";
+  // const path = "/kubo/v0.38.1/kubo_v0.38.1_linux-amd64.tar.gz";
 
   return (
-    <>
+    <Box id="page-ipfs">
       <AppHeader title={filename || cid || "CID"} />
       <Stack gap="lg">
         {!cid && (
@@ -261,7 +263,7 @@ const PageContent = () => {
           </div>
         </Center>
       </Stack>
-    </>
+    </Box>
   );
 };
 export default function PageIPFS() {

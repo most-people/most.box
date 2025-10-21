@@ -70,6 +70,7 @@ export default function PageDot() {
   const dotNodes = useUserStore((state) => state.dotNodes);
   const updateDot = useUserStore((state) => state.updateDot);
   const network = useUserStore((state) => state.network);
+  const setNetwork = useUserStore((state) => state.setNetwork);
 
   // ===== 当前节点状态 =====
   const [apiLoading, setApiLoading] = useState(false);
@@ -247,10 +248,10 @@ export default function PageDot() {
   // ===== 节点管理相关函数 =====
   const validateNetwork = (chainId: number): boolean => {
     if (chainId === NETWORK_CONFIG.mainnet.chainId) {
-      setItem("network", "mainnet");
+      setNetwork("mainnet");
       return true;
     } else if (chainId === NETWORK_CONFIG.testnet.chainId) {
-      setItem("network", "testnet");
+      setNetwork("testnet");
       return true;
     } else {
       showNotification(
@@ -402,7 +403,7 @@ export default function PageDot() {
     if (value && (value === "mainnet" || value === "testnet")) {
       const rpc = NETWORK_CONFIG[value].rpc;
       setCustomRPC(rpc);
-      setItem("network", value);
+      setNetwork(value);
       fetchNodes(rpc);
       notifications.show({
         title: "网络已切换",
