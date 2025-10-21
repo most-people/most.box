@@ -49,6 +49,7 @@ import {
   CONTRACT_ABI_DOT,
   CONTRACT_ADDRESS_DOT,
   NETWORK_CONFIG,
+  NetworkType,
   randomRPC,
 } from "@/constants/dot";
 import { useBack } from "@/hooks/useBack";
@@ -62,7 +63,6 @@ type DetectionResult = {
   status: DetectionStatus;
   responseTime?: number;
 };
-type NetworkType = "mainnet" | "testnet";
 
 export default function PageDot() {
   // ===== Zustand Store =====
@@ -604,7 +604,7 @@ export default function PageDot() {
               color="orange"
               variant="light"
               onClick={() => {
-                setCustomRPC(randomRPC());
+                setCustomRPC(randomRPC("mainnet"));
                 fetchNodes();
               }}
             >
@@ -843,7 +843,7 @@ export default function PageDot() {
           size="sm"
           color="yellow"
           variant="light"
-          onClick={() => setCustomRPC(randomRPC())}
+          onClick={() => setCustomRPC(randomRPC("mainnet"))}
         >
           更换 RPC
         </Button>

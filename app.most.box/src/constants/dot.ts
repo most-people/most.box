@@ -1,37 +1,6 @@
 // https://chainlist.org/rpcs.json
-// import rpcs from "@/assets/json/rpcs.json";
-// rpcs.find((e) => e.chainId === 8453).rpc.map((e: { url: string }) => e.url).filter((e: string) => e.startsWith("http"));
 
 import NameContractABI from "@/assets/json/NameContractABI.json";
-
-const RPCs = [
-  "https://base.llamarpc.com",
-  "https://mainnet.base.org",
-  "https://developer-access-mainnet.base.org",
-  "https://base-mainnet.diamondswap.org/rpc",
-  "https://base.public.blockpi.network/v1/rpc/public",
-  "https://1rpc.io/base",
-  "https://base-pokt.nodies.app",
-  "https://base.meowrpc.com",
-  "https://base-mainnet.public.blastapi.io",
-  "https://base.gateway.tenderly.co",
-  "https://gateway.tenderly.co/public/base",
-  "https://rpc.notadegen.com/base",
-  "https://base-rpc.publicnode.com",
-  "https://base.drpc.org",
-  "https://base.api.onfinality.io/public",
-  "https://public.stackup.sh/api/v1/node/base-mainnet",
-  "https://base-mainnet.gateway.tatum.io",
-  "https://base.rpc.subquery.network/public",
-  "https://api.zan.top/base-mainnet",
-  "https://endpoints.omniatech.io/v1/base/mainnet/public",
-  "https://base.lava.build",
-  "https://rpc.numa.network/base",
-  "https://node.histori.xyz/base-mainnet/8ry9f6t9dct1se2hlagxnd9n2a",
-  "https://0xrpc.io/base",
-  "https://rpc.owlracle.info/base/70d38ce1826c4a60bb2a8e05a6c8b20f",
-  "https://base.therpc.io",
-];
 
 // 合约配置
 export const CONTRACT_ADDRESS_DOT =
@@ -39,7 +8,7 @@ export const CONTRACT_ADDRESS_DOT =
 export const CONTRACT_ADDRESS_NAME =
   "0x8F175B89C1A5Bb27f050FC88F0894d684A45f299";
 
-export const randomRPC = () => RPCs[Math.floor(Math.random() * RPCs.length)];
+export type NetworkType = "mainnet" | "testnet";
 
 // 网络配置
 export const NETWORK_CONFIG = {
@@ -49,6 +18,34 @@ export const NETWORK_CONFIG = {
     name: "Base 主网",
     color: "blue",
     explorer: "https://basescan.org",
+    RPCs: [
+      "https://base.llamarpc.com",
+      "https://mainnet.base.org",
+      "https://developer-access-mainnet.base.org",
+      "https://base-mainnet.diamondswap.org/rpc",
+      "https://base.public.blockpi.network/v1/rpc/public",
+      "https://1rpc.io/base",
+      "https://base-pokt.nodies.app",
+      "https://base.meowrpc.com",
+      "https://base-mainnet.public.blastapi.io",
+      "https://base.gateway.tenderly.co",
+      "https://gateway.tenderly.co/public/base",
+      "https://rpc.notadegen.com/base",
+      "https://base-rpc.publicnode.com",
+      "https://base.drpc.org",
+      "https://base.api.onfinality.io/public",
+      "https://public.stackup.sh/api/v1/node/base-mainnet",
+      "https://base-mainnet.gateway.tatum.io",
+      "https://base.rpc.subquery.network/public",
+      "https://api.zan.top/base-mainnet",
+      "https://endpoints.omniatech.io/v1/base/mainnet/public",
+      "https://base.lava.build",
+      "https://rpc.numa.network/base",
+      "https://node.histori.xyz/base-mainnet/8ry9f6t9dct1se2hlagxnd9n2a",
+      "https://0xrpc.io/base",
+      "https://rpc.owlracle.info/base/70d38ce1826c4a60bb2a8e05a6c8b20f",
+      "https://base.therpc.io",
+    ],
   },
   testnet: {
     chainId: 84532,
@@ -56,7 +53,25 @@ export const NETWORK_CONFIG = {
     name: "Base 测试网",
     color: "orange",
     explorer: "https://sepolia.basescan.org",
+    RPCs: [
+      "https://rpc.notadegen.com/base/sepolia",
+      "https://public.stackup.sh/api/v1/node/base-sepolia",
+      "https://base-sepolia.gateway.tenderly.co",
+      "https://base-sepolia.drpc.org",
+      "https://base-sepolia-public.nodies.app",
+      "https://base-sepolia.therpc.io",
+      "https://base-sepolia.api.onfinality.io/public",
+      "https://base-testnet.rpc.grove.city/v1/01fdb492",
+      "https://sepolia.base.org",
+      "https://base-sepolia-rpc.publicnode.com",
+    ],
   },
+};
+
+export const randomRPC = (network: NetworkType) => {
+  return NETWORK_CONFIG[network].RPCs[
+    Math.floor(Math.random() * NETWORK_CONFIG[network].RPCs.length)
+  ];
 };
 
 // DotContract ABI
@@ -95,4 +110,6 @@ export const CONTRACT_ABI_DOT = [
     type: "function",
   },
 ];
+
+// NameContract ABI
 export const CONTRACT_ABI_NAME = NameContractABI;
