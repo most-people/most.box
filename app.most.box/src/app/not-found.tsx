@@ -6,7 +6,6 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import PageIPFS from "@/components/not-found/ipfs";
-import PageIPNS from "@/components/not-found/ipns";
 import PageUser from "@/components/not-found/user";
 
 const Page404 = () => {

@@ -11,11 +11,12 @@ import { useUserStore } from "@/stores/userStore";
 import { Icon } from "../Icon";
 // import Link from "next/link";
 import { notifications } from "@mantine/notifications";
+import { useDotStore } from "@/stores/dotStore";
 
 export default function PageUser() {
   const pathname = usePathname();
   const [uid, setUid] = useState("");
-  const RPC = useUserStore((state) => state.RPC);
+  const RPC = useDotStore((state) => state.RPC);
   const [API, setAPI] = useState("");
 
   const provider = useMemo(() => new JsonRpcProvider(RPC), [RPC]);
@@ -80,8 +81,8 @@ export default function PageUser() {
   }, [uid]);
 
   const nodeDark = useUserStore((state) => state.nodeDark);
-  // const dotAPI = useUserStore((state) => state.dotAPI);
-  // const updateDot = useUserStore((state) => state.updateDot);
+  // const dotAPI = useDotStore((state) => state.dotAPI);
+  // const updateDot = useDotStore((state) => state.updateDot);
   const profileElement = useRef<HTMLDivElement>(null);
   // const markdown = useMarkdown();
   // const noteName = pathname.split("/")[2] || ".profile";

@@ -41,16 +41,16 @@ import {
   IconSettings,
   IconBrandGithub,
 } from "@tabler/icons-react";
-import mp from "@/constants/mp";
-import { CID } from "multiformats";
-import Link from "next/link";
-import { DotNode, useUserStore } from "@/stores/userStore";
 import {
   CONTRACT_ABI_DOT,
   CONTRACT_ADDRESS_DOT,
   NETWORK_CONFIG,
   NETWORK_TYPE,
 } from "@/constants/dot";
+import mp from "@/constants/mp";
+import { CID } from "multiformats";
+import Link from "next/link";
+import { DotNode, useDotStore } from "@/stores/dotStore";
 import { useBack } from "@/hooks/useBack";
 
 // ===== 常量定义 =====
@@ -65,12 +65,12 @@ type DetectionResult = {
 
 export default function PageDot() {
   // ===== Zustand Store =====
-  const setItem = useUserStore((state) => state.setItem);
-  const dotAPI = useUserStore((state) => state.dotAPI);
-  const dotNodes = useUserStore((state) => state.dotNodes);
-  const updateDot = useUserStore((state) => state.updateDot);
-  const network = useUserStore((state) => state.network);
-  const setNetwork = useUserStore((state) => state.setNetwork);
+  const setItem = useDotStore((state) => state.setItem);
+  const dotAPI = useDotStore((state) => state.dotAPI);
+  const dotNodes = useDotStore((state) => state.dotNodes);
+  const updateDot = useDotStore((state) => state.updateDot);
+  const network = useDotStore((state) => state.network);
+  const setNetwork = useDotStore((state) => state.setNetwork);
 
   // ===== 当前节点状态 =====
   const [apiLoading, setApiLoading] = useState(false);

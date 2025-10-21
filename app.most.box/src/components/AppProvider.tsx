@@ -4,7 +4,7 @@ import { useUserStore } from "@/stores/userStore";
 import { useEffect } from "react";
 import { api } from "@/constants/api";
 import { useComputedColorScheme, useMantineColorScheme } from "@mantine/core";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { notifications } from "@mantine/notifications";
 
 export default function AppProvider() {
@@ -12,7 +12,6 @@ export default function AppProvider() {
   const setItem = useUserStore((state) => state.setItem);
   const setNetwork = useUserStore((state) => state.setNetwork);
   const updateDot = useUserStore((state) => state.updateDot);
-  const pathname = usePathname();
   const router = useRouter();
 
   const initFinger = async () => {
@@ -41,11 +40,6 @@ export default function AppProvider() {
     if (dotAPI) api.defaults.baseURL = dotAPI;
     // 切换节点
     updateDot(dotAPI || location.origin).then((list) => {
-      // 个人主页 不处理
-      if (pathname.startsWith("/@")) {
-        return;
-      }
-      // 节点不可用 跳转
       if (list === null) {
         notifications.show({ message: "节点不可用", color: "red" });
         router.push("/dot/?back");

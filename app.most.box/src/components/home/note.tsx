@@ -13,6 +13,7 @@ import {
   Menu,
   Tooltip,
   LoadingOverlay,
+  Box,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { IconDotsVertical, IconPlus, IconRefresh } from "@tabler/icons-react";
@@ -405,17 +406,21 @@ export default function HomeNote() {
                                 wrap="nowrap"
                                 gap={0}
                               >
-                                <Text
+                                <Box
                                   py={6}
                                   className="mp-hover"
                                   flex={1}
-                                  fw={500}
-                                  lineClamp={1}
                                   component={Link}
                                   href={shareUrl(note)}
                                 >
-                                  {subName || note.name}
-                                </Text>
+                                  <Text
+                                    fw={500}
+                                    lineClamp={1}
+                                    c="var(--mantine-color-text)"
+                                  >
+                                    {subName || note.name}
+                                  </Text>
+                                </Box>
                                 <Menu shadow="md" width={120}>
                                   <Menu.Target>
                                     <ActionIcon variant="subtle" color="gary">

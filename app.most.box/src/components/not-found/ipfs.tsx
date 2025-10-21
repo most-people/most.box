@@ -19,8 +19,8 @@ import {
   Box,
 } from "@mantine/core";
 import Link from "next/link";
-import { useUserStore } from "@/stores/userStore";
 import { IconCopy, IconInfoCircle } from "@tabler/icons-react";
+import { useDotStore } from "@/stores/dotStore";
 import "./ipfs.scss";
 
 type CidType = "dir" | "note" | "file";
@@ -32,8 +32,8 @@ const PageContent = () => {
   const cid = pathname.split("/")[2] || "";
   const initFilename = params.get("filename") || "";
   const [filename, setFilename] = useState<string>(initFilename);
-  const dotCID = useUserStore((state) => state.dotCID);
-  const dotAPI = useUserStore((state) => state.dotAPI);
+  const dotCID = useDotStore((state) => state.dotCID);
+  const dotAPI = useDotStore((state) => state.dotAPI);
 
   const shareUrl = useMemo(() => {
     if (dotAPI && cid) {

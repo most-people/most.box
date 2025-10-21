@@ -21,10 +21,11 @@ import Link from "next/link";
 import mp from "@/constants/mp";
 import { Icon } from "@/components/Icon";
 import { IconAt } from "@tabler/icons-react";
+import { useDotStore } from "@/stores/dotStore";
 
 const UserName = () => {
   const wallet = useUserStore((state) => state.wallet);
-  const RPC = useUserStore((state) => state.RPC);
+  const RPC = useDotStore((state) => state.RPC);
 
   const [currentName, setCurrentName] = useState("");
   const [nameInput, setNameInput] = useState("");
@@ -303,8 +304,8 @@ const UserName = () => {
 
 const UserData = () => {
   const wallet = useUserStore((state) => state.wallet);
-  const RPC = useUserStore((state) => state.RPC);
-  const dotAPI = useUserStore((state) => state.dotAPI);
+  const RPC = useDotStore((state) => state.RPC);
+  const dotAPI = useDotStore((state) => state.dotAPI);
   const [loadingSetData, setLoadingSetData] = useState(false);
   const [loadingDelData, setLoadingDelData] = useState(false);
   const [currentData, setCurrentData] = useState("");
@@ -525,7 +526,7 @@ const UserData = () => {
 };
 
 export default function PageProfile() {
-  const Explorer = useUserStore((state) => state.Explorer);
+  const Explorer = useDotStore((state) => state.Explorer);
   return (
     <Container p="md" w="100%">
       <AppHeader title="个人资料" />
