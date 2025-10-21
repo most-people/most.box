@@ -10,6 +10,7 @@ import {
   Divider,
 } from "@mantine/core";
 import { useUserStore } from "@/stores/userStore";
+import { useDotStore } from "@/stores/dotStore";
 import { AppHeader } from "@/components/AppHeader";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import Link from "next/link";
@@ -18,9 +19,11 @@ import { formatEther, JsonRpcProvider } from "ethers";
 
 export default function PageWeb3() {
   const wallet = useUserStore((state) => state.wallet);
-  const Explorer = useUserStore((state) => state.Explorer);
-  const network = useUserStore((state) => state.network);
-  const RPC = useUserStore((state) => state.RPC);
+
+  const Explorer = useDotStore((state) => state.Explorer);
+  const network = useDotStore((state) => state.network);
+  const RPC = useDotStore((state) => state.RPC);
+
   const [showX25519, setShowX25519] = useState(false);
   const [balance, setBalance] = useState("-");
   const [ipns, setIPNS] = useState("-");

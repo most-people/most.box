@@ -31,8 +31,8 @@ interface UserStore {
   fingerprint: string;
   // 根目录
   rootCID: string;
-  setRootCID: () => Promise<string[] | null>;
-  // 退出
+  updateRootCID: () => Promise<string[] | null>;
+  // 退出登录
   exit: () => void;
 }
 
@@ -72,7 +72,7 @@ export const useUserStore = create<State>((set, get) => ({
   fingerprint: "",
   // 根目录 CID
   rootCID: "",
-  async setRootCID() {
+  async updateRootCID() {
     return null;
   },
   exit() {

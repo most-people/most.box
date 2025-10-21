@@ -19,6 +19,7 @@ import "@/app/note/note.scss";
 
 import { useSearchParams } from "next/navigation";
 import { useUserStore } from "@/stores/userStore";
+import { useDotStore } from "@/stores/dotStore";
 import { api } from "@/constants/api";
 import { notifications } from "@mantine/notifications";
 import { mostDecode, mostEncode } from "@/constants/MostWallet";
@@ -27,9 +28,9 @@ import { modals } from "@mantine/modals";
 
 const PageContent = () => {
   const params = useSearchParams();
-  const dotCID = useUserStore((state) => state.dotCID);
+  const dotCID = useDotStore((state) => state.dotCID);
   const wallet = useUserStore((state) => state.wallet);
-  const updateCID = useUserStore((state) => state.updateCID);
+  const updateRootCID = useUserStore((state) => state.updateRootCID);
 
   const [loading, setLoading] = useState(true);
   const [viewer, setViewer] = useState<any>(null);
@@ -104,7 +105,7 @@ const PageContent = () => {
       const res = await api.put("/files.upload", formData);
       const cid = res.data?.cid;
       if (cid) {
-        updateCID();
+        updateRootCID();
         updateUrl(cid, wallet?.address);
         notifications.show({
           message: `${name} 保存成功`,

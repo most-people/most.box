@@ -1,6 +1,7 @@
 "use client";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { useUserStore } from "@/stores/userStore";
+import { useDotStore } from "@/stores/dotStore";
 import { useEffect } from "react";
 import { api } from "@/constants/api";
 import { useComputedColorScheme, useMantineColorScheme } from "@mantine/core";
@@ -9,9 +10,10 @@ import { notifications } from "@mantine/notifications";
 
 export default function AppProvider() {
   const initWallet = useUserStore((state) => state.initWallet);
-  const setItem = useUserStore((state) => state.setItem);
-  const setNetwork = useUserStore((state) => state.setNetwork);
-  const updateDot = useUserStore((state) => state.updateDot);
+  const setUserItem = useUserStore((state) => state.setItem);
+  const setDotItem = useDotStore((state) => state.setItem);
+  const setNetwork = useDotStore((state) => state.setNetwork);
+  const updateDot = useDotStore((state) => state.updateDot);
   const router = useRouter();
 
   const initFinger = async () => {
@@ -46,7 +48,7 @@ export default function AppProvider() {
       }
     });
     const dotCID = localStorage.getItem("dotCID");
-    if (dotCID) setItem("dotCID", dotCID);
+    if (dotCID) setDotItem("dotCID", dotCID);
   };
 
   useEffect(() => {
@@ -62,7 +64,7 @@ export default function AppProvider() {
   const computedColorScheme = useComputedColorScheme();
   useEffect(() => {
     const theme = colorScheme === "auto" ? computedColorScheme : colorScheme;
-    setItem("nodeDark", theme === "dark" ? "toastui-editor-dark" : "");
+    setUserItem("nodeDark", theme === "dark" ? "toastui-editor-dark" : "");
   }, [colorScheme, computedColorScheme]);
 
   return null;

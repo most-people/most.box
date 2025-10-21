@@ -32,6 +32,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { FileItem, useUserStore } from "@/stores/userStore";
 import mp from "@/constants/mp";
+import { useDotStore } from "@/stores/dotStore";
 
 interface PreviewFile {
   file: File;
@@ -43,11 +44,11 @@ const SystemDir = [".note"];
 
 export default function HomeFile() {
   const wallet = useUserStore((state) => state.wallet);
-  const dotCID = useUserStore((state) => state.dotCID);
   const files = useUserStore((state) => state.files);
   const filesPath = useUserStore((state) => state.filesPath);
   const setItem = useUserStore((state) => state.setItem);
-  const updateCID = useUserStore((state) => state.updateCID);
+  const updateRootCID = useUserStore((state) => state.updateRootCID);
+  const dotCID = useDotStore((state) => state.dotCID);
 
   const [fetchLoading, setFetchLoading] = useState(false);
   const [uploadLoading, setUploadLoading] = useState(false);
@@ -125,7 +126,7 @@ export default function HomeFile() {
       const res = await api.put("/files.upload", formData);
       const cid = res.data?.cid;
       if (cid) {
-        updateCID();
+        updateRootCID();
         notifications.show({
           message: "文件夹创建成功",
           color: "green",
@@ -206,7 +207,7 @@ export default function HomeFile() {
         const res = await api.put("/files.upload", formData);
         const cid = res.data?.cid;
         if (cid) {
-          updateCID();
+          updateRootCID();
           notifications.update({
             id: notificationId,
             title: "上传中",
