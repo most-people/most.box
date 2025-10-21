@@ -297,10 +297,10 @@ const UserName = () => {
           size="sm"
           c="blue"
           component={Link}
-          href={"/@" + currentName}
+          href={`https://most.box/@${currentName}/`}
           target="_blank"
         >
-          个人主页 /@{currentName}
+          个人主页 most.box/@{currentName}
         </Anchor>
       )}
     </Stack>
@@ -485,10 +485,10 @@ const UserData = () => {
       <Text>用户数据</Text>
 
       <TextInput
-        description="默认节点，个人主页使用该节点查询数据"
+        description="推荐节点"
         leftSection={<Icon name="Earth" size={16} />}
         variant="filled"
-        placeholder="请设置默认节点"
+        placeholder="请设置推荐节点"
         value={currentDot}
         disabled
       />
@@ -515,7 +515,7 @@ const UserData = () => {
           onClick={onSetData}
           disabled={!wallet || !dotAPI || currentDot === dotAPI}
         >
-          上链
+          设为推荐节点
         </Button>
         <Button
           variant="light"

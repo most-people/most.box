@@ -9,18 +9,17 @@ import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
 import mp from "@/constants/mp";
-import { api } from "@/constants/api";
-import { Dot, useUserStore } from "@/stores/userStore";
-import { useMarkdown } from "@/hooks/useMarkdown";
+// import { api } from "@/constants/api";
+import { useUserStore } from "@/stores/userStore";
+// import { useMarkdown } from "@/hooks/useMarkdown";
 import { Icon } from "../Icon";
-import Link from "next/link";
+// import Link from "next/link";
 import { notifications } from "@mantine/notifications";
 
 export default function PageUser() {
   const pathname = usePathname();
   const [uid, setUid] = useState("");
   const RPC = NETWORK_CONFIG["mainnet"].rpc;
-
   const [API, setAPI] = useState("");
 
   const provider = useMemo(() => new JsonRpcProvider(RPC), [RPC]);
@@ -85,42 +84,42 @@ export default function PageUser() {
   }, [uid]);
 
   const nodeDark = useUserStore((state) => state.nodeDark);
-  const dotAPI = useUserStore((state) => state.dotAPI);
-  const updateDot = useUserStore((state) => state.updateDot);
+  // const dotAPI = useUserStore((state) => state.dotAPI);
+  // const updateDot = useUserStore((state) => state.updateDot);
   const profileElement = useRef<HTMLDivElement>(null);
-  const markdown = useMarkdown();
-  const noteName = pathname.split("/")[2] || ".profile";
+  // const markdown = useMarkdown();
+  // const noteName = pathname.split("/")[2] || ".profile";
 
-  const [cid, setCid] = useState("");
-  const fetchNote = async (uid: string, url: string, dotCID: string) => {
-    // 没有节点 自动切换
-    if (!dotAPI) {
-      updateDot(url);
-    }
-    try {
-      const res = await api.get(`/files.cid/${uid}/.note/${noteName}`, {
-        baseURL: url,
-      });
-      const cid = res.data;
-      if (cid) {
-        setCid(cid);
-        const response = await fetch(`${dotCID}/ipfs/${cid}/index.md`);
-        const content = await response.text();
-        if (content && profileElement.current) {
-          const viewer = await markdown.initViewer(profileElement.current);
-          viewer.setMarkdown(content);
-        }
-      } else {
-        throw new Error(`cid 不存在`);
-      }
-    } catch (error) {
-      console.warn("获取笔记失败", error);
-      notifications.show({
-        message: `获取笔记 ${noteName} 失败`,
-        color: "red",
-      });
-    }
-  };
+  // const [cid, setCid] = useState("");
+  // const fetchNote = async (uid: string, url: string, dotCID: string) => {
+  //   // 没有节点 自动切换
+  //   if (!dotAPI) {
+  //     updateDot(url);
+  //   }
+  //   try {
+  //     const res = await api.get(`/files.cid/${uid}/.note/${noteName}`, {
+  //       baseURL: url,
+  //     });
+  //     const cid = res.data;
+  //     if (cid) {
+  //       setCid(cid);
+  //       const response = await fetch(`${dotCID}/ipfs/${cid}/index.md`);
+  //       const content = await response.text();
+  //       if (content && profileElement.current) {
+  //         const viewer = await markdown.initViewer(profileElement.current);
+  //         viewer.setMarkdown(content);
+  //       }
+  //     } else {
+  //       throw new Error(`cid 不存在`);
+  //     }
+  //   } catch (error) {
+  //     console.warn("获取笔记失败", error);
+  //     notifications.show({
+  //       message: `获取笔记 ${noteName} 失败`,
+  //       color: "red",
+  //     });
+  //   }
+  // };
 
   const fetchData = async (owner: string) => {
     try {
@@ -129,17 +128,17 @@ export default function PageUser() {
         const data = JSON.parse(json);
         if (data?.dot) {
           setAPI(data.dot);
-          const res = await api.get("/api.dot", { baseURL: data.dot });
-          const dot = res.data as Dot;
-          if (dot) {
-            let dotCID = dot.CIDs[0];
-            if (dotAPI.endsWith(":1976")) {
-              dotCID = dotAPI.slice(0, -5) + ":8080";
-            }
-            fetchNote(owner, data.dot, dotCID);
-          } else {
-            throw new Error("获取 api.dot 失败");
-          }
+          // const res = await api.get("/api.dot", { baseURL: data.dot });
+          // const dot = res.data as Dot;
+          // if (dot) {
+          //   let dotCID = dot.CIDs[0];
+          //   if (dotAPI.endsWith(":1976")) {
+          //     dotCID = dotAPI.slice(0, -5) + ":8080";
+          //   }
+          //   fetchNote(owner, data.dot, dotCID);
+          // } else {
+          //   throw new Error("获取 api.dot 失败");
+          // }
         } else {
           throw new Error("获取 data.dot 失败");
         }
@@ -173,7 +172,7 @@ export default function PageUser() {
               </ActionIcon>
             </Menu.Target>
 
-            <Menu.Dropdown>
+            {/* <Menu.Dropdown>
               <Menu.Item
                 leftSection="✏️"
                 component={Link}
@@ -182,14 +181,14 @@ export default function PageUser() {
               >
                 编辑
               </Menu.Item>
-            </Menu.Dropdown>
+            </Menu.Dropdown> */}
           </Menu>
         }
       />
       <Text>用户名：{username}</Text>
       <Text>地址：{owner}</Text>
-      <Text>节点：{API}</Text>
-      <Text>CID：{cid}</Text>
+      <Text>推荐节点：{API}</Text>
+      {/* <Text>CID：{cid}</Text> */}
       <Box className={nodeDark} ref={profileElement} />
     </Stack>
   );
