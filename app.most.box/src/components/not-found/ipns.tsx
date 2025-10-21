@@ -1,7 +1,7 @@
 "use client";
 import { Suspense } from "react";
 import { AppHeader } from "@/components/AppHeader";
-import { Box, Center, Container } from "@mantine/core";
+import { Center } from "@mantine/core";
 import { QRCodeSVG } from "qrcode.react";
 import "./ipns.scss";
 

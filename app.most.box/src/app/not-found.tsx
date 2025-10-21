@@ -52,7 +52,7 @@ export default function PageNotFound() {
       ) : type === "ipfs" ? (
         <PageIPFS />
       ) : type === "ipns" ? (
-        <PageIPNS />
+        <PageIPFS />
       ) : (
         <Page404 />
       )}

@@ -7,8 +7,6 @@ import { QRCodeSVG } from "qrcode.react";
 import {
   Text,
   Stack,
-  Paper,
-  Flex,
   Group,
   Title,
   CopyButton,
@@ -17,10 +15,12 @@ import {
   TextInput,
   Tooltip,
   Button,
+  Center,
 } from "@mantine/core";
 import Link from "next/link";
 import { useUserStore } from "@/stores/userStore";
 import { IconCopy, IconQrcode, IconInfoCircle } from "@tabler/icons-react";
+import "./ipfs.scss";
 
 type CidType = "dir" | "note" | "file";
 
@@ -79,6 +79,10 @@ const PageContent = () => {
     }
     return "";
   }, [dotCID, cid, filename, cidType]);
+  const name = "HEU KMS Activator";
+  const host = "https://most.box/ipns/";
+  const ipns = "k51qzi5uqu5dmdudfnx05uaaehyo5yceivmvhjehy2isy7o3nj5coyw9ycy2qv";
+  const path = "";
 
   return (
     <>
@@ -236,34 +240,26 @@ const PageContent = () => {
             </CopyButton>
           }
         />
-
-        {shareUrl && (
-          <Flex justify="center">
-            <Paper
-              radius="md"
-              p={12}
-              withBorder
-              style={{ backgroundColor: "white" }}
-            >
-              <Stack gap={9}>
-                <Group justify="center" gap={6}>
-                  <IconQrcode size={18} />
-                  <Text size="sm" c="dimmed">
-                    扫码分享
-                  </Text>
-                  <IconQrcode size={18} />
-                </Group>
-                <QRCodeSVG
-                  value={shareUrl}
-                  size={200}
-                  bgColor="white"
-                  fgColor="#333"
-                  level="M"
-                />
-              </Stack>
-            </Paper>
-          </Flex>
-        )}
+        <Center>
+          <div className="ipfs-qrcode">
+            <div className="qrcode-frame">
+              <QRCodeSVG
+                className="qrcode"
+                value={host + ipns + path}
+                size={138}
+                bgColor="transparent"
+                fgColor="#ffffff"
+              />
+            </div>
+            <div className="line"></div>
+            <div className="info">
+              <div className="name">{name}</div>
+              <div className="host">{host}</div>
+              <div className="ipns">{ipns}</div>
+              <div className="path">{path}</div>
+            </div>
+          </div>
+        </Center>
       </Stack>
     </>
   );
