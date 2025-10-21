@@ -2,13 +2,16 @@
 
 import NameContractABI from "@/assets/json/NameContractABI.json";
 
-// 合约配置
+// 节点合约
 export const CONTRACT_ADDRESS_DOT =
   "0xB67662F0d2BB106B055503062e1dba4f072f5781";
+
+// 名称合约
 export const CONTRACT_ADDRESS_NAME =
   "0x8F175B89C1A5Bb27f050FC88F0894d684A45f299";
 
-export type NetworkType = "mainnet" | "testnet";
+// 网络类型
+export type NETWORK_TYPE = "mainnet" | "testnet";
 
 // 网络配置
 export const NETWORK_CONFIG = {
@@ -66,12 +69,6 @@ export const NETWORK_CONFIG = {
       "https://base-sepolia-rpc.publicnode.com",
     ],
   },
-};
-
-export const randomRPC = (network: NetworkType) => {
-  return NETWORK_CONFIG[network].RPCs[
-    Math.floor(Math.random() * NETWORK_CONFIG[network].RPCs.length)
-  ];
 };
 
 // DotContract ABI

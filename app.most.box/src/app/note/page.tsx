@@ -29,6 +29,7 @@ const PageContent = () => {
   const params = useSearchParams();
   const dotCID = useUserStore((state) => state.dotCID);
   const wallet = useUserStore((state) => state.wallet);
+  const updateCID = useUserStore((state) => state.updateCID);
 
   const [loading, setLoading] = useState(true);
   const [viewer, setViewer] = useState<any>(null);
@@ -40,9 +41,9 @@ const PageContent = () => {
   const [isSecret, setIsSecret] = useState(false);
   const [inited, setInited] = useState(false);
 
-  const [noteName, setNoteName] = useState("123123");
+  const [noteName, setNoteName] = useState("");
 
-  const updateCid = (cid: string, uid?: string) => {
+  const updateUrl = (cid: string, uid?: string) => {
     const url = new URL(window.location.href);
     url.searchParams.set("cid", cid);
     if (uid) {
@@ -103,7 +104,8 @@ const PageContent = () => {
       const res = await api.put("/files.upload", formData);
       const cid = res.data?.cid;
       if (cid) {
-        updateCid(cid, wallet?.address);
+        updateCID();
+        updateUrl(cid, wallet?.address);
         notifications.show({
           message: `${name} 保存成功`,
           color: "green",
@@ -179,7 +181,7 @@ const PageContent = () => {
         const res = await api.get(`/files.cid/${uid}/.note/${name}`);
         const cid = res.data;
         if (cid) {
-          updateCid(cid);
+          updateUrl(cid);
           fetchNote(cid);
           return;
         }

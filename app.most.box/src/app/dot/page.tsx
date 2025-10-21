@@ -49,8 +49,7 @@ import {
   CONTRACT_ABI_DOT,
   CONTRACT_ADDRESS_DOT,
   NETWORK_CONFIG,
-  NetworkType,
-  randomRPC,
+  NETWORK_TYPE,
 } from "@/constants/dot";
 import { useBack } from "@/hooks/useBack";
 
@@ -70,6 +69,7 @@ export default function PageDot() {
   const dotAPI = useUserStore((state) => state.dotAPI);
   const dotNodes = useUserStore((state) => state.dotNodes);
   const updateDot = useUserStore((state) => state.updateDot);
+  const network = useUserStore((state) => state.network);
 
   // ===== 当前节点状态 =====
   const [apiLoading, setApiLoading] = useState(false);
@@ -87,7 +87,6 @@ export default function PageDot() {
   >({});
 
   // ===== 网络和RPC状态 =====
-  const [network, setNetwork] = useState<NetworkType>("mainnet");
   const RPC = NETWORK_CONFIG[network].rpc;
   const [customRPC, setCustomRPC] = useState(RPC);
   const Explorer = NETWORK_CONFIG[network].explorer;
@@ -248,10 +247,10 @@ export default function PageDot() {
   // ===== 节点管理相关函数 =====
   const validateNetwork = (chainId: number): boolean => {
     if (chainId === NETWORK_CONFIG.mainnet.chainId) {
-      setNetwork("mainnet");
+      setItem("network", "mainnet");
       return true;
     } else if (chainId === NETWORK_CONFIG.testnet.chainId) {
-      setNetwork("testnet");
+      setItem("network", "testnet");
       return true;
     } else {
       showNotification(
@@ -403,7 +402,7 @@ export default function PageDot() {
     if (value && (value === "mainnet" || value === "testnet")) {
       const rpc = NETWORK_CONFIG[value].rpc;
       setCustomRPC(rpc);
-      setNetwork(value);
+      setItem("network", value);
       fetchNodes(rpc);
       notifications.show({
         title: "网络已切换",
@@ -434,6 +433,12 @@ export default function PageDot() {
     // 从区块链获取最新数据
     fetchNodes();
   }, []);
+
+  const randomRPC = (network: NETWORK_TYPE) => {
+    return NETWORK_CONFIG[network].RPCs[
+      Math.floor(Math.random() * NETWORK_CONFIG[network].RPCs.length)
+    ];
+  };
 
   // ===== 主渲染 =====
   return (
@@ -604,7 +609,7 @@ export default function PageDot() {
               color="orange"
               variant="light"
               onClick={() => {
-                setCustomRPC(randomRPC("mainnet"));
+                setCustomRPC(randomRPC(network));
                 fetchNodes();
               }}
             >

@@ -1,8 +1,4 @@
-import {
-  CONTRACT_ABI_NAME,
-  CONTRACT_ADDRESS_NAME,
-  NETWORK_CONFIG,
-} from "@/constants/dot";
+import { CONTRACT_ABI_NAME, CONTRACT_ADDRESS_NAME } from "@/constants/dot";
 import { ActionIcon, Box, Menu, Stack, Text } from "@mantine/core";
 import { Contract, isAddress, JsonRpcProvider } from "ethers";
 import { usePathname } from "next/navigation";
@@ -19,7 +15,7 @@ import { notifications } from "@mantine/notifications";
 export default function PageUser() {
   const pathname = usePathname();
   const [uid, setUid] = useState("");
-  const RPC = NETWORK_CONFIG["mainnet"].rpc;
+  const RPC = useUserStore((state) => state.RPC);
   const [API, setAPI] = useState("");
 
   const provider = useMemo(() => new JsonRpcProvider(RPC), [RPC]);

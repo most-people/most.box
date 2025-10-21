@@ -3,6 +3,7 @@ import { type MostWallet } from "@/constants/MostWallet";
 import { create } from "zustand";
 import { api } from "@/constants/api";
 import { notifications } from "@mantine/notifications";
+import { NETWORK_CONFIG, type NETWORK_TYPE } from "@/constants/dot";
 
 export interface FileItem {
   name: string;
@@ -38,12 +39,21 @@ interface UserStore {
   dotAPI: string;
   dotCID: string;
   dotNodes: DotNode[];
+  // 笔记
   notes?: Note[];
   nodeDark: "toastui-editor-dark" | "";
   notesQuery: string;
+  // 文件系统
   files?: FileItem[];
   filesPath: string;
   fingerprint: string;
+  rootCID: string;
+  updateCID: () => Promise<string[] | null>;
+  // 区块链网络
+  network: NETWORK_TYPE;
+  RPC: string;
+  Explorer: string;
+  // 退出
   exit: () => void;
 }
 
@@ -106,9 +116,36 @@ export const useUserStore = create<State>((set, get) => ({
   files: undefined,
   filesPath: "",
   fingerprint: "",
+  rootCID: "",
+  async updateCID() {
+    return null;
+  },
   exit() {
     set({ wallet: undefined, notes: undefined, files: undefined });
     localStorage.removeItem("jwt");
     localStorage.removeItem("token");
+  },
+  // 网络相关状态和方法
+  network: (localStorage.getItem("network") as NETWORK_TYPE) || "mainnet",
+  RPC: NETWORK_CONFIG[
+    (localStorage.getItem("network") as NETWORK_TYPE) || "mainnet"
+  ].rpc,
+  Explorer:
+    NETWORK_CONFIG[
+      (localStorage.getItem("network") as NETWORK_TYPE) || "mainnet"
+    ].explorer,
+  setNetwork(network: NETWORK_TYPE) {
+    const config = NETWORK_CONFIG[network];
+    set({
+      network,
+      RPC: config.rpc,
+      Explorer: config.explorer,
+    });
+    localStorage.setItem("network", network);
+    notifications.show({
+      title: "网络已切换",
+      message: `已切换到 ${config.name}`,
+      color: config.color,
+    });
   },
 }));

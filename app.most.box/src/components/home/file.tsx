@@ -47,6 +47,8 @@ export default function HomeFile() {
   const files = useUserStore((state) => state.files);
   const filesPath = useUserStore((state) => state.filesPath);
   const setItem = useUserStore((state) => state.setItem);
+  const updateCID = useUserStore((state) => state.updateCID);
+
   const [fetchLoading, setFetchLoading] = useState(false);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [previewFiles, setPreviewFiles] = useState<PreviewFile[]>([]);
@@ -120,14 +122,20 @@ export default function HomeFile() {
       const formData = new FormData();
       formData.append("file", emptyFile, "hello.txt");
       formData.append("path", `${path}/hello.txt`);
-      await api.put("/files.upload", formData);
-      notifications.show({
-        message: "文件夹创建成功",
-        color: "green",
-      });
-      await fetchFiles(filesPath);
-      setNewFolderModalOpen(false);
-      setNewFolderName("");
+      const res = await api.put("/files.upload", formData);
+      const cid = res.data?.cid;
+      if (cid) {
+        updateCID();
+        notifications.show({
+          message: "文件夹创建成功",
+          color: "green",
+        });
+        await fetchFiles(filesPath);
+        setNewFolderModalOpen(false);
+        setNewFolderName("");
+      } else {
+        throw new Error("文件夹创建失败");
+      }
     } catch (error) {
       console.info(error);
       notifications.show({
@@ -198,6 +206,7 @@ export default function HomeFile() {
         const res = await api.put("/files.upload", formData);
         const cid = res.data?.cid;
         if (cid) {
+          updateCID();
           notifications.update({
             id: notificationId,
             title: "上传中",

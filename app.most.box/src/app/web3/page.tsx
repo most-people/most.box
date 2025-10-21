@@ -14,17 +14,16 @@ import { AppHeader } from "@/components/AppHeader";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import Link from "next/link";
 import mp from "@/constants/mp";
-import { NETWORK_CONFIG } from "@/constants/dot";
 import { formatEther, JsonRpcProvider } from "ethers";
 
 export default function PageWeb3() {
   const wallet = useUserStore((state) => state.wallet);
+  const RPC = useUserStore((state) => state.RPC);
   const [showX25519, setShowX25519] = useState(false);
   const [balance, setBalance] = useState("-");
   const [ipns, setIPNS] = useState("-");
 
   const fetchBalance = (address: string) => {
-    const RPC = NETWORK_CONFIG["mainnet"].rpc;
     const provider = new JsonRpcProvider(RPC);
     // 获取余额
     provider.getBalance(address).then((balance) => {

@@ -27,6 +27,7 @@ import { useDisclosure } from "@mantine/hooks";
 export default function HomeNote() {
   const wallet = useUserStore((state) => state.wallet);
   const notes = useUserStore((state) => state.notes);
+  const updateCID = useUserStore((state) => state.updateCID);
   const notesQuery = useUserStore((state) => state.notesQuery);
   const setItem = useUserStore((state) => state.setItem);
   const [fetchLoading, setFetchLoading] = useState(false);
@@ -139,6 +140,7 @@ export default function HomeNote() {
       const res = await api.put("/files.upload", formData);
       const cid = res.data?.cid;
       if (cid) {
+        updateCID();
         notifications.show({
           color: "green",
           message: "笔记创建成功",

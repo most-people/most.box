@@ -2,7 +2,6 @@
 
 import { AppHeader } from "@/components/AppHeader";
 import { Anchor, Avatar, Group } from "@mantine/core";
-
 import { useEffect, useMemo, useState } from "react";
 import {
   Text,
@@ -13,11 +12,7 @@ import {
   Badge,
 } from "@mantine/core";
 
-import {
-  CONTRACT_ABI_NAME,
-  CONTRACT_ADDRESS_NAME,
-  NETWORK_CONFIG,
-} from "@/constants/dot";
+import { CONTRACT_ABI_NAME, CONTRACT_ADDRESS_NAME } from "@/constants/dot";
 import { useUserStore } from "@/stores/userStore";
 import { Contract, JsonRpcProvider, HDNodeWallet } from "ethers";
 import { notifications } from "@mantine/notifications";
@@ -29,14 +24,13 @@ import { IconAt } from "@tabler/icons-react";
 
 const UserName = () => {
   const wallet = useUserStore((state) => state.wallet);
+  const RPC = useUserStore((state) => state.RPC);
 
   const [currentName, setCurrentName] = useState("");
   const [nameInput, setNameInput] = useState("");
   const [loadingGet, setLoadingGet] = useState(false);
   const [loadingSet, setLoadingSet] = useState(false);
   const [loadingDel, setLoadingDel] = useState(false);
-
-  const RPC = NETWORK_CONFIG["mainnet"].rpc;
 
   const provider = useMemo(() => new JsonRpcProvider(RPC), [RPC]);
   const contract = useMemo(
@@ -309,12 +303,11 @@ const UserName = () => {
 
 const UserData = () => {
   const wallet = useUserStore((state) => state.wallet);
+  const RPC = useUserStore((state) => state.RPC);
   const dotAPI = useUserStore((state) => state.dotAPI);
   const [loadingSetData, setLoadingSetData] = useState(false);
   const [loadingDelData, setLoadingDelData] = useState(false);
   const [currentData, setCurrentData] = useState("");
-
-  const RPC = NETWORK_CONFIG["mainnet"].rpc;
   const provider = useMemo(() => new JsonRpcProvider(RPC), [RPC]);
   const contract = useMemo(
     () => new Contract(CONTRACT_ADDRESS_NAME, CONTRACT_ABI_NAME, provider),
@@ -532,7 +525,7 @@ const UserData = () => {
 };
 
 export default function PageProfile() {
-  const Explorer = NETWORK_CONFIG["mainnet"].explorer;
+  const Explorer = useUserStore((state) => state.Explorer);
   return (
     <Container p="md" w="100%">
       <AppHeader title="个人资料" />
