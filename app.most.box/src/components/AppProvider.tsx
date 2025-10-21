@@ -61,31 +61,6 @@ export default function AppProvider() {
     sessionStorage.firstPath = window.location.pathname;
   }, []);
 
-  useEffect(() => {
-    if (pathname && dotAPI) {
-      try {
-        // web2 登录 不处理
-        if (window.location.hash.includes("=")) {
-          return;
-        }
-        // 个人主页 不处理
-        if (pathname.startsWith("/@")) {
-          return;
-        }
-        const url = new URL(window.location.href);
-        const dot = new URL(dotAPI);
-        if (url.hash !== "#" + dot.host) {
-          if (url.host === dot.host) {
-            url.hash = "";
-          } else {
-            url.hash = dot.host;
-          }
-          router.replace(url.href, { scroll: false });
-        }
-      } catch {}
-    }
-  }, [pathname, dotAPI]);
-
   const { colorScheme } = useMantineColorScheme();
   const computedColorScheme = useComputedColorScheme();
   useEffect(() => {
