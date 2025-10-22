@@ -10,7 +10,6 @@ import HomeNote from "@/components/home/note";
 import HomeExplore from "@/components/home/explore";
 import { AppHeader } from "@/components/AppHeader";
 import Link from "next/link";
-import HomeMore from "@/components/home/more";
 
 export default function PageHome() {
   const [homeTab, setHomeTab] = useState<string | null>(null);
@@ -39,7 +38,6 @@ export default function PageHome() {
             <Icon name="Earth" size={24} />
           </ActionIcon>
         }
-        right={<HomeMore homeTab={homeTab} />}
       />
       <Tabs
         id="page-home"

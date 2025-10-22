@@ -260,131 +260,13 @@ export const registerFiles = (server, ipfs) => {
     }
   });
 
-  // 上传 tar 压缩包并解压
+  // 导入
   server.put("/files.import", async (request, reply) => {
     const address = mp.getAddress(request.headers.authorization);
     if (!address) {
       return reply.code(400).send("token 无效");
     }
-
-    try {
-      const data = await request.file();
-
-      if (!data) {
-        return reply.code(400).send("没有文件");
-      }
-
-      const buffer = await data.toBuffer();
-      const path = data.fields.path?.value || "";
-      const filename = data.filename;
-
-      // 检查文件是否为 tar 格式
-      if (!filename.endsWith(".tar")) {
-        return reply.code(400).send("只支持 .tar 格式的压缩包");
-      }
-
-      const targetPath = path ? `/${address}/${path}` : `/${address}`;
-
-      const extract = tar.extract();
-      const uploadedFiles = [];
-      const errors = [];
-
-      // 处理 tar 文件中的每个条目
-      extract.on("entry", (header, stream, next) => {
-        try {
-          if (header.type === "file") {
-            const chunks = [];
-
-            stream.on("data", (chunk) => {
-              chunks.push(chunk);
-            });
-
-            stream.on("end", async () => {
-              try {
-                const fileBuffer = Buffer.concat(chunks);
-                const filePath = `${targetPath}/${header.name}`;
-
-                // 将文件添加到 IPFS
-                const fileAdded = await ipfs.add(fileBuffer, {
-                  cidVersion: 1,
-                  rawLeaves: true,
-                });
-
-                // 将文件复制到指定路径（自动创建父目录和覆盖已存在文件）
-                await ipfs.files.cp(`/ipfs/${fileAdded.cid}`, filePath, {
-                  parents: true,
-                });
-
-                uploadedFiles.push({
-                  name: header.name,
-                  path: filePath,
-                  cid: fileAdded.cid.toString(),
-                  size: fileAdded.size,
-                });
-
-                next();
-              } catch (error) {
-                errors.push(`文件 ${header.name} 上传失败: ${error.message}`);
-                next();
-              }
-            });
-
-            stream.on("error", (error) => {
-              errors.push(`文件 ${header.name} 读取失败: ${error.message}`);
-              next();
-            });
-          } else if (header.type === "directory") {
-            // 创建目录
-            (async () => {
-              try {
-                const dirPath = `${targetPath}/${header.name}`;
-                await ipfs.files.mkdir(dirPath, { parents: true });
-                uploadedFiles.push({
-                  name: header.name,
-                  path: dirPath,
-                  type: "directory",
-                });
-                next();
-              } catch (error) {
-                errors.push(`目录 ${header.name} 创建失败: ${error.message}`);
-                next();
-              }
-            })();
-          } else {
-            // 跳过其他类型的条目
-            next();
-          }
-        } catch (error) {
-          errors.push(`处理 ${header.name} 时出错: ${error.message}`);
-          next();
-        }
-      });
-
-      return new Promise((resolve, reject) => {
-        extract.on("finish", () => {
-          const result = {
-            ok: true,
-            message: `成功导入 ${uploadedFiles.length} 个文件`,
-            name: uploadedFiles[0]?.name || "",
-          };
-
-          if (errors.length > 0) {
-            result.message += `，但有 ${errors.length} 个文件处理失败`;
-          }
-
-          reply.code(200).send(result);
-          resolve(result);
-        });
-
-        extract.on("error", (error) => {
-          reply.code(500).send("tar 文件解压失败: " + error.message);
-          reject(error);
-        });
-
-        extract.end(buffer);
-      });
-    } catch (error) {
-      return reply.code(500).send("tar 压缩包上传失败 " + error.message);
-    }
   });
+
+  // 移除
 };

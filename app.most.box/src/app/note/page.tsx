@@ -28,9 +28,9 @@ import { modals } from "@mantine/modals";
 
 const PageContent = () => {
   const params = useSearchParams();
-  const dotCID = useDotStore((state) => state.dotCID);
   const wallet = useUserStore((state) => state.wallet);
-  const updateRootCID = useDotStore((state) => state.updateRootCID);
+  const setRootCID = useUserStore((state) => state.setRootCID);
+  const dotCID = useDotStore((state) => state.dotCID);
 
   const [loading, setLoading] = useState(true);
   const [viewer, setViewer] = useState<any>(null);
@@ -105,7 +105,7 @@ const PageContent = () => {
       const res = await api.put("/files.upload", formData);
       const cid = res.data?.cid;
       if (cid) {
-        updateRootCID();
+        setRootCID();
         updateUrl(cid, wallet?.address);
         notifications.show({
           message: `${name} 保存成功`,

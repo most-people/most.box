@@ -47,10 +47,9 @@ export default function HomeFile() {
   const files = useUserStore((state) => state.files);
   const filesPath = useUserStore((state) => state.filesPath);
   const setItem = useUserStore((state) => state.setItem);
+  const rootCID = useUserStore((state) => state.rootCID);
+  const setRootCID = useUserStore((state) => state.setRootCID);
 
-  const setDotItem = useDotStore((state) => state.setItem);
-  const updateRootCID = useDotStore((state) => state.updateRootCID);
-  const rootCID = useDotStore((state) => state.rootCID);
   const dotCID = useDotStore((state) => state.dotCID);
 
   const [fetchLoading, setFetchLoading] = useState(false);
@@ -88,7 +87,7 @@ export default function HomeFile() {
       api.post("/files.cid").then((res) => {
         const cid = res.data;
         if (cid) {
-          setDotItem("rootCID", cid);
+          setItem("rootCID", cid);
         }
       });
     }
@@ -127,7 +126,7 @@ export default function HomeFile() {
       const res = await api.put("/files.upload", formData);
       const cid = res.data?.cid;
       if (cid) {
-        updateRootCID();
+        setRootCID();
         notifications.show({
           message: "文件夹创建成功",
           color: "green",
@@ -208,7 +207,7 @@ export default function HomeFile() {
         const res = await api.put("/files.upload", formData);
         const cid = res.data?.cid;
         if (cid) {
-          updateRootCID();
+          setRootCID();
           notifications.update({
             id: notificationId,
             title: "上传中",
@@ -457,10 +456,10 @@ export default function HomeFile() {
   };
 
   useEffect(() => {
-    if (wallet && !files) {
+    if (rootCID && wallet && !files) {
       fetchFiles(filesPath);
     }
-  }, [wallet, files]);
+  }, [rootCID, wallet, files]);
 
   const normalizePath = (s: string) => (s || "").replace(/^\/+|\/+$/g, "");
   const oldPathForCompare = renamingItem

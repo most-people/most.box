@@ -1,13 +1,6 @@
 import { create } from "zustand";
-import {
-  CONTRACT_ABI_NAME,
-  CONTRACT_ADDRESS_NAME,
-  NETWORK_CONFIG,
-  type NETWORK_TYPE,
-} from "@/constants/dot";
+import { NETWORK_CONFIG, type NETWORK_TYPE } from "@/constants/dot";
 import { api } from "@/constants/api";
-import { Contract, HDNodeWallet, JsonRpcProvider } from "ethers";
-import { useUserStore } from "./userStore";
 
 export interface Dot {
   name: string;
@@ -33,9 +26,6 @@ interface DotState {
   RPC: string;
   Explorer: string;
   setNetwork: (network: NETWORK_TYPE) => void;
-  // 根目录
-  rootCID: string;
-  updateRootCID: () => Promise<void>;
   // 通用设置器
   setItem: <K extends keyof DotState>(key: K, value: DotState[K]) => void;
 }
@@ -85,29 +75,6 @@ export const useDotStore = create<State>((set, get) => ({
       Explorer: config.explorer,
     });
     localStorage.setItem("network", network);
-  },
-  // 根目录 CID
-  rootCID: "",
-  async updateRootCID() {
-    const { wallet } = useUserStore.getState();
-    if (wallet) {
-      const { RPC } = get();
-      const provider = new JsonRpcProvider(RPC);
-      const signer = HDNodeWallet.fromPhrase(wallet.mnemonic).connect(provider);
-      const contract = new Contract(
-        CONTRACT_ADDRESS_NAME,
-        CONTRACT_ABI_NAME,
-        signer
-      );
-      const rootCID = await contract.getCID(wallet.address);
-      const res = await api.post("/files.cid");
-      const cid = res.data;
-      if (cid && cid !== rootCID) {
-        const tx = await contract.setCID(cid);
-        await tx.wait();
-        set({ rootCID: cid });
-      }
-    }
   },
   // 通用设置器
   setItem: (key, value) => set((state) => ({ ...state, [key]: value })),
