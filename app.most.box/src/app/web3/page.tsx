@@ -63,7 +63,7 @@ export default function PageWeb3() {
           ETH 地址
         </Text>
 
-        <Text>{wallet?.address || "-"}</Text>
+        <Text>{wallet?.address.toLowerCase() || "-"}</Text>
 
         <Text size="lg" fw={500}>
           余额
@@ -120,18 +120,6 @@ export default function PageWeb3() {
 
         <Anchor component={Link} href="/web3/ethers">
           <Text>Ethers</Text>
-        </Anchor>
-
-        <Anchor component={Link} href="/game/5">
-          <Text>五子棋</Text>
-        </Anchor>
-
-        <Anchor component={Link} href="/game/black">
-          <Text>黑白棋</Text>
-        </Anchor>
-
-        <Anchor component={Link} href="/game/21">
-          <Text>二十一点</Text>
         </Anchor>
 
         <Anchor component={Link} href="/ipns">

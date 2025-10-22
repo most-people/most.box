@@ -30,7 +30,7 @@ const PageContent = () => {
   const params = useSearchParams();
   const dotCID = useDotStore((state) => state.dotCID);
   const wallet = useUserStore((state) => state.wallet);
-  const updateRootCID = useUserStore((state) => state.updateRootCID);
+  const saveRootCID = useUserStore((state) => state.saveRootCID);
 
   const [loading, setLoading] = useState(true);
   const [viewer, setViewer] = useState<any>(null);
@@ -105,7 +105,7 @@ const PageContent = () => {
       const res = await api.put("/files.upload", formData);
       const cid = res.data?.cid;
       if (cid) {
-        updateRootCID();
+        saveRootCID();
         updateUrl(cid, wallet?.address);
         notifications.show({
           message: `${name} 保存成功`,

@@ -47,7 +47,9 @@ export default function HomeFile() {
   const files = useUserStore((state) => state.files);
   const filesPath = useUserStore((state) => state.filesPath);
   const setItem = useUserStore((state) => state.setItem);
-  const updateRootCID = useUserStore((state) => state.updateRootCID);
+  const saveRootCID = useUserStore((state) => state.saveRootCID);
+  const rootCID = useUserStore((state) => state.rootCID);
+
   const dotCID = useDotStore((state) => state.dotCID);
 
   const [fetchLoading, setFetchLoading] = useState(false);
@@ -67,8 +69,6 @@ export default function HomeFile() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
 
-  const [rootCid, setRootCid] = useState("");
-
   const fetchFiles = async (path: string) => {
     try {
       setFetchLoading(true);
@@ -87,7 +87,7 @@ export default function HomeFile() {
       api.post("/files.cid").then((res) => {
         const cid = res.data;
         if (cid) {
-          setRootCid(cid);
+          setItem("rootCID", cid);
         }
       });
     }
@@ -126,7 +126,7 @@ export default function HomeFile() {
       const res = await api.put("/files.upload", formData);
       const cid = res.data?.cid;
       if (cid) {
-        updateRootCID();
+        saveRootCID();
         notifications.show({
           message: "文件夹创建成功",
           color: "green",
@@ -207,7 +207,7 @@ export default function HomeFile() {
         const res = await api.put("/files.upload", formData);
         const cid = res.data?.cid;
         if (cid) {
-          updateRootCID();
+          saveRootCID();
           notifications.update({
             id: notificationId,
             title: "上传中",
@@ -598,7 +598,7 @@ export default function HomeFile() {
                         handleOpenFile({
                           name: "root",
                           type: "directory",
-                          cid: { "/": rootCid },
+                          cid: { "/": rootCID },
                           size: 0,
                         })
                       }

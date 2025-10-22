@@ -2,6 +2,7 @@ import mp from "@/constants/mp";
 import { type MostWallet } from "@/constants/MostWallet";
 import { create } from "zustand";
 import { notifications } from "@mantine/notifications";
+import { api } from "@/constants/api";
 
 export interface FileItem {
   name: string;
@@ -31,7 +32,7 @@ interface UserStore {
   fingerprint: string;
   // 根目录
   rootCID: string;
-  updateRootCID: () => Promise<string[] | null>;
+  saveRootCID: () => Promise<void>;
   // 退出登录
   exit: () => void;
 }
@@ -72,8 +73,8 @@ export const useUserStore = create<State>((set, get) => ({
   fingerprint: "",
   // 根目录 CID
   rootCID: "",
-  async updateRootCID() {
-    return null;
+  async saveRootCID() {
+    // todo: 保存根目录 CID
   },
   exit() {
     set({ wallet: undefined, notes: undefined, files: undefined });

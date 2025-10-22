@@ -9,6 +9,7 @@ import {
   Divider,
   Group,
   Box,
+  Anchor,
 } from "@mantine/core";
 import { useMarkdown } from "@/hooks/useMarkdown";
 import IPFS from "@/assets/docs/IPFS.md";
@@ -17,6 +18,7 @@ import RunDot from "@/assets/docs/run-dot.md";
 import "./explore.scss";
 import { useUserStore } from "@/stores/userStore";
 import { Icon } from "@/components/Icon";
+import Link from "next/link";
 
 export default function HomeExplore() {
   const [randomWord, setRandomWord] = useState("");
@@ -85,7 +87,7 @@ export default function HomeExplore() {
 
       <Accordion my="md" variant="separated">
         <Accordion.Item value="DOT">
-          <Accordion.Control icon="🦕">节点切换</Accordion.Control>
+          <Accordion.Control icon="🌐">节点切换</Accordion.Control>
           <Accordion.Panel>
             点击左上角 <Icon name="Earth" size={24} /> 图标选择 IPFS 网关
           </Accordion.Panel>
@@ -111,6 +113,30 @@ export default function HomeExplore() {
       <Group justify="flex-end">
         <Text c="dimmed">——「{randomWord}」</Text>
       </Group>
+
+      <Title size="h3">快捷入口</Title>
+      <Divider my="md" />
+
+      <Accordion my="md" variant="separated" defaultValue="GAME">
+        <Accordion.Item value="GAME">
+          <Accordion.Control icon="🦕">小游戏</Accordion.Control>
+          <Accordion.Panel>
+            <Group>
+              <Anchor component={Link} href="/game/5">
+                <Text>五子棋</Text>
+              </Anchor>
+
+              <Anchor component={Link} href="/game/black">
+                <Text>黑白棋</Text>
+              </Anchor>
+
+              <Anchor component={Link} href="/game/21">
+                <Text>二十一点</Text>
+              </Anchor>
+            </Group>
+          </Accordion.Panel>
+        </Accordion.Item>
+      </Accordion>
     </Container>
   );
 }

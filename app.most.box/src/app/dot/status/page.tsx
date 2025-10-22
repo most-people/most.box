@@ -372,10 +372,9 @@ export default function PageDotStatus() {
 
   return (
     <Container py={20}>
-      <AppHeader title="IPFS 节点状态" />
+      <AppHeader title="IPFS 本地节点状态" />
 
       <Stack gap="md">
-        {/* IPFS节点状态 */}
         <Card withBorder>
           <Group justify="space-between" mb="md">
             <Group>
@@ -446,7 +445,6 @@ export default function PageDotStatus() {
           )}
         </Card>
 
-        {/* 对等节点统计 */}
         <Card withBorder>
           <Group justify="space-between" mb="md">
             <Group>
