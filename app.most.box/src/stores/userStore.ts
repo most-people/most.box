@@ -1,5 +1,9 @@
 import mp from "@/constants/mp";
-import { type MostWallet } from "@/constants/MostWallet";
+import {
+  mostDecode,
+  mostEncode,
+  type MostWallet,
+} from "@/constants/MostWallet";
 import { create } from "zustand";
 import { notifications } from "@mantine/notifications";
 import { CONTRACT_ABI_NAME, CONTRACT_ADDRESS_NAME } from "@/constants/dot";
@@ -94,13 +98,23 @@ export const useUserStore = create<State>((set, get) => ({
         CONTRACT_ABI_NAME,
         signer
       );
-      const [res, rootCID] = await Promise.all([
+      const [res, encodeCID] = await Promise.all([
         api.post("/files.cid"),
         contract.getCID(wallet.address),
       ]);
       const cid = res.data;
+      const rootCID = mostDecode(
+        encodeCID,
+        wallet.public_key,
+        wallet.private_key
+      );
       if (cid && cid !== rootCID) {
-        const tx = await contract.setCID(cid);
+        const encodeCID = mostEncode(
+          cid,
+          wallet.public_key,
+          wallet.private_key
+        );
+        const tx = await contract.setCID(encodeCID);
         await tx.wait();
         set({ rootCID: cid });
       }
@@ -116,10 +130,15 @@ export const useUserStore = create<State>((set, get) => ({
         CONTRACT_ABI_NAME,
         provider
       );
-      const [res, rootCID] = await Promise.all([
+      const [res, encodeCID] = await Promise.all([
         api.post("/files.cid"),
         contract.getCID(wallet.address),
       ]);
+      const rootCID = mostDecode(
+        encodeCID,
+        wallet.public_key,
+        wallet.private_key
+      );
       if (rootCID === res.data) {
         set({ rootCID });
       } else {

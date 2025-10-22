@@ -457,7 +457,6 @@ export default function HomeFile() {
 
   useEffect(() => {
     if (rootCID && wallet && !files) {
-      console.log("🌊", 123123);
       fetchFiles(filesPath);
     }
   }, [rootCID, wallet, files]);

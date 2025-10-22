@@ -1,5 +1,5 @@
 import { CONTRACT_ABI_NAME, CONTRACT_ADDRESS_NAME } from "@/constants/dot";
-import { ActionIcon, Box, Menu, Stack, Text } from "@mantine/core";
+import { ActionIcon, Anchor, Box, Menu, Stack, Text } from "@mantine/core";
 import { Contract, isAddress, JsonRpcProvider } from "ethers";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -12,11 +12,13 @@ import { Icon } from "../Icon";
 // import Link from "next/link";
 import { notifications } from "@mantine/notifications";
 import { useDotStore } from "@/stores/dotStore";
+import Link from "next/link";
 
 export default function PageUser() {
   const pathname = usePathname();
   const [uid, setUid] = useState("");
   const RPC = useDotStore((state) => state.RPC);
+  const Explorer = useDotStore((state) => state.Explorer);
   const [API, setAPI] = useState("");
 
   const provider = useMemo(() => new JsonRpcProvider(RPC), [RPC]);
@@ -137,15 +139,12 @@ export default function PageUser() {
           //   throw new Error("获取 api.dot 失败");
           // }
         } else {
-          throw new Error("获取 data.dot 失败");
+          // throw new Error("获取 data.dot 失败");
         }
-      } else {
-        throw new Error("获取 data 失败");
       }
-    } catch (err) {
-      console.warn("获取数据失败", err);
+    } catch (error: any) {
       notifications.show({
-        message: "获取数据失败",
+        message: error.message || "获取数据失败",
         color: "red",
       });
     }
@@ -182,10 +181,18 @@ export default function PageUser() {
           </Menu>
         }
       />
+      <Anchor
+        size="sm"
+        c="blue"
+        component={Link}
+        href={Explorer + "/address/" + CONTRACT_ADDRESS_NAME}
+        target="_blank"
+      >
+        合约地址 {mp.formatAddress(CONTRACT_ADDRESS_NAME)}
+      </Anchor>
       <Text>用户名：{username}</Text>
       <Text>地址：{owner}</Text>
       <Text>推荐节点：{API}</Text>
-      {/* <Text>CID：{cid}</Text> */}
       <Box className={nodeDark} ref={profileElement} />
     </Stack>
   );
