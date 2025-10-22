@@ -29,7 +29,7 @@ export default function HomeNote() {
   const wallet = useUserStore((state) => state.wallet);
   const notes = useUserStore((state) => state.notes);
   const rootCID = useUserStore((state) => state.rootCID);
-  const setRootCID = useUserStore((state) => state.setRootCID);
+  const updateRootCID = useUserStore((state) => state.updateRootCID);
   const notesQuery = useUserStore((state) => state.notesQuery);
   const setItem = useUserStore((state) => state.setItem);
 
@@ -143,7 +143,7 @@ export default function HomeNote() {
       const res = await api.put("/files.upload", formData);
       const cid = res.data?.cid;
       if (cid) {
-        setRootCID();
+        updateRootCID();
         notifications.show({
           color: "green",
           message: "笔记创建成功",

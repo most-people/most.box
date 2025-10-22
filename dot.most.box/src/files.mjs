@@ -133,6 +133,11 @@ export const registerFiles = (server, ipfs) => {
     }
 
     const subPath = request.params["*"] || ""; // 获取子路径
+
+    if (!subPath) {
+      return reply.code(400).send("文件不能为空");
+    }
+
     try {
       // 构建完整路径，如果有子路径则包含子路径
       const fullPath = subPath ? `/${address}/${subPath}` : `/${address}`;
@@ -143,71 +148,6 @@ export const registerFiles = (server, ipfs) => {
       };
     } catch (error) {
       return reply.code(500).send("文件删除失败 " + error.message);
-    }
-  });
-
-  // 下载 CID
-  server.get("/files.download.directory/:cid", async (request, reply) => {
-    const cid = request.params.cid;
-
-    if (!cid) {
-      return reply.code(400).send("缺少目录 CID 参数");
-    }
-
-    try {
-      const ipfsPath = `/ipfs/${cid}`;
-
-      // 检查是否为目录
-      let stat;
-      try {
-        stat = await ipfs.files.stat(ipfsPath);
-      } catch (error) {
-        return reply.code(400).send("无法获取 CID 信息");
-      }
-
-      if (!stat.type === "directory") {
-        return reply.code(400).send("CID 不是目录");
-      }
-
-      // 如果是目录，打包成 zip 下载
-      const archive = archiver("zip", {
-        zlib: { level: 9 }, // 压缩级别
-      });
-
-      // 设置响应头
-      reply.header("Content-Type", "application/zip");
-      reply.header("Content-Disposition", `attachment; filename="${cid}.zip"`);
-
-      // 将 archive 流发送给客户端
-      reply.send(archive);
-
-      // 递归添加目录中的所有文件到 zip
-      const addToArchive = async (path, archivePath = "") => {
-        for await (const file of ipfs.ls(path)) {
-          const filePath = `${path}/${file.name}`;
-          const fileArchivePath = archivePath
-            ? `${archivePath}/${file.name}`
-            : file.name;
-
-          if (file.type === "dir") {
-            // 如果是目录，递归处理
-            await addToArchive(filePath, fileArchivePath);
-          } else {
-            // 如果是文件，添加到 zip
-            const chunks = [];
-            for await (const chunk of ipfs.cat(filePath)) {
-              chunks.push(chunk);
-            }
-            const content = Buffer.concat(chunks);
-            archive.append(content, { name: fileArchivePath });
-          }
-        }
-      };
-
-      await addToArchive(ipfsPath);
-      archive.finalize();
-    } catch (error) {
-      return reply.code(500).send("下载失败: " + error.message);
     }
   });
 
@@ -261,12 +201,26 @@ export const registerFiles = (server, ipfs) => {
   });
 
   // 导入
-  server.put("/files.import", async (request, reply) => {
+  server.put("/files.import/:cid", async (request, reply) => {
     const address = mp.getAddress(request.headers.authorization);
     if (!address) {
       return reply.code(400).send("token 无效");
     }
-  });
+    const cid = request.params.cid;
+    if (!cid) {
+      return reply.code(400).send("缺少 cid 参数");
+    }
 
-  // 移除
+    try {
+      await ipfs.files.rm(`/${address}`, { recursive: true, force: true });
+      await ipfs.files.cp(`/ipfs/${cid}`, `/${address}`);
+      return {
+        ok: true,
+        message: "导入成功",
+        cid: cid,
+      };
+    } catch (error) {
+      return reply.code(500).send("导入失败 " + error.message);
+    }
+  });
 };

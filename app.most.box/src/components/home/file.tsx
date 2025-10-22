@@ -48,7 +48,7 @@ export default function HomeFile() {
   const filesPath = useUserStore((state) => state.filesPath);
   const setItem = useUserStore((state) => state.setItem);
   const rootCID = useUserStore((state) => state.rootCID);
-  const setRootCID = useUserStore((state) => state.setRootCID);
+  const updateRootCID = useUserStore((state) => state.updateRootCID);
 
   const dotCID = useDotStore((state) => state.dotCID);
 
@@ -82,15 +82,15 @@ export default function HomeFile() {
       setFetchLoading(false);
     }
 
-    // 获取 MFS 根目录 CID
-    if (path === "") {
-      api.post("/files.cid").then((res) => {
-        const cid = res.data;
-        if (cid) {
-          setItem("rootCID", cid);
-        }
-      });
-    }
+    // // 获取 MFS 根目录 CID
+    // if (path === "") {
+    //   api.post("/files.cid").then((res) => {
+    //     const cid = res.data;
+    //     if (cid) {
+    //       setItem("rootCID", cid);
+    //     }
+    //   });
+    // }
   };
 
   const createFolder = async () => {
@@ -126,7 +126,7 @@ export default function HomeFile() {
       const res = await api.put("/files.upload", formData);
       const cid = res.data?.cid;
       if (cid) {
-        setRootCID();
+        updateRootCID();
         notifications.show({
           message: "文件夹创建成功",
           color: "green",
@@ -207,7 +207,7 @@ export default function HomeFile() {
         const res = await api.put("/files.upload", formData);
         const cid = res.data?.cid;
         if (cid) {
-          setRootCID();
+          updateRootCID();
           notifications.update({
             id: notificationId,
             title: "上传中",
@@ -457,6 +457,7 @@ export default function HomeFile() {
 
   useEffect(() => {
     if (rootCID && wallet && !files) {
+      console.log("🌊", 123123);
       fetchFiles(filesPath);
     }
   }, [rootCID, wallet, files]);

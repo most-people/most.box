@@ -37,8 +37,8 @@ interface UserStore {
   exit: () => void;
   // 根目录
   rootCID: string;
-  setRootCID: () => Promise<void>;
-  getRootCID: () => Promise<string>;
+  updateRootCID: () => Promise<void>;
+  getRootCID: () => Promise<void>;
 }
 
 interface State extends UserStore {
@@ -83,7 +83,7 @@ export const useUserStore = create<State>((set, get) => ({
   },
   // 根目录 CID
   rootCID: "",
-  async setRootCID() {
+  async updateRootCID() {
     const { wallet } = get();
     if (wallet) {
       const { RPC } = useDotStore.getState();
@@ -120,12 +120,16 @@ export const useUserStore = create<State>((set, get) => ({
         api.post("/files.cid"),
         contract.getCID(wallet.address),
       ]);
-      const cid = res.data;
-      if (cid === rootCID) {
-        set({ rootCID: cid });
+      if (rootCID === res.data) {
+        set({ rootCID });
       } else {
+        const res = await api.put(`/files.import/${rootCID}`);
+        if (res.data.ok) {
+          set({ rootCID });
+        } else {
+          notifications.show({ message: "根目录 CID 导入失败", color: "red" });
+        }
       }
-      return rootCID;
     }
   },
   // 通用设置器
