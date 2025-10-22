@@ -10,11 +10,11 @@ export const useBack = () => {
 
   // 返回处理函数
   const back = () => {
-    const firstPath = sessionStorage.firstPath;
+    const firstPath = sessionStorage.getItem("firstPath");
     // 如果当前路径是首次访问的路径
     if (firstPath === pathname) {
       // 重置首页路径为根路径
-      sessionStorage.firstPath = "/";
+      sessionStorage.setItem("firstPath", "/");
       // 重定向到首页
       router.replace("/");
     } else {

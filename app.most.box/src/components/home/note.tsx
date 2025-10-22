@@ -19,6 +19,7 @@ import { useEffect, useState } from "react";
 import { IconDotsVertical, IconPlus, IconRefresh } from "@tabler/icons-react";
 import { api } from "@/constants/api";
 import { Note, useUserStore } from "@/stores/userStore";
+import { useDotStore } from "@/stores/dotStore";
 import Link from "next/link";
 import "./note.scss";
 import mp from "@/constants/mp";
@@ -28,7 +29,7 @@ import { useDisclosure } from "@mantine/hooks";
 export default function HomeNote() {
   const wallet = useUserStore((state) => state.wallet);
   const notes = useUserStore((state) => state.notes);
-  const saveRootCID = useUserStore((state) => state.saveRootCID);
+  const updateRootCID = useDotStore((state) => state.updateRootCID);
   const notesQuery = useUserStore((state) => state.notesQuery);
   const setItem = useUserStore((state) => state.setItem);
   const [fetchLoading, setFetchLoading] = useState(false);
@@ -141,7 +142,7 @@ export default function HomeNote() {
       const res = await api.put("/files.upload", formData);
       const cid = res.data?.cid;
       if (cid) {
-        saveRootCID();
+        updateRootCID();
         notifications.show({
           color: "green",
           message: "笔记创建成功",

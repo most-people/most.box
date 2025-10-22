@@ -30,8 +30,8 @@ import {
   IconPlus,
 } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
-import { FileItem, useUserStore } from "@/stores/userStore";
 import mp from "@/constants/mp";
+import { FileItem, useUserStore } from "@/stores/userStore";
 import { useDotStore } from "@/stores/dotStore";
 
 interface PreviewFile {
@@ -47,9 +47,10 @@ export default function HomeFile() {
   const files = useUserStore((state) => state.files);
   const filesPath = useUserStore((state) => state.filesPath);
   const setItem = useUserStore((state) => state.setItem);
-  const saveRootCID = useUserStore((state) => state.saveRootCID);
-  const rootCID = useUserStore((state) => state.rootCID);
 
+  const setDotItem = useDotStore((state) => state.setItem);
+  const updateRootCID = useDotStore((state) => state.updateRootCID);
+  const rootCID = useDotStore((state) => state.rootCID);
   const dotCID = useDotStore((state) => state.dotCID);
 
   const [fetchLoading, setFetchLoading] = useState(false);
@@ -87,7 +88,7 @@ export default function HomeFile() {
       api.post("/files.cid").then((res) => {
         const cid = res.data;
         if (cid) {
-          setItem("rootCID", cid);
+          setDotItem("rootCID", cid);
         }
       });
     }
@@ -126,7 +127,7 @@ export default function HomeFile() {
       const res = await api.put("/files.upload", formData);
       const cid = res.data?.cid;
       if (cid) {
-        saveRootCID();
+        updateRootCID();
         notifications.show({
           message: "文件夹创建成功",
           color: "green",
@@ -207,7 +208,7 @@ export default function HomeFile() {
         const res = await api.put("/files.upload", formData);
         const cid = res.data?.cid;
         if (cid) {
-          saveRootCID();
+          updateRootCID();
           notifications.update({
             id: notificationId,
             title: "上传中",

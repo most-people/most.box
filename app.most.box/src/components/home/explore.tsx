@@ -117,7 +117,7 @@ export default function HomeExplore() {
       <Title size="h3">快捷入口</Title>
       <Divider my="md" />
 
-      <Accordion my="md" variant="separated" defaultValue="GAME">
+      <Accordion my="md" variant="separated">
         <Accordion.Item value="GAME">
           <Accordion.Control icon="🦕">小游戏</Accordion.Control>
           <Accordion.Panel>

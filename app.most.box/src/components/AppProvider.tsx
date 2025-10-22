@@ -54,7 +54,7 @@ export default function AppProvider() {
   useEffect(() => {
     initDot();
     initFinger();
-    sessionStorage.firstPath = window.location.pathname;
+    sessionStorage.setItem("firstPath", window.location.pathname);
     const network =
       localStorage.getItem("network") === "mainnet" ? "mainnet" : "testnet";
     setNetwork(network);
