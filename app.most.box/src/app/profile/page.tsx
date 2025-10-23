@@ -20,8 +20,9 @@ import { modals } from "@mantine/modals";
 import Link from "next/link";
 import mp from "@/constants/mp";
 import { Icon } from "@/components/Icon";
-import { IconAt } from "@tabler/icons-react";
+import { IconAbc, IconAt } from "@tabler/icons-react";
 import { useDotStore } from "@/stores/dotStore";
+import { mostDecode, mostEncode } from "@/constants/MostWallet";
 
 const UserName = () => {
   const wallet = useUserStore((state) => state.wallet);
@@ -302,6 +303,103 @@ const UserName = () => {
   );
 };
 
+const UserRootCID = () => {
+  const wallet = useUserStore((state) => state.wallet);
+  const [currentRootCID, setCurrentRootCID] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [canSet, setCanSet] = useState(false);
+
+  useEffect(() => {
+    getRootCID();
+  }, [wallet]);
+
+  // 获取根目录 CID
+  const getRootCID = async () => {
+    if (wallet) {
+      const { RPC } = useDotStore.getState();
+      const provider = new JsonRpcProvider(RPC);
+      const contract = new Contract(
+        CONTRACT_ADDRESS_NAME,
+        CONTRACT_ABI_NAME,
+        provider
+      );
+      try {
+        const encodeCID = await contract.getCID(wallet.address);
+        const rootCID = mostDecode(
+          encodeCID,
+          wallet.public_key,
+          wallet.private_key
+        );
+        setCurrentRootCID(rootCID || "");
+        setCanSet(rootCID === "");
+      } catch (err) {
+        console.warn("获取根目录 CID 失败", err);
+      }
+    }
+  };
+
+  // 设置根目录 CID
+  const setRootCID = async () => {
+    if (wallet) {
+      try {
+        setLoading(true);
+        const { RPC } = useDotStore.getState();
+        const provider = new JsonRpcProvider(RPC);
+        const signer = HDNodeWallet.fromPhrase(wallet.mnemonic).connect(
+          provider
+        );
+        const contract = new Contract(
+          CONTRACT_ADDRESS_NAME,
+          CONTRACT_ABI_NAME,
+          signer
+        );
+        const encodeCID = mostEncode(
+          currentRootCID,
+          wallet.public_key,
+          wallet.private_key
+        );
+        const tx = await contract.setCID(encodeCID);
+        notifications.show({ message: "交易已提交，等待确认…", color: "blue" });
+        await tx.wait();
+        notifications.show({ message: "设置成功", color: "green" });
+        getRootCID();
+      } catch (err: any) {
+        console.warn(err);
+        notifications.show({
+          message: err?.shortMessage || err?.message || "设置失败",
+          color: "red",
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
+  return (
+    <Stack>
+      <Text>根目录 CID（自动加密）</Text>
+
+      <Group>
+        <TextInput
+          flex={1}
+          leftSection={<IconAbc size={16} />}
+          variant="filled"
+          placeholder="请设置根目录 CID"
+          value={currentRootCID}
+          onChange={(e) => setCurrentRootCID(e.currentTarget.value)}
+        />
+        <Button
+          loading={loading}
+          onClick={setRootCID}
+          disabled={!wallet || !canSet}
+        >
+          首次设置
+        </Button>
+      </Group>
+    </Stack>
+  );
+};
+
 const UserData = () => {
   const wallet = useUserStore((state) => state.wallet);
   const RPC = useDotStore((state) => state.RPC);
@@ -533,6 +631,7 @@ export default function PageProfile() {
       <Stack>
         <UserName />
         <UserData />
+        <UserRootCID />
         <Group>
           <Anchor
             size="sm"

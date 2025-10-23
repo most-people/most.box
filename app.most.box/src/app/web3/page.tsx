@@ -126,10 +126,6 @@ export default function PageWeb3() {
           <Text>IPFS 二维码</Text>
         </Anchor>
 
-        <Anchor component={Link} href="/dot/status">
-          <Text>IPFS 本地节点状态</Text>
-        </Anchor>
-
         <Text>{mp.formatTime(Date.now())}</Text>
       </Stack>
     </Container>

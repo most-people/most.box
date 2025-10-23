@@ -372,7 +372,7 @@ export default function PageDotStatus() {
 
   return (
     <Container py={20}>
-      <AppHeader title="IPFS 本地节点状态" />
+      <AppHeader title="本地 IPFS 节点状态" />
 
       <Stack gap="md">
         <Card withBorder>

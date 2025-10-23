@@ -75,7 +75,7 @@ export default function PageDot() {
   // ===== 当前节点状态 =====
   const [apiLoading, setApiLoading] = useState(false);
   const [ApiList, setApiList] = useState<string[]>([]);
-  const [apiURL, setApiURL] = useState("");
+  const [apiURL, setApiURL] = useState("http://localhost:1976");
 
   // ===== 节点列表状态 =====
   const [loading, setLoading] = useState(true);
@@ -487,7 +487,7 @@ export default function PageDot() {
             </Anchor>
           )}
 
-          <Group mt="lg" w="100%" justify="space-between">
+          <Group w="100%" justify="space-between">
             <TextInput
               flex={1}
               leftSection={<IconWorldWww />}
@@ -921,6 +921,10 @@ export default function PageDot() {
           target="_blank"
         >
           节点合约 {mp.formatAddress(CONTRACT_ADDRESS_DOT)}
+        </Anchor>
+
+        <Anchor size="sm" c="blue" component={Link} href="/dot/status">
+          本地 IPFS 节点状态
         </Anchor>
       </Group>
     </Container>
