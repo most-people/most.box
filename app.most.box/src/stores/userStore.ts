@@ -135,13 +135,14 @@ export const useUserStore = create<State>((set, get) => ({
         api.post("/files.cid"),
         contract.getCID(wallet.address),
       ]);
+      const cid = res.data;
       const rootCID = mostDecode(
         encodeCID,
         wallet.public_key,
         wallet.private_key
       );
       if (rootCID) {
-        if (rootCID === res.data) {
+        if (rootCID === cid) {
           set({ rootCID });
         } else {
           // 导入根目录 CID

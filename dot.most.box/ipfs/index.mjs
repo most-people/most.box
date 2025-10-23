@@ -5,13 +5,13 @@
 
 import fs from "fs/promises";
 import path from "path";
-import os from "os";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const NETWORK_ROOT = __dirname;
+
 // 环境变量调参（为 100 节点规模提供合理默认值）
 const DEFAULT_PORT = Number(process.env.DEFAULT_PORT || 4001);
 const BOOTSTRAP_K = Number(process.env.BOOTSTRAP_K || 8); // 作为 Bootstrap 的 dhtserver 数量
@@ -24,11 +24,11 @@ const API_CANDIDATE_PORTS = (process.env.IPFS_API_PORTS || "5001,45005")
   .map((s) => Number(s.trim()))
   .filter((n) => Number.isFinite(n) && n > 0);
 
-function trimSlash(urlBase) {
+const trimSlash = (urlBase) => {
   return String(urlBase || "").replace(/\/+$/, "");
-}
+};
 
-function multiaddrToHttp(addr) {
+const multiaddrToHttp = (addr) => {
   // 支持 /ip4/127.0.0.1/tcp/5001 或 /dns4/localhost/tcp/5001
   if (!addr || typeof addr !== "string") return null;
   if (/^https?:\/\//i.test(addr)) return trimSlash(addr);
@@ -41,9 +41,9 @@ function multiaddrToHttp(addr) {
     if (Number.isFinite(port)) return `http://${host}:${port}`;
   }
   return null;
-}
+};
 
-function parseApiFromEnv() {
+const parseApiFromEnv = () => {
   const envRaw = (
     process.env.IPFS_API ||
     process.env.KUBO_API ||
@@ -53,9 +53,9 @@ function parseApiFromEnv() {
   if (!envRaw) return null;
   const parsed = multiaddrToHttp(envRaw) || trimSlash(envRaw);
   return parsed || null;
-}
+};
 
-async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+const fetchWithTimeout = async (url, options = {}, timeoutMs = 8000) => {
   const controller = new AbortController();
   const t = setTimeout(
     () => controller.abort(new Error(`请求超时 ${timeoutMs}ms: ${url}`)),
@@ -67,9 +67,9 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
   } finally {
     clearTimeout(t);
   }
-}
+};
 
-async function fetchJsonPOST(url, body = undefined, timeoutMs = 8000) {
+const fetchJsonPOST = async (url, body = undefined, timeoutMs = 8000) => {
   const res = await fetchWithTimeout(url, { method: "POST", body }, timeoutMs);
   const text = await res.text();
   if (!res.ok) throw new Error(`HTTP ${res.status}: ${text}`);
@@ -80,9 +80,9 @@ async function fetchJsonPOST(url, body = undefined, timeoutMs = 8000) {
       `解析 JSON 失败：${e.message} | 响应片段：${text.slice(0, 200)}`
     );
   }
-}
+};
 
-async function isApiAlive(base) {
+const isApiAlive = async (base) => {
   try {
     const res = await fetchWithTimeout(
       `${base}/api/v0/version`,
@@ -93,9 +93,9 @@ async function isApiAlive(base) {
   } catch (e) {
     return false;
   }
-}
+};
 
-async function detectApiBase() {
+const detectApiBase = async () => {
   const envBase = parseApiFromEnv();
   const candidates = [];
   if (envBase) candidates.push(envBase);
@@ -107,17 +107,17 @@ async function detectApiBase() {
     if (await isApiAlive(base)) return base;
   }
   return null;
-}
+};
 
-async function getIpfsInfoFromHttp(apiBase) {
+const getIpfsInfoFromHttp = async (apiBase) => {
   const cfg = await fetchJsonPOST(`${apiBase}/api/v0/config/show`);
   const id = await fetchJsonPOST(`${apiBase}/api/v0/id`);
   const peerId = id && (id.ID || id.Id || id.PeerID || id.PeerId);
   if (!peerId) throw new Error("HTTP API 的 /id 未返回 Peer ID");
   return { config: cfg, peerId, source: "http", apiBase };
-}
+};
 
-async function applyConfigViaHttp(apiBase, finalCfg) {
+const applyConfigViaHttp = async (apiBase, finalCfg) => {
   const form = new FormData();
   const blob = new Blob([JSON.stringify(finalCfg, null, 2) + "\n"], {
     type: "application/json",
@@ -131,39 +131,39 @@ async function applyConfigViaHttp(apiBase, finalCfg) {
   const text = await res.text();
   if (!res.ok) throw new Error(`配置替换失败：HTTP ${res.status}: ${text}`);
   return text;
-}
+};
 
-async function readJson(filePath) {
+const readJson = async (filePath) => {
   const text = await fs.readFile(filePath, "utf8");
   try {
     return JSON.parse(text);
   } catch (e) {
     throw new Error(`JSON 解析失败：${filePath}：${e.message}`);
   }
-}
+};
 
-function deepClone(obj) {
+const deepClone = (obj) => {
   return JSON.parse(JSON.stringify(obj));
-}
+};
 
-function addTcp(base, port = DEFAULT_PORT) {
+const addTcp = (base, port = DEFAULT_PORT) => {
   return `${base}/tcp/${port}`;
-}
+};
 
-function addUdpQuic(base, port = DEFAULT_PORT) {
+const addUdpQuic = (base, port = DEFAULT_PORT) => {
   return `${base}/udp/${port}/quic-v1`;
-}
+};
 
-function addP2pTcp(base, peerId, port = DEFAULT_PORT) {
+const addP2pTcp = (base, peerId, port = DEFAULT_PORT) => {
   return `${addTcp(base, port)}/p2p/${peerId}`;
-}
+};
 
 // 工具函数
-function isDnsaddr(ma) {
+const isDnsaddr = (ma) => {
   return typeof ma === "string" && ma.startsWith("/dnsaddr/");
-}
+};
 
-function dedupe(list) {
+const dedupe = (list) => {
   const seen = new Set();
   const out = [];
   for (const v of list || []) {
@@ -173,51 +173,51 @@ function dedupe(list) {
     }
   }
   return out;
-}
+};
 
-function shuffle(arr) {
+const shuffle = (arr) => {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
-}
+};
 
-function pickK(arr, k) {
+const pickK = (arr, k) => {
   if (k <= 0) return [];
   return shuffle(arr).slice(0, Math.min(k, arr.length));
-}
+};
 
-function nodePort(node) {
+const nodePort = (node) => {
   const p = node && node.port !== undefined ? Number(node.port) : DEFAULT_PORT;
   return Number.isFinite(p) && p > 0 ? p : DEFAULT_PORT;
-}
+};
 
 // 将基础 multiaddr 规范化为可拨号地址（不带 /p2p），用于 Peering.Addrs
-function normalizeNoP2p(base, port) {
+const normalizeNoP2p = (base, port) => {
   if (isDnsaddr(base)) return [base];
   const p = port || DEFAULT_PORT;
   return [addTcp(base, p), addUdpQuic(base, p)];
-}
+};
 
 // 将基础 multiaddr 规范化为可拨号地址（带 /p2p），用于 Bootstrap 条目
-function normalizeWithP2p(base, peerId, port) {
+const normalizeWithP2p = (base, peerId, port) => {
   if (isDnsaddr(base)) return [base];
   const p = port || DEFAULT_PORT;
   return [addP2pTcp(base, peerId, p), `${addUdpQuic(base, p)}/p2p/${peerId}`];
-}
+};
 
-function buildAnnounce(ipList, port = DEFAULT_PORT) {
+const buildAnnounce = (ipList, port = DEFAULT_PORT) => {
   const out = [];
   for (const ip of ipList || []) {
     for (const a of normalizeNoP2p(ip, port)) out.push(a);
   }
   return dedupe(out);
-}
+};
 
 // Bootstrap：仅选择 dhtserver 节点，限制为 BOOTSTRAP_K 个，并包含 TCP 与 QUIC 的 /p2p 地址
-function buildBootstrap(nodes) {
+const buildBootstrap = (nodes) => {
   const servers = (nodes || []).filter(
     (n) => n && n.type === "dhtserver" && Array.isArray(n.ip) && n.ip.length > 0
   );
@@ -230,10 +230,10 @@ function buildBootstrap(nodes) {
     }
   }
   return dedupe(out);
-}
+};
 
 // Peering：针对本地节点，选择环形邻居 + 随机邻居，生成 TCP 与 QUIC 地址（不带 /p2p）
-function buildPeeringForLocal(nodes, localPeerId) {
+const buildPeeringForLocal = (nodes, localPeerId) => {
   const arr = Array.isArray(nodes) ? nodes.slice() : [];
   const idx = arr.findIndex((n) => n && n.id === localPeerId);
   const N = arr.length;
@@ -280,13 +280,9 @@ function buildPeeringForLocal(nodes, localPeerId) {
     }
   }
   return peers;
-}
+};
 
-async function ensureDir(dir) {
-  await fs.mkdir(dir, { recursive: true });
-}
-
-function mergeObjects(target, source) {
+const mergeObjects = (target, source) => {
   if (!source || typeof source !== "object") return target;
   if (!target || typeof target !== "object") target = {};
   for (const key of Object.keys(source)) {
@@ -304,12 +300,12 @@ function mergeObjects(target, source) {
     }
   }
   return target;
-}
+};
 
-function mergeBaseWithExtras(
+const mergeBaseWithExtras = (
   baseCfg,
   { announceAddrs, bootstrapAddrs, peeringPeers, roleCfg }
-) {
+) => {
   const cfg = deepClone(baseCfg);
 
   // Addresses：保留现有 Swarm，不覆盖；仅设置 Announce
@@ -343,43 +339,9 @@ function mergeBaseWithExtras(
   delete cfg.Reprovider;
 
   return cfg;
-}
+};
 
-// 仅从磁盘读取本地 IPFS 仓库配置，以保留 Identity.PrivKey
-function getIpfsRepoPath() {
-  const envPath = (process.env.IPFS_PATH || process.env.IPFS_REPO || "").trim();
-  if (envPath) return envPath;
-  return path.join(os.homedir(), ".ipfs");
-}
-
-async function getIpfsInfoFromDisk(repoPath = getIpfsRepoPath()) {
-  const cfgFile = path.join(repoPath, "config");
-  const config = await readJson(cfgFile);
-  const peerId =
-    (config &&
-      config.Identity &&
-      (config.Identity.PeerID ||
-        config.Identity.Id ||
-        config.Identity.PeerId)) ||
-    null;
-  if (!peerId) {
-    throw new Error("无法从磁盘配置读取 Peer ID（Identity.PeerID 缺失）");
-  }
-  const hasPrivKey = !!(
-    config &&
-    config.Identity &&
-    typeof config.Identity.PrivKey === "string" &&
-    config.Identity.PrivKey.length > 0
-  );
-  if (!hasPrivKey) {
-    console.warn(
-      "警告：磁盘配置中未发现 Identity.PrivKey。若你使用了外部密钥或不同仓库路径，请设置 IPFS_PATH 或 IPFS_REPO 环境变量指向正确的仓库。"
-    );
-  }
-  return { config, peerId, source: "disk", repoPath };
-}
-
-async function getCurrentIpfsInfo() {
+const getCurrentIpfsInfo = async () => {
   // 仅在检测到 HTTP API 时才继续；否则直接停止
   const apiBase = await detectApiBase();
   if (!apiBase) {
@@ -389,9 +351,9 @@ async function getCurrentIpfsInfo() {
   }
   // 通过 HTTP API 获取当前运行的配置与 Peer ID
   return await getIpfsInfoFromHttp(apiBase);
-}
+};
 
-async function main() {
+const main = async () => {
   const customPath = path.join(NETWORK_ROOT, "custom.json");
   const dhtClientPath = path.join(NETWORK_ROOT, "dhtclient.json");
   const dhtServerPath = path.join(NETWORK_ROOT, "dhtserver.json");
@@ -430,35 +392,30 @@ async function main() {
       roleCfg,
     });
 
-    let appliedViaHttp = false;
     if (info && info.source === "http" && info.apiBase) {
       try {
         await applyConfigViaHttp(info.apiBase, finalCfg);
-        appliedViaHttp = true;
         console.log(
           `已通过 HTTP API (${info.apiBase}) 替换正在运行的 IPFS 配置。`
         );
       } catch (e) {
-        console.error(
-          `通过 HTTP API 替换失败：${e.message}\n` +
-          `已停止执行（不再尝试磁盘写入或其他方式）。`
-        );
+        console.error(`通过 HTTP API 替换失败：${e.message}`);
         process.exit(1);
       }
     }
 
     console.log(
       `本地 Peer：${peerId}（${matched ? matched.name : "未知"}）\n` +
-      `Bootstrap 条目数：${bootstrapAddrs.length}，Peering 固定邻居数：${peeringPeers.length}，Announce 条目数：${announceAddrs.length}`
+        `Bootstrap 条目数：${bootstrapAddrs.length}，Peering 固定邻居数：${peeringPeers.length}，Announce 条目数：${announceAddrs.length}`
     );
     if (info && info.source === "http") {
       console.log(`配置源：HTTP API（${info.apiBase}）。`);
     }
   } catch (err) {
-    console.error("错误：从磁盘读取 IPFS 配置 / Peer ID 失败。", err);
+    console.error("错误：获取 IPFS 配置或 Peer ID 失败。", err);
     process.exit(1);
   }
-}
+};
 
 main().catch((err) => {
   console.error("生成 IPFS 配置出错：", err);

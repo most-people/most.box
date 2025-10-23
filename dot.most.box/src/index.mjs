@@ -13,8 +13,9 @@ import { registerSSE } from "./sse.mjs";
 import mp from "./mp.mjs";
 
 // 创建 IPFS 客户端
-const ipfs = create({ url: "http://localhost:5001" });
+const ipfs = create({ url: "http://127.0.0.1:5001" });
 
+// 创建 Fastify 服务器
 const server = fastify();
 
 const __filename = fileURLToPath(import.meta.url);
