@@ -1,6 +1,11 @@
 # 依赖目录
 /node_modules
+
+# 配置文件
 .env
+
+# 输出目录
+/out/
 
 # 系统文件
 .DS_Store

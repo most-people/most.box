@@ -1,8 +1,4 @@
 import mp from "./mp.mjs";
-// 压缩 zip
-import archiver from "archiver";
-// 解压 tar
-import tar from "tar-stream";
 
 const SystemDir = [".note"];
 

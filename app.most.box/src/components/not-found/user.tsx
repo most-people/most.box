@@ -21,12 +21,6 @@ export default function PageUser() {
   const Explorer = useDotStore((state) => state.Explorer);
   const [API, setAPI] = useState("");
 
-  const provider = useMemo(() => new JsonRpcProvider(RPC), [RPC]);
-  const contract = useMemo(
-    () => new Contract(CONTRACT_ADDRESS_NAME, CONTRACT_ABI_NAME, provider),
-    [provider]
-  );
-
   const [owner, setOwner] = useState("");
   const [username, setUsername] = useState("");
 
@@ -36,6 +30,13 @@ export default function PageUser() {
 
   const fetchOwner = async (name: string) => {
     try {
+      const provider = new JsonRpcProvider(RPC);
+      const contract = new Contract(
+        CONTRACT_ADDRESS_NAME,
+        CONTRACT_ABI_NAME,
+        provider
+      );
+
       const owner = await contract.getOwner(name);
       setOwner(owner);
       fetchName(owner);
@@ -49,6 +50,13 @@ export default function PageUser() {
   };
   const fetchName = async (address: string) => {
     try {
+      const provider = new JsonRpcProvider(RPC);
+      const contract = new Contract(
+        CONTRACT_ADDRESS_NAME,
+        CONTRACT_ABI_NAME,
+        provider
+      );
+
       const name = await contract.getName(address);
       if (name) {
         updateName(name);
@@ -122,6 +130,13 @@ export default function PageUser() {
 
   const fetchData = async (owner: string) => {
     try {
+      const provider = new JsonRpcProvider(RPC);
+      const contract = new Contract(
+        CONTRACT_ADDRESS_NAME,
+        CONTRACT_ABI_NAME,
+        provider
+      );
+
       const json = await contract.getData(owner);
       if (json) {
         const data = JSON.parse(json);

@@ -32,18 +32,17 @@ const UserName = () => {
   const [nameInput, setNameInput] = useState("");
   const [loadingGet, setLoadingGet] = useState(false);
   const [loadingSet, setLoadingSet] = useState(false);
-  const [loadingDel, setLoadingDel] = useState(false);
-
-  const provider = useMemo(() => new JsonRpcProvider(RPC), [RPC]);
-  const contract = useMemo(
-    () => new Contract(CONTRACT_ADDRESS_NAME, CONTRACT_ABI_NAME, provider),
-    [provider]
-  );
 
   const fetchName = async () => {
     if (!wallet) return;
     try {
       setLoadingGet(true);
+      const provider = new JsonRpcProvider(RPC);
+      const contract = new Contract(
+        CONTRACT_ADDRESS_NAME,
+        CONTRACT_ABI_NAME,
+        provider
+      );
       const name: string = await contract.getName(wallet.address);
       setCurrentName(name);
       if (!nameInput && name) setNameInput(name);
@@ -57,21 +56,6 @@ const UserName = () => {
   useEffect(() => {
     fetchName();
   }, [wallet]);
-
-  // 获取可用的 Signer
-  const getSigner = () => {
-    try {
-      if (wallet?.mnemonic) {
-        const signer = HDNodeWallet.fromPhrase(wallet.mnemonic).connect(
-          provider
-        );
-        return new Contract(CONTRACT_ADDRESS_NAME, CONTRACT_ABI_NAME, signer);
-      }
-    } catch (err) {
-      console.warn("获取签名器失败", err);
-    }
-    return null;
-  };
 
   const onSetName = async () => {
     if (!wallet)
@@ -90,14 +74,14 @@ const UserName = () => {
         color: "yellow",
       });
 
-    const signer = getSigner();
-    if (!signer) {
-      notifications.show({
-        message: "未检测到可用钱包，无法发起交易。请安装钱包或使用助记词登录。",
-        color: "red",
-      });
-      return;
-    }
+    const provider = new JsonRpcProvider(RPC);
+    const signer = HDNodeWallet.fromPhrase(wallet.mnemonic).connect(provider);
+    const contract = new Contract(
+      CONTRACT_ADDRESS_NAME,
+      CONTRACT_ABI_NAME,
+      signer
+    );
+
     try {
       setLoadingSet(true);
       // 交易前检查余额是否足够支付 Gas（运行时估算）
@@ -109,7 +93,7 @@ const UserName = () => {
       if (gasPrice) {
         let gas: bigint = 0n;
         try {
-          gas = await (signer as any).estimateGas.setName(value);
+          gas = await contract.setName.estimateGas(value);
         } catch {
           // 无法估算时，继续交由链上处理
         }
@@ -125,7 +109,7 @@ const UserName = () => {
         }
       }
 
-      const tx = await (signer as any).setName(value);
+      const tx = await contract.setName(value);
       notifications.show({ message: "交易已提交，等待确认…", color: "blue" });
       await tx.wait();
       notifications.show({ message: "设置成功", color: "green" });
@@ -193,7 +177,7 @@ const UserName = () => {
         value={nameInput}
         onChange={(e) => setNameInput(e.currentTarget.value)}
         maxLength={32}
-        disabled={loadingSet || loadingDel}
+        disabled={loadingSet}
       />
 
       <Group>
@@ -323,34 +307,19 @@ const UserData = () => {
   const RPC = useDotStore((state) => state.RPC);
   const dotAPI = useDotStore((state) => state.dotAPI);
   const [loadingSetData, setLoadingSetData] = useState(false);
-  const [loadingDelData, setLoadingDelData] = useState(false);
   const [currentData, setCurrentData] = useState("");
-  const provider = useMemo(() => new JsonRpcProvider(RPC), [RPC]);
-  const contract = useMemo(
-    () => new Contract(CONTRACT_ADDRESS_NAME, CONTRACT_ABI_NAME, provider),
-    [provider]
-  );
-
-  // 获取可用的 Signer（与用户名模块保持一致）
-  const getSigner = () => {
-    try {
-      if (wallet?.mnemonic) {
-        const signer = HDNodeWallet.fromPhrase(wallet.mnemonic).connect(
-          provider
-        );
-        return new Contract(CONTRACT_ADDRESS_NAME, CONTRACT_ABI_NAME, signer);
-      }
-    } catch (err) {
-      console.warn("获取签名器失败", err);
-    }
-    return null;
-  };
 
   // 读取链上数据
   const fetchData = async () => {
     if (!wallet) return;
     try {
-      const str: string = await contract.getData(wallet.address);
+      const provider = new JsonRpcProvider(RPC);
+      const contract = new Contract(
+        CONTRACT_ADDRESS_NAME,
+        CONTRACT_ABI_NAME,
+        provider
+      );
+      const str = await contract.getData(wallet.address);
       setCurrentData(str || "");
     } catch (err) {
       console.warn("获取用户数据失败", err);
@@ -374,17 +343,17 @@ const UserData = () => {
   }, [currentData]);
 
   const onSetData = async () => {
-    if (!wallet)
+    if (!wallet) {
       return notifications.show({ message: "请先登录", color: "red" });
-
-    const signer = getSigner();
-    if (!signer) {
-      notifications.show({
-        message: "未检测到可用钱包，无法发起交易。请安装钱包或使用助记词登录。",
-        color: "red",
-      });
-      return;
     }
+
+    const provider = new JsonRpcProvider(RPC);
+    const signer = HDNodeWallet.fromPhrase(wallet.mnemonic).connect(provider);
+    const contract = new Contract(
+      CONTRACT_ADDRESS_NAME,
+      CONTRACT_ABI_NAME,
+      signer
+    );
 
     const data = JSON.stringify({ dot: dotAPI });
 
@@ -399,7 +368,7 @@ const UserData = () => {
       if (gasPrice) {
         let gas: bigint = 0n;
         try {
-          gas = await (signer as any).estimateGas.setData(data);
+          gas = await contract.setData.estimateGas(data);
         } catch {
           // 无法估算时，继续交由链上处理
         }
@@ -415,7 +384,7 @@ const UserData = () => {
         }
       }
 
-      const tx = await (signer as any).setData(data);
+      const tx = await contract.setData(data);
       notifications.show({
         message: "交易已提交，等待确认…",
         color: "blue",

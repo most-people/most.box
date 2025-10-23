@@ -98,6 +98,7 @@ export const useUserStore = create<State>((set, get) => ({
         CONTRACT_ABI_NAME,
         signer
       );
+
       const [res, encodeCID] = await Promise.all([
         api.post("/files.cid"),
         contract.getCID(wallet.address),
@@ -139,14 +140,20 @@ export const useUserStore = create<State>((set, get) => ({
         wallet.public_key,
         wallet.private_key
       );
-      if (rootCID === res.data) {
-        set({ rootCID });
-      } else {
-        const res = await api.put(`/files.import/${rootCID}`);
-        if (res.data.ok) {
+      if (rootCID) {
+        if (rootCID === res.data) {
           set({ rootCID });
         } else {
-          notifications.show({ message: "根目录 CID 导入失败", color: "red" });
+          // 导入根目录 CID
+          const res = await api.put(`/files.import/${rootCID}`);
+          if (res.data.ok) {
+            set({ rootCID });
+          } else {
+            notifications.show({
+              message: "根目录 CID 导入失败",
+              color: "red",
+            });
+          }
         }
       }
     }

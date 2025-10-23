@@ -72,6 +72,11 @@ export default function PageDot() {
   const network = useDotStore((state) => state.network);
   const setNetwork = useDotStore((state) => state.setNetwork);
 
+  // ===== 网络和RPC状态 =====
+  const RPC = useDotStore((state) => state.RPC);
+  const Explorer = useDotStore((state) => state.Explorer);
+  const [customRPC, setCustomRPC] = useState(RPC);
+
   // ===== 当前节点状态 =====
   const [apiLoading, setApiLoading] = useState(false);
   const [ApiList, setApiList] = useState<string[]>([]);
@@ -86,11 +91,6 @@ export default function PageDot() {
   const [selectedApiByNode, setSelectedApiByNode] = useState<
     Record<string, string>
   >({});
-
-  // ===== 网络和RPC状态 =====
-  const RPC = NETWORK_CONFIG[network].rpc;
-  const [customRPC, setCustomRPC] = useState(RPC);
-  const Explorer = NETWORK_CONFIG[network].explorer;
 
   // ===== CID检测状态 =====
   const [customCid, setCustomCid] = useState(
@@ -293,6 +293,7 @@ export default function PageDot() {
         };
       });
       localStorage.setItem("dotNodes", JSON.stringify(nodes));
+      setItem("RPC", rpcUrl);
       if (nodes) {
         setItem("dotNodes", nodes);
       }
@@ -435,7 +436,7 @@ export default function PageDot() {
     fetchNodes();
   }, []);
 
-  const randomRPC = (network: NETWORK_TYPE) => {
+  const randomRPC = () => {
     return NETWORK_CONFIG[network].RPCs[
       Math.floor(Math.random() * NETWORK_CONFIG[network].RPCs.length)
     ];
@@ -610,7 +611,7 @@ export default function PageDot() {
               color="orange"
               variant="light"
               onClick={() => {
-                setCustomRPC(randomRPC(network));
+                setCustomRPC(randomRPC());
                 fetchNodes();
               }}
             >
@@ -849,7 +850,7 @@ export default function PageDot() {
           size="sm"
           color="yellow"
           variant="light"
-          onClick={() => setCustomRPC(randomRPC("mainnet"))}
+          onClick={() => setCustomRPC(randomRPC())}
         >
           更换 RPC
         </Button>
