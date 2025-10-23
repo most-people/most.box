@@ -142,69 +142,6 @@ const UserName = () => {
     }
   };
 
-  const onDelName = async () => {
-    if (!wallet)
-      return notifications.show({ message: "请先登录", color: "red" });
-    if (!currentName)
-      return notifications.show({
-        message: "当前未设置用户名",
-        color: "yellow",
-      });
-
-    const signer = getSigner();
-    if (!signer) {
-      notifications.show({
-        message: "未检测到可用钱包，无法发起交易。请安装钱包或使用助记词登录。",
-        color: "red",
-      });
-      return;
-    }
-
-    try {
-      setLoadingDel(true);
-      // 交易前检查余额是否足够支付 Gas（运行时估算）
-      const [balance, fee] = await Promise.all([
-        provider.getBalance(wallet.address),
-        provider.getFeeData(),
-      ]);
-      const gasPrice = fee.maxFeePerGas ?? fee.gasPrice;
-      if (gasPrice) {
-        let gas: bigint = 0n;
-        try {
-          gas = await (signer as any).estimateGas.delName();
-        } catch {
-          // 无法估算时，继续交由链上处理
-        }
-        if (gas > 0n) {
-          const cost = gas * gasPrice;
-          if (balance < cost) {
-            notifications.show({
-              message: "余额不足以支付 Gas，请先充值",
-              color: "red",
-            });
-            throw new Error("余额不足以支付 Gas，请先充值");
-          }
-        }
-      }
-
-      const tx = await (signer as any).delName();
-      notifications.show({ message: "交易已提交，等待确认…", color: "blue" });
-      await tx.wait();
-      notifications.show({ message: "删除成功", color: "green" });
-      setCurrentName("");
-      setNameInput("");
-      fetchName();
-    } catch (err: any) {
-      console.warn(err);
-      notifications.show({
-        message: err?.shortMessage || err?.message || "删除失败",
-        color: "red",
-      });
-    } finally {
-      setLoadingDel(false);
-    }
-  };
-
   // 二次确认：保存用户名
   const confirmSetName = () => {
     modals.openConfirmModal({
@@ -216,16 +153,6 @@ const UserName = () => {
     });
   };
 
-  // 二次确认：删除用户名
-  const confirmDelName = () => {
-    modals.openConfirmModal({
-      centered: true,
-      title: "确认操作",
-      children: <Text c="dimmed">是否继续删除用户名？</Text>,
-      labels: { confirm: "继续", cancel: "取消" },
-      onConfirm: onDelName,
-    });
-  };
   return (
     <Stack>
       <Avatar
@@ -259,7 +186,7 @@ const UserName = () => {
       </Group>
 
       <TextInput
-        description="链上唯一，可修改或删除"
+        description="链上唯一，可修改"
         leftSection={<IconAt size={16} />}
         variant="filled"
         placeholder="请输入新用户名"
@@ -277,15 +204,6 @@ const UserName = () => {
           size="sm"
         >
           上链
-        </Button>
-        <Button
-          variant="light"
-          loading={loadingDel}
-          onClick={confirmDelName}
-          disabled={!wallet || !currentName}
-          size="sm"
-        >
-          删除
         </Button>
       </Group>
       {currentName && (
@@ -516,62 +434,6 @@ const UserData = () => {
     }
   };
 
-  const onDelData = async () => {
-    if (!wallet)
-      return notifications.show({ message: "请先登录", color: "red" });
-    if (!currentDot)
-      return notifications.show({ message: "当前未设置节点", color: "yellow" });
-
-    const signer = getSigner();
-    if (!signer) {
-      notifications.show({
-        message: "未检测到可用钱包，无法发起交易。请安装钱包或使用助记词登录。",
-        color: "red",
-      });
-      return;
-    }
-
-    try {
-      setLoadingDelData(true);
-      // 交易前检查余额是否足够支付 Gas（运行时估算）
-      const [balance, fee] = await Promise.all([
-        provider.getBalance(wallet.address),
-        provider.getFeeData(),
-      ]);
-      const gasPrice = fee.maxFeePerGas ?? fee.gasPrice;
-      if (gasPrice) {
-        let gas: bigint = 0n;
-        try {
-          gas = await (signer as any).estimateGas.delData();
-        } catch {}
-        if (gas > 0n) {
-          const cost = gas * gasPrice;
-          if (balance < cost) {
-            notifications.show({
-              message: "余额不足以支付 Gas，请先充值",
-              color: "red",
-            });
-            throw new Error("余额不足以支付 Gas，请先充值");
-          }
-        }
-      }
-
-      const tx = await (signer as any).delData();
-      notifications.show({ message: "交易已提交，等待确认…", color: "blue" });
-      await tx.wait();
-      notifications.show({ message: "删除成功", color: "green" });
-      setCurrentData("");
-    } catch (err: any) {
-      console.warn(err);
-      notifications.show({
-        message: err?.shortMessage || err?.message || "删除失败",
-        color: "red",
-      });
-    } finally {
-      setLoadingDelData(false);
-    }
-  };
-
   return (
     <Stack>
       <Text>用户数据</Text>
@@ -608,15 +470,6 @@ const UserData = () => {
           disabled={!wallet || !dotAPI || currentDot === dotAPI}
         >
           设为推荐节点
-        </Button>
-        <Button
-          variant="light"
-          size="sm"
-          loading={loadingDelData}
-          onClick={onDelData}
-          disabled={!wallet || !currentDot}
-        >
-          删除
         </Button>
       </Group>
     </Stack>

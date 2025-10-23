@@ -223,7 +223,7 @@ export default function HomeNote() {
         oldName: `/.note/${currentNote.name}`,
         newName: `/.note/${name}`,
       });
-
+      updateRootCID();
       notifications.show({
         color: "green",
         message: "重命名成功",

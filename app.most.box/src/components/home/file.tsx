@@ -371,7 +371,7 @@ export default function HomeFile() {
         oldName: `/${normalize(oldPath)}`,
         newName: `/${normalize(newPath)}`,
       });
-
+      updateRootCID();
       notifications.show({
         title: "重命名成功",
         message: `新路径名称 "${normalize(newPath)}"`,
