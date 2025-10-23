@@ -3,6 +3,7 @@ import rng from "rdrand-lite";
 import { exec } from "child_process";
 import { promisify } from "util";
 import path from "path";
+import { Wallet, JsonRpcProvider, parseEther, formatEther } from "ethers";
 
 const execAsync = promisify(exec);
 const isRdrandSupported = rng.isRrdrandSupported();
@@ -41,9 +42,12 @@ export const registerApis = (server, __dirname) => {
       const rootPath = path.join(__dirname, "..");
       // 0. git checkout .
       log.push("执行 git checkout . (忽略本地修改)");
-      const { stdout: checkoutOut, stderr: checkoutErr } = await execAsync("git checkout .", {
-        cwd: rootPath,
-      });
+      const { stdout: checkoutOut, stderr: checkoutErr } = await execAsync(
+        "git checkout .",
+        {
+          cwd: rootPath,
+        }
+      );
       log.push(`Git checkout: ${checkoutOut || checkoutErr}`);
 
       // 1. git pull
@@ -147,5 +151,55 @@ export const registerApis = (server, __dirname) => {
   server.get("/api.git", async () => {
     const { stdout: gitOut, stderr: gitErr } = await execAsync("git remote -v");
     return gitOut || gitErr;
+  });
+
+  // 给余额为 0 的地址发一笔 Gas
+  server.post("/api.testnet.gas", async (request, reply) => {
+    const { PRIVATE_KEY } = process.env;
+    if (!PRIVATE_KEY) {
+      reply.code(400);
+      return { ok: false, message: "请在 .env 文件设置 PRIVATE_KEY" };
+    }
+
+    const address = mp.getAddress(request.headers.authorization);
+    if (!address) {
+      return reply.code(400).send("token 无效");
+    }
+
+    try {
+      const RPC = "https://sepolia.base.org";
+      const provider = new JsonRpcProvider(RPC);
+      // 检查地址余额
+      const balance = await provider.getBalance(address);
+
+      if (balance > 0) {
+        reply.code(400);
+        return {
+          ok: false,
+          message: `余额 ${formatEther(balance)} 大于 0, 无需领取 Gas`,
+        };
+      }
+
+      // 发送一笔 Gas
+      const signer = new Wallet(PRIVATE_KEY, provider);
+      const tx = await signer.sendTransaction({
+        to: address,
+        value: parseEther("0.00001976"),
+      });
+
+      await tx.wait();
+      return {
+        ok: true,
+        message: "Gas 领取成功",
+        txHash: tx.hash,
+      };
+    } catch (error) {
+      reply.code(500);
+      return {
+        ok: false,
+        message: "Gas 领取失败",
+        error: error.message,
+      };
+    }
   });
 };

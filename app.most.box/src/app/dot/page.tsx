@@ -45,7 +45,6 @@ import {
   CONTRACT_ABI_DOT,
   CONTRACT_ADDRESS_DOT,
   NETWORK_CONFIG,
-  NETWORK_TYPE,
 } from "@/constants/dot";
 import mp from "@/constants/mp";
 import { CID } from "multiformats";
@@ -246,7 +245,7 @@ export default function PageDot() {
   };
 
   // ===== 节点管理相关函数 =====
-  const validateNetwork = (chainId: number): boolean => {
+  const verifyNetwork = (chainId: number): boolean => {
     if (chainId === NETWORK_CONFIG.mainnet.chainId) {
       setNetwork("mainnet");
       return true;
@@ -274,7 +273,7 @@ export default function PageDot() {
       const networkInfo = await provider.getNetwork();
       const chainId = Number(networkInfo.chainId);
 
-      if (!validateNetwork(chainId)) return;
+      if (!verifyNetwork(chainId)) return;
 
       const contract = new Contract(
         CONTRACT_ADDRESS_DOT,

@@ -4,7 +4,7 @@
   "description": "TypeScript + Fastify",
   "main": "dist/index.js",
   "scripts": {
-    "start": "npx nodemon src/index.mjs --watch src",
+    "start": "npx nodemon src/index.mjs",
     "preview": "node src/index.mjs",
     "ipfs": "node ipfs/index.mjs",
     "npm": "npm i"
