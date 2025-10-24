@@ -22,7 +22,9 @@ import mp from "@/constants/mp";
 import { Icon } from "@/components/Icon";
 import { IconAbc, IconAt } from "@tabler/icons-react";
 import { useDotStore } from "@/stores/dotStore";
-import { mostDecode, mostEncode } from "@/constants/MostWallet";
+import { mostEncode } from "@/constants/MostWallet";
+import { api } from "@/constants/api";
+import { CID } from "multiformats";
 
 const UserName = () => {
   const wallet = useUserStore((state) => state.wallet);
@@ -206,42 +208,30 @@ const UserName = () => {
 };
 
 const UserRootCID = () => {
+  const setItem = useUserStore((state) => state.setItem);
   const wallet = useUserStore((state) => state.wallet);
-  const [currentRootCID, setCurrentRootCID] = useState("");
+  const rootCID = useUserStore((state) => state.rootCID);
+  const [customCID, setCustomCID] = useState("");
   const [loading, setLoading] = useState(false);
-  const [canSet, setCanSet] = useState(false);
 
-  useEffect(() => {
-    getRootCID();
-  }, [wallet]);
-
-  // 获取根目录 CID
-  const getRootCID = async () => {
-    if (wallet) {
-      const { RPC } = useDotStore.getState();
-      const provider = new JsonRpcProvider(RPC);
-      const contract = new Contract(
-        CONTRACT_ADDRESS_NAME,
-        CONTRACT_ABI_NAME,
-        provider
-      );
-      try {
-        const encodeCID = await contract.getCID(wallet.address);
-        const rootCID = mostDecode(
-          encodeCID,
-          wallet.public_key,
-          wallet.private_key
-        );
-        setCurrentRootCID(rootCID || "");
-        setCanSet(rootCID === "");
-      } catch (err) {
-        console.warn("获取根目录 CID 失败", err);
-      }
+  // 校验 CID 是否有效（支持 v0/v1），使用 multiformats 解析
+  const isValidCID = (cid: string): boolean => {
+    try {
+      CID.parse(cid.trim().split("?")[0]);
+      return true;
+    } catch {
+      return false;
     }
   };
 
   // 设置根目录 CID
   const setRootCID = async () => {
+    if (!isValidCID(customCID)) {
+      return notifications.show({
+        message: "无效的 CID",
+        color: "red",
+      });
+    }
     if (wallet) {
       try {
         setLoading(true);
@@ -256,7 +246,7 @@ const UserRootCID = () => {
           signer
         );
         const encodeCID = mostEncode(
-          currentRootCID,
+          customCID,
           wallet.public_key,
           wallet.private_key
         );
@@ -264,7 +254,7 @@ const UserRootCID = () => {
         notifications.show({ message: "交易已提交，等待确认…", color: "blue" });
         await tx.wait();
         notifications.show({ message: "设置成功", color: "green" });
-        getRootCID();
+        setItem("rootCID", encodeCID);
       } catch (err: any) {
         console.warn(err);
         notifications.show({
@@ -277,25 +267,51 @@ const UserRootCID = () => {
     }
   };
 
+  const getRootCID = async () => {
+    const res = await api.post("/files.cid");
+    const cid = res.data;
+    if (cid) {
+      setCustomCID(cid);
+    }
+  };
+
   return (
     <Stack>
-      <Text>根目录 CID（自动加密）</Text>
+      <Text>根目录 CID「自动加密」</Text>
 
-      <Group>
+      <TextInput
+        description="链上 CID"
+        leftSection={<IconAbc size={16} />}
+        variant="filled"
+        placeholder="请设置"
+        disabled
+        value={rootCID}
+      />
+      <Group align="flex-start">
         <TextInput
           flex={1}
+          description="当前 CID"
           leftSection={<IconAbc size={16} />}
           variant="filled"
-          placeholder="请设置根目录 CID"
-          value={currentRootCID}
-          onChange={(e) => setCurrentRootCID(e.currentTarget.value)}
+          placeholder="自定义"
+          value={customCID}
+          onChange={(e) => setCustomCID(e.currentTarget.value)}
+          error={
+            customCID && !isValidCID(customCID) ? "请输入有效的 CID" : undefined
+          }
         />
+        <Button mt="21.8px" onClick={getRootCID}>
+          获取当前
+        </Button>
+      </Group>
+      <Group>
         <Button
+          size="sm"
           loading={loading}
           onClick={setRootCID}
-          disabled={!wallet || !canSet}
+          disabled={!wallet || !isValidCID(customCID) || rootCID === customCID}
         >
-          首次设置
+          设为根目录 CID
         </Button>
       </Group>
     </Stack>

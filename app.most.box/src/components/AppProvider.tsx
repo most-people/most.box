@@ -7,14 +7,34 @@ import { api } from "@/constants/api";
 import { useComputedColorScheme, useMantineColorScheme } from "@mantine/core";
 import { useRouter } from "next/navigation";
 import { notifications } from "@mantine/notifications";
+import mp from "@/constants/mp";
 
 export default function AppProvider() {
-  const initWallet = useUserStore((state) => state.initWallet);
-  const setUserItem = useUserStore((state) => state.setItem);
+  const exit = useUserStore((state) => state.exit);
+  const setWallet = useUserStore((state) => state.setWallet);
+  const setItem = useUserStore((state) => state.setItem);
   const setDotItem = useDotStore((state) => state.setItem);
   const setNetwork = useDotStore((state) => state.setNetwork);
   const updateDot = useDotStore((state) => state.updateDot);
   const router = useRouter();
+
+  const initWallet = (fingerprint: string) => {
+    setItem("fingerprint", fingerprint);
+    const jwt = localStorage.getItem("jwt");
+    if (jwt) {
+      try {
+        const wallet = mp.verifyJWT(jwt);
+        if (wallet) {
+          mp.createToken(wallet);
+          setWallet(wallet);
+        }
+      } catch (error) {
+        notifications.show({ message: "登录过期", color: "red" });
+        console.warn("登录过期", error);
+        exit();
+      }
+    }
+  };
 
   const initFinger = async () => {
     try {
@@ -64,7 +84,7 @@ export default function AppProvider() {
   const computedColorScheme = useComputedColorScheme();
   useEffect(() => {
     const theme = colorScheme === "auto" ? computedColorScheme : colorScheme;
-    setUserItem("nodeDark", theme === "dark" ? "toastui-editor-dark" : "");
+    setItem("nodeDark", theme === "dark" ? "toastui-editor-dark" : "");
   }, [colorScheme, computedColorScheme]);
 
   return null;

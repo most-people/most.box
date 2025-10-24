@@ -15,30 +15,18 @@ import { AppHeader } from "@/components/AppHeader";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import Link from "next/link";
 import mp from "@/constants/mp";
-import { formatEther, JsonRpcProvider } from "ethers";
-
 export default function PageWeb3() {
   const wallet = useUserStore((state) => state.wallet);
+  const balance = useUserStore((state) => state.balance);
 
   const Explorer = useDotStore((state) => state.Explorer);
   const network = useDotStore((state) => state.network);
-  const RPC = useDotStore((state) => state.RPC);
 
   const [showX25519, setShowX25519] = useState(false);
-  const [balance, setBalance] = useState("-");
   const [ipns, setIPNS] = useState("-");
-
-  const fetchBalance = (address: string) => {
-    const provider = new JsonRpcProvider(RPC);
-    // 获取余额
-    provider.getBalance(address).then((balance) => {
-      setBalance(formatEther(balance));
-    });
-  };
 
   useEffect(() => {
     if (wallet) {
-      fetchBalance(wallet.address);
       const ipns = mp.getIPNS(wallet.private_key, wallet.ed_public_key);
       setIPNS(ipns);
     }

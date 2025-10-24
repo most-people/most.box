@@ -8,7 +8,14 @@ import { create } from "zustand";
 import { notifications } from "@mantine/notifications";
 import { CONTRACT_ABI_NAME, CONTRACT_ADDRESS_NAME } from "@/constants/dot";
 import { api } from "@/constants/api";
-import { Contract, HDNodeWallet, JsonRpcProvider } from "ethers";
+import {
+  Contract,
+  formatEther,
+  HDNodeWallet,
+  JsonRpcProvider,
+  parseEther,
+  parseUnits,
+} from "ethers";
 import { useDotStore } from "@/stores/dotStore";
 
 export interface FileItem {
@@ -27,7 +34,7 @@ export interface Note {
 
 interface UserStore {
   wallet?: MostWallet;
-  initWallet: (fingerprint: string) => void;
+  setWallet: (wallet: MostWallet) => void;
   firstPath: string;
   // 笔记
   notes?: Note[];
@@ -41,8 +48,11 @@ interface UserStore {
   exit: () => void;
   // 根目录
   rootCID: string;
+  initRootCID: () => Promise<void>;
   updateRootCID: () => Promise<void>;
-  getRootCID: () => Promise<void>;
+  // 余额
+  balance: string;
+  initBalance: () => Promise<void>;
 }
 
 interface State extends UserStore {
@@ -52,23 +62,13 @@ interface State extends UserStore {
 export const useUserStore = create<State>((set, get) => ({
   // 钱包
   wallet: undefined,
-  initWallet(fingerprint: string) {
-    set({ fingerprint });
-    const jwt = localStorage.getItem("jwt");
-    if (jwt) {
-      try {
-        const wallet = mp.verifyJWT(jwt);
-        if (wallet) {
-          mp.createToken(wallet);
-          set({ wallet });
-          get().getRootCID();
-        }
-      } catch (error) {
-        notifications.show({ message: "登录过期", color: "red" });
-        console.warn("登录过期", error);
-        get().exit();
-      }
-    }
+  setWallet(wallet: MostWallet) {
+    set({ wallet });
+    const { initRootCID, initBalance } = get();
+    initRootCID();
+    initBalance();
+    // 自动获取测试网 Gas
+    // api.post("/api.testnet.gas");
   },
   // 返回
   firstPath: "",
@@ -121,42 +121,57 @@ export const useUserStore = create<State>((set, get) => ({
       }
     }
   },
-  async getRootCID() {
+  async initRootCID() {
     const { wallet } = get();
-    if (wallet) {
-      const { RPC } = useDotStore.getState();
-      const provider = new JsonRpcProvider(RPC);
-      const contract = new Contract(
-        CONTRACT_ADDRESS_NAME,
-        CONTRACT_ABI_NAME,
-        provider
-      );
-      const [res, encodeCID] = await Promise.all([
-        api.post("/files.cid"),
-        contract.getCID(wallet.address),
-      ]);
-      const cid = res.data;
-      const rootCID = mostDecode(
-        encodeCID,
-        wallet.public_key,
-        wallet.private_key
-      );
-      if (rootCID) {
-        if (rootCID === cid) {
+    if (!wallet) return console.log("未登录");
+
+    const { RPC } = useDotStore.getState();
+    const provider = new JsonRpcProvider(RPC);
+    const contract = new Contract(
+      CONTRACT_ADDRESS_NAME,
+      CONTRACT_ABI_NAME,
+      provider
+    );
+    const [res, encodeCID] = await Promise.all([
+      api.post("/files.cid"),
+      contract.getCID(wallet.address),
+    ]);
+    const cid = res.data;
+    const rootCID = mostDecode(
+      encodeCID,
+      wallet.public_key,
+      wallet.private_key
+    );
+    if (rootCID) {
+      if (rootCID === cid) {
+        set({ rootCID });
+      } else {
+        // 导入根目录 CID
+        const res = await api.put(`/files.import/${rootCID}`);
+        if (res.data.ok) {
           set({ rootCID });
         } else {
-          // 导入根目录 CID
-          const res = await api.put(`/files.import/${rootCID}`);
-          if (res.data.ok) {
-            set({ rootCID });
-          } else {
-            notifications.show({
-              message: "根目录 CID 导入失败",
-              color: "red",
-            });
-          }
+          notifications.show({
+            message: "根目录 CID 导入失败",
+            color: "red",
+          });
         }
       }
+    }
+  },
+  // 余额
+  balance: "",
+  async initBalance() {
+    const { wallet } = get();
+    if (!wallet) return console.log("未登录");
+
+    const { RPC } = useDotStore.getState();
+    const provider = new JsonRpcProvider(RPC);
+    const balance = await provider.getBalance(wallet.address);
+    set({ balance: formatEther(balance) });
+
+    if (Number(balance) === 0) {
+      api.post("/api.testnet.gas");
     }
   },
   // 通用设置器

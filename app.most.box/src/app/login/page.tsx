@@ -51,7 +51,7 @@ export default function PageLogin() {
   const [emailModalOpened, { open: openEmailModal, close: closeEmailModal }] =
     useDisclosure(false);
 
-  const setItem = useUserStore((state) => state.setItem);
+  const setWallet = useUserStore((state) => state.setWallet);
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -93,17 +93,11 @@ export default function PageLogin() {
     }
     const wallet = mp.login(username, password);
     if (wallet) {
-      getTestnetGas();
       setTimeout(() => {
-        setItem("wallet", wallet);
+        setWallet(wallet);
       }, 0);
     }
     back();
-  };
-
-  const getTestnetGas = async () => {
-    const res = await api.post("/api.testnet.gas");
-    console.log("🌊", res);
   };
 
   const loginTelegram = () => {

@@ -22,7 +22,7 @@ import { notifications } from "@mantine/notifications";
 
 export default function AuthCallback() {
   const router = useRouter();
-  const setItem = useUserStore((state) => state.setItem);
+  const setWallet = useUserStore((state) => state.setWallet);
   const [hash] = useHash();
 
   const [visible, { toggle }] = useDisclosure(false);
@@ -62,7 +62,7 @@ export default function AuthCallback() {
     const wallet = mp.login(username, walletPassword);
     if (wallet) {
       setTimeout(() => {
-        setItem("wallet", wallet);
+        setWallet(wallet);
       }, 0);
     }
     // 登录成功，重定向到主页面
