@@ -248,6 +248,7 @@ export default function HomeNote() {
         // 这里添加删除的API调用
         await api.delete(`/files/.note/${note.name}`);
 
+        updateRootCID();
         notifications.show({
           color: "green",
           message: "删除成功",

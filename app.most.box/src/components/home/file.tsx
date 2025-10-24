@@ -314,6 +314,7 @@ export default function HomeFile() {
         color: "green",
       });
 
+      updateRootCID();
       // 删除成功后刷新文件列表
       await fetchFiles(filesPath);
     } catch (error) {
