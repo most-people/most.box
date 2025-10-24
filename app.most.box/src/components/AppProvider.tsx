@@ -5,7 +5,6 @@ import { checkNode, useDotStore } from "@/stores/dotStore";
 import { useEffect } from "react";
 import { api } from "@/constants/api";
 import { useComputedColorScheme, useMantineColorScheme } from "@mantine/core";
-import { useRouter } from "next/navigation";
 import { notifications } from "@mantine/notifications";
 import mp from "@/constants/mp";
 

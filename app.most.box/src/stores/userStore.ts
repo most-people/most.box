@@ -1,4 +1,3 @@
-import mp from "@/constants/mp";
 import {
   mostDecode,
   mostEncode,
@@ -8,14 +7,7 @@ import { create } from "zustand";
 import { notifications } from "@mantine/notifications";
 import { CONTRACT_ABI_NAME, CONTRACT_ADDRESS_NAME } from "@/constants/dot";
 import { api } from "@/constants/api";
-import {
-  Contract,
-  formatEther,
-  HDNodeWallet,
-  JsonRpcProvider,
-  parseEther,
-  parseUnits,
-} from "ethers";
+import { Contract, formatEther, HDNodeWallet, JsonRpcProvider } from "ethers";
 import { useDotStore } from "@/stores/dotStore";
 
 export interface FileItem {

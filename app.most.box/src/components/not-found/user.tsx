@@ -2,7 +2,7 @@ import { CONTRACT_ABI_NAME, CONTRACT_ADDRESS_NAME } from "@/constants/dot";
 import { ActionIcon, Anchor, Box, Menu, Stack, Text } from "@mantine/core";
 import { Contract, isAddress, JsonRpcProvider } from "ethers";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
 import mp from "@/constants/mp";
 // import { api } from "@/constants/api";

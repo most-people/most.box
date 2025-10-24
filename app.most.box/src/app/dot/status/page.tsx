@@ -10,11 +10,8 @@ import {
   Group,
   Button,
   Alert,
-  Divider,
   ActionIcon,
-  Tooltip,
   ThemeIcon,
-  Flex,
   Paper,
   Title,
   Box,
@@ -221,7 +218,7 @@ export default function PageDotStatus() {
           try {
             const result = JSON.parse(line);
             results.push(result);
-          } catch (e) {
+          } catch {
             // 忽略解析错误的行
           }
         }
@@ -333,6 +330,7 @@ export default function PageDotStatus() {
         color: "green",
       });
     } catch (error) {
+      console.info("Failed to test all nodes:", error);
       notifications.show({
         title: "错误",
         message: "测试过程中发生错误",
