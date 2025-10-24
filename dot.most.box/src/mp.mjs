@@ -98,7 +98,9 @@ const postIP = async (RPC) => {
   const { PRIVATE_KEY, DOT_NAME ,API_URLS} = process.env
   if (!(PRIVATE_KEY && DOT_NAME && API_URLS)) {
     console.error('请在 .env 文件设置 PRIVATE_KEY, DOT_NAME 和 API_URLS');
+    return;
   } 
+  
   const provider = new ethers.JsonRpcProvider(RPC);
   const dotContract = new ethers.Contract(CONTRACT_ADDRESS_DOT, DotContractABI, provider);
   const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
