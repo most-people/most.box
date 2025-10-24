@@ -105,8 +105,8 @@ const PageContent = () => {
       const res = await api.put("/files.upload", formData);
       const cid = res.data?.cid;
       if (cid) {
-        updateRootCID();
         updateUrl(cid, wallet?.address);
+        updateRootCID();
         notifications.show({
           message: `${name} 保存成功`,
           color: "green",

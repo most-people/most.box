@@ -207,7 +207,6 @@ export default function HomeFile() {
         const res = await api.put("/files.upload", formData);
         const cid = res.data?.cid;
         if (cid) {
-          updateRootCID();
           notifications.update({
             id: notificationId,
             title: "上传中",
@@ -224,6 +223,7 @@ export default function HomeFile() {
         autoClose: true,
       });
 
+      updateRootCID();
       // 上传完成后刷新文件列表
       await fetchFiles(filesPath);
       setShowPreview(false);

@@ -2,11 +2,10 @@
   "name": "dot-most-box",
   "version": "1.0.0",
   "description": "TypeScript + Fastify",
-  "main": "dist/index.js",
   "scripts": {
-    "start": "npx nodemon src/index.mjs",
-    "preview": "node src/index.mjs",
-    "ipfs": "node ipfs/index.mjs",
+    "start": "cd src && npx nodemon index.mjs",
+    "preview": "cd src && node index.mjs",
+    "ipfs": "cd ipfs && node index.mjs",
     "npm": "npm i"
   },
   "dependencies": {

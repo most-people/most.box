@@ -52,10 +52,17 @@ registerApis(server, __dirname);
 registerSSE(server);
 
 const start = async () => {
-  // 运行 DOT.MOST.BOX
+  // 检测 IPFS 节点是否运行
   try {
     const peer = await ipfs.id();
     console.log("IPFS", peer.id);
+  } catch (error) {
+    console.error("IPFS 节点未运行，请启动 IPFS 节点");
+    process.exit(1);
+  }
+
+  // 启动 Most.Box
+  try {
     await server.listen({ port: mp.PORT, host: "::" });
 
     // 获取 IP 地址
@@ -68,7 +75,6 @@ const start = async () => {
     }, 60 * 60 * 1000); // 每1小时执行一次
   } catch (error) {
     console.error(error);
-    server.log.error(error);
     process.exit(1);
   }
 };

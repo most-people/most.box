@@ -21,14 +21,14 @@ import {
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import mp from "@/constants/mp";
-import { mostWallet } from "@/constants/MostWallet";
+import { MostWallet, mostWallet } from "@/constants/MostWallet";
 import { useUserStore } from "@/stores/userStore";
 import { notifications } from "@mantine/notifications";
 import { useBack } from "@/hooks/useBack";
 import { supabase } from "@/constants/supabase";
 import { type Provider } from "@supabase/supabase-js";
 import { Icon } from "@/components/Icon";
-import { SupabaseURL } from "@/constants/api";
+import { api, SupabaseURL } from "@/constants/api";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
@@ -93,11 +93,17 @@ export default function PageLogin() {
     }
     const wallet = mp.login(username, password);
     if (wallet) {
+      getTestnetGas();
       setTimeout(() => {
         setItem("wallet", wallet);
       }, 0);
     }
     back();
+  };
+
+  const getTestnetGas = async () => {
+    const res = await api.post("/api.testnet.gas");
+    console.log("🌊", res);
   };
 
   const loginTelegram = () => {
