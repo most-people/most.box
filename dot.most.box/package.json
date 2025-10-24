@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "TypeScript + Fastify",
   "scripts": {
-    "start": "cd src && npx nodemon index.mjs",
-    "preview": "cd src && node index.mjs",
-    "ipfs": "cd ipfs && node index.mjs",
+    "start": "npx nodemon src/index.mjs --watch src",
+    "preview": "node src/index.mjs",
+    "ipfs": "node ipfs/index.mjs",
     "npm": "npm i"
   },
   "dependencies": {
