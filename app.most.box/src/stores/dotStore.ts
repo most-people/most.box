@@ -1,6 +1,12 @@
 import { create } from "zustand";
-import { NETWORK_CONFIG, type NETWORK_TYPE } from "@/constants/dot";
+import {
+  CONTRACT_ABI_DOT,
+  CONTRACT_ADDRESS_DOT,
+  NETWORK_CONFIG,
+  type NETWORK_TYPE,
+} from "@/constants/dot";
 import { api } from "@/constants/api";
+import { Contract, JsonRpcProvider } from "ethers";
 
 export interface Dot {
   name: string;
@@ -20,6 +26,7 @@ interface DotState {
   dotAPI: string;
   dotCID: string;
   dotNodes: DotNode[];
+  fetchNodes: (rpc?: string) => Promise<DotNode[]>;
   updateDot: (url: string, first?: boolean) => Promise<string[] | null>;
   // 区块链网络
   network: NETWORK_TYPE;
@@ -33,13 +40,64 @@ interface DotState {
 interface State extends DotState {
   setItem: <K extends keyof State>(key: K, value: State[K]) => void;
 }
+export const checkNode = (
+  node: DotNode
+): Promise<{ isOnline: boolean; responseTime: number }> => {
+  return new Promise((resolve) => {
+    if (!node.APIs || node.APIs.length === 0) {
+      resolve({ isOnline: false, responseTime: 0 });
+      return;
+    }
+
+    const nodeUrl = node.APIs[0];
+    const startTime = Date.now();
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+    fetch(`${nodeUrl}/api.dot`, {
+      signal: controller.signal,
+      mode: "cors",
+    })
+      .then(() => {
+        clearTimeout(timeoutId);
+        const responseTime = Date.now() - startTime;
+        resolve({ isOnline: true, responseTime });
+      })
+      .catch(() => {
+        clearTimeout(timeoutId);
+        const responseTime = Date.now() - startTime;
+        resolve({ isOnline: false, responseTime });
+      });
+  });
+};
 
 export const useDotStore = create<State>((set, get) => ({
   // 节点
   dotAPI: "",
   dotCID: "",
   dotNodes: [],
-  async updateDot(url) {
+  fetchNodes: async (rpc?: string) => {
+    const { RPC } = get();
+    const provider = new JsonRpcProvider(rpc || RPC);
+    const contract = new Contract(
+      CONTRACT_ADDRESS_DOT,
+      CONTRACT_ABI_DOT,
+      provider
+    );
+    const [addresses, names, APIss, CIDss, updates] =
+      await contract.getAllDots();
+    const nodes: DotNode[] = addresses.map((address: string, index: number) => {
+      return {
+        address,
+        name: names[index] || `节点 ${index + 1}`,
+        APIs: APIss[index] || [],
+        CIDs: CIDss[index] || [],
+        lastUpdate: Number(updates[index]),
+      };
+    });
+    return nodes;
+  },
+  async updateDot(url: string) {
     try {
       const dotAPI = new URL(url).origin;
       const res = await api.get("/api.dot", { baseURL: dotAPI });

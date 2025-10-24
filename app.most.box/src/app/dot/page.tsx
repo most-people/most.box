@@ -23,7 +23,7 @@ import {
   Anchor,
   Radio,
 } from "@mantine/core";
-import { Contract, JsonRpcProvider } from "ethers";
+import { JsonRpcProvider } from "ethers";
 import { notifications } from "@mantine/notifications";
 import {
   IconCheck,
@@ -41,19 +41,12 @@ import {
   IconSettings,
   IconBrandGithub,
 } from "@tabler/icons-react";
-import {
-  CONTRACT_ABI_DOT,
-  CONTRACT_ADDRESS_DOT,
-  NETWORK_CONFIG,
-} from "@/constants/dot";
+import { CONTRACT_ADDRESS_DOT, NETWORK_CONFIG } from "@/constants/dot";
 import mp from "@/constants/mp";
 import { CID } from "multiformats";
 import Link from "next/link";
-import { DotNode, useDotStore } from "@/stores/dotStore";
+import { checkNode, DotNode, useDotStore } from "@/stores/dotStore";
 import { useBack } from "@/hooks/useBack";
-
-// ===== 常量定义 =====
-const TIMEOUT = 2000;
 
 // ===== 类型定义 =====
 type DetectionStatus = "success" | "error" | "timeout" | "pending";
@@ -70,6 +63,7 @@ export default function PageDot() {
   const updateDot = useDotStore((state) => state.updateDot);
   const network = useDotStore((state) => state.network);
   const setNetwork = useDotStore((state) => state.setNetwork);
+  const fetchNodes = useDotStore((state) => state.fetchNodes);
 
   // ===== 网络和RPC状态 =====
   const RPC = useDotStore((state) => state.RPC);
@@ -169,7 +163,7 @@ export default function PageDot() {
   ): Promise<DetectionResult> => {
     const startTime = Date.now();
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
 
     try {
       const response = await fetch(fullUrl, {
@@ -263,34 +257,22 @@ export default function PageDot() {
     }
   };
 
-  const fetchNodes = async (rpc?: string) => {
+  const fetchDotNodes = async (rpc?: string) => {
     try {
       setLoading(true);
       setError(null);
 
       const rpcUrl = rpc || customRPC || RPC;
       const provider = new JsonRpcProvider(rpcUrl);
-      const networkInfo = await provider.getNetwork();
-      const chainId = Number(networkInfo.chainId);
 
-      if (!verifyNetwork(chainId)) return;
+      // 验证网络
+      if (rpc) {
+        const networkInfo = await provider.getNetwork();
+        const chainId = Number(networkInfo.chainId);
+        if (!verifyNetwork(chainId)) return;
+      }
 
-      const contract = new Contract(
-        CONTRACT_ADDRESS_DOT,
-        CONTRACT_ABI_DOT,
-        provider
-      );
-      const [addresses, names, APIss, CIDss, updates] =
-        await contract.getAllDots();
-      const nodes = addresses.map((address: string, index: number) => {
-        return {
-          address,
-          name: names[index] || `节点 ${index + 1}`,
-          APIs: APIss[index] || [],
-          CIDs: CIDss[index] || [],
-          lastUpdate: Number(updates[index]),
-        };
-      });
+      const nodes = await fetchNodes(rpcUrl);
       localStorage.setItem("dotNodes", JSON.stringify(nodes));
       setItem("RPC", rpcUrl);
       if (nodes) {
@@ -305,44 +287,13 @@ export default function PageDot() {
     }
   };
 
-  const checkNodeConnectivity = (
-    node: DotNode
-  ): Promise<{ isOnline: boolean; responseTime: number }> => {
-    return new Promise((resolve) => {
-      if (!node.APIs || node.APIs.length === 0) {
-        resolve({ isOnline: false, responseTime: 0 });
-        return;
-      }
-
-      const nodeUrl = node.APIs[0];
-      const startTime = Date.now();
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
-
-      fetch(`${nodeUrl}/api.dot`, {
-        signal: controller.signal,
-        mode: "cors",
-      })
-        .then(() => {
-          clearTimeout(timeoutId);
-          const responseTime = Date.now() - startTime;
-          resolve({ isOnline: true, responseTime });
-        })
-        .catch(() => {
-          clearTimeout(timeoutId);
-          const responseTime = Date.now() - startTime;
-          resolve({ isOnline: false, responseTime });
-        });
-    });
-  };
-
   const checkAllConnectivity = async () => {
     setCheckingConnectivity(true);
 
     try {
       const updatedNodes = await Promise.all(
         dotNodes.map(async (node) => {
-          const { isOnline, responseTime } = await checkNodeConnectivity(node);
+          const { isOnline, responseTime } = await checkNode(node);
           return { ...node, isOnline, responseTime };
         })
       );
@@ -404,7 +355,7 @@ export default function PageDot() {
       const rpc = NETWORK_CONFIG[value].rpc;
       setCustomRPC(rpc);
       setNetwork(value);
-      fetchNodes(rpc);
+      fetchDotNodes(rpc);
       notifications.show({
         title: "网络已切换",
         message: `已切换到 ${NETWORK_CONFIG[value].name}`,
@@ -432,7 +383,7 @@ export default function PageDot() {
     }
 
     // 从区块链获取最新数据
-    fetchNodes();
+    fetchDotNodes();
   }, []);
 
   const randomRPC = () => {
@@ -546,7 +497,7 @@ export default function PageDot() {
                 size="lg"
                 variant="light"
                 color="blue"
-                onClick={() => fetchNodes()}
+                onClick={() => fetchDotNodes()}
                 loading={loading}
               >
                 <IconRefresh size={18} />
@@ -611,7 +562,7 @@ export default function PageDot() {
               variant="light"
               onClick={() => {
                 setCustomRPC(randomRPC());
-                fetchNodes();
+                fetchDotNodes();
               }}
             >
               重新尝试
@@ -868,7 +819,7 @@ export default function PageDot() {
             size="lg"
             variant="light"
             color="blue"
-            onClick={() => fetchNodes()}
+            onClick={() => fetchDotNodes()}
             loading={loading}
           >
             <IconRefresh size={18} />
