@@ -16,7 +16,8 @@ const isRdrandSupported = rng.isRrdrandSupported();
 export const registerApis = (server, __dirname) => {
   // 节点信息
   server.get("/api.dot", async () => {
-    return mp.getIP();
+    const dot = await mp.getIP()
+    return dot;
   });
 
   // 真随机数

@@ -1,9 +1,12 @@
 import { ethers } from "ethers";
 import os from "os";
+import { create } from "kubo-rpc-client";
 import DotContractABI from "./abi/DotContractABI.json" with { type: "json" };
 
 const PORT = 1976;
 const CONTRACT_ADDRESS_DOT = "0xB67662F0d2BB106B055503062e1dba4f072f5781";
+// 创建 IPFS 客户端
+const ipfs = create({ url: "http://127.0.0.1:5001" });
 
 /**
  * 验证 token 并返回地址
@@ -78,10 +81,12 @@ const initIP = () => {
   postIP('https://mainnet.base.org')
 };
 
-const getIP = () => {
+const getIP = async () => {
+  const peer = await ipfs.id();
+  const IPFS_ID = peer.id.toString();
   const { DOT_NAME, API_URLS, CID_URLS } = process.env
   const dot = {
-    name: DOT_NAME || '',
+    name: `${DOT_NAME || 'Unknown'}-${IPFS_ID}` || '',
     APIs: network.ipv6.slice(1),
     CIDs: [],
   }
@@ -95,12 +100,12 @@ const getIP = () => {
 }
 
 const postIP = async (RPC) => {
-  const { PRIVATE_KEY, DOT_NAME ,API_URLS} = process.env
+  const { PRIVATE_KEY, DOT_NAME, API_URLS } = process.env
   if (!(PRIVATE_KEY && DOT_NAME && API_URLS)) {
     console.error('请在 .env 文件设置 PRIVATE_KEY, DOT_NAME 和 API_URLS');
     return;
-  } 
-  
+  }
+
   const provider = new ethers.JsonRpcProvider(RPC);
   const dotContract = new ethers.Contract(CONTRACT_ADDRESS_DOT, DotContractABI, provider);
   const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
@@ -109,9 +114,9 @@ const postIP = async (RPC) => {
   // 更新
   try {
     const [name, APIs, CIDs, update] = await contract.getDot(wallet.address);
-    const dot = getIP()
+    const dot = await getIP()
 
-    if (arrayEqual(APIs, dot.APIs) && arrayEqual(CIDs, dot.CIDs)) {
+    if (name === dot.name && arrayEqual(APIs, dot.APIs) && arrayEqual(CIDs, dot.CIDs)) {
       console.log(RPC, "节点无变化");
       return;
     }
