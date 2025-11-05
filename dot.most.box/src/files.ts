@@ -1,28 +1,27 @@
-import mp from "./mp.mjs";
+import type { FastifyInstance } from "fastify";
+import mp from "./mp.js";
+import type { KuboRPCClient } from "kubo-rpc-client";
 
 const SystemDir = [".note"];
 
 /**
  * 注册文件相关的路由
- * @param {import('fastify').FastifyInstance} server - Fastify 服务器实例
- * 注册文件相关的路由
- * @param {import('kubo-rpc-client').KuboRPCClient} ipfs - IPFS 客户端实例
  */
-export const registerFiles = (server, ipfs) => {
+export const registerFiles = (server: FastifyInstance, ipfs: KuboRPCClient) => {
   // 查找 MFS 文件路径 CID
-  server.get("/files.cid/:uid/:dir/:name", async (request) => {
-    const address = request.params["uid"] || "";
-    const dir = request.params["dir"] || "";
+  server.get("/files.cid/:uid/:dir/:name", async (request, reply) => {
+    const address = (request.params as any)["uid"] || "";
+    const dir = (request.params as any)["dir"] || "";
     if (!SystemDir.includes(dir)) {
       return "";
     }
-    const name = request.params["name"] || "";
+    const name = (request.params as any)["name"] || "";
     if (!name) {
       return "";
     }
     const fullPath = "/" + address.toLowerCase() + "/" + dir + "/" + name;
     try {
-      const stat = await ipfs.files.stat(fullPath);
+      const stat = await ipfs.files.stat(fullPath as any);
       return stat.cid.toV1().toString();
     } catch {
       return "";
@@ -30,14 +29,14 @@ export const registerFiles = (server, ipfs) => {
   });
 
   // 查找 MFS 根目录 CID
-  server.post("/files.cid", async (request) => {
-    const address = mp.getAddress(request.headers.authorization);
+  server.post("/files.cid", async (request, reply) => {
+    const address = mp.getAddress(request.headers.authorization as string);
     if (!address) {
       return reply.code(400).send("token 无效");
     }
     const fullPath = "/" + address.toLowerCase();
     try {
-      const stat = await ipfs.files.stat(fullPath);
+      const stat = await ipfs.files.stat(fullPath as any);
       return stat.cid.toV1().toString();
     } catch {
       return "";
@@ -46,68 +45,68 @@ export const registerFiles = (server, ipfs) => {
 
   // 查看文件/目录
   server.post("/files/*", async (request, reply) => {
-    const address = mp.getAddress(request.headers.authorization);
+    const address = mp.getAddress(request.headers.authorization as string);
     if (!address) {
       return reply.code(400).send("token 无效");
     }
 
-    const subPath = request.params["*"] || ""; // 获取子路径
+    const subPath = (request.params as any)["*"] || ""; // 获取子路径
     try {
       // 构建完整路径，如果有子路径则包含子路径
       const fullPath = subPath ? `/${address}/${subPath}` : `/${address}`;
-      const result = ipfs.files.ls(fullPath, { long: true });
+      const result = ipfs.files.ls(fullPath as any, { long: true } as any);
       const entries = [];
-      for await (const file of result) {
+      for await (const file of result as any) {
         file.cid = file.cid.toV1();
         entries.push(file);
       }
       return entries;
     } catch (error) {
-      if (error.message.includes("file does not exist")) {
+      if ((error as any).message.includes("file does not exist")) {
         return [];
       }
-      return reply.code(500).send("文件列表获取失败 " + error.message);
+      return reply.code(500).send("文件列表获取失败 " + (error as any).message);
     }
   });
 
   // 上传文件
   server.put("/files.upload", async (request, reply) => {
-    const address = mp.getAddress(request.headers.authorization);
+    const address = mp.getAddress(request.headers.authorization as string);
     if (!address) {
       return reply.code(400).send("token 无效");
     }
 
     try {
-      const data = await request.file();
+      const data = await (request as any).file();
       if (!data) {
         return reply.code(400).send("没有文件");
       }
 
       const buffer = await data.toBuffer();
-      const path = data.fields.path?.value || "";
-      const filename = path || data.filename || "unnamed";
+      const pathFromField = data.fields.path?.value || "";
+      const filename = pathFromField || data.filename || "unnamed";
 
       const targetPath = `/${address}/${filename}`;
 
       // 将文件添加到IPFS
-      const fileAdded = await ipfs.add(buffer, {
+      const fileAdded = await ipfs.add(buffer as any, {
         cidVersion: 1,
         rawLeaves: true,
-      });
+      } as any);
 
       // 检查文件是否已存在，如果存在则先删除
       try {
-        await ipfs.files.stat(targetPath);
+        await ipfs.files.stat(targetPath as any);
         // 文件存在，先删除
-        await ipfs.files.rm(targetPath);
+        await ipfs.files.rm(targetPath as any);
       } catch (error) {
         // 文件不存在，忽略错误
       }
 
       // 将文件复制到指定地址目录
-      await ipfs.files.cp(`/ipfs/${fileAdded.cid}`, targetPath, {
+      await ipfs.files.cp(`/ipfs/${fileAdded.cid}`, targetPath as any, {
         parents: true,
-      });
+      } as any);
 
       return {
         ok: true,
@@ -117,18 +116,18 @@ export const registerFiles = (server, ipfs) => {
         size: fileAdded.size,
       };
     } catch (error) {
-      return reply.code(500).send("文件上传失败 " + error.message);
+      return reply.code(500).send("文件上传失败 " + (error as any).message);
     }
   });
 
   // 删除文件/目录
   server.delete("/files/*", async (request, reply) => {
-    const address = mp.getAddress(request.headers.authorization);
+    const address = mp.getAddress(request.headers.authorization as string);
     if (!address) {
       return reply.code(400).send("token 无效");
     }
 
-    const subPath = request.params["*"] || ""; // 获取子路径
+    const subPath = (request.params as any)["*"] || ""; // 获取子路径
 
     if (!subPath) {
       return reply.code(400).send("文件不能为空");
@@ -137,24 +136,24 @@ export const registerFiles = (server, ipfs) => {
     try {
       // 构建完整路径，如果有子路径则包含子路径
       const fullPath = subPath ? `/${address}/${subPath}` : `/${address}`;
-      await ipfs.files.rm(fullPath, { recursive: true });
+      await ipfs.files.rm(fullPath as any, { recursive: true } as any);
       return {
         ok: true,
         message: "删除成功",
       };
     } catch (error) {
-      return reply.code(500).send("文件删除失败 " + error.message);
+      return reply.code(500).send("文件删除失败 " + (error as any).message);
     }
   });
 
   // 重命名
   server.put("/files.rename", async (request, reply) => {
-    const address = mp.getAddress(request.headers.authorization);
+    const address = mp.getAddress(request.headers.authorization as string);
     if (!address) {
       return reply.code(400).send("token 无效");
     }
 
-    const { oldName, newName } = request.body;
+    const { oldName, newName } = (request.body || {}) as any;
 
     if (!oldName || !newName) {
       return reply.code(400).send("缺少文件名参数");
@@ -169,21 +168,21 @@ export const registerFiles = (server, ipfs) => {
       const newPath = `/${address}${newName}`;
       // 检查原文件是否存在
       try {
-        await ipfs.files.stat(oldPath);
+        await ipfs.files.stat(oldPath as any);
       } catch {
         return reply.code(404).send("原文件不存在");
       }
 
       // 检查新文件名是否已存在
       try {
-        await ipfs.files.stat(newPath);
+        await ipfs.files.stat(newPath as any);
         return reply.code(409).send("新文件名已存在");
       } catch {
         // 文件不存在，可以继续重命名
       }
 
       // 执行重命名操作
-      await ipfs.files.mv(oldPath, newPath);
+      await ipfs.files.mv(oldPath as any, newPath as any);
 
       return {
         ok: true,
@@ -192,31 +191,31 @@ export const registerFiles = (server, ipfs) => {
         newName: newName,
       };
     } catch (error) {
-      return reply.code(500).send("重命名失败 " + error.message);
+      return reply.code(500).send("重命名失败 " + (error as any).message);
     }
   });
 
   // 导入
   server.put("/files.import/:cid", async (request, reply) => {
-    const address = mp.getAddress(request.headers.authorization);
+    const address = mp.getAddress(request.headers.authorization as string);
     if (!address) {
       return reply.code(400).send("token 无效");
     }
-    const cid = request.params.cid;
+    const cid = (request.params as any).cid;
     if (!cid) {
       return reply.code(400).send("缺少 cid 参数");
     }
 
     try {
-      await ipfs.files.rm(`/${address}`, { recursive: true, force: true });
-      await ipfs.files.cp(`/ipfs/${cid}`, `/${address}`);
+      await ipfs.files.rm(`/${address}` as any, { recursive: true, force: true } as any);
+      await ipfs.files.cp(`/ipfs/${cid}`, `/${address}` as any);
       return {
         ok: true,
         message: "导入成功",
         cid: cid,
       };
     } catch (error) {
-      return reply.code(500).send("导入失败 " + error.message);
+      return reply.code(500).send("导入失败 " + (error as any).message);
     }
   });
 };

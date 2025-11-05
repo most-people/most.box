@@ -1,8 +1,9 @@
-import mp from "./mp.mjs";
+import mp from "./mp.js";
 import rng from "rdrand-lite";
 import { exec } from "child_process";
 import { promisify } from "util";
 import path from "path";
+import type { FastifyInstance } from "fastify";
 import { Wallet, JsonRpcProvider, parseEther, formatEther } from "ethers";
 
 const execAsync = promisify(exec);
@@ -10,20 +11,17 @@ const isRdrandSupported = rng.isRrdrandSupported();
 
 /**
  * 注册 API 相关的路由
- * @param {import('fastify').FastifyInstance} server - Fastify 服务器实例
- * @param {string} __dirname - 项目根目录
  */
-export const registerApis = (server, __dirname) => {
+export const registerApis = (server: FastifyInstance, __dirname: string) => {
   // 节点信息
   server.get("/api.dot", async () => {
-    const dot = await mp.getIP()
+    const dot = await mp.getIP();
     return dot;
   });
 
   // 真随机数
   server.get("/api.TRNG", async () => {
     if (isRdrandSupported) {
-      // CPU 随机数
       return rng.rdSeed64().toString(16);
     } else {
       return "not support rdSeed";
@@ -35,7 +33,7 @@ export const registerApis = (server, __dirname) => {
     const log = [];
 
     try {
-      const isOwner = mp.isOwner(request.headers.authorization);
+      const isOwner = mp.isOwner(request.headers.authorization as string);
       if (!isOwner) {
         throw new Error("管理员 token 无效");
       }
@@ -43,19 +41,12 @@ export const registerApis = (server, __dirname) => {
       const rootPath = path.join(__dirname, "..");
       // 0. git checkout .
       log.push("执行 git checkout . (忽略本地修改)");
-      const { stdout: checkoutOut, stderr: checkoutErr } = await execAsync(
-        "git checkout .",
-        {
-          cwd: rootPath,
-        }
-      );
+      const { stdout: checkoutOut, stderr: checkoutErr } = await execAsync("git checkout .", { cwd: rootPath });
       log.push(`Git checkout: ${checkoutOut || checkoutErr}`);
 
       // 1. git pull
       log.push("执行 git pull...");
-      const { stdout: gitOut, stderr: gitErr } = await execAsync("git pull", {
-        cwd: rootPath,
-      });
+      const { stdout: gitOut, stderr: gitErr } = await execAsync("git pull", { cwd: rootPath });
       log.push(`Git: ${gitOut || gitErr}`);
 
       // 检查是否有更新
@@ -71,14 +62,12 @@ export const registerApis = (server, __dirname) => {
 
       // 2. npm install
       log.push("执行 npm install...");
-      const { stdout: npmOut, stderr: npmErr } = await execAsync("npm i", {
-        cwd: rootPath,
-      });
+      const { stdout: npmOut, stderr: npmErr } = await execAsync("npm i", { cwd: rootPath });
       log.push(`NPM: ${npmOut || npmErr}`);
 
       // 3. pm2 reload all
       log.push("执行 pm2 reload all...");
-      const { stdout: pm2Out, stderr: pm2Err } = execAsync("pm2 reload all");
+      const { stdout: pm2Out, stderr: pm2Err } = await execAsync("pm2 reload all");
       log.push(`PM2: ${pm2Out || pm2Err}`);
       log.push("部署完成！");
       return {
@@ -88,12 +77,12 @@ export const registerApis = (server, __dirname) => {
         timestamp: new Date().toJSON(),
       };
     } catch (error) {
-      log.push(`Error: ${error.message}`);
+      log.push(`Error: ${(error as any).message}`);
       reply.code(500);
       return {
         ok: false,
         message: "部署失败",
-        error: error.message,
+        error: (error as any).message,
         log,
         timestamp: new Date().toJSON(),
       };
@@ -103,13 +92,13 @@ export const registerApis = (server, __dirname) => {
   // 重启电脑
   server.put("/api.reboot", async (request, reply) => {
     try {
-      const isOwner = mp.isOwner(request.headers.authorization);
+      const isOwner = mp.isOwner(request.headers.authorization as string);
       if (!isOwner) {
         reply.code(401);
         return { ok: false, message: "管理员 token 无效" };
       }
 
-      let command;
+      let command: string;
       if (process.platform === "win32") {
         command = "shutdown /r /t 0";
       } else if (process.platform === "linux") {
@@ -142,7 +131,7 @@ export const registerApis = (server, __dirname) => {
       return {
         ok: false,
         message: "发起重启失败",
-        error: error.message,
+        error: (error as any).message,
         timestamp: new Date().toJSON(),
       };
     }
@@ -162,7 +151,7 @@ export const registerApis = (server, __dirname) => {
       return { ok: false, message: "请在 .env 文件设置 PRIVATE_KEY" };
     }
 
-    const address = mp.getAddress(request.headers.authorization);
+    const address = mp.getAddress(request.headers.authorization as string);
     if (!address) {
       return reply.code(400).send("token 无效");
     }
@@ -173,7 +162,7 @@ export const registerApis = (server, __dirname) => {
       // 检查地址余额
       const balance = await provider.getBalance(address);
 
-      if (balance > 0) {
+      if (balance > 0n) {
         reply.code(400);
         return {
           ok: false,
@@ -199,7 +188,7 @@ export const registerApis = (server, __dirname) => {
       return {
         ok: false,
         message: "Gas 领取失败",
-        error: error.message,
+        error: (error as any).message,
       };
     }
   });

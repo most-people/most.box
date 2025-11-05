@@ -1,8 +1,12 @@
+import type { FastifyInstance } from "fastify";
+import type { ServerResponse } from "http";
+
 // SSE rooms: roomId -> Set<{ id: string, send: (data:any)=>void, res: ServerResponse }>
-const rooms = new Map();
+type Client = { id: string; send: (data: any) => void; res: ServerResponse };
+const rooms: Map<string, Set<Client>> = new Map();
 
 // ---- SSE helpers (deduplicated) ----
-const makeSender = (rawRes) => (obj) => {
+const makeSender = (rawRes: ServerResponse) => (obj: any) => {
   try {
     rawRes.write(`data: ${JSON.stringify(obj)}\n\n`);
   } catch {
@@ -10,7 +14,11 @@ const makeSender = (rawRes) => (obj) => {
   }
 };
 
-const broadcastToRoom = (roomId, message, { excludeId, toId } = {}) => {
+const broadcastToRoom = (
+  roomId: string,
+  message: any,
+  { excludeId, toId }: { excludeId?: string | number; toId?: string | number } = {}
+) => {
   const set = rooms.get(roomId);
   if (!set || set.size === 0) return 0;
   let delivered = 0;
@@ -24,11 +32,11 @@ const broadcastToRoom = (roomId, message, { excludeId, toId } = {}) => {
 };
 
 // ============ HTTP + SSE 信令 ============
-export const registerSSE = (server) => {
+export const registerSSE = (server: FastifyInstance) => {
   // 订阅房间消息 SSE
   server.get("/sse.signaling", (request, reply) => {
     try {
-      const { roomId, clientId } = request.query || {};
+      const { roomId, clientId } = (request.query || {}) as any;
       if (!roomId || !clientId) {
         reply.code(400);
         reply.send({ ok: false, message: "roomId 和 clientId 必填" });
@@ -52,7 +60,7 @@ export const registerSSE = (server) => {
         rooms.set(roomId, set);
       }
 
-      const client = { id: String(clientId), send, res: reply.raw };
+      const client: Client = { id: String(clientId), send, res: reply.raw };
       set.add(client);
       // console.log(`[SSE] client ${clientId} joined room ${roomId}, size=${set.size}`);
 
@@ -102,7 +110,7 @@ export const registerSSE = (server) => {
         }
         // console.log(`[SSE] client ${clientId} left room ${roomId}`);
       });
-    } catch (error) {
+    } catch (error: any) {
       // console.error("[SSE] subscribe error:", error);
       reply.code(500).send({ ok: false, message: error.message });
     }
@@ -111,7 +119,7 @@ export const registerSSE = (server) => {
   // 获取房间用户列表 HTTP
   server.get("/api.room", async (request, reply) => {
     try {
-      const { roomId } = request.query || {};
+      const { roomId } = (request.query || {}) as any;
 
       if (!roomId) {
         reply.code(400);
@@ -122,7 +130,7 @@ export const registerSSE = (server) => {
       const users = set ? Array.from(set).map((client) => client.id) : [];
 
       return { ok: true, users };
-    } catch (error) {
+    } catch (error: any) {
       // console.error("[SSE] get room users error:", error);
       reply.code(500);
       return { ok: false, message: error.message };
@@ -132,7 +140,7 @@ export const registerSSE = (server) => {
   // 发送信令 HTTP
   server.post("/api.signaling", async (request, reply) => {
     try {
-      const { roomId, from, to, type, payload } = request.body || {};
+      const { roomId, from, to, type, payload } = (request.body || {}) as any;
 
       if (!roomId || !from || !type) {
         reply.code(400);
@@ -149,7 +157,7 @@ export const registerSSE = (server) => {
       );
 
       return { ok: true, delivered };
-    } catch (error) {
+    } catch (error: any) {
       // console.error("[SSE] post signaling error:", error);
       reply.code(500);
       return { ok: false, message: error.message };

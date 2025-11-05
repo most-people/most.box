@@ -10,10 +10,9 @@ const ipfs = create({ url: "http://127.0.0.1:5001" });
 
 /**
  * 验证 token 并返回地址
- * @param {string} token - 格式为 "address.message.signature" 的 token
- * @returns {string | null} - 验证成功返回地址，失败返回空字符串
+ * @param token 格式为 "address.message.signature"
  */
-const getAddress = (token) => {
+const getAddress = (token: string | undefined | null): string | null => {
   if (token && typeof token === "string") {
     try {
       const [address, t, sig] = token.split(".");
@@ -35,13 +34,8 @@ const getAddress = (token) => {
   return null;
 };
 
-/**
- * 判断数组相等
- * @param {string[]} a
- * @param {string[]} b
- * @returns {boolean}
- */
-const arrayEqual = (a, b) => {
+/** 判断数组相等 */
+const arrayEqual = (a: string[], b: string[]) => {
   if (a.length !== b.length) {
     return false;
   }
@@ -57,64 +51,64 @@ const network = {
 
 const initIP = () => {
   // 重置
-  network.ipv4 = [`http://localhost:${PORT}`]
-  network.ipv6 = [`http://[::1]:${PORT}`]
+  network.ipv4 = [`http://localhost:${PORT}`];
+  network.ipv6 = [`http://[::1]:${PORT}`];
   const interfaces = os.networkInterfaces();
   for (const name of Object.keys(interfaces)) {
-    for (const iface of interfaces[name]) {
+    for (const iface of interfaces[name] || []) {
       // 获取 IPv4 地址
-      if (iface.family === "IPv4" && !iface.internal) {
-        network.ipv4.push(`http://${iface.address}:${PORT}`);
+      if ((iface as any).family === "IPv4" && !(iface as any).internal) {
+        network.ipv4.push(`http://${(iface as any).address}:${PORT}`);
       }
       // 获取 IPv6 地址
       if (
-        iface.family === "IPv6" &&
-        !iface.internal &&
-        !iface.address.startsWith("fe80")
+        (iface as any).family === "IPv6" &&
+        !(iface as any).internal &&
+        !String((iface as any).address).startsWith("fe80")
       ) {
-        network.ipv6.push(`http://[${iface.address}]:${PORT}`);
+        network.ipv6.push(`http://[${(iface as any).address}]:${PORT}`);
       }
     }
   }
   // 推送 IP 地址
-  postIP("https://sepolia.base.org")
-  postIP('https://mainnet.base.org')
+  postIP("https://sepolia.base.org");
+  postIP("https://mainnet.base.org");
 };
 
 const getIP = async () => {
   const peer = await ipfs.id();
   const IPFS_ID = peer.id.toString();
-  const { DOT_NAME, API_URLS, CID_URLS } = process.env
+  const { DOT_NAME, API_URLS, CID_URLS } = process.env;
   const dot = {
-    name: `${DOT_NAME || 'Unknown'}-${IPFS_ID}` || '',
+    name: `${DOT_NAME || "Unknown"}-${IPFS_ID}` || "",
     APIs: network.ipv6.slice(1),
-    CIDs: [],
-  }
+    CIDs: [] as string[],
+  };
   if (API_URLS) {
-    dot.APIs.unshift(...API_URLS.split(','));
+    dot.APIs.unshift(...API_URLS.split(","));
   }
   if (CID_URLS) {
-    dot.CIDs.unshift(...CID_URLS.split(','));
+    dot.CIDs.unshift(...CID_URLS.split(","));
   }
-  return dot
-}
+  return dot;
+};
 
-const postIP = async (RPC) => {
-  const { PRIVATE_KEY, DOT_NAME, API_URLS } = process.env
+const postIP = async (RPC: string) => {
+  const { PRIVATE_KEY, DOT_NAME, API_URLS } = process.env;
   if (!(PRIVATE_KEY && DOT_NAME && API_URLS)) {
     console.error('请在 .env 文件设置 PRIVATE_KEY, DOT_NAME 和 API_URLS');
     return;
   }
 
   const provider = new ethers.JsonRpcProvider(RPC);
-  const dotContract = new ethers.Contract(CONTRACT_ADDRESS_DOT, DotContractABI, provider);
+  const dotContract = new ethers.Contract(CONTRACT_ADDRESS_DOT, DotContractABI as any, provider);
   const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
-  const contract = dotContract.connect(wallet);
+  const contract = dotContract.connect(wallet) as any;
 
   // 更新
   try {
-    const [name, APIs, CIDs, update] = await contract.getDot(wallet.address);
-    const dot = await getIP()
+    const [name, APIs, CIDs] = await contract.getDot(wallet.address);
+    const dot = await getIP();
 
     if (name === dot.name && arrayEqual(APIs, dot.APIs) && arrayEqual(CIDs, dot.CIDs)) {
       console.log(RPC, "节点无变化");
@@ -123,8 +117,9 @@ const postIP = async (RPC) => {
 
     // 估算gas费用
     const gasEstimate = await contract.setDot.estimateGas(dot.name, dot.APIs, dot.CIDs);
-    const gasPrice = await provider.getFeeData();
-    const estimatedCost = gasEstimate * gasPrice.gasPrice;
+    const feeData = await provider.getFeeData();
+    const gasPrice = feeData.gasPrice || 0n;
+    const estimatedCost = gasEstimate * gasPrice;
 
     // 检查余额是否足够
     const balance = await provider.getBalance(wallet.address);
@@ -141,10 +136,10 @@ const postIP = async (RPC) => {
   }
 };
 
-const isOwner = (token) => {
+const isOwner = (token: string | undefined | null) => {
   const { PRIVATE_KEY } = process.env;
   if (!PRIVATE_KEY) return false;
-  const address = getAddress(token);
+  const address = getAddress(token || "");
   if (!address) return false;
   const wallet = new ethers.Wallet(PRIVATE_KEY);
   return wallet.address.toLowerCase() === address;
