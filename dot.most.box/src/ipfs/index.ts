@@ -1,10 +1,10 @@
 // 通过合并角色模板与节点清单生成 IPFS 配置
-// 输入：custom.json、dhtclient.json、dhtserver.json
-// 输出：从本地 IPFS 仓库磁盘读取当前配置与 Peer ID，按 custom.json 与角色模板进行细粒度合并，写入到 .ipfs/config
+// 输入：custom、dhtclient.json、dhtserver.json
+// 输出：从本地 IPFS 仓库磁盘读取当前配置与 Peer ID，按 custom 与角色模板进行细粒度合并，写入到 .ipfs/config
 /**
  * 模块概述：
  * - 检测本机 IPFS/Kubo HTTP API（常见默认端口）
- * - 读取角色模板（dhtclient/dhtserver）与网络节点清单（custom.json）
+ * - 读取角色模板（dhtclient/dhtserver）与网络节点清单（custom）
  * - 依据当前 Peer 身份生成 Announce/Bootstrap/Peering 等配置并通过 HTTP API 替换运行时配置
  *
  * 设计原则：
@@ -381,7 +381,7 @@ const isSwarmPortOpen = async (host: string, port = DEFAULT_PORT): Promise<boole
 
 /**
  * 将链上 dots 转换为 custom 节点清单
- * - 优先沿用现有 custom.json 的 type/port
+ * - 优先沿用现有 custom 的 type/port
  * - 无历史记录时默认 type=dhtclient
  */
 const dotsToCustom = async (dots: Dot[]): Promise<NodeDef[]> => {
@@ -569,10 +569,10 @@ const mergeBaseWithExtras = (
   // Addresses：保留现有 Swarm，不覆盖；仅设置 Announce
   (cfg.Addresses ||= {}).Announce = announceAddrs;
 
-  // Bootstrap 列表（来自 custom.json）
+  // Bootstrap 列表（来自 custom）
   cfg.Bootstrap = bootstrapAddrs;
 
-  // Peering 列表（来自 custom.json）
+  // Peering 列表（来自 custom）
   cfg.Peering = { Peers: peeringPeers };
 
   // Routing.Type 按模板角色设置
@@ -622,10 +622,10 @@ const getCurrentIpfsInfo = async (): Promise<IpfsHttpInfo> => {
  */
 const main = async () => {
   const dots = await mp.getAllDots();
+  const custom = await dotsToCustom(dots as Dot[]);
 
   const dhtClientPath = path.join(NETWORK_ROOT, "dhtclient.json");
   const dhtServerPath = path.join(NETWORK_ROOT, "dhtserver.json");
-  const custom = await dotsToCustom(dots as Dot[]);
 
   const dhtClient = await readJson(dhtClientPath);
   const dhtServer = await readJson(dhtServerPath);

@@ -33,6 +33,7 @@ import {
 } from "@tabler/icons-react";
 import { useState, useEffect } from "react";
 import { notifications } from "@mantine/notifications";
+import { useDotStore, checkNode, type DotNode } from "@/stores/dotStore";
 
 // 类型定义
 interface IPFSNodeInfo {
@@ -65,61 +66,14 @@ interface PingResult {
   Text: string;
 }
 
-interface CustomNode {
-  name: string;
-  type: string;
-  id: string;
-  ip: string[];
-}
-
 interface NodeTestResult {
-  node: CustomNode;
+  node: DotNode;
   found: boolean;
   addresses: string[];
   pingResults: PingResult[];
   avgLatency?: number;
   status: "success" | "error" | "testing" | "idle";
 }
-
-// Custom nodes from custom.json
-const CUSTOM_NODES: CustomNode[] = [
-  {
-    name: "ThreeBody",
-    type: "dhtserver",
-    id: "12D3KooWEfhngz9JqycJXmrxtozE3qKvwBpTW8cusoU7SWixgeEc",
-    ip: ["/dns6/m1.most.box"],
-  },
-  {
-    name: "SG1",
-    type: "dhtserver",
-    id: "12D3KooWK3Z55bUGEC8Rn8cfqFFMzy8LzHEFwitdsx3xX48LEJvA",
-    ip: ["/ip4/129.226.147.127", "/dns4/sg1.most-people.com"],
-  },
-  {
-    name: "DOT",
-    type: "dhtserver",
-    id: "12D3KooWBXK1mBkN8UY9UVEfkKJtaY8Xkb1YKZgBUTDRFnLAKGpV",
-    ip: ["/ip4/119.91.213.99", "/dns4/dot.most.red"],
-  },
-  {
-    name: "SG2",
-    type: "dhtclient",
-    id: "12D3KooWHNKz2FbXQzUGynYMyDpPHrEQSm2jkjzzW8t285tWbb41",
-    ip: ["/ip4/143.156.32.57", "/dns4/sg2.most-people.com"],
-  },
-  {
-    name: "Damon",
-    type: "dhtclient",
-    id: "12D3KooWNeNLV7D7qivHMX237XzyfMbzeQZyqbkizFcekKhDJiqR",
-    ip: ["/ip4/111.230.30.145", "/dns4/damon.most.red"],
-  },
-  {
-    name: "ZX",
-    type: "dhtclient",
-    id: "12D3KooWPen5b7dvQm9C2nmnVXad51FaxLWrwQch2H8fVNFfhoGW",
-    ip: ["/ip4/123.206.203.234", "/dns4/zx-dot.most.red"],
-  },
-];
 
 const IPFS_API_BASE = "http://localhost:5001/api/v0";
 
@@ -130,10 +84,13 @@ export default function PageDotStatus() {
   const [loading, setLoading] = useState(false);
   const [ipfsOnline, setIpfsOnline] = useState<boolean | null>(null);
 
-  // 初始化节点测试结果
-  useEffect(() => {
+  const fetchNodes = useDotStore((state) => state.fetchNodes);
+
+  const init = async () => {
+    const nodes = await fetchNodes("https://mainnet.base.org");
+
     setNodeTests(
-      CUSTOM_NODES.map((node) => ({
+      nodes.map((node) => ({
         node,
         found: false,
         addresses: [],
@@ -141,6 +98,10 @@ export default function PageDotStatus() {
         status: "idle",
       }))
     );
+  };
+  // 初始化节点测试结果
+  useEffect(() => {
+    init();
   }, []);
 
   // 检查IPFS节点信息
@@ -231,9 +192,9 @@ export default function PageDotStatus() {
     return [];
   };
 
-  // 测试单个节点
+  // 测试单个节点（链上节点）
   const testNode = async (nodeIndex: number) => {
-    const node = CUSTOM_NODES[nodeIndex];
+    const node = nodeTests[nodeIndex]?.node;
 
     setNodeTests((prev) =>
       prev.map((test, i) =>
@@ -242,53 +203,22 @@ export default function PageDotStatus() {
     );
 
     try {
-      // 查找节点
-      const peerInfo = await findPeer(node.id);
+      const result = await checkNode(node);
 
-      if (peerInfo) {
-        // Ping测试
-        const pingResults = await pingPeer(node.id, 3);
-
-        // 计算平均延迟
-        const latencyResults = pingResults.filter(
-          (r) => r.Success && r.Time > 0
-        );
-        const avgLatency =
-          latencyResults.length > 0
-            ? latencyResults.reduce((sum, r) => sum + r.Time, 0) /
-              latencyResults.length /
-              1000000 // 转换为毫秒
-            : undefined;
-
-        setNodeTests((prev) =>
-          prev.map((test, i) =>
-            i === nodeIndex
-              ? {
-                  ...test,
-                  found: true,
-                  addresses: peerInfo.Addrs || [],
-                  pingResults,
-                  avgLatency,
-                  status: "success",
-                }
-              : test
-          )
-        );
-      } else {
-        setNodeTests((prev) =>
-          prev.map((test, i) =>
-            i === nodeIndex
-              ? {
-                  ...test,
-                  found: false,
-                  addresses: [],
-                  pingResults: [],
-                  status: "error",
-                }
-              : test
-          )
-        );
-      }
+      setNodeTests((prev) =>
+        prev.map((test, i) =>
+          i === nodeIndex
+            ? {
+                ...test,
+                found: result.isOnline,
+                addresses: [],
+                pingResults: [],
+                avgLatency: result.responseTime,
+                status: result.isOnline ? "success" : "error",
+              }
+            : test
+        )
+      );
     } catch (error) {
       console.error(`Failed to test node ${node.name}:`, error);
       setNodeTests((prev) =>
@@ -319,8 +249,8 @@ export default function PageDotStatus() {
       // 获取对等节点列表
       await getSwarmPeers();
 
-      // 测试所有自定义节点
-      for (let i = 0; i < CUSTOM_NODES.length; i++) {
+      // 测试所有链上节点
+      for (let i = 0; i < nodeTests.length; i++) {
         await testNode(i);
       }
 
@@ -503,14 +433,11 @@ export default function PageDotStatus() {
 
           <Stack gap="sm">
             {nodeTests.map((test, index) => (
-              <Paper key={test.node.id} p="md" withBorder>
+              <Paper key={test.node.address} p="md" withBorder>
                 <Group justify="space-between" mb="sm">
                   <Group>
-                    <Badge
-                      variant="light"
-                      color={test.node.type === "dhtserver" ? "blue" : "green"}
-                    >
-                      {test.node.type}
+                    <Badge variant="light" color="blue">
+                      dot
                     </Badge>
                     <Text fw={500}>{test.node.name}</Text>
                   </Group>
@@ -534,7 +461,7 @@ export default function PageDotStatus() {
                 </Group>
 
                 <Text size="xs" c="dimmed" ff="monospace" mb="xs">
-                  {test.node.id}
+                  {test.node.address}
                 </Text>
 
                 {test.found && test.addresses.length > 0 && (
