@@ -17,7 +17,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import type { RequestInit } from "undici";
 import mp from "../mp.js";
-import { isIP } from "net";
+import { isIP, createConnection } from "net";
 import { resolve4, resolve6 } from "dns/promises";
 
 type NodeRole = "dhtclient" | "dhtserver";
@@ -277,6 +277,8 @@ const splitDotName = (full: string): { name: string; id: string } => {
  */
 // DNS 记录检测缓存，避免重复解析
 const dnsSupportCache = new Map<string, { v4: boolean; v6: boolean }>();
+// DNS 解析结果缓存（A/AAAA），减少重复解析
+const dnsResolveCache = new Map<string, string[]>();
 
 const getDnsSupport = async (
   host: string
@@ -299,27 +301,82 @@ const getDnsSupport = async (
 };
 
 const toMaBasesFromApis = async (apis: string[]): Promise<string[]> => {
-  const out: string[] = [];
-  for (const s of apis || []) {
+  const tasks = (apis || []).map(async (s) => {
     try {
       const u = new URL(s);
       const hostRaw = u.hostname || "";
       const host = hostRaw.replace(/^\[|\]$/g, ""); // 去掉 IPv6 方括号
       const kind = isIP(host);
-      if (kind === 4) out.push(`/ip4/${host}`);
-      else if (kind === 6) out.push(`/ip6/${host}`);
-      else if (host) {
+      if (kind === 4) return [`/ip4/${host}`];
+      if (kind === 6) return [`/ip6/${host}`];
+      if (host) {
         const { v4, v6 } = await getDnsSupport(host);
+        const out: string[] = [];
         if (v4) out.push(`/dns4/${host}`);
         if (v6) out.push(`/dns6/${host}`);
-        // 若均不可用，保底使用 dns4 以便后续 TCP 拨号仍可尝试
+        // 若均不可用，保底使用 dns6 以便后续 TCP 拨号仍可尝试
         if (!v4 && !v6) out.push(`/dns6/${host}`);
+        return out;
       }
     } catch {
       // 非法 URL，忽略
     }
+    return [] as string[];
+  });
+  const results = await Promise.all(tasks);
+  return dedupe(results.flat());
+};
+
+// 提取 APIs 中的主机名/IP（去重）
+const hostsFromApis = (apis: string[]): string[] => {
+  const out: string[] = [];
+  for (const s of apis || []) {
+    try {
+      const u = new URL(s);
+      const hostRaw = u.hostname || "";
+      const host = hostRaw.replace(/^\[|\]$/g, "");
+      if (host) out.push(host);
+    } catch { }
   }
   return dedupe(out);
+};
+
+// 尝试 TCP 连接判断端口是否开放
+const tryTcpConnect = (host: string, port: number, timeoutMs = 1200): Promise<boolean> => {
+  return new Promise((resolve) => {
+    let finished = false;
+    const socket = createConnection({ host, port });
+    const done = (ok: boolean) => {
+      if (finished) return;
+      finished = true;
+      try { socket.destroy(); } catch { }
+      resolve(ok);
+    };
+    const t = setTimeout(() => done(false), timeoutMs);
+    socket.once("connect", () => { clearTimeout(t); done(true); });
+    socket.once("error", () => { clearTimeout(t); done(false); });
+  });
+};
+
+// 判断某主机的 4001 端口是否开放（域名先解析 A/AAAA）
+const isSwarmPortOpen = async (host: string, port = DEFAULT_PORT): Promise<boolean> => {
+  const kind = isIP(host);
+  if (kind === 4 || kind === 6) {
+    return await tryTcpConnect(host, port);
+  }
+  // 读取或填充解析缓存
+  let addrs = dnsResolveCache.get(host);
+  if (!addrs) {
+    addrs = [];
+    try { addrs = addrs.concat(await resolve4(host)); } catch { }
+    try { addrs = addrs.concat(await resolve6(host)); } catch { }
+    dnsResolveCache.set(host, addrs);
+  }
+  const targets = addrs.length > 0 ? addrs : [host];
+  // 并发尝试连接任意地址，只要有一个成功则视为开放
+  const checks = targets.map((t) => tryTcpConnect(t, port));
+  const results = await Promise.allSettled(checks);
+  return results.some((r) => r.status === "fulfilled" && (r as any).value === true);
 };
 
 /**
@@ -332,7 +389,11 @@ const dotsToCustom = async (dots: Dot[]): Promise<NodeDef[]> => {
   for (const d of dots || []) {
     const { name, id } = splitDotName(d?.name || "");
     const ips = await toMaBasesFromApis(d?.APIs || []);
-    result.push({ name, id, ip: ips, type: "dhtserver" });
+    const hosts = hostsFromApis(d?.APIs || []);
+    const checks = hosts.map((h) => isSwarmPortOpen(h, DEFAULT_PORT));
+    const results = await Promise.allSettled(checks);
+    const open4001 = results.some((r) => r.status === "fulfilled" && (r as any).value === true);
+    result.push({ name, id, ip: ips, type: open4001 ? "dhtserver" : "dhtclient" });
   }
   return result;
 };
@@ -554,22 +615,17 @@ const getCurrentIpfsInfo = async (): Promise<IpfsHttpInfo> => {
 
 /**
  * 主流程：
- * 1) 读取 custom.json 与角色模板
+ * 1) 从链上读取 dots，生成 custom 清单，并加载角色模板
  * 2) 构建全局 Bootstrap 列表
  * 3) 基于当前节点身份生成 Announce/Peering 并细粒度合并角色模板
  * 4) 通过 HTTP API 替换运行时配置并输出摘要
  */
-const main = async (): Promise<void> => {
+const main = async () => {
   const dots = await mp.getAllDots();
-  console.log('dots', dots);
 
   const dhtClientPath = path.join(NETWORK_ROOT, "dhtclient.json");
   const dhtServerPath = path.join(NETWORK_ROOT, "dhtserver.json");
   const custom = await dotsToCustom(dots as Dot[]);
-  console.log('custom', custom);
-  if (!Array.isArray(custom)) {
-    throw new Error("生成的节点清单必须是数组");
-  }
 
   const dhtClient = await readJson(dhtClientPath);
   const dhtServer = await readJson(dhtServerPath);
@@ -578,7 +634,7 @@ const main = async (): Promise<void> => {
   // Bootstrap：选择有限数量的 dhtserver，包含 TCP + QUIC + /p2p，并进行去重
   const bootstrapAddrs = buildBootstrap(custom as NodeDef[]);
 
-  // 默认流程：获取当前 IPFS 配置与 peer id，按 custom.json 与角色模板进行更细粒度合并
+  // 默认流程：获取当前 IPFS 配置与 peer id，按 custom 与角色模板进行更细粒度合并
   try {
     const info = await getCurrentIpfsInfo();
     const { config: currentCfg, peerId } = info;
@@ -606,8 +662,8 @@ const main = async (): Promise<void> => {
         console.log(
           `已通过 HTTP API (${info.apiBase}) 替换正在运行的 IPFS 配置。`
         );
-      } catch (e: any) {
-        console.error(`通过 HTTP API 替换失败：${e.message}`);
+      } catch (err: any) {
+        console.error(`通过 HTTP API 替换失败：${err.message}`);
         process.exit(1);
       }
     }
@@ -616,11 +672,8 @@ const main = async (): Promise<void> => {
       `本地 Peer：${peerId}（${matched ? matched.name : "未知"}）\n` +
       `Bootstrap 条目数：${bootstrapAddrs.length}，Peering 固定邻居数：${peeringPeers.length}，Announce 条目数：${announceAddrs.length}`
     );
-    if (info && info.source === "http") {
-      console.log(`配置源：HTTP API（${info.apiBase}）。`);
-    }
   } catch (err: any) {
-    console.error("错误：获取 IPFS 配置或 Peer ID 失败。", err);
+    console.error("配置 IPFS 错误：获取 IPFS 配置或 Peer ID 失败。");
     process.exit(1);
   }
 };

@@ -66,6 +66,7 @@ const start = async () => {
     mp.initIP();
     console.log(mp.network);
 
+    // 每小时执行一次 IP 初始化
     setInterval(() => {
       mp.initIP();
     }, 60 * 60 * 1000);

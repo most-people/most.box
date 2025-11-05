@@ -6,6 +6,7 @@
   "scripts": {
     "start": "tsx watch src/index.ts",
     "preview": "tsx src/index.ts",
+    "ipfs": "tsx src/ipfs/index.ts",
     "build": "tsc -p .",
     "typecheck": "tsc -p . --noEmit",
     "npm": "npm i"

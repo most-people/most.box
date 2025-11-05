@@ -45,13 +45,13 @@ const arrayEqual = (a: string[], b: string[]) => {
 };
 
 const network = {
-  ipv4: [`http://localhost:${PORT}`],
+  ipv4: [`http://127.0.0.1:${PORT}`],
   ipv6: [`http://[::1]:${PORT}`],
 };
 
 const initIP = () => {
   // 重置
-  network.ipv4 = [`http://localhost:${PORT}`];
+  network.ipv4 = [`http://127.0.0.1:${PORT}`];
   network.ipv6 = [`http://[::1]:${PORT}`];
   const interfaces = os.networkInterfaces();
   for (const name of Object.keys(interfaces)) {
