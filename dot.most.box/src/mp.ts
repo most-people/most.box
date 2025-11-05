@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { Contract, formatEther, JsonRpcProvider, verifyMessage, Wallet } from "ethers";
 import os from "os";
 import { create } from "kubo-rpc-client";
 import DotContractABI from "./abi/DotContractABI.json" with { type: "json" };
@@ -21,7 +21,7 @@ const getAddress = (token: string | undefined | null): string | null => {
         return null;
       }
       if (address && t && sig) {
-        const ethAddress = ethers.verifyMessage(t, sig).toLowerCase();
+        const ethAddress = verifyMessage(t, sig).toLowerCase();
         if (address.toLowerCase() === ethAddress) {
           return ethAddress;
         }
@@ -100,9 +100,9 @@ const postIP = async (RPC: string) => {
     return;
   }
 
-  const provider = new ethers.JsonRpcProvider(RPC);
-  const dotContract = new ethers.Contract(CONTRACT_ADDRESS_DOT, DotContractABI as any, provider);
-  const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
+  const provider = new JsonRpcProvider(RPC);
+  const dotContract = new Contract(CONTRACT_ADDRESS_DOT, DotContractABI, provider);
+  const wallet = new Wallet(PRIVATE_KEY, provider);
   const contract = dotContract.connect(wallet) as any;
 
   // 更新
@@ -125,7 +125,7 @@ const postIP = async (RPC: string) => {
     const balance = await provider.getBalance(wallet.address);
 
     if (balance < estimatedCost) {
-      console.error(RPC, `手续费不足: 需要 ${ethers.formatEther(estimatedCost)} ETH，但余额只有 ${ethers.formatEther(balance)} ETH`);
+      console.error(RPC, `手续费不足: 需要 ${formatEther(estimatedCost)} ETH，但余额只有 ${formatEther(balance)} ETH`);
       return;
     }
 
@@ -141,8 +141,32 @@ const isOwner = (token: string | undefined | null) => {
   if (!PRIVATE_KEY) return false;
   const address = getAddress(token || "");
   if (!address) return false;
-  const wallet = new ethers.Wallet(PRIVATE_KEY);
+  const wallet = new Wallet(PRIVATE_KEY);
   return wallet.address.toLowerCase() === address;
+}
+
+interface Dot {
+  address: string;
+  name: string;
+  APIs: string[];
+  CIDs: string[];
+  lastUpdate: number;
+}
+
+const getAllDots = async () => {
+  const provider = new JsonRpcProvider("https://mainnet.base.org");
+  const contract = new Contract(CONTRACT_ADDRESS_DOT, DotContractABI, provider);
+  const [addresses, names, APIss, CIDss, updates] = await contract.getAllDots();
+  const dots: Dot[] = addresses.map((address: string, index: number) => {
+    return {
+      address,
+      name: names[index] || '',
+      APIs: APIss[index] || [],
+      CIDs: CIDss[index] || [],
+      lastUpdate: Number(updates[index]),
+    };
+  });
+  return dots;
 }
 
 export default {
@@ -152,5 +176,6 @@ export default {
   getIP,
   initIP,
   getAddress,
+  getAllDots,
   arrayEqual,
 };

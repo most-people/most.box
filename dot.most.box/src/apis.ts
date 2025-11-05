@@ -41,12 +41,17 @@ export const registerApis = (server: FastifyInstance, __dirname: string) => {
       const rootPath = path.join(__dirname, "..");
       // 0. git checkout .
       log.push("执行 git checkout . (忽略本地修改)");
-      const { stdout: checkoutOut, stderr: checkoutErr } = await execAsync("git checkout .", { cwd: rootPath });
+      const { stdout: checkoutOut, stderr: checkoutErr } = await execAsync(
+        "git checkout .",
+        { cwd: rootPath }
+      );
       log.push(`Git checkout: ${checkoutOut || checkoutErr}`);
 
       // 1. git pull
       log.push("执行 git pull...");
-      const { stdout: gitOut, stderr: gitErr } = await execAsync("git pull", { cwd: rootPath });
+      const { stdout: gitOut, stderr: gitErr } = await execAsync("git pull", {
+        cwd: rootPath,
+      });
       log.push(`Git: ${gitOut || gitErr}`);
 
       // 检查是否有更新
@@ -62,12 +67,16 @@ export const registerApis = (server: FastifyInstance, __dirname: string) => {
 
       // 2. npm install
       log.push("执行 npm install...");
-      const { stdout: npmOut, stderr: npmErr } = await execAsync("npm i", { cwd: rootPath });
+      const { stdout: npmOut, stderr: npmErr } = await execAsync("npm i", {
+        cwd: rootPath,
+      });
       log.push(`NPM: ${npmOut || npmErr}`);
 
       // 3. pm2 reload all
       log.push("执行 pm2 reload all...");
-      const { stdout: pm2Out, stderr: pm2Err } = await execAsync("pm2 reload all");
+      const { stdout: pm2Out, stderr: pm2Err } = await execAsync(
+        "pm2 reload all"
+      );
       log.push(`PM2: ${pm2Out || pm2Err}`);
       log.push("部署完成！");
       return {

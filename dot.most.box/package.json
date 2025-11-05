@@ -4,7 +4,6 @@
   "description": "TypeScript + Fastify",
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
     "start": "tsx watch src/index.ts",
     "preview": "tsx src/index.ts",
     "build": "tsc -p .",

@@ -3,19 +3,22 @@
 // 输出：从本地 IPFS 仓库磁盘读取当前配置与 Peer ID，按 custom.json 与角色模板进行细粒度合并，写入到 .ipfs/config
 /**
  * 模块概述：
- * - 检测本机 IPFS/Kubo HTTP API（支持环境变量与常见默认端口）
+ * - 检测本机 IPFS/Kubo HTTP API（常见默认端口）
  * - 读取角色模板（dhtclient/dhtserver）与网络节点清单（custom.json）
  * - 依据当前 Peer 身份生成 Announce/Bootstrap/Peering 等配置并通过 HTTP API 替换运行时配置
  *
  * 设计原则：
  * - 保守覆盖：仅在模板明确给定时更新字段；保留现有 Swarm 等数组
- * - 可调参数：通过环境变量调整端口与邻居选择规模，适配 100 节点规模
+ * - 可调参数：通过源代码常量调整端口与邻居选择规模，适配 100 节点规模
  */
 
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
 import type { RequestInit } from "undici";
+import mp from "../mp.js";
+import { isIP } from "net";
+import { resolve4, resolve6 } from "dns/promises";
 
 type NodeRole = "dhtclient" | "dhtserver";
 /**
@@ -32,6 +35,16 @@ type NodeDef = {
   id: string;
   ip: string[];
   port?: number;
+};
+/**
+ * 从链上合约读取的 Dot 结构
+ */
+type Dot = {
+  address: string;
+  name: string;
+  APIs: string[];
+  CIDs: string[];
+  lastUpdate: number;
 };
 /**
  * 通过 HTTP API 获取到的配置信息
@@ -54,71 +67,15 @@ const __dirname = path.dirname(__filename);
 // 网络清单与角色模板所在目录（与本文件同级）
 const NETWORK_ROOT = __dirname;
 
-// 环境变量调参（为 100 节点规模提供合理默认值）
-// DEFAULT_PORT：Swarm 端口默认值（TCP/QUIC 共用）；可通过环境变量覆盖
-const DEFAULT_PORT = Number(process.env.DEFAULT_PORT || 4001);
+// 参数常量（为 100 节点规模提供合理默认值）
+// DEFAULT_PORT：Swarm 端口默认值（TCP/QUIC 共用）
+const DEFAULT_PORT = 4001;
 // BOOTSTRAP_K：作为 Bootstrap 的 dhtserver 数量上限
-const BOOTSTRAP_K = Number(process.env.BOOTSTRAP_K || 8);
+const BOOTSTRAP_K = 8;
 // PEERING_RING：环形邻居，左右各多少个（不含自身）
-const PEERING_RING = Number(process.env.PEERING_RING || 3);
+const PEERING_RING = 3;
 // PEERING_RANDOM：额外随机邻居数量（优先选择 dhtserver）
-const PEERING_RANDOM = Number(process.env.PEERING_RANDOM || 3);
-
-// HTTP API 相关：支持 IPFS Desktop 与 Kubo 默认端口；允许通过环境变量覆盖
-/**
- * API_CANDIDATE_PORTS：检测本机 IPFS/Kubo HTTP API 的候选端口
- * - 默认包含 Kubo 默认端口 5001 与 IPFS Desktop 常见端口 45005
- * - 可通过环境变量 `IPFS_API_PORTS` 传入逗号分隔的端口列表，如："5001,8080,45005"
- */
-const API_CANDIDATE_PORTS = (process.env.IPFS_API_PORTS || "5001,45005")
-  .split(",")
-  .map((s) => Number(s.trim()))
-  .filter((n) => Number.isFinite(n) && n > 0);
-
-/**
- * 去除 URL 末尾的多余斜杠
- */
-const trimSlash = (urlBase: unknown): string => {
-  return String(urlBase || "").replace(/\/+$/, "");
-};
-
-/**
- * 将 multiaddr 转为 HTTP 基地址
- * 支持示例：
- * - /ip4/127.0.0.1/tcp/5001 -> http://127.0.0.1:5001
- * - /dns4/localhost/tcp/5001 -> http://localhost:5001
- * - 若输入已是 http/https 则直接归一化返回
- */
-const multiaddrToHttp = (addr: string | null | undefined): string | null => {
-  if (!addr || typeof addr !== "string") return null;
-  if (/^https?:\/\//i.test(addr)) return trimSlash(addr);
-  const m = addr.match(
-    /^\/(ip4|ip6|dns|dns4|dns6|dnsaddr)\/([^/]+)\/tcp\/(\d+)(?:\/.*)?$/i
-  );
-  if (m) {
-    const host = m[2];
-    const port = Number(m[3]);
-    if (Number.isFinite(port)) return `http://${host}:${port}`;
-  }
-  return null;
-};
-
-/**
- * 从环境变量解析 HTTP API 基地址
- * 支持变量：`IPFS_API`、`KUBO_API`、`IPFS_HTTP_API`
- * - 可传 multiaddr 或 http(s) URL；前者将被转换为 http URL
- */
-const parseApiFromEnv = (): string | null => {
-  const envRaw = (
-    process.env.IPFS_API ||
-    process.env.KUBO_API ||
-    process.env.IPFS_HTTP_API ||
-    ""
-  ).trim();
-  if (!envRaw) return null;
-  const parsed = multiaddrToHttp(envRaw) || trimSlash(envRaw);
-  return parsed || null;
-};
+const PEERING_RANDOM = 3;
 
 /**
  * 带超时控制的 fetch（POST 默认由调用方传入）
@@ -183,19 +140,11 @@ const isApiAlive = async (base: string): Promise<boolean> => {
 
 /**
  * 自动检测本机可用的 HTTP API 基地址
- * - 优先使用环境变量提供的地址，其次尝试本机 127.0.0.1 上的候选端口
+ * - 固定为 http://127.0.0.1:5001
  */
 const detectApiBase = async (): Promise<string | null> => {
-  const envBase = parseApiFromEnv();
-  const candidates: string[] = [];
-  if (envBase) candidates.push(envBase);
-  // 常见默认端口（Kubo 默认 5001，IPFS Desktop 常见 45005）
-  for (const p of API_CANDIDATE_PORTS) candidates.push(`http://127.0.0.1:${p}`);
-  // 去重
-  const list = dedupe(candidates);
-  for (const base of list) {
-    if (await isApiAlive(base)) return base;
-  }
+  const base = "http://127.0.0.1:5001";
+  if (await isApiAlive(base)) return base;
   return null;
 };
 
@@ -308,6 +257,84 @@ const shuffle = <T>(arr: T[]): T[] => {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
+};
+
+/**
+ * 将 Dot.name 拆分为 { name, id }
+ * 约定格式："<显示名>-<PeerID>"
+ */
+const splitDotName = (full: string): { name: string; id: string } => {
+  const i = typeof full === "string" ? full.lastIndexOf("-") : -1;
+  if (i > 0) return { name: full.slice(0, i), id: full.slice(i + 1) };
+  return { name: full || "", id: "" };
+};
+
+/**
+ * 将 APIs URL 列表转为基础 multiaddr（不含 /tcp、/udp、/p2p）
+ * - IPv4: /ip4/<host>
+ * - IPv6: /ip6/<host>
+ * - 域名: /dns4/<host> 与 /dns6/<host>
+ */
+// DNS 记录检测缓存，避免重复解析
+const dnsSupportCache = new Map<string, { v4: boolean; v6: boolean }>();
+
+const getDnsSupport = async (
+  host: string
+): Promise<{ v4: boolean; v6: boolean }> => {
+  const cached = dnsSupportCache.get(host);
+  if (cached) return cached;
+  let v4 = false;
+  let v6 = false;
+  try {
+    const a = await resolve4(host);
+    v4 = Array.isArray(a) && a.length > 0;
+  } catch { }
+  try {
+    const aaaa = await resolve6(host);
+    v6 = Array.isArray(aaaa) && aaaa.length > 0;
+  } catch { }
+  const flags = { v4, v6 };
+  dnsSupportCache.set(host, flags);
+  return flags;
+};
+
+const toMaBasesFromApis = async (apis: string[]): Promise<string[]> => {
+  const out: string[] = [];
+  for (const s of apis || []) {
+    try {
+      const u = new URL(s);
+      const hostRaw = u.hostname || "";
+      const host = hostRaw.replace(/^\[|\]$/g, ""); // 去掉 IPv6 方括号
+      const kind = isIP(host);
+      if (kind === 4) out.push(`/ip4/${host}`);
+      else if (kind === 6) out.push(`/ip6/${host}`);
+      else if (host) {
+        const { v4, v6 } = await getDnsSupport(host);
+        if (v4) out.push(`/dns4/${host}`);
+        if (v6) out.push(`/dns6/${host}`);
+        // 若均不可用，保底使用 dns4 以便后续 TCP 拨号仍可尝试
+        if (!v4 && !v6) out.push(`/dns6/${host}`);
+      }
+    } catch {
+      // 非法 URL，忽略
+    }
+  }
+  return dedupe(out);
+};
+
+/**
+ * 将链上 dots 转换为 custom 节点清单
+ * - 优先沿用现有 custom.json 的 type/port
+ * - 无历史记录时默认 type=dhtclient
+ */
+const dotsToCustom = async (dots: Dot[]): Promise<NodeDef[]> => {
+  const result: NodeDef[] = [];
+  for (const d of dots || []) {
+    const { name, id } = splitDotName(d?.name || "");
+    const ips = await toMaBasesFromApis(d?.APIs || []);
+    result.push({ name, id, ip: ips, type: "dhtserver" });
+  }
+  return result;
 };
 
 /**
@@ -518,7 +545,7 @@ const getCurrentIpfsInfo = async (): Promise<IpfsHttpInfo> => {
   const apiBase = await detectApiBase();
   if (!apiBase) {
     throw new Error(
-      "未检测到可用的 IPFS HTTP API（常见端口 5001 或 IPFS Desktop 端口 45005）。请确保守护进程已开启 HTTP API。"
+      "未检测到可用的 IPFS HTTP API（常见端口 5001）。请确保守护进程已开启 HTTP API。"
     );
   }
   // 通过 HTTP API 获取当前运行的配置与 Peer ID
@@ -533,13 +560,15 @@ const getCurrentIpfsInfo = async (): Promise<IpfsHttpInfo> => {
  * 4) 通过 HTTP API 替换运行时配置并输出摘要
  */
 const main = async (): Promise<void> => {
-  const customPath = path.join(NETWORK_ROOT, "custom.json");
+  const dots = await mp.getAllDots();
+  console.log('dots', dots);
+
   const dhtClientPath = path.join(NETWORK_ROOT, "dhtclient.json");
   const dhtServerPath = path.join(NETWORK_ROOT, "dhtserver.json");
-
-  const custom = await readJson(customPath);
+  const custom = await dotsToCustom(dots as Dot[]);
+  console.log('custom', custom);
   if (!Array.isArray(custom)) {
-    throw new Error("custom.json 必须是节点定义的数组");
+    throw new Error("生成的节点清单必须是数组");
   }
 
   const dhtClient = await readJson(dhtClientPath);
@@ -585,7 +614,7 @@ const main = async (): Promise<void> => {
 
     console.log(
       `本地 Peer：${peerId}（${matched ? matched.name : "未知"}）\n` +
-        `Bootstrap 条目数：${bootstrapAddrs.length}，Peering 固定邻居数：${peeringPeers.length}，Announce 条目数：${announceAddrs.length}`
+      `Bootstrap 条目数：${bootstrapAddrs.length}，Peering 固定邻居数：${peeringPeers.length}，Announce 条目数：${announceAddrs.length}`
     );
     if (info && info.source === "http") {
       console.log(`配置源：HTTP API（${info.apiBase}）。`);

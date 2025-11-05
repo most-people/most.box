@@ -82,7 +82,7 @@ export const registerSSE = (server: FastifyInstance) => {
       const heartbeat = setInterval(() => {
         try {
           reply.raw.write(`: ping ${Date.now()}\n\n`);
-        } catch {}
+        } catch { }
       }, 15000);
 
       // 断开清理
