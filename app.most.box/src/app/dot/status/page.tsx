@@ -75,7 +75,8 @@ interface NodeTestResult {
   status: "success" | "error" | "testing" | "idle";
 }
 
-const IPFS_API_BASE = "http://localhost:5001/api/v0";
+// IPFS API 基地址（硬编码不变）
+const IPFS_API_BASE = "http://127.0.0.1:5001/api/v0";
 
 export default function PageDotStatus() {
   const [nodeInfo, setNodeInfo] = useState<IPFSNodeInfo | null>(null);

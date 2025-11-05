@@ -20,6 +20,9 @@ import mp from "../mp.js";
 import { isIP, createConnection } from "net";
 import { resolve4, resolve6 } from "dns/promises";
 
+// IPFS/Kubo HTTP API 基地址
+const IPFS_API_BASE = "http://127.0.0.1:5001";
+
 type NodeRole = "dhtclient" | "dhtserver";
 /**
  * 节点清单中的单个节点定义
@@ -136,16 +139,6 @@ const isApiAlive = async (base: string): Promise<boolean> => {
   } catch (e) {
     return false;
   }
-};
-
-/**
- * 自动检测本机可用的 HTTP API 基地址
- * - 固定为 http://127.0.0.1:5001
- */
-const detectApiBase = async (): Promise<string | null> => {
-  const base = "http://127.0.0.1:5001";
-  if (await isApiAlive(base)) return base;
-  return null;
 };
 
 /**
@@ -603,14 +596,13 @@ const mergeBaseWithExtras = (
  */
 const getCurrentIpfsInfo = async (): Promise<IpfsHttpInfo> => {
   // 仅在检测到 HTTP API 时才继续；否则直接停止
-  const apiBase = await detectApiBase();
-  if (!apiBase) {
+  if (!isApiAlive(IPFS_API_BASE)) {
     throw new Error(
       "未检测到可用的 IPFS HTTP API（常见端口 5001）。请确保守护进程已开启 HTTP API。"
     );
   }
   // 通过 HTTP API 获取当前运行的配置与 Peer ID
-  return await getIpfsInfoFromHttp(apiBase);
+  return await getIpfsInfoFromHttp(IPFS_API_BASE);
 };
 
 /**
