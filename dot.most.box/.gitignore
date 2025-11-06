@@ -1,11 +1,13 @@
 # 依赖目录
-/node_modules
+node_modules
 
 # 配置文件
 .env
 
+/cmd/server
+
 # 编译输出
-/dist
+/bin
 
 # 系统文件
 .DS_Store
