@@ -1,18 +1,18 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "Most Box",
+  "productName": "Most.Box",
   "version": "0.1.0",
-  "identifier": "com.most.box.app",
+  "identifier": "com.most.box",
   "build": {
     "frontendDist": "../out",
     "devUrl": "http://localhost:2025",
-    "beforeDevCommand": "npm run start",
-    "beforeBuildCommand": "npm run build"
+    "beforeDevCommand": "",
+    "beforeBuildCommand": ""
   },
   "app": {
     "windows": [
       {
-        "title": "Most Box",
+        "title": "Most.Box",
         "width": 800,
         "height": 600,
         "resizable": true,
