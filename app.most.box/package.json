@@ -5,10 +5,9 @@
   "scripts": {
     "start": "next dev --turbopack --port 2025",
     "build": "next build",
-    "tauri-start": "npx tauri dev",
-    "tauri-build": "npx tauri build",
     "preview": "npx serve out",
-    "lint": "next lint --fix",
+    "dev": "npx tauri dev",
+    "tauri": "npx tauri build",
     "yarn": "yarn"
   },
   "dependencies": {

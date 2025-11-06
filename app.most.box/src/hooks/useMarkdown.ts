@@ -12,15 +12,12 @@ let editorModulesPromise: Promise<[any, any, any]> | null = null;
 const getEditorModules = () => {
   if (!editorModulesPromise) {
     editorModulesPromise = Promise.all([
-      // eslint-disable-next-line
       // @ts-ignore
       import("@toast-ui/editor"),
       import(
-        // eslint-disable-next-line
         // @ts-ignore
         "@toast-ui/editor-plugin-code-syntax-highlight/dist/toastui-editor-plugin-code-syntax-highlight-all.js"
       ),
-      // eslint-disable-next-line
       // @ts-ignore
       import("@toast-ui/editor/dist/i18n/zh-cn"),
     ]);

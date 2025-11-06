@@ -750,7 +750,6 @@ export default function HomeFile() {
       <input
         ref={folderInputRef}
         type="file"
-        // eslint-disable-next-line
         // @ts-ignore
         webkitdirectory=""
         multiple

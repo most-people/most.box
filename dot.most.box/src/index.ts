@@ -56,8 +56,8 @@ const start = async () => {
     const peer = await ipfs.id();
     console.log("IPFS", peer.id.toString());
   } catch (error) {
-    console.error("IPFS 节点未运行，请启动 IPFS 节点");
-    process.exit(1);
+    console.error("⚠️\nIPFS 节点未运行，请启动 IPFS 节点\n");
+    // process.exit(1);
   }
 
   try {
