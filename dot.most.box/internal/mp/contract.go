@@ -18,8 +18,10 @@ import (
 	shell "github.com/ipfs/go-ipfs-api"
 )
 
+// dotContractAddress Dot 合约地址（Base 网络）。
 const dotContractAddress = "0xB67662F0d2BB106B055503062e1dba4f072f5781"
 
+// Dot 表示链上记录的节点信息。
 type Dot struct {
 	Address    string   `json:"address"`
 	Name       string   `json:"name"`
@@ -28,7 +30,7 @@ type Dot struct {
 	LastUpdate uint64   `json:"lastUpdate"`
 }
 
-// GetIP constructs current dot info using IPFS peer and discovered APIs/CIDs.
+// GetIP 使用 IPFS 节点与已发现的接口构建当前节点信息。
 func GetIP() (name string, apis []string, cids []string, err error) {
 	ipfsShell := shell.NewShell("http://127.0.0.1:5001")
 	idInfo, ipfsErr := ipfsShell.ID()
@@ -42,7 +44,7 @@ func GetIP() (name string, apis []string, cids []string, err error) {
 		dotName = "Unknown"
 	}
 	name = dotName + "-" + peer
-	// APIs: prepend env, then discovered IPv6 (skip ::1)
+	// API 列表：先添加环境变量中的地址，再追加已发现的 IPv6（跳过 ::1）
 	netInfo := Network()
 	apis = []string{}
 	if v := strings.TrimSpace(os.Getenv("API_URLS")); v != "" {
@@ -70,7 +72,7 @@ func splitNonEmpty(c string) []string {
 	return out
 }
 
-// PostIP pushes current dot info to contract on given RPC, if changed and balance sufficient.
+// PostIP 在信息发生变化且余额充足时，向指定 RPC 的合约上链当前节点信息。
 func PostIP(rpc string) error {
 	privateKeyHex := strings.TrimSpace(os.Getenv("PRIVATE_KEY"))
 	dotName := strings.TrimSpace(os.Getenv("DOT_NAME"))
@@ -96,14 +98,14 @@ func PostIP(rpc string) error {
 	contractAddress := common.HexToAddress(dotContractAddress)
 	contract := bind.NewBoundContract(contractAddress, abiDef, client, client, client)
 
-	// Wallet
+	// 钱包初始化
 	privateKey, err := crypto.HexToECDSA(strings.TrimPrefix(privateKeyHex, "0x"))
 	if err != nil {
 		return fmt.Errorf("私钥解析失败: %w", err)
 	}
 	fromAddress := crypto.PubkeyToAddress(privateKey.PublicKey)
 
-	// Read existing
+	// 读取当前链上记录
 	var callOutput []interface{}
 	call := &bind.CallOpts{Pending: false, From: fromAddress}
 	if err = contract.Call(call, &callOutput, "getDot", fromAddress); err != nil {
@@ -123,10 +125,10 @@ func PostIP(rpc string) error {
 		}
 	}
 	if curName == name && equalStrings(curAPIs, apis) && equalStrings(curCIDs, cids) {
-		return nil // no change
+		return nil // 无变化
 	}
 
-	// Send transaction via bind (gas estimation internally)
+	// 通过 bind 发送交易（内部进行 Gas 估算）
 	ctx := context.Background()
 	chainID, err := client.NetworkID(ctx)
 	if err != nil {
@@ -140,7 +142,7 @@ func PostIP(rpc string) error {
 	if err != nil {
 		return fmt.Errorf("发送交易失败: %w", err)
 	}
-	// wait receipt
+	// 等待交易回执
 	for i := 0; i < 60; i++ {
 		receipt, err := client.TransactionReceipt(ctx, transaction.Hash())
 		if receipt != nil {
@@ -166,7 +168,7 @@ func equalStrings(a, b []string) bool {
 	return true
 }
 
-// GetAllDots reads all dots from mainnet.base.org
+// GetAllDots 从 Base 主网读取所有节点信息。
 func GetAllDots() ([]Dot, error) {
 	rpc := "https://mainnet.base.org"
 	client, err := ethclient.Dial(rpc)

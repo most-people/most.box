@@ -1,3 +1,4 @@
+// Package files 提供基于 IPFS 的文件管理相关接口。
 package files
 
 import (
@@ -15,8 +16,9 @@ import (
 	shell "github.com/ipfs/go-ipfs-api"
 )
 
-var systemDir = map[string]struct{}{".note": {}}
+var systemDir = map[string]struct{}{".note": {}} // 系统目录白名单
 
+// Register 注册文件相关路由（列表、删除、上传、重命名、导入）。
 func Register(mux *http.ServeMux, sh *shell.Shell) {
 	mux.HandleFunc("/files.cid/", func(w http.ResponseWriter, r *http.Request) {
 		parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/files.cid/"), "/")
@@ -84,7 +86,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 				return
 			}
 			entries, _ := listResult["Entries"].([]any)
-			// transform to expected shape: {name, type, size, cid:{"/": v1}}
+			// 转换为预期结构：{name, type, size, cid:{"/": CIDv1}}
 			out := make([]map[string]any, 0, len(entries))
 			for _, e := range entries {
 				if m, ok := e.(map[string]any); ok {
@@ -281,7 +283,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 	})
 }
 
-// cidString extracts CID string and normalizes to CIDv1 base32.
+// cidString 提取并归一化 CID，统一输出为 CIDv1（base32）。
 func cidString(cidField any) string {
 	switch value := cidField.(type) {
 	case string:

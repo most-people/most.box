@@ -1,3 +1,4 @@
+// Package apis 提供 HTTP API 路由注册与相关处理逻辑。
 package apis
 
 import (
@@ -23,8 +24,9 @@ import (
 	shell "github.com/ipfs/go-ipfs-api"
 )
 
+// Register 注册所有 API 路由到给定 mux，使用 IPFS 客户端 sh。
 func Register(mux *http.ServeMux, sh *shell.Shell) {
-	// /api.dot
+	// /api.dot 返回节点名称以及可用的 API 与 CID 列表
 	mux.HandleFunc("/api.dot", func(w http.ResponseWriter, r *http.Request) {
 		out, err := sh.ID()
 		if err != nil {
@@ -40,7 +42,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 		}
 		if v := getEnv("API_URLS", ""); v != "" {
 			parts := strings.Split(v, ",")
-			// prepend env APIs
+			// 先添加环境变量中的 API，再追加发现的 IPv6 地址
 			apis = append(parts, apis...)
 		}
 		cids := []string{}
@@ -50,7 +52,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 		json.NewEncoder(w).Encode(map[string]any{"name": name, "APIs": apis, "CIDs": cids})
 	})
 
-	// /api.TRNG
+	// /api.TRNG 返回 8 字节真随机数（十六进制字符串）
 	mux.HandleFunc("/api.TRNG", func(w http.ResponseWriter, r *http.Request) {
 		var b [8]byte
 		if _, err := rand.Read(b[:]); err != nil {
@@ -61,7 +63,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 		w.Write([]byte(iohex))
 	})
 
-	// /api.git
+	// /api.git 返回 git remote -v 的输出
 	mux.HandleFunc("/api.git", func(w http.ResponseWriter, r *http.Request) {
 		out, err := exec.Command("git", "remote", "-v").CombinedOutput()
 		if err != nil {
@@ -71,7 +73,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 		w.Write(out)
 	})
 
-	// /api.deploy
+	// /api.deploy 触发拉取仓库并重载 PM2，需管理员 token
 	mux.HandleFunc("/api.deploy", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPut {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -84,7 +86,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			json.NewEncoder(w).Encode(map[string]any{"ok": false, "message": "管理员 token 无效"})
 			return
 		}
-		// repo root: parent of current working dir (expecting cwd at go)
+		// 仓库根目录：为当前工作目录的父级（Go 进程位于子目录）
 		wd, _ := os.Getwd()
 		root := filepath.Dir(wd)
 		// 0. git checkout .
@@ -128,7 +130,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 		json.NewEncoder(w).Encode(map[string]any{"ok": true, "message": "部署成功", "log": log, "timestamp": time.Now().Format(time.RFC3339)})
 	})
 
-	// /api.testnet.gas
+	// /api.testnet.gas 向指定地址发送少量 Base Sepolia Gas
 	mux.HandleFunc("/api.testnet.gas", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -183,7 +185,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			http.Error(w, "查询 chainID 失败 "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-		// 0.00001976 ETH
+		// 转账金额：0.00001976 ETH
 		value := etherToWei("0.00001976")
 		to := common.HexToAddress(address)
 		tx := types.NewTransaction(nonce, to, value, 21000, gasPrice, nil)
@@ -206,6 +208,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 	})
 }
 
+// getEnv 读取环境变量，若为空则返回默认值。
 func getEnv(key, def string) string {
 	v := strings.TrimSpace(os.Getenv(key))
 	if v != "" {
@@ -214,13 +217,15 @@ func getEnv(key, def string) string {
 	return def
 }
 
-// helpers for /api.testnet.gas
+// /api.testnet.gas 辅助函数
+// weiToEther 将 Wei 转换为 Ether 字符串（保留 18 位小数）。
 func weiToEther(wei *big.Int) string {
 	f := new(big.Float).SetInt(wei)
 	eth := new(big.Float).Quo(f, big.NewFloat(1e18))
 	return eth.Text('f', 18)
 }
 
+// etherToWei 将字符串形式的 Ether 转换为 Wei。
 func etherToWei(s string) *big.Int {
 	f, _, err := big.ParseFloat(s, 10, 256, big.ToNearestEven)
 	if err != nil {
@@ -231,6 +236,7 @@ func etherToWei(s string) *big.Int {
 	return out
 }
 
+// waitReceipt 轮询等待交易回执，最多 60 秒。
 func waitReceipt(ctx context.Context, c *ethclient.Client, h common.Hash) (*types.Receipt, error) {
 	for i := 0; i < 60; i++ {
 		rc, err := c.TransactionReceipt(ctx, h)
