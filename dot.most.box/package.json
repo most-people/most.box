@@ -1,7 +1,7 @@
 {
   "scripts": {
     "start": "air -c .air.yaml",
-    "build": "go build -o ./bin/dot.exe ./cmd/server",
+    "build": "node ./scripts/build-all.js",
     "run": "go run ./cmd/server"
   }
 }
