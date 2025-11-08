@@ -37,7 +37,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			io.WriteString(w, "")
 			return
 		}
-		cid := cidString(statInfo["cid"]) // kubo returns v1
+		cid := cidString(statInfo["Hash"]) // kubo returns v1
 		io.WriteString(w, cid)
 	})
 
@@ -57,7 +57,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			io.WriteString(w, "")
 			return
 		}
-		cid := cidString(statInfo["cid"]) // kubo returns v1
+		cid := cidString(statInfo["Hash"]) // kubo returns v1
 		io.WriteString(w, cid)
 	})
 

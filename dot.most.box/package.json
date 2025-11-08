@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "start": "air -c .air.toml",
+    "start": "air -c .air.yaml",
     "build": "go build -o ./bin/dot.exe ./cmd/server",
     "run": "go run ./cmd/server"
   }
