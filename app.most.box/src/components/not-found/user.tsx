@@ -1,17 +1,25 @@
 import { CONTRACT_ABI_NAME, CONTRACT_ADDRESS_NAME } from "@/constants/dot";
-import { ActionIcon, Anchor, Box, Menu, Stack, Text } from "@mantine/core";
+import {
+  ActionIcon,
+  Anchor,
+  Box,
+  Button,
+  Group,
+  Menu,
+  Stack,
+  Text,
+} from "@mantine/core";
 import { Contract, isAddress, JsonRpcProvider } from "ethers";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
 import mp from "@/constants/mp";
-// import { api } from "@/constants/api";
+import { api } from "@/constants/api";
 import { useUserStore } from "@/stores/userStore";
-// import { useMarkdown } from "@/hooks/useMarkdown";
+import { useMarkdown } from "@/hooks/useMarkdown";
 import { Icon } from "../Icon";
-// import Link from "next/link";
 import { notifications } from "@mantine/notifications";
-import { useDotStore } from "@/stores/dotStore";
+import { Dot, useDotStore } from "@/stores/dotStore";
 import Link from "next/link";
 
 export default function PageUser() {
@@ -19,10 +27,13 @@ export default function PageUser() {
   const [uid, setUid] = useState("");
   const RPC = useDotStore((state) => state.RPC);
   const Explorer = useDotStore((state) => state.Explorer);
-  const [API, setAPI] = useState("");
 
+  const [dotAPI, setDotAPI] = useState("");
   const [owner, setOwner] = useState("");
   const [username, setUsername] = useState("");
+
+  const noteName = pathname.split("/")[2] || ".profile";
+  const [CID, setCID] = useState("");
 
   useEffect(() => {
     setUid(pathname.split("/")[1].slice(1));
@@ -91,42 +102,35 @@ export default function PageUser() {
   }, [uid]);
 
   const nodeDark = useUserStore((state) => state.nodeDark);
-  // const dotAPI = useDotStore((state) => state.dotAPI);
-  // const updateDot = useDotStore((state) => state.updateDot);
   const profileElement = useRef<HTMLDivElement>(null);
-  // const markdown = useMarkdown();
-  // const noteName = pathname.split("/")[2] || ".profile";
+  const markdown = useMarkdown();
 
-  // const [cid, setCid] = useState("");
-  // const fetchNote = async (uid: string, url: string, dotCID: string) => {
-  //   // 没有节点 自动切换
-  //   if (!dotAPI) {
-  //     updateDot(url);
-  //   }
-  //   try {
-  //     const res = await api.get(`/files.cid/${uid}/.note/${noteName}`, {
-  //       baseURL: url,
-  //     });
-  //     const cid = res.data;
-  //     if (cid) {
-  //       setCid(cid);
-  //       const response = await fetch(`${dotCID}/ipfs/${cid}/index.md`);
-  //       const content = await response.text();
-  //       if (content && profileElement.current) {
-  //         const viewer = await markdown.initViewer(profileElement.current);
-  //         viewer.setMarkdown(content);
-  //       }
-  //     } else {
-  //       throw new Error(`cid 不存在`);
-  //     }
-  //   } catch (error) {
-  //     console.warn("获取笔记失败", error);
-  //     notifications.show({
-  //       message: `获取笔记 ${noteName} 失败`,
-  //       color: "red",
-  //     });
-  //   }
-  // };
+  const fetchNote = async (uid: string, url: string, dotCID: string) => {
+    try {
+      const res = await api.get(`/files.cid/${uid}/.note/${noteName}`, {
+        baseURL: url,
+      });
+      const cid = res.data;
+      if (cid) {
+        setCID(cid);
+        const response = await fetch(`${dotCID}/ipfs/${cid}/index.md`);
+        const content = await response.text();
+        if (content && profileElement.current) {
+          const viewer = await markdown.initViewer(profileElement.current);
+          viewer.setMarkdown(content);
+        }
+      } else {
+        setCID(" ");
+        throw new Error(`cid 不存在`);
+      }
+    } catch (error) {
+      console.warn(`获取笔记 ${noteName} 失败`, error);
+      notifications.show({
+        message: `获取笔记 ${noteName} 失败`,
+        color: "red",
+      });
+    }
+  };
 
   const fetchData = async (owner: string) => {
     try {
@@ -141,20 +145,25 @@ export default function PageUser() {
       if (json) {
         const data = JSON.parse(json);
         if (data?.dot) {
-          setAPI(data.dot);
-          // const res = await api.get("/api.dot", { baseURL: data.dot });
-          // const dot = res.data as Dot;
-          // if (dot) {
-          //   let dotCID = dot.CIDs[0];
-          //   if (dotAPI.endsWith(":1976")) {
-          //     dotCID = dotAPI.slice(0, -5) + ":8080";
-          //   }
-          //   fetchNote(owner, data.dot, dotCID);
-          // } else {
-          //   throw new Error("获取 api.dot 失败");
-          // }
+          const baseURL = data.dot;
+          setDotAPI(baseURL);
+          const res = await api.get("/api.dot", { baseURL });
+          const dot = res.data as Dot;
+          if (dot) {
+            let dotCID = dot.CIDs[0];
+            if (baseURL.endsWith(":1976")) {
+              dotCID = baseURL.slice(0, -5) + ":8080";
+            }
+            if (dotCID) {
+              fetchNote(owner, baseURL, dotCID);
+            } else {
+              throw new Error("获取 IPFS 网关失败");
+            }
+          } else {
+            throw new Error("获取推荐节点失败");
+          }
         } else {
-          // throw new Error("获取 data.dot 失败");
+          throw new Error("获取 data.dot 失败");
         }
       }
     } catch (error: any) {
@@ -183,32 +192,60 @@ export default function PageUser() {
               </ActionIcon>
             </Menu.Target>
 
-            {/* <Menu.Dropdown>
+            <Menu.Dropdown>
               <Menu.Item
                 leftSection="✏️"
                 component={Link}
-                href={`/note/?uid=${owner}&name=${noteName}&cid=${cid}`}
+                href={`/note/?uid=${owner}&name=${noteName}&cid=${CID}`}
                 target="_blank"
               >
                 编辑
               </Menu.Item>
-            </Menu.Dropdown> */}
+            </Menu.Dropdown>
           </Menu>
         }
       />
-      <Anchor
-        size="sm"
-        c="blue"
-        component={Link}
-        href={Explorer + "/address/" + CONTRACT_ADDRESS_NAME}
-        target="_blank"
-      >
-        合约地址 {mp.formatAddress(CONTRACT_ADDRESS_NAME)}
-      </Anchor>
       <Text>用户名：{username}</Text>
       <Text>地址：{owner}</Text>
-      <Text>推荐节点：{API}</Text>
+      <Text>推荐节点：{dotAPI}</Text>
+      <Text>CID：{CID}</Text>
+
+      {CID === " " ? (
+        <Button
+          variant="outline"
+          size="small"
+          component={Link}
+          href={`/note/?uid=${owner}&name=${noteName}&cid=${CID}`}
+          target="_blank"
+        >
+          ✏️ 请先创建笔记「{noteName}」
+        </Button>
+      ) : CID === "" ? (
+        <Text>加载中...</Text>
+      ) : null}
+
       <Box className={nodeDark} ref={profileElement} />
+
+      <Group mt={10}>
+        <Anchor
+          size="sm"
+          c="blue"
+          component={Link}
+          href={Explorer + "/address/" + CONTRACT_ADDRESS_NAME}
+          target="_blank"
+        >
+          合约地址 {mp.formatAddress(CONTRACT_ADDRESS_NAME)}
+        </Anchor>
+        <Anchor
+          size="sm"
+          c="blue"
+          component={Link}
+          href={`https://most.box/SEA/${noteName}`}
+          target="_blank"
+        >
+          分享网址 https://most.box/SEA/{noteName}
+        </Anchor>
+      </Group>
     </Stack>
   );
 }
