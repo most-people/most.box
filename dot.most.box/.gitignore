@@ -8,7 +8,9 @@ node_modules
 
 # 编译输出
 /bin
-/server.exe
 
 # 系统文件
 .DS_Store
+ 
+# Air 临时目录
+/tmp

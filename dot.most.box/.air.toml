@@ -1,0 +1,14 @@
+# Air config for Go hot reload
+root = "."
+tmp_dir = "tmp"
+
+[build]
+# Build the server binary into tmp, then run it
+cmd = "go build -o ./tmp/dot.exe ./cmd/server"
+bin = "tmp/dot.exe"
+include_ext = ["go"]
+exclude_dir = ["tmp", "vendor", ".git"]
+exclude_file = ["go.sum"]
+exclude_regex = ["_test.go$"]
+delay = 1000
+stop_on_error = true

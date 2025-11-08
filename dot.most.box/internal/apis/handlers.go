@@ -30,7 +30,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 	mux.HandleFunc("/api.dot", func(w http.ResponseWriter, r *http.Request) {
 		out, err := sh.ID()
 		if err != nil {
-			http.Error(w, "IPFS 未就绪: "+err.Error(), http.StatusServiceUnavailable)
+			http.Error(w, "IPFS 未启动，请联系管理员。", http.StatusServiceUnavailable)
 			return
 		}
 		peer := out.ID
