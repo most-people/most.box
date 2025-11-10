@@ -34,7 +34,7 @@ archives:
     # 按原有命名习惯输出文件名
     name_template: >-
       {{- if eq .Os "windows" -}}
-      {{ .Binary }}-windows.exe
+      {{ .Binary }}-windows
       {{- else if eq .Os "darwin" -}}
       {{ .Binary }}-macOS-{{ .Arch }}.bin
       {{- else -}}
