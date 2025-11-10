@@ -1,7 +1,8 @@
 {
   "scripts": {
     "start": "air -c .air.yaml",
-    "build": "node ./scripts/build-all.js",
+    "build": "goreleaser build --snapshot --single-target --clean",
+    "release": "goreleaser release --clean",
     "run": "go run ./cmd/server"
   }
 }

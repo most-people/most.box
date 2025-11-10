@@ -1,0 +1,64 @@
+project_name: dot
+
+# 输出目录（默认 dist）
+dist: dist
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: dot
+    main: ./cmd/server
+    binary: dot
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+    goos:
+      - windows
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      # 仅发布 Windows amd64，与原 Node 构建保持一致
+      - goos: windows
+        goarch: arm64
+
+archives:
+  - id: binaries
+    builds:
+      - dot
+    format: binary
+    # 按原有命名习惯输出文件名
+    name_template: >-
+      {{- if eq .Os "windows" -}}
+      {{ .Binary }}-windows.exe
+      {{- else if eq .Os "darwin" -}}
+      {{ .Binary }}-macOS-{{ .Arch }}.bin
+      {{- else -}}
+      {{ .Binary }}-linux-{{ .Arch }}.bin
+      {{- end -}}
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  use: git
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+# 使用 UPX 压缩（macOS Ventura 暂不支持，过滤 macOS）
+upx:
+  - enabled: true
+    ids: [dot]
+    goos: [linux, windows]
+    compress: best
+    lzma: true
+    brute: false
