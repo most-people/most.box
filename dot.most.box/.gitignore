@@ -4,9 +4,6 @@ node_modules
 # 配置文件
 .env
 
-# 前端静态资源
-/cmd/server/out
-
 # 编译输出
 /bin
 /dist
