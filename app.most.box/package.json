@@ -5,6 +5,7 @@
   "scripts": {
     "start": "next dev --turbopack --port 2025",
     "build": "next build",
+    "postbuild-copy": "node scripts/postbuild-copy.js",
     "preview": "npx serve out",
     "dev": "npx tauri dev",
     "tauri": "npx tauri build",

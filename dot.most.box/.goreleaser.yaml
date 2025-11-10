@@ -18,6 +18,7 @@ builds:
       - -trimpath
     ldflags:
       - -s -w
+      - -X dotmostbox/internal/update.Version={{ .Version }}
     goos:
       - windows
       - linux
@@ -33,13 +34,7 @@ archives:
     formats: ["binary"]
     # 按原有命名习惯输出文件名
     name_template: >-
-      {{- if eq .Os "windows" -}}
-      {{ .Binary }}-windows
-      {{- else if eq .Os "darwin" -}}
-      {{ .Binary }}-macOS-{{ .Arch }}.bin
-      {{- else -}}
-      {{ .Binary }}-linux-{{ .Arch }}.bin
-      {{- end -}}
+      {{ .Binary }}-{{ .Os }}-{{ .Arch }}
 
 checksum:
   name_template: "checksums.txt"
@@ -50,6 +45,10 @@ changelog:
     exclude:
       - "^docs:"
       - "^test:"
+
+# 解决重复上传同名资产导致的 422 错误
+release:
+  replace_existing_artifacts: true
 
 # 使用 UPX 压缩（macOS Ventura 暂不支持，过滤 macOS）
 upx:
