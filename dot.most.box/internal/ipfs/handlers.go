@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -56,11 +55,11 @@ const (
 // 注册 /ipfs/config 路由：生成并替换本机 IPFS 配置
 func Register(mux *http.ServeMux, sh *shell.Shell) {
 	mux.HandleFunc("/ipfs/config", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
+		if r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		if !mp.IsOwner(r.Header.Get("Authorization")) {
+		if !isLocalRequest(r) && !mp.IsOwner(r.Header.Get("Authorization")) {
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(map[string]any{"ok": false, "message": "管理员 token 无效"})
 			return
@@ -539,7 +538,6 @@ func pickKNodes(arr []nodeDef, k int) []nodeDef {
 	}
 	r := make([]nodeDef, len(arr))
 	copy(r, arr)
-	rand.Seed(time.Now().UnixNano())
 	rand.Shuffle(len(r), func(i, j int) { r[i], r[j] = r[j], r[i] })
 	if k > len(r) {
 		k = len(r)
@@ -591,7 +589,7 @@ func applyConfigViaHTTP(base string, cfg map[string]any) error {
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode/100 != 2 {
-		return errors.New(fmt.Sprintf("HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body))))
+		return fmt.Errorf("HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 	return nil
 }
@@ -602,4 +600,34 @@ func ifThen(cond bool, a, b string) string {
 		return a
 	}
 	return b
+}
+
+func isLocalRequest(r *http.Request) bool {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err == nil {
+		ip := net.ParseIP(host)
+		if ip != nil && (ip.IsLoopback() || ip.IsUnspecified()) {
+			return true
+		}
+	}
+	h := r.Host
+	if h != "" {
+		hh, _, err2 := net.SplitHostPort(h)
+		if err2 != nil {
+			hh = h
+		}
+		if hh == "localhost" || hh == "127.0.0.1" || hh == "::1" {
+			return true
+		}
+	}
+	xf := r.Header.Get("X-Forwarded-For")
+	if xf != "" {
+		p := strings.Split(xf, ",")
+		first := strings.TrimSpace(p[0])
+		ip := net.ParseIP(first)
+		if ip != nil && ip.IsLoopback() {
+			return true
+		}
+	}
+	return false
 }

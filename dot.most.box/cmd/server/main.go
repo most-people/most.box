@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"dotmostbox/internal/apis"
-	"dotmostbox/internal/ipfs"
 	"dotmostbox/internal/files"
+	"dotmostbox/internal/ipfs"
 	"dotmostbox/internal/mp"
 	"dotmostbox/internal/sse"
 	"dotmostbox/internal/update"
@@ -59,7 +59,7 @@ func main() {
 	// 后台自动检测更新（首次启动 + 每日）
 	update.StartBackgroundCheck(context.Background())
 
-	log.Println("Server listening on", "http://localhost:"+mp.PORT)
+	log.Println("服务器正在监听", "http://localhost:"+mp.PORT)
 	if err := http.ListenAndServe(":"+mp.PORT, handler); err != nil {
 		log.Fatal(err)
 	}
