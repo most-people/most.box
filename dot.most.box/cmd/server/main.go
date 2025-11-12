@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"dotmostbox/internal/apis"
+	"dotmostbox/internal/ipfs"
 	"dotmostbox/internal/files"
 	"dotmostbox/internal/mp"
 	"dotmostbox/internal/sse"
@@ -40,6 +41,7 @@ func main() {
 	// register routes
 	files.Register(mux, sh)
 	apis.Register(mux, sh)
+	ipfs.Register(mux, sh)
 	sse.Register(mux)
 
 	// 静态站点：仅使用嵌入的 ./out 内容
