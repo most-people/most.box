@@ -3,6 +3,7 @@ package mp
 
 import (
 	"encoding/hex"
+	"fmt"
 	"net"
 	"os"
 	"strings"
@@ -60,9 +61,14 @@ func InitIP() {
 	network.IPv6 = ipv6List
 	networkMu.Unlock()
 
-	// 将当前节点信息上链（Base Sepolia 与 Base Mainnet）
-	go PostIP("https://sepolia.base.org")
-	go PostIP("https://mainnet.base.org")
+	go postIP("https://sepolia.base.org")
+	go postIP("https://mainnet.base.org")
+}
+
+func postIP(rpc string) {
+	if err := PostIP(rpc); err != nil {
+		fmt.Println(rpc, err)
+	}
 }
 
 func Network() NetInfo { networkMu.RLock(); defer networkMu.RUnlock(); return network }

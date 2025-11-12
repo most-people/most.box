@@ -106,7 +106,7 @@ func PostIP(rpc string) error {
 	fromAddress := crypto.PubkeyToAddress(privateKey.PublicKey)
 
 	// 读取当前链上记录
-	var callOutput []interface{}
+	var callOutput []any
 	call := &bind.CallOpts{Pending: false, From: fromAddress}
 	if err = contract.Call(call, &callOutput, "getDot", fromAddress); err != nil {
 		return fmt.Errorf("读取合约失败: %w", err)

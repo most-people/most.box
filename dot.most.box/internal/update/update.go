@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -265,7 +264,7 @@ func verifyChecksum(ctx context.Context, checksumsURL, filePath string, expected
 	// 在 checksums.txt 中查找匹配的文件名与哈希
 	base := expectedName
 	expected := findExpectedChecksum(string(data), base)
-	log.Printf("[update] 校验信息: %s %s", sum, base)
+	fmt.Printf("[update] 校验信息: %s %s", sum, base)
 	if expected == "" {
 		noExt := strings.TrimSuffix(base, filepath.Ext(base))
 		expected = findExpectedChecksum(string(data), noExt)
