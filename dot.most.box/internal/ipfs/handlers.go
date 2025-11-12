@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strconv"
@@ -54,8 +55,10 @@ const (
 
 // 注册 /ipfs/config 路由：生成并替换本机 IPFS 配置
 func Register(mux *http.ServeMux, sh *shell.Shell) {
+
+	// 根据链上节点清单生成配置
 	mux.HandleFunc("/ipfs/config", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
+		if r.Method != http.MethodPost && r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
@@ -125,6 +128,59 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(out)
+	})
+
+	// 重启 IPFS 节点以应用新配置
+	mux.HandleFunc("/ipfs/restart", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost && r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		if !isLocalRequest(r) && !mp.IsOwner(r.Header.Get("Authorization")) {
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]any{"ok": false, "message": "管理员 token 无效"})
+			return
+		}
+		client := &http.Client{Timeout: 8 * time.Second}
+		req, _ := http.NewRequest("POST", ipfsAPIBase+"/api/v0/shutdown", nil)
+		resp, err := client.Do(req)
+		if err == nil {
+			io.ReadAll(resp.Body)
+			resp.Body.Close()
+		}
+		start := time.Now()
+		for i := 0; i < 30; i++ {
+			ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
+			var id map[string]any
+			err2 := sh.Request("id").Exec(ctx, &id)
+			cancel()
+			if err2 != nil {
+				break
+			}
+			time.Sleep(300 * time.Millisecond)
+		}
+		cmd := exec.Command("ipfs", "daemon", "--enable-gc")
+		cmd.Stdout = io.Discard
+		cmd.Stderr = io.Discard
+		_ = cmd.Start()
+		ok := false
+		for i := 0; i < 40; i++ {
+			time.Sleep(300 * time.Millisecond)
+			ctx, cancel := context.WithTimeout(context.Background(), 700*time.Millisecond)
+			var id map[string]any
+			err3 := sh.Request("id").Exec(ctx, &id)
+			cancel()
+			if err3 == nil && id != nil && id["ID"] != nil {
+				ok = true
+				break
+			}
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{
+			"ok":      ok,
+			"message": ifThen(ok, "IPFS 已重启", "正在重启，稍后生效"),
+			"elapsed": int(time.Since(start).Milliseconds()),
+		})
 	})
 }
 
