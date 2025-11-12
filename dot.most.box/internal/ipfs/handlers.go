@@ -56,6 +56,26 @@ const (
 // 注册 /ipfs/config 路由：生成并替换本机 IPFS 配置
 func Register(mux *http.ServeMux, sh *shell.Shell) {
 
+	// 返回当前配置 /ipfs/config/show
+	mux.HandleFunc("/ipfs/config/show", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		if !isLocalRequest(r) && !mp.IsOwner(r.Header.Get("Authorization")) {
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]any{"ok": false, "message": "管理员 token 无效"})
+			return
+		}
+		var cfg map[string]any
+		if err := sh.Request("config/show").Exec(context.Background(), &cfg); err != nil {
+			http.Error(w, "读取当前配置失败 "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(cfg)
+	})
+
 	// 根据链上节点清单生成配置
 	mux.HandleFunc("/ipfs/config", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost && r.Method != http.MethodGet {
