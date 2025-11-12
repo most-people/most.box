@@ -4,13 +4,14 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"time"
@@ -21,17 +22,9 @@ import (
 // Version 由构建系统注入（GoReleaser ldflags），默认为 dev
 var Version = "dev"
 
-var Repo = "https://api.github.com/repos/most-people/most.box/releases/latest"
-
-type githubRelease struct {
-	TagName string        `json:"tag_name"`
-	Assets  []githubAsset `json:"assets"`
-}
-
-type githubAsset struct {
-	Name               string `json:"name"`
-	BrowserDownloadURL string `json:"browser_download_url"`
-}
+var IPNSBase = "http://127.0.0.1:8080/ipns/dist.most.box"
+var DistRoot = "dot"
+var ErrChecksumInfoMissing = errors.New("校验信息缺失")
 
 // StartBackgroundCheck 在后台定时检测更新（启动时先检查一次，后续每日检查）
 func StartBackgroundCheck(ctx context.Context) {
@@ -88,12 +81,12 @@ func ApplyPendingIfPossible() {
 
 // CheckAndDownload 检测是否存在更新；若发现新版本则下载对应平台的二进制到当前目录（dot.new*）
 func CheckAndDownload(ctx context.Context) error {
-	latest, err := fetchLatest(ctx)
+	latestTag, err := fetchLatestVersion(ctx)
 	if err != nil {
 		return err
 	}
 
-	curV, latestV, cmp, err := compareVersions(Version, latest.TagName)
+	curV, latestV, cmp, err := compareVersions(Version, latestTag)
 	if err != nil {
 		return err
 	}
@@ -103,12 +96,7 @@ func CheckAndDownload(ctx context.Context) error {
 	}
 
 	assetNamePrefix := fmt.Sprintf("dot-%s-%s", runtime.GOOS, runtime.GOARCH)
-	asset, ok := findAsset(latest.Assets, assetNamePrefix)
-	if !ok {
-		return fmt.Errorf("未找到匹配资产: %s", assetNamePrefix)
-	}
 
-	// 计算目标文件路径
 	exePath, err := os.Executable()
 	if err != nil {
 		return fmt.Errorf("获取当前可执行文件失败: %w", err)
@@ -121,16 +109,15 @@ func CheckAndDownload(ctx context.Context) error {
 	newName := "dot.new" + ext
 	newPath := filepath.Join(exeDir, newName)
 
-	// 下载二进制
-	if err := downloadFile(ctx, asset.BrowserDownloadURL, newPath); err != nil {
+	assetURL := fmt.Sprintf("%s/%s/v%s/%s%s", IPNSBase, DistRoot, latestV, assetNamePrefix, ext)
+	if err := downloadFile(ctx, assetURL, newPath); err != nil {
 		return fmt.Errorf("下载新版本失败: %w", err)
 	}
 
-	// 校验 checksum（可选）
-	if sumURL, ok := findChecksumsURL(latest.Assets); ok {
-		if err := verifyChecksum(ctx, sumURL, newPath); err != nil {
-			return fmt.Errorf("校验新版本失败: %w", err)
-		}
+	sumsURL := fmt.Sprintf("%s/%s/v%s/checksums.txt", IPNSBase, DistRoot, latestV)
+	expectedName := assetNamePrefix + ext
+	if err := verifyChecksum(ctx, sumsURL, newPath, expectedName); err != nil && !errors.Is(err, ErrChecksumInfoMissing) {
+		return fmt.Errorf("校验新版本失败: %w", err)
 	}
 
 	fmt.Printf("[update] 已下载新版本 %s 至 %s\n", latestV, newPath)
@@ -138,31 +125,56 @@ func CheckAndDownload(ctx context.Context) error {
 	return nil
 }
 
-func fetchLatest(ctx context.Context) (*githubRelease, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, Repo, nil)
+func fetchLatestVersion(ctx context.Context) (string, error) {
+	u := fmt.Sprintf("%s/%s/", IPNSBase, DistRoot)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	req.Header.Set("Accept", "application/vnd.github+json")
 	req.Header.Set("User-Agent", "dot.most.box-updater")
-	if token := os.Getenv("GITHUB_TOKEN"); token != "" {
-		req.Header.Set("Authorization", "Bearer "+token)
-	}
-
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		b, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("GitHub API 响应错误: %d %s", resp.StatusCode, string(b))
+		return "", fmt.Errorf("目录获取失败: %d %s", resp.StatusCode, string(b))
 	}
-	var gr githubRelease
-	if err := json.NewDecoder(resp.Body).Decode(&gr); err != nil {
-		return nil, err
+	body, _ := io.ReadAll(resp.Body)
+	text := string(body)
+	re := regexp.MustCompile(`v[0-9]+\.[0-9]+\.[0-9]+`)
+	matches := re.FindAllString(text, -1)
+	if len(matches) == 0 {
+		return "", fmt.Errorf("目录中未发现版本")
 	}
-	return &gr, nil
+	seen := map[string]struct{}{}
+	list := []string{}
+	for _, m := range matches {
+		if _, ok := seen[m]; !ok {
+			seen[m] = struct{}{}
+			list = append(list, m)
+		}
+	}
+	best := pickLatest(list)
+	if best == "" {
+		return "", fmt.Errorf("无法解析最新版本")
+	}
+	return best, nil
+}
+
+func pickLatest(list []string) string {
+	best := ""
+	for _, s := range list {
+		_, _, cmp, err := compareVersions(best, s)
+		if err != nil {
+			continue
+		}
+		if best == "" || cmp < 0 {
+			best = s
+		}
+	}
+	return best
 }
 
 func compareVersions(current, latest string) (curV, latestV string, cmp int, err error) {
@@ -188,23 +200,7 @@ func compareVersions(current, latest string) (curV, latestV string, cmp int, err
 	return cv.String(), lv.String(), cv.Compare(lv), nil
 }
 
-func findAsset(assets []githubAsset, prefix string) (githubAsset, bool) {
-	for _, a := range assets {
-		if a.Name == prefix || strings.HasPrefix(a.Name, prefix) {
-			return a, true
-		}
-	}
-	return githubAsset{}, false
-}
-
-func findChecksumsURL(assets []githubAsset) (string, bool) {
-	for _, a := range assets {
-		if a.Name == "checksums.txt" {
-			return a.BrowserDownloadURL, true
-		}
-	}
-	return "", false
-}
+// GitHub 相关逻辑已移除，使用 IPNS 版本分发
 
 func downloadFile(ctx context.Context, url, dest string) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -233,7 +229,7 @@ func downloadFile(ctx context.Context, url, dest string) error {
 	return nil
 }
 
-func verifyChecksum(ctx context.Context, checksumsURL, filePath string) error {
+func verifyChecksum(ctx context.Context, checksumsURL, filePath string, expectedName string) error {
 	// 下载 checksums.txt
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, checksumsURL, nil)
 	if err != nil {
@@ -267,16 +263,15 @@ func verifyChecksum(ctx context.Context, checksumsURL, filePath string) error {
 	sum := hex.EncodeToString(h.Sum(nil))
 
 	// 在 checksums.txt 中查找匹配的文件名与哈希
-	base := filepath.Base(filePath)
+	base := expectedName
 	expected := findExpectedChecksum(string(data), base)
+	log.Printf("[update] 校验信息: %s %s", sum, base)
 	if expected == "" {
-		// 某些命名不带 .exe 或不同前缀，尝试去除后检查
 		noExt := strings.TrimSuffix(base, filepath.Ext(base))
 		expected = findExpectedChecksum(string(data), noExt)
 	}
 	if expected == "" {
-		// 无法匹配校验信息，返回可选错误
-		return errors.New("校验信息缺失")
+		return ErrChecksumInfoMissing
 	}
 	if !strings.EqualFold(sum, expected) {
 		return fmt.Errorf("校验失败: 期望 %s 实际 %s", expected, sum)

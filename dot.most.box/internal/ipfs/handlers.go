@@ -1,3 +1,5 @@
+// IPFS 配置接口与生成逻辑
+// 提供 /ipfs/config 路由，依据链上节点与角色模板生成配置并应用
 package ipfs
 
 import (
@@ -24,13 +26,16 @@ import (
 	shell "github.com/ipfs/go-ipfs-api"
 )
 
+// 节点角色：dhtclient（非公开）/ dhtserver（公开）
 type nodeRole string
 
+// 角色常量
 const (
 	roleClient nodeRole = "dhtclient"
 	roleServer nodeRole = "dhtserver"
 )
 
+// 节点定义：由链上 Dot 转换而来
 type nodeDef struct {
 	Name string
 	Type nodeRole
@@ -39,6 +44,7 @@ type nodeDef struct {
 	Port int
 }
 
+// 配置生成常量：默认端口、选择数量等
 const (
 	defaultPort   = 4001
 	bootstrapK    = 8
@@ -47,6 +53,7 @@ const (
 	ipfsAPIBase   = "http://127.0.0.1:5001"
 )
 
+// 注册 /ipfs/config 路由：生成并替换本机 IPFS 配置
 func Register(mux *http.ServeMux, sh *shell.Shell) {
 	mux.HandleFunc("/ipfs/config", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -58,6 +65,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			json.NewEncoder(w).Encode(map[string]any{"ok": false, "message": "管理员 token 无效"})
 			return
 		}
+		// 读取链上节点清单
 		dots, err := mp.GetAllDots()
 		if err != nil {
 			http.Error(w, "读取链上节点失败 "+err.Error(), http.StatusInternalServerError)
@@ -68,18 +76,21 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			http.Error(w, "解析节点清单失败 "+err.Error(), http.StatusInternalServerError)
 			return
 		}
+		// 加载角色模板
 		dhtClient, dhtServer, err := loadRoleTemplates()
 		if err != nil {
 			http.Error(w, "读取角色模板失败 "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 		bs := buildBootstrap(custom)
+		// 获取本地节点信息
 		idInfo, err := sh.ID()
 		if err != nil {
 			http.Error(w, "获取本地 Peer ID 失败 "+err.Error(), http.StatusServiceUnavailable)
 			return
 		}
 		peerID := idInfo.ID
+		// 拉取当前配置
 		var currentCfg map[string]any
 		if err := sh.Request("config/show").Exec(context.Background(), &currentCfg); err != nil {
 			http.Error(w, "读取当前配置失败 "+err.Error(), http.StatusInternalServerError)
@@ -92,12 +103,14 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 		}
 		announceAddrs := buildAnnounce(matchedIP(matched), nodePort(matched))
 		peeringPeers := buildPeeringForLocal(custom, peerID)
+		// 合并配置（当前配置 + 计算结果 + 角色模板）
 		finalCfg := mergeBaseWithExtras(currentCfg, map[string]any{
 			"announceAddrs":  announceAddrs,
 			"bootstrapAddrs": bs,
 			"peeringPeers":   peeringPeers,
 			"roleCfg":        roleCfg,
 		})
+		// 通过 IPFS HTTP API 替换配置
 		if err := applyConfigViaHTTP(ipfsAPIBase, finalCfg); err != nil {
 			http.Error(w, "替换配置失败 "+err.Error(), http.StatusInternalServerError)
 			return
@@ -116,6 +129,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 	})
 }
 
+// 将链上 Dot 转换为内部节点清单，并判定角色（探测 Swarm 端口）
 func dotsToCustom(dots []mp.Dot) ([]nodeDef, error) {
 	result := make([]nodeDef, 0, len(dots))
 	for _, d := range dots {
@@ -132,6 +146,7 @@ func dotsToCustom(dots []mp.Dot) ([]nodeDef, error) {
 	return result, nil
 }
 
+// 读取角色模板配置（dhtclient/dhtserver）
 func loadRoleTemplates() (map[string]any, map[string]any, error) {
 	wd, _ := os.Getwd()
 	root := filepath.Dir(wd)
@@ -148,6 +163,7 @@ func loadRoleTemplates() (map[string]any, map[string]any, error) {
 	return dc, ds, nil
 }
 
+// 读取并解析 JSON 文件
 func readJSONFile(p string) (map[string]any, error) {
 	b, err := os.ReadFile(p)
 	if err != nil {
@@ -160,6 +176,7 @@ func readJSONFile(p string) (map[string]any, error) {
 	return v, nil
 }
 
+// 从名称中拆分 PeerID（约定格式：name-peerID）
 func splitDotName(full string) (string, string) {
 	i := strings.LastIndex(full, "-")
 	if i > 0 {
@@ -168,6 +185,7 @@ func splitDotName(full string) (string, string) {
 	return full, ""
 }
 
+// 从 API URL 提取主机并生成基础 multiaddr 前缀（/ip4、/ip6、dns4、dns6）
 func toMaBasesFromApis(apis []string) []string {
 	out := []string{}
 	for _, s := range apis {
@@ -210,6 +228,7 @@ func toMaBasesFromApis(apis []string) []string {
 	return dedupeStrings(out)
 }
 
+// 从 API URL 提取主机列表（用于端口探测）
 func hostsFromApis(apis []string) []string {
 	out := []string{}
 	for _, s := range apis {
@@ -225,6 +244,7 @@ func hostsFromApis(apis []string) []string {
 	return dedupeStrings(out)
 }
 
+// 探测任意主机的 Swarm 端口是否开放
 func anySwarmOpen(hosts []string, port int) bool {
 	if len(hosts) == 0 {
 		return false
@@ -237,6 +257,7 @@ func anySwarmOpen(hosts []string, port int) bool {
 	return false
 }
 
+// 探测单主机的 Swarm 端口是否开放（支持解析域名至多地址）
 func isSwarmPortOpen(host string, port int) bool {
 	ip := net.ParseIP(host)
 	targets := []string{}
@@ -263,6 +284,7 @@ func isSwarmPortOpen(host string, port int) bool {
 	return false
 }
 
+// 返回节点端口（默认 4001）
 func nodePort(n *nodeDef) int {
 	if n == nil || n.Port <= 0 {
 		return defaultPort
@@ -270,16 +292,21 @@ func nodePort(n *nodeDef) int {
 	return n.Port
 }
 
+// 构建 TCP 地址
 func addTcp(base string, port int) string { return base + "/tcp/" + strconv.Itoa(port) }
 
+// 构建 QUIC v1 地址
 func addUdpQuic(base string, port int) string {
 	return base + "/udp/" + strconv.Itoa(port) + "/quic-v1"
 }
 
+// 构建带 /p2p 的 TCP 地址
 func addP2pTcp(base, peerID string, port int) string { return addTcp(base, port) + "/p2p/" + peerID }
 
+// 判断是否为 /dnsaddr/ 前缀
 func isDnsaddr(s string) bool { return strings.HasPrefix(s, "/dnsaddr/") }
 
+// 规范化地址（不含 /p2p）
 func normalizeNoP2p(base string, port int) []string {
 	if isDnsaddr(base) {
 		return []string{base}
@@ -287,6 +314,7 @@ func normalizeNoP2p(base string, port int) []string {
 	return []string{addTcp(base, port), addUdpQuic(base, port)}
 }
 
+// 规范化地址（包含 /p2p/<peerID>）
 func normalizeWithP2p(base, peerID string, port int) []string {
 	if isDnsaddr(base) {
 		return []string{base}
@@ -294,6 +322,7 @@ func normalizeWithP2p(base, peerID string, port int) []string {
 	return []string{addP2pTcp(base, peerID, port), addUdpQuic(base, port) + "/p2p/" + peerID}
 }
 
+// 构建 Announce 地址列表：TCP + QUIC v1
 func buildAnnounce(ipList []string, port int) []string {
 	out := []string{}
 	for _, ip := range ipList {
@@ -303,6 +332,7 @@ func buildAnnounce(ipList []string, port int) []string {
 	return dedupeStrings(out)
 }
 
+// 构建 Bootstrap 地址：选择 K 个服务器节点，生成带 /p2p 的地址
 func buildBootstrap(nodes []nodeDef) []string {
 	servers := []nodeDef{}
 	for _, n := range nodes {
@@ -321,6 +351,7 @@ func buildBootstrap(nodes []nodeDef) []string {
 	return dedupeStrings(out)
 }
 
+// 构建 Peering 邻居：环形邻居与随机邻居（优先服务器）
 func buildPeeringForLocal(nodes []nodeDef, localPeerID string) []map[string]any {
 	arr := make([]nodeDef, len(nodes))
 	copy(arr, nodes)
@@ -383,6 +414,7 @@ func buildPeeringForLocal(nodes []nodeDef, localPeerID string) []map[string]any 
 	return peers
 }
 
+// 合并当前配置与计算结果、角色模板（数组保守、对象递归、覆盖基本类型）
 func mergeBaseWithExtras(baseCfg map[string]any, extras map[string]any) map[string]any {
 	cfg := deepCloneMap(baseCfg)
 	announce, _ := extras["announceAddrs"].([]string)
@@ -427,6 +459,7 @@ func mergeBaseWithExtras(baseCfg map[string]any, extras map[string]any) map[stri
 	return cfg
 }
 
+// 递归合并对象；数组仅在目标不存在时复制模板
 func mergeObjects(target map[string]any, source map[string]any) map[string]any {
 	if source == nil {
 		return target
@@ -451,8 +484,10 @@ func mergeObjects(target map[string]any, source map[string]any) map[string]any {
 	return target
 }
 
+// 深拷贝 map
 func deepCloneMap(m map[string]any) map[string]any { return asMap(deepCloneAny(m)) }
 
+// 安全转换为 map[string]any
 func asMap(v any) map[string]any {
 	if v == nil {
 		return map[string]any{}
@@ -463,6 +498,7 @@ func asMap(v any) map[string]any {
 	return map[string]any{}
 }
 
+// 判断是否为切片类型
 func isSlice(v any) bool {
 	if v == nil {
 		return false
@@ -470,6 +506,7 @@ func isSlice(v any) bool {
 	return reflect.ValueOf(v).Kind() == reflect.Slice
 }
 
+// 使用 JSON 编解码进行深拷贝
 func deepCloneAny(v any) any {
 	b, _ := json.Marshal(v)
 	var out any
@@ -477,6 +514,7 @@ func deepCloneAny(v any) any {
 	return out
 }
 
+// 取匹配节点的 IP 列表
 func matchedIP(n *nodeDef) []string {
 	if n == nil {
 		return []string{}
@@ -484,6 +522,7 @@ func matchedIP(n *nodeDef) []string {
 	return n.IP
 }
 
+// 根据 PeerID 查找节点
 func findByPeer(nodes []nodeDef, peerID string) *nodeDef {
 	for i := range nodes {
 		if nodes[i].ID == peerID {
@@ -493,6 +532,7 @@ func findByPeer(nodes []nodeDef, peerID string) *nodeDef {
 	return nil
 }
 
+// 随机选择 K 个节点
 func pickKNodes(arr []nodeDef, k int) []nodeDef {
 	if k <= 0 || len(arr) == 0 {
 		return []nodeDef{}
@@ -507,6 +547,7 @@ func pickKNodes(arr []nodeDef, k int) []nodeDef {
 	return r[:k]
 }
 
+// 去重字符串列表
 func dedupeStrings(list []string) []string {
 	seen := map[string]struct{}{}
 	out := []string{}
@@ -519,6 +560,7 @@ func dedupeStrings(list []string) []string {
 	return out
 }
 
+// 调用 IPFS HTTP API /api/v0/config/replace 替换配置
 func applyConfigViaHTTP(base string, cfg map[string]any) error {
 	buf := &bytes.Buffer{}
 	w := multipart.NewWriter(buf)
@@ -554,6 +596,7 @@ func applyConfigViaHTTP(base string, cfg map[string]any) error {
 	return nil
 }
 
+// 条件选择
 func ifThen(cond bool, a, b string) string {
 	if cond {
 		return a
