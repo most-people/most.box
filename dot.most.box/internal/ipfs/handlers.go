@@ -5,6 +5,7 @@ package ipfs
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,9 +14,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"os"
 	"os/exec"
-	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
@@ -34,6 +33,12 @@ const (
 	roleClient nodeRole = "dhtclient"
 	roleServer nodeRole = "dhtserver"
 )
+
+//go:embed dhtclient.json
+var embeddedDHTClient []byte
+
+//go:embed dhtserver.json
+var embeddedDHTServer []byte
 
 // 节点定义：由链上 Dot 转换而来
 type nodeDef struct {
@@ -223,32 +228,15 @@ func dotsToCustom(dots []mp.Dot) ([]nodeDef, error) {
 
 // 读取角色模板配置（dhtclient/dhtserver）
 func loadRoleTemplates() (map[string]any, map[string]any, error) {
-	wd, _ := os.Getwd()
-	root := filepath.Dir(wd)
-	clientPath := filepath.Join(root, "dot.most.box", "internal", "ipfs", "dhtclient.json")
-	serverPath := filepath.Join(root, "dot.most.box", "internal", "ipfs", "dhtserver.json")
-	dc, err := readJSONFile(clientPath)
-	if err != nil {
+	var dc map[string]any
+	var ds map[string]any
+	if err := json.Unmarshal(embeddedDHTClient, &dc); err != nil {
 		return nil, nil, err
 	}
-	ds, err := readJSONFile(serverPath)
-	if err != nil {
+	if err := json.Unmarshal(embeddedDHTServer, &ds); err != nil {
 		return nil, nil, err
 	}
 	return dc, ds, nil
-}
-
-// 读取并解析 JSON 文件
-func readJSONFile(p string) (map[string]any, error) {
-	b, err := os.ReadFile(p)
-	if err != nil {
-		return nil, err
-	}
-	var v map[string]any
-	if err := json.Unmarshal(b, &v); err != nil {
-		return nil, err
-	}
-	return v, nil
 }
 
 // 从名称中拆分 PeerID（约定格式：name-peerID）
