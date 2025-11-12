@@ -14,6 +14,7 @@
     "EnableAutoRelay": false
   },
   "Pubsub": { "Enabled": true, "Router": "gossipsub" },
+  "Ipns": { "MaxCacheTTL": "1m" },
   "Provide": {
     "Strategy": "pinned",
     "DHT": { "Interval": "6h" }

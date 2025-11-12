@@ -14,6 +14,7 @@
     "ConnMgr": { "LowWater": 100, "HighWater": 200, "GracePeriod": "2m" }
   },
   "Pubsub": { "Enabled": true, "Router": "gossipsub" },
+  "Ipns": { "MaxCacheTTL": "1m" },
   "Provide": {
     "Strategy": "pinned",
     "DHT": { "Interval": "12h" }

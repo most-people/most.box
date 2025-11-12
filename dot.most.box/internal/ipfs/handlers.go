@@ -450,6 +450,9 @@ func mergeBaseWithExtras(baseCfg map[string]any, extras map[string]any) map[stri
 		if p, ok := roleCfg["Pubsub"].(map[string]any); ok {
 			cfg["Pubsub"] = mergeObjects(asMap(cfg["Pubsub"]), p)
 		}
+		if i, ok := roleCfg["Ipns"].(map[string]any); ok {
+			cfg["Ipns"] = mergeObjects(asMap(cfg["Ipns"]), i)
+		}
 		if prv, ok := roleCfg["Provide"].(map[string]any); ok {
 			cfg["Provide"] = mergeObjects(asMap(cfg["Provide"]), prv)
 		}
