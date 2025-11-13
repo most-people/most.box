@@ -78,7 +78,17 @@ func PostIP(rpc string) error {
 	dotName := strings.TrimSpace(os.Getenv("DOT_NAME"))
 	apiUrls := strings.TrimSpace(os.Getenv("API_URLS"))
 	if privateKeyHex == "" || dotName == "" || apiUrls == "" {
-		return fmt.Errorf("请在 .env 文件设置 PRIVATE_KEY, DOT_NAME 和 API_URLS")
+		missing := []string{}
+		if privateKeyHex == "" {
+			missing = append(missing, "PRIVATE_KEY")
+		}
+		if dotName == "" {
+			missing = append(missing, "DOT_NAME")
+		}
+		if apiUrls == "" {
+			missing = append(missing, "API_URLS")
+		}
+		return fmt.Errorf("请在当前目录 .env 文件设置 %s", strings.Join(missing, ", "))
 	}
 	name, apis, cids, err := GetIP()
 	if err != nil {

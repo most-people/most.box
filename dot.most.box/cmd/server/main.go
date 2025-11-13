@@ -6,7 +6,9 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -18,6 +20,7 @@ import (
 	"dotmostbox/internal/update"
 
 	shell "github.com/ipfs/go-ipfs-api"
+	"github.com/joho/godotenv"
 )
 
 // 嵌入 ./out 目录下的所有静态文件，便于单文件分发
@@ -26,6 +29,12 @@ import (
 var embeddedFS embed.FS
 
 func main() {
+	// 加载当前可执行文件所在目录的 .env 文件
+	exe, _ := os.Executable()
+	dir := filepath.Dir(exe)
+	_ = godotenv.Load(filepath.Join(dir, ".env"))
+
+	// 初始化 IPFS Shell
 	sh := shell.NewShell("http://127.0.0.1:5001")
 
 	if _, err := sh.ID(); err != nil {
