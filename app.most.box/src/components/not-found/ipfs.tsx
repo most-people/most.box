@@ -43,13 +43,10 @@ const PageContent = () => {
         url.searchParams.set("filename", filename);
         url.searchParams.set("type", cidType);
       }
-      try {
-        url.hash = new URL(dotAPI).host;
-      } catch {}
       return url.href;
     }
     return "";
-  }, [dotAPI, cid, filename]);
+  }, [dotAPI, cid, filename, cidType]);
 
   const previewUrl = useMemo(() => {
     if (dotCID && cid) {
@@ -80,11 +77,8 @@ const PageContent = () => {
     }
     return "";
   }, [dotCID, cid, filename, cidType]);
-  const name = "HEU KMS Activator";
-  const host = "https://most.box/ipns/";
-  const ipns = "k51qzi5uqu5dmdudfnx05uaaehyo5yceivmvhjehy2isy7o3nj5coyw9ycy2qv";
-  const path = "";
-  // const path = "/kubo/v0.38.1/kubo_v0.38.1_linux-amd64.tar.gz";
+
+  const host = `https://most.box/${pathname.split("/")[1]}/`;
 
   return (
     <Box id="page-ipfs">
@@ -247,18 +241,18 @@ const PageContent = () => {
             <div className="qrcode-frame">
               <QRCodeSVG
                 className="qrcode"
-                value={host + ipns + path}
+                value={`${host}/${cid}`}
                 size={138}
                 bgColor="transparent"
                 fgColor="#ffffff"
               />
             </div>
             <div className="line"></div>
+
             <div className="info">
-              <div className="name">{name}</div>
+              <div className="name">{filename}</div>
               <div className="host">{host}</div>
-              <div className="ipns">{ipns}</div>
-              <div className="path">{path}</div>
+              <div className="ipns">{cid}</div>
             </div>
           </div>
         </Center>

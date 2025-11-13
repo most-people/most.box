@@ -94,27 +94,27 @@ func CheckAndDownload(ctx context.Context) error {
 		return nil
 	}
 
-	assetNamePrefix := fmt.Sprintf("dot-%s-%s", runtime.GOOS, runtime.GOARCH)
+	ext := ""
+	if runtime.GOOS == "windows" {
+		ext = ".exe"
+	}
+	file := fmt.Sprintf("%s-%s-%s%s", runtime.GOOS, runtime.GOARCH, "dot", ext)
 
 	exePath, err := os.Executable()
 	if err != nil {
 		return fmt.Errorf("获取当前可执行文件失败: %w", err)
 	}
 	exeDir := filepath.Dir(exePath)
-	ext := ""
-	if runtime.GOOS == "windows" {
-		ext = ".exe"
-	}
 	newName := "dot.new" + ext
 	newPath := filepath.Join(exeDir, newName)
 
-	assetURL := fmt.Sprintf("%s/%s/v%s/%s%s", IPNSBase, DistRoot, latestV, assetNamePrefix, ext)
+	assetURL := fmt.Sprintf("%s/%s/v%s/%s", IPNSBase, DistRoot, latestV, file)
 	if err := downloadFile(ctx, assetURL, newPath); err != nil {
 		return fmt.Errorf("下载新版本失败: %w", err)
 	}
 
 	sumsURL := fmt.Sprintf("%s/%s/v%s/checksums.txt", IPNSBase, DistRoot, latestV)
-	expectedName := assetNamePrefix + ext
+	expectedName := file
 	if err := verifyChecksum(ctx, sumsURL, newPath, expectedName); err != nil && !errors.Is(err, ErrChecksumInfoMissing) {
 		return fmt.Errorf("校验新版本失败: %w", err)
 	}

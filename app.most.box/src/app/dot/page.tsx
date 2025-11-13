@@ -631,7 +631,7 @@ export default function PageDot() {
                   <Box>
                     <Group gap="xs">
                       <Text fw={600} size="md" lineClamp={1}>
-                        {node.name}
+                        {node.name.split("-")[0]}
                       </Text>
                       {isCurrentNode(node) && (
                         <Badge size="xs" color="blue" variant="filled">

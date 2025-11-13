@@ -62,7 +62,7 @@ const (
 func Register(mux *http.ServeMux, sh *shell.Shell) {
 
 	// 返回当前配置 /ipfs/config/show
-	mux.HandleFunc("/ipfs/config/show", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/ipfs.config.show", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
@@ -82,7 +82,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 	})
 
 	// 根据链上节点清单生成配置
-	mux.HandleFunc("/ipfs/config", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/ipfs.config.update", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost && r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
@@ -156,7 +156,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 	})
 
 	// 重启 IPFS 节点以应用新配置
-	mux.HandleFunc("/ipfs/restart", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/ipfs.restart", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost && r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return

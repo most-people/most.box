@@ -10,12 +10,12 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"time"
 
 	"context"
 	"dotmostbox/internal/mp"
+	"dotmostbox/internal/update"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -73,61 +73,41 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 		w.Write(out)
 	})
 
-	// /api.deploy 触发拉取仓库并重载 PM2，需管理员 token
-	mux.HandleFunc("/api.deploy", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/api.update", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPut {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		log := []string{}
-		isOwner := mp.IsOwner(r.Header.Get("Authorization"))
-		if !isOwner {
+		if !mp.IsOwner(r.Header.Get("Authorization")) {
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(map[string]any{"ok": false, "message": "管理员 token 无效"})
 			return
 		}
-		// 仓库根目录：为当前工作目录的父级（Go 进程位于子目录）
-		wd, _ := os.Getwd()
-		root := filepath.Dir(wd)
-		// 0. git checkout .
-		log = append(log, "执行 git checkout . (忽略本地修改)")
-		if out, err := exec.Command("git", "checkout", ".").CombinedOutput(); err == nil {
-			log = append(log, fmt.Sprintf("Git checkout: %s", strings.TrimSpace(string(out))))
-		} else {
-			log = append(log, fmt.Sprintf("Git checkout ERR: %s", strings.TrimSpace(string(out))))
-		}
-		// 1. git pull
-		log = append(log, "执行 git pull...")
-		gitCmd := exec.Command("git", "pull")
-		gitCmd.Dir = root
-		gitOut, gitErr := gitCmd.CombinedOutput()
-		if gitErr != nil {
-			log = append(log, fmt.Sprintf("Git ERR: %s", gitErr.Error()))
-		}
-		log = append(log, fmt.Sprintf("Git: %s", strings.TrimSpace(string(gitOut))))
-		if strings.Contains(string(gitOut), "Already up") {
-			json.NewEncoder(w).Encode(map[string]any{"ok": true, "message": "无需部署", "log": log, "timestamp": time.Now().Format(time.RFC3339)})
+		if err := update.CheckAndDownload(r.Context()); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]any{"ok": false, "message": err.Error(), "timestamp": time.Now().Format(time.RFC3339)})
 			return
 		}
-		// 2. npm install
-		log = append(log, "执行 npm install...")
-		npm := exec.Command("npm", "i")
-		npm.Dir = root
-		npmOut, npmErr := npm.CombinedOutput()
-		if npmErr != nil {
-			log = append(log, fmt.Sprintf("NPM ERR: %s", npmErr.Error()))
+		update.ApplyPendingIfPossible()
+		json.NewEncoder(w).Encode(map[string]any{"ok": true, "message": "更新已下载，重启后生效", "timestamp": time.Now().Format(time.RFC3339)})
+	})
+
+	// /api.restart 重启当前 dot 服务进程（需管理员）
+	mux.HandleFunc("/api.restart", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
 		}
-		log = append(log, fmt.Sprintf("NPM: %s", strings.TrimSpace(string(npmOut))))
-		// 3. pm2 reload all
-		log = append(log, "执行 pm2 reload all...")
-		pm2 := exec.Command("pm2", "reload", "all")
-		pm2Out, pm2Err := pm2.CombinedOutput()
-		if pm2Err != nil {
-			log = append(log, fmt.Sprintf("PM2 ERR: %s", pm2Err.Error()))
+		if !mp.IsOwner(r.Header.Get("Authorization")) {
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]any{"ok": false, "message": "管理员 token 无效"})
+			return
 		}
-		log = append(log, fmt.Sprintf("PM2: %s", strings.TrimSpace(string(pm2Out))))
-		log = append(log, "部署完成！")
-		json.NewEncoder(w).Encode(map[string]any{"ok": true, "message": "部署成功", "log": log, "timestamp": time.Now().Format(time.RFC3339)})
+		json.NewEncoder(w).Encode(map[string]any{"ok": true, "message": "服务即将重启", "timestamp": time.Now().Format(time.RFC3339)})
+		go func() {
+			time.Sleep(500 * time.Millisecond)
+			os.Exit(0)
+		}()
 	})
 
 	// /api.testnet.gas 向指定地址发送少量 Base Sepolia Gas
