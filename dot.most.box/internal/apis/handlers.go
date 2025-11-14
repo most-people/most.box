@@ -83,13 +83,17 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			json.NewEncoder(w).Encode(map[string]any{"ok": false, "message": "管理员 token 无效"})
 			return
 		}
-		if err := update.CheckAndDownload(r.Context()); err != nil {
+		downloaded, err := update.CheckAndDownload(r.Context())
+		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(map[string]any{"ok": false, "message": err.Error(), "timestamp": time.Now().Format(time.RFC3339)})
 			return
 		}
-		update.ApplyPendingIfPossible()
-		json.NewEncoder(w).Encode(map[string]any{"ok": true, "message": "更新已下载，重启后生效", "timestamp": time.Now().Format(time.RFC3339)})
+		if downloaded {
+			json.NewEncoder(w).Encode(map[string]any{"ok": true, "message": "更新已下载，重启后生效", "timestamp": time.Now().Format(time.RFC3339)})
+			return
+		}
+		json.NewEncoder(w).Encode(map[string]any{"ok": true, "message": "当前已是最新，无需更新", "timestamp": time.Now().Format(time.RFC3339)})
 	})
 	mux.HandleFunc("/app.restart", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
@@ -104,6 +108,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 		json.NewEncoder(w).Encode(map[string]any{"ok": true, "message": "服务即将重启", "timestamp": time.Now().Format(time.RFC3339)})
 		go func() {
 			time.Sleep(500 * time.Millisecond)
+			update.ApplyPendingIfPossible()
 			os.Exit(0)
 		}()
 	})

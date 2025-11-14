@@ -64,19 +64,19 @@ func applyPendingWindows(exeDir string) {
 }
 
 // CheckAndDownload 检测是否存在更新；若发现新版本则下载对应平台的二进制到当前目录（dot.new*）
-func CheckAndDownload(ctx context.Context) error {
+func CheckAndDownload(ctx context.Context) (bool, error) {
 	latestTag, err := fetchLatestVersion(ctx)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	curV, latestV, cmp, err := compareVersions(Version, latestTag)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if cmp >= 0 {
 		fmt.Printf("[update] 当前版本 %s 已是最新（最新 %s）\n", curV, latestV)
-		return nil
+		return false, nil
 	}
 
 	ext := ""
@@ -87,7 +87,7 @@ func CheckAndDownload(ctx context.Context) error {
 
 	exePath, err := os.Executable()
 	if err != nil {
-		return fmt.Errorf("获取当前可执行文件失败: %w", err)
+		return false, fmt.Errorf("获取当前可执行文件失败: %w", err)
 	}
 	exeDir := filepath.Dir(exePath)
 	newName := "dot.new" + ext
@@ -95,18 +95,18 @@ func CheckAndDownload(ctx context.Context) error {
 
 	assetURL := fmt.Sprintf("%s/%s/v%s/%s", IPNSBase, DistRoot, latestV, file)
 	if err := downloadFile(ctx, assetURL, newPath); err != nil {
-		return fmt.Errorf("下载新版本失败: %w", err)
+		return false, fmt.Errorf("下载新版本失败: %w", err)
 	}
 
 	sumsURL := fmt.Sprintf("%s/%s/v%s/checksums.txt", IPNSBase, DistRoot, latestV)
 	expectedName := file
 	if err := verifyChecksum(ctx, sumsURL, newPath, expectedName); err != nil && !errors.Is(err, ErrChecksumInfoMissing) {
-		return fmt.Errorf("校验新版本失败: %w", err)
+		return false, fmt.Errorf("校验新版本失败: %w", err)
 	}
 
 	fmt.Printf("[update] 已下载新版本 %s 至 %s\n", latestV, newPath)
 	fmt.Println("[update] 提示：请手动重启以应用更新（Windows 无法在运行时覆盖自身）")
-	return nil
+	return true, nil
 }
 
 func fetchLatestVersion(ctx context.Context) (string, error) {
