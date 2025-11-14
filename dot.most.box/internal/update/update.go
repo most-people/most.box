@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -32,7 +33,7 @@ func ApplyPendingIfPossible() {
 	}
 	exeDir := filepath.Dir(exePath)
 	if runtime.GOOS == "windows" {
-		// Windows 无法在运行时覆盖自身，跳过
+		applyPendingWindows(exeDir)
 		return
 	}
 	// 非 Windows：将 dot.new 替换为 dot
@@ -43,6 +44,23 @@ func ApplyPendingIfPossible() {
 		_ = os.Rename(newPath, targetPath)
 		fmt.Println("[update] 已应用待更新文件，重启后生效")
 	}
+}
+
+// Windows：在进程退出后将 dot.new.exe 替换为当前可执行文件，并重启
+func applyPendingWindows(exeDir string) {
+	newPath := filepath.Join(exeDir, "dot.new.exe")
+	exePath, err := os.Executable()
+	if err != nil {
+		return
+	}
+	targetPath := exePath
+	if _, err := os.Stat(newPath); err != nil {
+		return
+	}
+	pid := os.Getpid()
+	ps := fmt.Sprintf(`$ErrorActionPreference = "SilentlyContinue"; $pid=%d; while (Get-Process -Id $pid -ErrorAction SilentlyContinue) { Start-Sleep -Milliseconds 500 }; Move-Item -Force -LiteralPath "%s" -Destination "%s"; Start-Process -FilePath "%s"`, pid, newPath, targetPath, targetPath)
+	cmd := exec.Command("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", ps)
+	_ = cmd.Start()
 }
 
 // CheckAndDownload 检测是否存在更新；若发现新版本则下载对应平台的二进制到当前目录（dot.new*）
