@@ -13,7 +13,6 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
-	"time"
 
 	semver "github.com/blang/semver/v4"
 )
@@ -24,38 +23,6 @@ var Version = "dev"
 var IPNSBase = "http://127.0.0.1:8080/ipns/dist.most.box"
 var DistRoot = "dot"
 var ErrChecksumInfoMissing = errors.New("校验信息缺失")
-
-// StartBackgroundCheck 在后台定时检测更新（启动时先检查一次，后续每日检查）
-func StartBackgroundCheck(ctx context.Context) {
-	// 尝试应用已下载的待更新文件（非 Windows 可直接替换）
-	ApplyPendingIfPossible()
-
-	// 首次启动尝试检查
-	go func() {
-		// 允许启动后 3 秒再检查，避免与其他初始化竞争
-		time.Sleep(3 * time.Second)
-		if err := CheckAndDownload(ctx); err != nil {
-			// 仅日志提示，不影响主流程
-			fmt.Println("[update] 首次检测失败:", err)
-		}
-	}()
-
-	// 每日检查一次
-	go func() {
-		ticker := time.NewTicker(24 * time.Hour)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				if err := CheckAndDownload(ctx); err != nil {
-					fmt.Println("[update] 定时检测失败:", err)
-				}
-			}
-		}
-	}()
-}
 
 // ApplyPendingIfPossible 在非 Windows 平台将 dot.new* 覆盖为 dot*
 func ApplyPendingIfPossible() {

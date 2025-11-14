@@ -73,7 +73,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 		w.Write(out)
 	})
 
-	mux.HandleFunc("/api.update", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/app.update", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPut {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
@@ -91,9 +91,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 		update.ApplyPendingIfPossible()
 		json.NewEncoder(w).Encode(map[string]any{"ok": true, "message": "更新已下载，重启后生效", "timestamp": time.Now().Format(time.RFC3339)})
 	})
-
-	// /api.restart 重启当前 dot 服务进程（需管理员）
-	mux.HandleFunc("/api.restart", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/app.restart", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return

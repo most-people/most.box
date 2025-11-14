@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"embed"
 	"io/fs"
 	"log"
@@ -17,7 +16,6 @@ import (
 	"dotmostbox/internal/ipfs"
 	"dotmostbox/internal/mp"
 	"dotmostbox/internal/sse"
-	"dotmostbox/internal/update"
 
 	shell "github.com/ipfs/go-ipfs-api"
 	"github.com/joho/godotenv"
@@ -64,9 +62,6 @@ func main() {
 			mp.InitIP()
 		}
 	}()
-
-	// 后台自动检测更新（首次启动 + 每日）
-	update.StartBackgroundCheck(context.Background())
 
 	log.Println("服务器正在监听", "http://localhost:"+mp.PORT)
 	if err := http.ListenAndServe(":"+mp.PORT, handler); err != nil {
