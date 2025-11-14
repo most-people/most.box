@@ -67,7 +67,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		if !isLocalRequest(r) && !mp.IsOwner(r.Header.Get("Authorization")) {
+		if !mp.IsLocalRequest(r) && !mp.IsOwner(r.Header.Get("Authorization")) {
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(map[string]any{"ok": false, "message": "管理员 token 无效"})
 			return
@@ -87,7 +87,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		if !isLocalRequest(r) && !mp.IsOwner(r.Header.Get("Authorization")) {
+		if !mp.IsLocalRequest(r) && !mp.IsOwner(r.Header.Get("Authorization")) {
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(map[string]any{"ok": false, "message": "管理员 token 无效"})
 			return
@@ -161,7 +161,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		if !isLocalRequest(r) && !mp.IsOwner(r.Header.Get("Authorization")) {
+		if !mp.IsLocalRequest(r) && !mp.IsOwner(r.Header.Get("Authorization")) {
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(map[string]any{"ok": false, "message": "管理员 token 无效"})
 			return
@@ -667,34 +667,4 @@ func ifThen(cond bool, a, b string) string {
 		return a
 	}
 	return b
-}
-
-func isLocalRequest(r *http.Request) bool {
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err == nil {
-		ip := net.ParseIP(host)
-		if ip != nil && (ip.IsLoopback() || ip.IsUnspecified()) {
-			return true
-		}
-	}
-	h := r.Host
-	if h != "" {
-		hh, _, err2 := net.SplitHostPort(h)
-		if err2 != nil {
-			hh = h
-		}
-		if hh == "localhost" || hh == "127.0.0.1" || hh == "::1" {
-			return true
-		}
-	}
-	xf := r.Header.Get("X-Forwarded-For")
-	if xf != "" {
-		p := strings.Split(xf, ",")
-		first := strings.TrimSpace(p[0])
-		ip := net.ParseIP(first)
-		if ip != nil && ip.IsLoopback() {
-			return true
-		}
-	}
-	return false
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"strings"
 	"sync"
@@ -153,3 +154,33 @@ func parseInt64(text string) (int64, error) {
 
 // nowMillis 返回当前时间的毫秒时间戳。
 func nowMillis() int64 { return time.Now().UnixMilli() }
+
+func IsLocalRequest(r *http.Request) bool {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err == nil {
+		ip := net.ParseIP(host)
+		if ip != nil && (ip.IsLoopback() || ip.IsUnspecified()) {
+			return true
+		}
+	}
+	h := r.Host
+	if h != "" {
+		hh, _, err2 := net.SplitHostPort(h)
+		if err2 != nil {
+			hh = h
+		}
+		if hh == "localhost" || hh == "127.0.0.1" || hh == "::1" {
+			return true
+		}
+	}
+	xf := r.Header.Get("X-Forwarded-For")
+	if xf != "" {
+		p := strings.Split(xf, ",")
+		first := strings.TrimSpace(p[0])
+		ip := net.ParseIP(first)
+		if ip != nil && ip.IsLoopback() {
+			return true
+		}
+	}
+	return false
+}

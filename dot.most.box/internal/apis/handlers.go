@@ -78,7 +78,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		if !mp.IsOwner(r.Header.Get("Authorization")) {
+		if !mp.IsLocalRequest(r) && !mp.IsOwner(r.Header.Get("Authorization")) {
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(map[string]any{"ok": false, "message": "管理员 token 无效"})
 			return
@@ -96,7 +96,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		if !mp.IsOwner(r.Header.Get("Authorization")) {
+		if !mp.IsLocalRequest(r) && !mp.IsOwner(r.Header.Get("Authorization")) {
 			w.WriteHeader(http.StatusUnauthorized)
 			json.NewEncoder(w).Encode(map[string]any{"ok": false, "message": "管理员 token 无效"})
 			return
