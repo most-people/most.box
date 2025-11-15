@@ -32,9 +32,9 @@ archives:
     ids:
       - dot
     formats: ["binary"]
-    # 按原有命名习惯输出文件名
+    # go-selfupdate 必须按默认命名习惯输出文件名
     name_template: >-
-      {{ .Os }}-{{ .Arch }}-{{ .Binary }}
+      {{ .Binary }}-{{ .Os }}-{{ .Arch }}
 
 checksum:
   name_template: "checksums.txt"
