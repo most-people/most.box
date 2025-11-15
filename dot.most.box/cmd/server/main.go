@@ -1,11 +1,11 @@
 package main
 
 import (
-	"embed"
-	"io/fs"
-	"log"
-	"net/http"
-	"os"
+    "embed"
+    "io/fs"
+    "log"
+    "net/http"
+    "os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -15,8 +15,7 @@ import (
 	"dotmostbox/internal/files"
 	"dotmostbox/internal/ipfs"
 	"dotmostbox/internal/mp"
-	"dotmostbox/internal/sse"
-	"dotmostbox/internal/update"
+    "dotmostbox/internal/sse"
 
 	shell "github.com/ipfs/go-ipfs-api"
 	"github.com/joho/godotenv"
@@ -33,8 +32,7 @@ func main() {
 	dir := filepath.Dir(exe)
 	_ = godotenv.Load(filepath.Join(dir, ".env"))
 
-	// 应用待更新的二进制（Windows 使用辅助进程在退出后替换）
-	update.ApplyPendingIfPossible()
+    
 
 	// 初始化 IPFS Shell
 	sh := shell.NewShell("http://127.0.0.1:5001")

@@ -106,11 +106,10 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			return
 		}
 		json.NewEncoder(w).Encode(map[string]any{"ok": true, "message": "服务即将重启", "timestamp": time.Now().Format(time.RFC3339)})
-		go func() {
-			time.Sleep(500 * time.Millisecond)
-			update.ApplyPendingIfPossible()
-			os.Exit(0)
-		}()
+        go func() {
+            time.Sleep(500 * time.Millisecond)
+            os.Exit(0)
+        }()
 	})
 
 	// /api.testnet.gas 向指定地址发送少量 Base Sepolia Gas
