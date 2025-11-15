@@ -73,6 +73,18 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 		w.Write(out)
 	})
 
+	mux.HandleFunc("/app.version", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		v := strings.TrimSpace(update.Version)
+		if v == "" {
+			v = "dev"
+		}
+		json.NewEncoder(w).Encode(map[string]any{"version": v, "timestamp": time.Now().Format(time.RFC3339)})
+	})
+
 	mux.HandleFunc("/app.update", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPut {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -106,10 +118,10 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			return
 		}
 		json.NewEncoder(w).Encode(map[string]any{"ok": true, "message": "服务即将重启", "timestamp": time.Now().Format(time.RFC3339)})
-        go func() {
-            time.Sleep(500 * time.Millisecond)
-            os.Exit(0)
-        }()
+		go func() {
+			time.Sleep(500 * time.Millisecond)
+			os.Exit(0)
+		}()
 	})
 
 	// /api.testnet.gas 向指定地址发送少量 Base Sepolia Gas
