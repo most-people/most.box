@@ -45,5 +45,5 @@ func CheckAndDownload(ctx context.Context) (bool, error) {
 			return true, nil
 		}
 	}
-	return false, fmt.Errorf("IPNS 下载失败")
+	return false, fmt.Errorf("IPNS 下载出错")
 }

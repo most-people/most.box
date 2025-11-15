@@ -14,7 +14,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"os/exec"
 	"reflect"
 	"strconv"
 	"strings"
@@ -156,7 +155,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 	})
 
 	// 重启 IPFS 节点以应用新配置
-	mux.HandleFunc("/ipfs.restart", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/ipfs.shutdown", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost && r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
@@ -173,39 +172,35 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			io.ReadAll(resp.Body)
 			resp.Body.Close()
 		}
-		start := time.Now()
-		for i := 0; i < 30; i++ {
-			ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
-			var id map[string]any
-			err2 := sh.Request("id").Exec(ctx, &id)
-			cancel()
-			if err2 != nil {
-				break
-			}
-			time.Sleep(300 * time.Millisecond)
-		}
-		cmd := exec.Command("ipfs", "daemon", "--enable-gc")
-		cmd.Stdout = io.Discard
-		cmd.Stderr = io.Discard
-		_ = cmd.Start()
-		ok := false
-		for i := 0; i < 40; i++ {
-			time.Sleep(300 * time.Millisecond)
-			ctx, cancel := context.WithTimeout(context.Background(), 700*time.Millisecond)
-			var id map[string]any
-			err3 := sh.Request("id").Exec(ctx, &id)
-			cancel()
-			if err3 == nil && id != nil && id["ID"] != nil {
-				ok = true
-				break
-			}
-		}
+		ok := err == nil
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]any{
 			"ok":      ok,
-			"message": ifThen(ok, "IPFS 已重启", "正在重启，稍后生效"),
-			"elapsed": int(time.Since(start).Milliseconds()),
+			"message": ifThen(ok, "关闭命令已发送", "关闭命令发送失败"),
 		})
+	})
+
+	mux.HandleFunc("/ipfs.id", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		if !mp.IsLocalRequest(r) && !mp.IsOwner(r.Header.Get("Authorization")) {
+			w.WriteHeader(http.StatusUnauthorized)
+			json.NewEncoder(w).Encode(map[string]any{"ok": false, "message": "管理员 token 无效"})
+			return
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 700*time.Millisecond)
+		defer cancel()
+		var id map[string]any
+		err := sh.Request("id").Exec(ctx, &id)
+		ok := err == nil && id != nil && id["ID"] != nil
+		w.Header().Set("Content-Type", "application/json")
+		if ok {
+			json.NewEncoder(w).Encode(map[string]any{"ok": true, "id": id["ID"]})
+			return
+		}
+		json.NewEncoder(w).Encode(map[string]any{"ok": false})
 	})
 }
 

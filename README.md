@@ -39,3 +39,38 @@ nohup ./dot-linux-amd64 > ~/dot.log 2>&1 &
 # 关闭
 kill -9 $(pgrep -f dot-linux-amd64)
 ```
+
+```bash
+curl http://localhost:1976/ipfs.config.update
+curl http://localhost:1976/app.update -X PUT
+curl http://localhost:1976/app.restart -X POST
+```
+
+Linux
+
+```bash
+# ipfs
+pm2 start ipfs --interpreter none -- daemon --enable-gc
+
+# dot
+# 上传 dot-linux-amd64 到服务器
+scp ./dot-linux-amd64 ubuntu@most.box:~
+# dot-linux-amd64 添加可执行权限
+chmod +x dot-linux-amd64
+
+pm2 start dot-linux-amd64 --interpreter none
+```
+
+Windows Git Bash
+
+```bash
+# ipfs
+pm2 start ipfs --interpreter none -- daemon --enable-gc
+
+# dot
+pm2 start dot-windows-amd64.exe --interpreter none
+
+# caddy
+cd /c/caddy
+pm2 start caddy.exe --interpreter none -- run
+```
