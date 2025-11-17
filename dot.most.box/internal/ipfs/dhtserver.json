@@ -1,22 +1,11 @@
 {
   "Routing": { "Type": "dhtserver" },
-  "Addresses": {
-    "Swarm": [
-      "/ip4/0.0.0.0/tcp/4001",
-      "/ip6/::/tcp/4001",
-      "/ip4/0.0.0.0/udp/4001/quic",
-      "/ip6/::/udp/4001/quic"
-    ]
-  },
   "Swarm": {
     "RelayService": { "Enabled": true },
     "ConnMgr": { "LowWater": 200, "HighWater": 400, "GracePeriod": "2m" },
     "EnableAutoRelay": false
   },
-  "Pubsub": { "Enabled": true, "Router": "gossipsub" },
-  "Ipns": { "MaxCacheTTL": "1m" },
   "Provide": {
-    "Strategy": "pinned",
     "DHT": { "Interval": "6h" }
   }
 }

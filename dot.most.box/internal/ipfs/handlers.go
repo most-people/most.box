@@ -39,6 +39,9 @@ var embeddedDHTClient []byte
 //go:embed dhtserver.json
 var embeddedDHTServer []byte
 
+//go:embed default.json
+var embeddedDefault []byte
+
 // 节点定义：由链上 Dot 转换而来
 type nodeDef struct {
 	Name string
@@ -103,7 +106,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			return
 		}
 		// 加载角色模板
-		dhtClient, dhtServer, err := loadRoleTemplates()
+		defaultCfg, dhtClient, dhtServer, err := loadRoleTemplates()
 		if err != nil {
 			http.Error(w, "读取角色模板失败 "+err.Error(), http.StatusInternalServerError)
 			return
@@ -135,6 +138,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			"bootstrapAddrs": bs,
 			"peeringPeers":   peeringPeers,
 			"roleCfg":        roleCfg,
+			"defaultCfg":     defaultCfg,
 		})
 		// 通过 IPFS HTTP API 替换配置
 		if err := applyConfigViaHTTP(ipfsAPIBase, finalCfg); err != nil {
@@ -222,16 +226,20 @@ func dotsToCustom(dots []mp.Dot) ([]nodeDef, error) {
 }
 
 // 读取角色模板配置（dhtclient/dhtserver）
-func loadRoleTemplates() (map[string]any, map[string]any, error) {
+func loadRoleTemplates() (map[string]any, map[string]any, map[string]any, error) {
+	var df map[string]any
 	var dc map[string]any
 	var ds map[string]any
+	if err := json.Unmarshal(embeddedDefault, &df); err != nil {
+		return nil, nil, nil, err
+	}
 	if err := json.Unmarshal(embeddedDHTClient, &dc); err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	if err := json.Unmarshal(embeddedDHTServer, &ds); err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
-	return dc, ds, nil
+	return df, dc, ds, nil
 }
 
 // 从名称中拆分 PeerID（约定格式：name-peerID）
@@ -479,6 +487,25 @@ func mergeBaseWithExtras(baseCfg map[string]any, extras map[string]any) map[stri
 	bootstrap, _ := extras["bootstrapAddrs"].([]string)
 	peering, _ := extras["peeringPeers"].([]map[string]any)
 	roleCfg, _ := extras["roleCfg"].(map[string]any)
+	defaultCfg, _ := extras["defaultCfg"].(map[string]any)
+
+	if defaultCfg != nil {
+		if dAddr, ok := defaultCfg["Addresses"].(map[string]any); ok {
+			cfg["Addresses"] = mergeObjects(asMap(cfg["Addresses"]), dAddr)
+		}
+		if dSwarm, ok := defaultCfg["Swarm"].(map[string]any); ok {
+			cfg["Swarm"] = mergeObjects(asMap(cfg["Swarm"]), dSwarm)
+		}
+		if dPubsub, ok := defaultCfg["Pubsub"].(map[string]any); ok {
+			cfg["Pubsub"] = mergeObjects(asMap(cfg["Pubsub"]), dPubsub)
+		}
+		if dIpns, ok := defaultCfg["Ipns"].(map[string]any); ok {
+			cfg["Ipns"] = mergeObjects(asMap(cfg["Ipns"]), dIpns)
+		}
+		if dProvide, ok := defaultCfg["Provide"].(map[string]any); ok {
+			cfg["Provide"] = mergeObjects(asMap(cfg["Provide"]), dProvide)
+		}
+	}
 
 	addr, _ := cfg["Addresses"].(map[string]any)
 	if addr == nil {
