@@ -33,10 +33,11 @@ export default function PageWeb3Tool() {
   const [showAddress, setShowAddress] = useState(false);
   const [showMnemonic, setShowMnemonic] = useState(false);
 
-  // 新增状态：模式切换和直接输入助记词
+  // 模式切换和直接输入助记词
   const [useMnemonicMode, setUseMnemonicMode] = useState(false);
   const [inputMnemonic, setInputMnemonic] = useState("");
-  const [validatedMnemonic, setValidatedMnemonic] = useState(""); // 用于存储验证过的助记词
+  // 用于存储验证过的助记词
+  const [validatedMnemonic, setValidatedMnemonic] = useState("");
 
   const [deriveAddressList, setDeriveAddressList] = useState<DeriveAddress[]>(
     []
@@ -131,12 +132,7 @@ export default function PageWeb3Tool() {
     <Container maw={1200} w="100%" p={20}>
       <AppHeader title="工具集" />
       <Stack gap="md">
-        <Avatar
-          size={100}
-          radius="sm"
-          src={hasValidWallet ? mp.avatar(address) : "/icons/pwa-512x512.png"}
-          alt="it's me"
-        />
+        <Avatar size={100} radius="sm" src={mp.avatar(address)} alt="it's me" />
 
         <Text size="xl">Most Wallet 账户查询</Text>
 

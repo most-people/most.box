@@ -283,11 +283,9 @@ export default function PageLogin() {
           <Avatar
             size="xl"
             radius="md"
-            src={
-              username
-                ? mp.avatar(mostWallet(username, password).address)
-                : "/icons/pwa-512x512.png"
-            }
+            src={mp.avatar(
+              username ? mostWallet(username, password).address : undefined
+            )}
             alt="it's me"
           />
         </Stack>

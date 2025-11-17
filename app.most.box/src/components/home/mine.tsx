@@ -25,11 +25,7 @@ export default function HomeMine() {
             href="/profile"
             size="md"
             radius="sm"
-            src={
-              wallet?.address
-                ? mp.avatar(wallet.address)
-                : "/icons/pwa-512x512.png"
-            }
+            src={mp.avatar(wallet?.address)}
             alt="it's me"
           />
           <Box>

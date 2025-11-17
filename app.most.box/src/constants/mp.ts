@@ -28,7 +28,10 @@ dayjs.extend(relativeTime);
 dayjs.locale("zh-cn");
 
 // 头像生成
-const avatar = (address = "Most") => {
+const avatar = (address?: string) => {
+  if (!address || address === ZeroAddress) {
+    return "/icons/pwa-512x512.png";
+  }
   return createAvatar(botttsNeutral, {
     seed: "most.box@" + address,
     flip: true,

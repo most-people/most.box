@@ -144,9 +144,7 @@ const UserName = () => {
       <Avatar
         size={100}
         radius="lg"
-        src={
-          wallet?.address ? mp.avatar(wallet.address) : "/icons/pwa-512x512.png"
-        }
+        src={mp.avatar(wallet?.address)}
         alt="头像"
         style={{
           boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)",
