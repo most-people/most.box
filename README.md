@@ -42,7 +42,7 @@ kill -9 $(pgrep -f dot-linux-amd64)
 
 ```bash
 curl http://localhost:1976/ipfs.config.update
-curl http://localhost:1976/app.update -X PUT
+curl http://localhost:1976/app.update -X POST
 curl http://localhost:1976/app.restart -X POST
 ```
 
@@ -64,6 +64,8 @@ pm2 start dot-linux-amd64 --interpreter none
 Windows Git Bash
 
 ```bash
+# path C:\Users\<用户名>\AppData\Local\Programs\IPFS Desktop\resources\app.asar.unpacked\node_modules\kubo\kubo
+
 # ipfs
 pm2 start ipfs --interpreter none -- daemon --enable-gc
 

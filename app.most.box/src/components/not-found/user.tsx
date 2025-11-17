@@ -4,6 +4,7 @@ import {
   Anchor,
   Box,
   Button,
+  Divider,
   Group,
   Menu,
   Stack,
@@ -224,7 +225,11 @@ export default function PageUser() {
         <Text>加载中...</Text>
       ) : null}
 
+      <Divider variant="dashed" labelPosition="center" my="md" />
+
       <Box className={nodeDark} ref={profileElement} />
+
+      <Divider variant="dashed" labelPosition="center" my="md" />
 
       <Group mt={10}>
         <Anchor
@@ -240,10 +245,10 @@ export default function PageUser() {
           size="sm"
           c="blue"
           component={Link}
-          href={`https://most.box/SEA/${noteName}`}
+          href={`https://most.box/@${username}/${noteName}`}
           target="_blank"
         >
-          分享网址 https://most.box/SEA/{noteName}
+          分享网址 https://most.box/@{username}/{noteName}
         </Anchor>
       </Group>
     </Stack>

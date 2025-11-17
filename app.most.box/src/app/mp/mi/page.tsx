@@ -15,7 +15,7 @@ import {
 import { useEffect, useState } from "react";
 import { mostEncode, mostDecode, mostWallet } from "@/constants/MostWallet";
 import { notifications } from "@mantine/notifications";
-import { IconInfoCircle, IconCopy, IconShare } from "@tabler/icons-react";
+import { IconInfoCircle, IconCopy } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
 
 export default function PageMpMi() {
@@ -47,28 +47,18 @@ export default function PageMpMi() {
     }
   };
 
-  const handleShareCipherText = async () => {
+  const handleCopyLink = async () => {
     const url = new URL(window.location.origin + window.location.pathname);
     url.searchParams.set("mi", cipherText);
     const shareUrl = url.href;
 
     try {
-      if (navigator.share) {
-        // 如果支持原生分享
-        await navigator.share({
-          title: "加密信息分享",
-          text: shareUrl,
-          url: shareUrl,
-        });
-      } else {
-        // 否则复制链接到剪贴板
-        await navigator.clipboard.writeText(shareUrl);
-        notifications.show({
-          title: "成功",
-          message: "分享链接已复制到剪贴板",
-          color: "green",
-        });
-      }
+      await navigator.clipboard.writeText(shareUrl);
+      notifications.show({
+        title: "成功",
+        message: "网址已复制到剪贴板",
+        color: "green",
+      });
     } catch (error) {
       console.error(error);
     }
@@ -215,11 +205,11 @@ export default function PageMpMi() {
           <Button
             variant="light"
             color="blue"
-            onClick={handleShareCipherText}
+            onClick={handleCopyLink}
             disabled={!cipherText}
-            leftSection={<IconShare size={16} />}
+            leftSection={<IconCopy size={16} />}
           >
-            分享
+            复制网址
           </Button>
         </Group>
 

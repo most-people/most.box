@@ -86,7 +86,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 	})
 
 	mux.HandleFunc("/app.update", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPut {
+		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
