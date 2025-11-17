@@ -14,9 +14,12 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os/exec"
 	"reflect"
+	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"dotmostbox/internal/mp"
@@ -32,6 +35,9 @@ const (
 	roleClient nodeRole = "dhtclient"
 	roleServer nodeRole = "dhtserver"
 )
+
+var httpClientApply = &http.Client{Timeout: applyTimeout}
+var httpClientShutdown = &http.Client{Timeout: shutdownTimeout}
 
 //go:embed dhtclient.json
 var embeddedDHTClient []byte
@@ -53,12 +59,27 @@ type nodeDef struct {
 
 // 配置生成常量：默认端口、选择数量等
 const (
-	defaultPort   = 4001
-	bootstrapK    = 8
-	peeringRing   = 3
-	peeringRandom = 3
-	ipfsAPIBase   = "http://127.0.0.1:5001"
+	defaultPort     = 4001
+	bootstrapK      = 8
+	peeringRing     = 3
+	peeringRandom   = 3
+	ipfsAPIBase     = "http://127.0.0.1:5001"
+	dialTCPTimeout  = 1200 * time.Millisecond
+	shutdownTimeout = 8 * time.Second
+	idTimeout       = 700 * time.Millisecond
+	applyTimeout    = 12 * time.Second
+	restartTimeout  = 10 * time.Second
 )
+
+func authorized(r *http.Request) bool {
+	return mp.IsLocalRequest(r) || mp.IsOwner(r.Header.Get("Authorization"))
+}
+
+func writeJSON(w http.ResponseWriter, status int, payload any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(payload)
+}
 
 // 注册 /ipfs/config 路由：生成并替换本机 IPFS 配置
 func Register(mux *http.ServeMux, sh *shell.Shell) {
@@ -69,9 +90,8 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		if !mp.IsLocalRequest(r) && !mp.IsOwner(r.Header.Get("Authorization")) {
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(map[string]any{"ok": false, "message": "管理员 token 无效"})
+		if !authorized(r) {
+			writeJSON(w, http.StatusUnauthorized, map[string]any{"ok": false, "message": "管理员 token 无效"})
 			return
 		}
 		var cfg map[string]any
@@ -79,8 +99,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			http.Error(w, "读取当前配置失败 "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(cfg)
+		writeJSON(w, http.StatusOK, cfg)
 	})
 
 	// 根据链上节点清单生成配置
@@ -89,9 +108,8 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		if !mp.IsLocalRequest(r) && !mp.IsOwner(r.Header.Get("Authorization")) {
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(map[string]any{"ok": false, "message": "管理员 token 无效"})
+		if !authorized(r) {
+			writeJSON(w, http.StatusUnauthorized, map[string]any{"ok": false, "message": "管理员 token 无效"})
 			return
 		}
 		// 读取链上节点清单
@@ -154,22 +172,20 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			"bootstrapCount": len(bs),
 			"peeringCount":   len(peeringPeers),
 		}
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(out)
+		writeJSON(w, http.StatusOK, out)
 	})
 
-	// 重启 IPFS 节点以应用新配置
+	// 关闭 IPFS 节点
 	mux.HandleFunc("/ipfs.shutdown", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost && r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		if !mp.IsLocalRequest(r) && !mp.IsOwner(r.Header.Get("Authorization")) {
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(map[string]any{"ok": false, "message": "管理员 token 无效"})
+		if !authorized(r) {
+			writeJSON(w, http.StatusUnauthorized, map[string]any{"ok": false, "message": "管理员 token 无效"})
 			return
 		}
-		client := &http.Client{Timeout: 8 * time.Second}
+		client := httpClientShutdown
 		req, _ := http.NewRequest("POST", ipfsAPIBase+"/api/v0/shutdown", nil)
 		resp, err := client.Do(req)
 		if err == nil {
@@ -177,34 +193,64 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			resp.Body.Close()
 		}
 		ok := err == nil
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]any{
+		writeJSON(w, http.StatusOK, map[string]any{
 			"ok":      ok,
 			"message": ifThen(ok, "关闭命令已发送", "关闭命令发送失败"),
 		})
 	})
 
+	// 重启 IPFS 节点
+	mux.HandleFunc("/ipfs.restart", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost && r.Method != http.MethodGet {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		if !authorized(r) {
+			writeJSON(w, http.StatusUnauthorized, map[string]any{"ok": false, "message": "管理员 token 无效"})
+			return
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), restartTimeout)
+		defer cancel()
+		var cmd *exec.Cmd
+		if runtime.GOOS == "windows" {
+			cmd = exec.CommandContext(ctx, "cmd", "/C", "pm2 restart ipfs")
+		} else {
+			cmd = exec.CommandContext(ctx, "bash", "-lc", "pm2 restart ipfs")
+		}
+		outBuf := &bytes.Buffer{}
+		errBuf := &bytes.Buffer{}
+		cmd.Stdout = outBuf
+		cmd.Stderr = errBuf
+		err := cmd.Run()
+		ok := err == nil
+		writeJSON(w, http.StatusOK, map[string]any{
+			"ok":      ok,
+			"message": ifThen(ok, "已执行 pm2 restart ipfs", "执行失败"),
+			"stdout":  strings.TrimSpace(outBuf.String()),
+			"stderr":  strings.TrimSpace(errBuf.String()),
+		})
+	})
+
+	// 返回节点信息
 	mux.HandleFunc("/ipfs.id", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		if !mp.IsLocalRequest(r) && !mp.IsOwner(r.Header.Get("Authorization")) {
-			w.WriteHeader(http.StatusUnauthorized)
-			json.NewEncoder(w).Encode(map[string]any{"ok": false, "message": "管理员 token 无效"})
+		if !authorized(r) {
+			writeJSON(w, http.StatusUnauthorized, map[string]any{"ok": false, "message": "管理员 token 无效"})
 			return
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), 700*time.Millisecond)
+		ctx, cancel := context.WithTimeout(context.Background(), idTimeout)
 		defer cancel()
 		var id map[string]any
 		err := sh.Request("id").Exec(ctx, &id)
 		ok := err == nil && id != nil && id["ID"] != nil
-		w.Header().Set("Content-Type", "application/json")
 		if ok {
-			json.NewEncoder(w).Encode(map[string]any{"ok": true, "id": id["ID"]})
+			writeJSON(w, http.StatusOK, map[string]any{"ok": true, "id": id["ID"]})
 			return
 		}
-		json.NewEncoder(w).Encode(map[string]any{"ok": false})
+		writeJSON(w, http.StatusOK, map[string]any{"ok": false})
 	})
 }
 
@@ -315,12 +361,28 @@ func anySwarmOpen(hosts []string, port int) bool {
 	if len(hosts) == 0 {
 		return false
 	}
+	success := make(chan struct{}, 1)
+	var wg sync.WaitGroup
 	for _, h := range hosts {
-		if isSwarmPortOpen(h, port) {
-			return true
-		}
+		wg.Add(1)
+		go func(host string) {
+			defer wg.Done()
+			if isSwarmPortOpen(host, port) {
+				select {
+				case success <- struct{}{}:
+				default:
+				}
+			}
+		}(h)
 	}
-	return false
+	done := make(chan struct{})
+	go func() { wg.Wait(); close(done) }()
+	select {
+	case <-success:
+		return true
+	case <-done:
+		return false
+	}
 }
 
 // 探测单主机的 Swarm 端口是否开放（支持解析域名至多地址）
@@ -339,15 +401,34 @@ func isSwarmPortOpen(host string, port int) bool {
 			targets = append(targets, host)
 		}
 	}
-	for _, t := range targets {
-		addr := net.JoinHostPort(t, strconv.Itoa(port))
-		c, err := net.DialTimeout("tcp", addr, 1200*time.Millisecond)
-		if err == nil {
-			c.Close()
-			return true
-		}
+	if len(targets) == 0 {
+		return false
 	}
-	return false
+	success := make(chan struct{}, 1)
+	var wg sync.WaitGroup
+	for _, t := range targets {
+		wg.Add(1)
+		go func(target string) {
+			defer wg.Done()
+			addr := net.JoinHostPort(target, strconv.Itoa(port))
+			c, err := net.DialTimeout("tcp", addr, dialTCPTimeout)
+			if err == nil {
+				c.Close()
+				select {
+				case success <- struct{}{}:
+				default:
+				}
+			}
+		}(t)
+	}
+	done := make(chan struct{})
+	go func() { wg.Wait(); close(done) }()
+	select {
+	case <-success:
+		return true
+	case <-done:
+		return false
+	}
 }
 
 // 返回节点端口（默认 4001）
@@ -490,6 +571,9 @@ func mergeBaseWithExtras(baseCfg map[string]any, extras map[string]any) map[stri
 	defaultCfg, _ := extras["defaultCfg"].(map[string]any)
 
 	if defaultCfg != nil {
+		if dAPI, ok := defaultCfg["API"].(map[string]any); ok {
+			cfg["API"] = mergeObjects(asMap(cfg["API"]), dAPI)
+		}
 		if dAddr, ok := defaultCfg["Addresses"].(map[string]any); ok {
 			cfg["Addresses"] = mergeObjects(asMap(cfg["Addresses"]), dAddr)
 		}
@@ -559,7 +643,7 @@ func mergeObjects(target map[string]any, source map[string]any) map[string]any {
 		tv, exists := target[k]
 		if isSlice(sv) {
 			if !exists {
-				target[k] = deepCloneAny(sv)
+				target[k] = deepCopyAny(sv)
 			}
 			continue
 		}
@@ -573,7 +657,7 @@ func mergeObjects(target map[string]any, source map[string]any) map[string]any {
 }
 
 // 深拷贝 map
-func deepCloneMap(m map[string]any) map[string]any { return asMap(deepCloneAny(m)) }
+func deepCloneMap(m map[string]any) map[string]any { return asMap(deepCopyAny(m)) }
 
 // 安全转换为 map[string]any
 func asMap(v any) map[string]any {
@@ -595,11 +679,27 @@ func isSlice(v any) bool {
 }
 
 // 使用 JSON 编解码进行深拷贝
-func deepCloneAny(v any) any {
-	b, _ := json.Marshal(v)
-	var out any
-	_ = json.Unmarshal(b, &out)
-	return out
+func deepCopyAny(v any) any {
+	switch x := v.(type) {
+	case map[string]any:
+		out := make(map[string]any, len(x))
+		for k, vv := range x {
+			out[k] = deepCopyAny(vv)
+		}
+		return out
+	case []any:
+		out := make([]any, len(x))
+		for i := range x {
+			out[i] = deepCopyAny(x[i])
+		}
+		return out
+	case []string:
+		out := make([]string, len(x))
+		copy(out, x)
+		return out
+	default:
+		return x
+	}
 }
 
 // 取匹配节点的 IP 列表
@@ -637,7 +737,7 @@ func pickKNodes(arr []nodeDef, k int) []nodeDef {
 // 去重字符串列表
 func dedupeStrings(list []string) []string {
 	seen := map[string]struct{}{}
-	out := []string{}
+	out := make([]string, 0, len(list))
 	for _, v := range list {
 		if _, ok := seen[v]; !ok {
 			seen[v] = struct{}{}
@@ -670,8 +770,7 @@ func applyConfigViaHTTP(base string, cfg map[string]any) error {
 		return err
 	}
 	req.Header.Set("Content-Type", w.FormDataContentType())
-	client := &http.Client{Timeout: 12 * time.Second}
-	resp, err := client.Do(req)
+	resp, err := httpClientApply.Do(req)
 	if err != nil {
 		return err
 	}
