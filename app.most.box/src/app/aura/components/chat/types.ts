@@ -14,6 +14,9 @@ export type Message = {
   kind: MessageKind;
   text?: string;
   file?: Attachment;
+  // 发送者信息（群聊中使用；单聊可为空）
+  senderName?: string;
+  senderAvatar?: string;
   ts: number;
 };
 

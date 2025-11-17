@@ -1,5 +1,5 @@
 .chat-app {
-  max-width: 1100px;
+  max-width: 1200px;
   margin: 0 auto;
   display: grid;
   grid-template-columns: 320px 1fr;
@@ -75,6 +75,9 @@
   margin: 6px 0;
   display: grid;
   gap: 4px;
+}
+.msg .sender-name {
+  margin-bottom: 2px;
 }
 .msg .bubble {
   padding: 10px 12px;

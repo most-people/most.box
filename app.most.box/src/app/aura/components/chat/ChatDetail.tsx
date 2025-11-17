@@ -89,11 +89,29 @@ export default function ChatDetail() {
               const isImage = !!mime && mime.startsWith("image/");
               const isVideo = !!mime && mime.startsWith("video/");
               const isFile = m.kind === "file" && !isImage && !isVideo;
+              const displayName = active.isGroup
+                ? m.senderName ?? (m.from === "me" ? "我" : "成员")
+                : undefined;
+              const leftAvatar = m.from === "them";
+              const rightAvatar = m.from === "me";
               return (
                 <div
                   key={m.id}
                   className={`msg ${m.from === "me" ? "me" : "them"}`}
                 >
+                  {displayName && (
+                    <Text size="xs" c="dimmed">
+                      {displayName}
+                    </Text>
+                  )}
+                  <Group gap={8} align="flex-start" wrap="nowrap">
+                    {leftAvatar && (
+                      <Avatar radius="xl" size={28} color={active.isGroup ? "grape" : "blue"}>
+                        {active.isGroup
+                          ? (displayName ?? "").slice(0, 1).toUpperCase()
+                          : active.name.slice(0, 1).toUpperCase()}
+                      </Avatar>
+                    )}
                   <div
                     className={`bubble ${
                       isImage || isVideo ? "media" : isFile ? "file" : ""
@@ -129,6 +147,12 @@ export default function ChatDetail() {
                       </Stack>
                     )}
                   </div>
+                    {rightAvatar && (
+                      <Avatar radius="xl" size={28} color="blue">
+                        我
+                      </Avatar>
+                    )}
+                  </Group>
                   <Text size="xs" c="dimmed" className="time">
                     {new Date(m.ts).toLocaleTimeString()}
                   </Text>

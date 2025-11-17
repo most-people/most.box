@@ -21,13 +21,25 @@ export default function AuraHeader() {
           <Link className={`nav-item ${isHome ? "active" : ""}`} href="/aura">
             首页
           </Link>
-          <Link className={`nav-item ${isChat ? "active" : ""}`} href="/aura/chat">
+          <Link
+            className={`nav-item ${isChat ? "active" : ""}`}
+            href="/aura/chat"
+          >
             聊天
           </Link>
-          <a className="nav-item" href="#">群组</a>
-          <a className="nav-item" href="#">频道</a>
+          <a className="nav-item" href="#">
+            群组
+          </a>
+          <a className="nav-item" href="#">
+            频道
+          </a>
         </nav>
         <div className="user">
+          <div
+            className="avatar"
+            aria-label="用户头像"
+            onClick={() => setShowUserMenu((s) => !s)}
+          />
           <button
             className="icon-btn"
             onClick={() => setShowMobile((s) => !s)}
@@ -35,19 +47,20 @@ export default function AuraHeader() {
           >
             ☰
           </button>
-          <div
-            className="avatar"
-            aria-label="用户头像"
-            onClick={() => setShowUserMenu((s) => !s)}
-          />
         </div>
       </div>
       {showMobile && (
         <div className="mobile-menu">
-          <Link href="/aura" className={`mobile-item ${isHome ? "active" : ""}`}>
+          <Link
+            href="/aura"
+            className={`mobile-item ${isHome ? "active" : ""}`}
+          >
             首页
           </Link>
-          <Link href="/aura/chat" className={`mobile-item ${isChat ? "active" : ""}`}>
+          <Link
+            href="/aura/chat"
+            className={`mobile-item ${isChat ? "active" : ""}`}
+          >
             聊天
           </Link>
           <a href="#" className="mobile-item">

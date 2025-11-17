@@ -100,6 +100,7 @@ function initialData(): Conversation[] {
           from: "them",
           kind: "text",
           text: "记得提 PR 到 `develop` 分支。",
+          senderName: "Gavin",
           ts: MOCK_BASE_TS - hours(6),
         },
         {
@@ -107,6 +108,7 @@ function initialData(): Conversation[] {
           from: "them",
           kind: "text",
           text: "周会改到周三下午。",
+          senderName: "Daisy",
           ts: MOCK_BASE_TS - minutes(15),
         },
       ],
@@ -140,6 +142,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           from: "me",
           kind: "text",
           text,
+          senderName: c.isGroup ? "我" : undefined,
           ts: Date.now(),
         };
         return {
@@ -164,6 +167,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
             from: "them",
             kind: "text",
             text: replyText,
+            senderName: c.isGroup ? "助手" : undefined,
             ts: Date.now(),
           };
           return {
@@ -201,6 +205,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           from: "me",
           kind: "file",
           file: att,
+          senderName: c.isGroup ? "我" : undefined,
           ts: Date.now(),
         };
         return {
@@ -261,6 +266,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           from: "them",
           kind: "text",
           text: "欢迎加入群组，此处为前端模拟消息。",
+          senderName: "系统",
           ts: now,
         },
       ],
