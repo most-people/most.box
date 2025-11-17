@@ -1,0 +1,159 @@
+.chat-app {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 0;
+  height: calc(100vh - 120px);
+  overflow: hidden;
+}
+
+.chat-list {
+  border-right: 1px solid #eef2f7;
+  background: #fff;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  padding: 12px;
+}
+.chat-list .list-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.chat-list .list-items {
+  overflow-y: auto;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.chat-list .list-item {
+  border: 0;
+  background: transparent;
+  text-align: left;
+  padding: 8px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.chat-list .list-item:hover {
+  background: #f8fafc;
+}
+.chat-list .list-item.active {
+  background: #eef2ff;
+}
+.list-text {
+  width: 100%;
+}
+
+.chat-detail {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100%;
+  min-height: 0;
+}
+.chat-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #eef2f7;
+  background: #fff;
+}
+.chat-header .back-mobile {
+  display: none;
+}
+
+.messages {
+  padding: 16px;
+  overflow-y: auto;
+  background: #f6f7fb;
+  height: 100%;
+  box-sizing: border-box;
+  overscroll-behavior: contain;
+  min-height: 0;
+}
+.msg {
+  max-width: 68%;
+  margin: 6px 0;
+  display: grid;
+  gap: 4px;
+}
+.msg .bubble {
+  padding: 10px 12px;
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+/* 媒体气泡（图片/视频）不需要内部填充，内容自适应 */
+.msg .bubble.media {
+  padding: 0;
+  overflow: hidden;
+  background: transparent;
+  border: none;
+}
+.msg .bubble.media img,
+.msg .bubble.media video {
+  display: block;
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+  border-radius: 14px;
+}
+.msg.them {
+  justify-self: start;
+}
+.msg.them .bubble {
+  background: #fff;
+  border: 1px solid #eef2f7;
+}
+.msg.me {
+  justify-self: end;
+}
+.msg.me .bubble {
+  background: #3b82f6;
+  color: #fff;
+}
+
+/* 自我消息的媒体气泡也保持透明背景 */
+.msg.me .bubble.media {
+  background: transparent;
+  color: inherit;
+}
+.msg .time {
+  justify-self: end;
+}
+
+.composer {
+  display: grid;
+  // grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  padding: 12px;
+  border-top: 1px solid #eef2f7;
+  background: #fff;
+}
+.empty {
+  display: grid;
+  place-items: center;
+  color: #9ca3af;
+}
+
+@media (max-width: 900px) {
+  .chat-app {
+    grid-template-columns: 1fr;
+    height: calc(100vh - 100px);
+  }
+  /* 根据是否选中会话在移动端切换显示 */
+  .chat-app.no-active .chat-list {
+    display: block;
+  }
+  .chat-app.no-active .chat-detail {
+    display: none;
+  }
+  .chat-app.has-active .chat-list {
+    display: none;
+  }
+  .chat-app.has-active .chat-detail {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+  }
+  .chat-header .back-mobile {
+    display: inline-flex;
+  }
+}
