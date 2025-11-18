@@ -90,7 +90,10 @@ export default function HomeNote() {
   const fetchNotes = async () => {
     try {
       setFetchLoading(true);
-      const res = await api.post("/files/.note");
+      const res = await api({
+        url: `/files.get`,
+        params: { path: ".note" },
+      });
       const list = res.data as { name: string; cid: { "/": string } }[];
       if (list) {
         const notes = list.map((item) => ({
@@ -245,8 +248,11 @@ export default function HomeNote() {
   const handleDelete = async (note: Note) => {
     if (confirm(`确定要删除笔记"${note.name}"吗？此操作不可撤销。`)) {
       try {
-        // 这里添加删除的API调用
-        await api.delete(`/files/.note/${note.name}`);
+        await api({
+          method: "delete",
+          url: "/files.delete",
+          params: { path: `.note/${note.name}` },
+        });
 
         updateRootCID();
         notifications.show({

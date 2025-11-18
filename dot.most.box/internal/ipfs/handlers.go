@@ -104,7 +104,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 
 	// 根据链上节点清单生成配置
 	mux.HandleFunc("/ipfs.config.update", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost && r.Method != http.MethodGet {
+		if r.Method != http.MethodPut {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
@@ -177,7 +177,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 
 	// 关闭 IPFS 节点
 	mux.HandleFunc("/ipfs.shutdown", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost && r.Method != http.MethodGet {
+		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
@@ -201,7 +201,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 
 	// 重启 IPFS 节点
 	mux.HandleFunc("/ipfs.restart", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost && r.Method != http.MethodGet {
+		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
@@ -217,40 +217,12 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 		} else {
 			cmd = exec.CommandContext(ctx, "bash", "-lc", "pm2 restart ipfs")
 		}
-		outBuf := &bytes.Buffer{}
-		errBuf := &bytes.Buffer{}
-		cmd.Stdout = outBuf
-		cmd.Stderr = errBuf
 		err := cmd.Run()
 		ok := err == nil
 		writeJSON(w, http.StatusOK, map[string]any{
 			"ok":      ok,
 			"message": ifThen(ok, "已执行 pm2 restart ipfs", "执行失败"),
-			"stdout":  strings.TrimSpace(outBuf.String()),
-			"stderr":  strings.TrimSpace(errBuf.String()),
 		})
-	})
-
-	// 返回节点信息
-	mux.HandleFunc("/ipfs.id", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-		if !authorized(r) {
-			writeJSON(w, http.StatusUnauthorized, map[string]any{"ok": false, "message": "管理员 token 无效"})
-			return
-		}
-		ctx, cancel := context.WithTimeout(context.Background(), idTimeout)
-		defer cancel()
-		var id map[string]any
-		err := sh.Request("id").Exec(ctx, &id)
-		ok := err == nil && id != nil && id["ID"] != nil
-		if ok {
-			writeJSON(w, http.StatusOK, map[string]any{"ok": true, "id": id["ID"]})
-			return
-		}
-		writeJSON(w, http.StatusOK, map[string]any{"ok": false})
 	})
 }
 

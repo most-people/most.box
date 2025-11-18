@@ -72,7 +72,10 @@ export default function HomeFile() {
   const fetchFiles = async (path: string) => {
     try {
       setFetchLoading(true);
-      const res = await api.post(`/files/${path}`);
+      const res = await api({
+        url: `/files.get`,
+        params: { path },
+      });
       setSearchQuery("");
       setItem("files", res.data);
     } catch (error) {
@@ -84,7 +87,7 @@ export default function HomeFile() {
 
     // // 获取 MFS 根目录 CID
     // if (path === "") {
-    //   api.post("/files.cid").then((res) => {
+    //   api.post("/files.root.cid").then((res) => {
     //     const cid = res.data;
     //     if (cid) {
     //       setItem("rootCID", cid);
@@ -306,7 +309,11 @@ export default function HomeFile() {
     try {
       // 构建完整的文件路径
       const filePath = filesPath ? `${filesPath}/${fileName}` : fileName;
-      await api.delete(`/files/${filePath}`);
+      await api({
+        method: "delete",
+        url: "/files.delete",
+        params: { path: filePath },
+      });
 
       notifications.show({
         title: "删除成功",

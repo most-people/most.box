@@ -20,6 +20,7 @@ var systemDir = map[string]struct{}{".note": {}} // 系统目录白名单
 
 // Register 注册文件相关路由（列表、删除、上传、重命名、导入）。
 func Register(mux *http.ServeMux, sh *shell.Shell) {
+	// 获取文件 CID
 	mux.HandleFunc("/files.cid/", func(w http.ResponseWriter, r *http.Request) {
 		parts := strings.Split(strings.TrimPrefix(r.URL.Path, "/files.cid/"), "/")
 		if len(parts) < 3 {
@@ -41,7 +42,8 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 		io.WriteString(w, cid)
 	})
 
-	mux.HandleFunc("/files.cid", func(w http.ResponseWriter, r *http.Request) {
+	// 获取用户根目录 CID
+	mux.HandleFunc("/files.root.cid", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
@@ -61,88 +63,97 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 		io.WriteString(w, cid)
 	})
 
-	mux.HandleFunc("/files/", func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodPost:
-			address := mp.GetAddress(r.Header.Get("Authorization"))
-			if address == "" {
-				http.Error(w, "token 无效", http.StatusBadRequest)
-				return
-			}
-			subPath := strings.TrimPrefix(r.URL.Path, "/files/")
-			fullPath := "/" + address
-			if subPath != "" {
-				fullPath = path.Join(fullPath, subPath)
-			}
-			requestBuilder := sh.Request("files/ls", fullPath).Option("long", true)
-			var listResult map[string]any
-			if err := requestBuilder.Exec(context.Background(), &listResult); err != nil {
-				if strings.Contains(strings.ToLower(err.Error()), "file does not exist") {
-					w.Header().Set("Content-Type", "application/json")
-					io.WriteString(w, "[]")
-					return
-				}
-				http.Error(w, "文件列表获取失败 "+err.Error(), http.StatusInternalServerError)
-				return
-			}
-			entries, _ := listResult["Entries"].([]any)
-			// 转换为预期结构：{name, type, size, cid:{"/": CIDv1}}
-			out := make([]map[string]any, 0, len(entries))
-			for _, e := range entries {
-				if m, ok := e.(map[string]any); ok {
-					name, _ := m["Name"].(string)
-					// 简化 Type 与 Size 归一化
-					t := "file"
-					if v, ok := m["Type"].(float64); ok && v == 1 {
-						t = "directory"
-					}
-					size := int64(0)
-					if s, ok := m["Size"].(float64); ok {
-						size = int64(s)
-					}
-					out = append(out, map[string]any{
-						"name": name,
-						"type": t,
-						"size": size,
-						"cid":  map[string]any{"/": cidString(m["Hash"])},
-					})
-				}
-			}
-			b, _ := json.Marshal(out)
-			w.Header().Set("Content-Type", "application/json")
-			w.Write(b)
-		case http.MethodDelete:
-			address := mp.GetAddress(r.Header.Get("Authorization"))
-			if address == "" {
-				http.Error(w, "token 无效", http.StatusBadRequest)
-				return
-			}
-			subPath := strings.TrimPrefix(r.URL.Path, "/files/")
-			if subPath == "" {
-				http.Error(w, "文件不能为空", http.StatusBadRequest)
-				return
-			}
-			fullPath := "/" + address
-			if subPath != "" {
-				fullPath = path.Join(fullPath, subPath)
-			}
-			requestBuilder := sh.Request("files/rm", fullPath).Option("recursive", true)
-			response, err := requestBuilder.Send(context.Background())
-			if err != nil {
-				http.Error(w, "文件删除失败 "+err.Error(), http.StatusInternalServerError)
-				return
-			}
-			defer response.Close()
-			if response.Error != nil {
-				http.Error(w, "文件删除失败 "+response.Error.Error(), http.StatusInternalServerError)
-				return
-			}
-			json.NewEncoder(w).Encode(map[string]any{"ok": true, "message": "删除成功"})
-		default:
+	// 获取文件列表
+	mux.HandleFunc("/files.get", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
 			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
 		}
+		address := mp.GetAddress(r.Header.Get("Authorization"))
+		if address == "" {
+			http.Error(w, "token 无效", http.StatusBadRequest)
+			return
+		}
+		subPath := r.URL.Query().Get("path")
+		fullPath := "/" + address
+		if subPath != "" {
+			fullPath = path.Join(fullPath, subPath)
+		}
+		requestBuilder := sh.Request("files/ls", fullPath).Option("long", true)
+		var listResult map[string]any
+		if err := requestBuilder.Exec(context.Background(), &listResult); err != nil {
+			if strings.Contains(strings.ToLower(err.Error()), "file does not exist") {
+				w.Header().Set("Content-Type", "application/json")
+				io.WriteString(w, "[]")
+				return
+			}
+			http.Error(w, "文件列表获取失败 "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		entries, _ := listResult["Entries"].([]any)
+		// 转换为预期结构：{name, type, size, cid:{"/": CIDv1}}
+		out := make([]map[string]any, 0, len(entries))
+		for _, e := range entries {
+			if m, ok := e.(map[string]any); ok {
+				name, _ := m["Name"].(string)
+				// 简化 Type 与 Size 归一化
+				t := "file"
+				if v, ok := m["Type"].(float64); ok && v == 1 {
+					t = "directory"
+				}
+				size := int64(0)
+				if s, ok := m["Size"].(float64); ok {
+					size = int64(s)
+				}
+				out = append(out, map[string]any{
+					"name": name,
+					"type": t,
+					"size": size,
+					"cid":  map[string]any{"/": cidString(m["Hash"])},
+				})
+			}
+		}
+		b, _ := json.Marshal(out)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(b)
+
 	})
 
+	// 删除文件或目录
+	mux.HandleFunc("/files.delete", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		address := mp.GetAddress(r.Header.Get("Authorization"))
+		if address == "" {
+			http.Error(w, "token 无效", http.StatusBadRequest)
+			return
+		}
+		subPath := r.URL.Query().Get("path")
+		if subPath == "" {
+			http.Error(w, "文件不能为空", http.StatusBadRequest)
+			return
+		}
+		fullPath := "/" + address
+		if subPath != "" {
+			fullPath = path.Join(fullPath, subPath)
+		}
+		requestBuilder := sh.Request("files/rm", fullPath).Option("recursive", true)
+		response, err := requestBuilder.Send(context.Background())
+		if err != nil {
+			http.Error(w, "文件删除失败 "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer response.Close()
+		if response.Error != nil {
+			http.Error(w, "文件删除失败 "+response.Error.Error(), http.StatusInternalServerError)
+			return
+		}
+		json.NewEncoder(w).Encode(map[string]any{"ok": true, "message": "删除成功"})
+	})
+
+	// 上传文件
 	mux.HandleFunc("/files.upload", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPut {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -204,6 +215,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 		})
 	})
 
+	// 重命名文件或目录
 	mux.HandleFunc("/files.rename", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPut {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -255,7 +267,8 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 		json.NewEncoder(w).Encode(map[string]any{"ok": true, "message": "重命名成功", "oldName": body.OldName, "newName": body.NewName})
 	})
 
-	mux.HandleFunc("/files.import/", func(w http.ResponseWriter, r *http.Request) {
+	// 导入文件或目录
+	mux.HandleFunc("/files.import", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPut {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
@@ -265,7 +278,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			http.Error(w, "token 无效", http.StatusBadRequest)
 			return
 		}
-		cid := strings.TrimPrefix(r.URL.Path, "/files.import/")
+		cid := r.URL.Query().Get("cid")
 		if cid == "" {
 			http.Error(w, "缺少 cid 参数", http.StatusBadRequest)
 			return

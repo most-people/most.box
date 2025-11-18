@@ -266,7 +266,7 @@ const UserRootCID = () => {
   };
 
   const getRootCID = async () => {
-    const res = await api.post("/files.cid");
+    const res = await api.post("/files.root.cid");
     const cid = res.data;
     if (cid) {
       setCustomCID(cid);

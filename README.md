@@ -41,8 +41,11 @@ kill -9 $(pgrep -f dot-linux-amd64)
 ```
 
 ```bash
-curl http://localhost:1976/ipfs.config.update
-curl http://localhost:1976/app.update -X POST
+curl http://localhost:1976/ipfs.config.update -X PUT
+curl http://localhost:1976/ipfs.shutdown -X POST
+curl http://localhost:1976/ipfs.restart -X POST
+
+curl http://localhost:1976/app.update -X PUT
 curl http://localhost:1976/app.restart -X POST
 ```
 

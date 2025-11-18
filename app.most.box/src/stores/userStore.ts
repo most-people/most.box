@@ -92,7 +92,7 @@ export const useUserStore = create<State>((set, get) => ({
       );
 
       const [res, encodeCID] = await Promise.all([
-        api.post("/files.cid"),
+        api.post("/files.root.cid"),
         contract.getCID(wallet.address),
       ]);
       const cid = res.data;
@@ -125,7 +125,7 @@ export const useUserStore = create<State>((set, get) => ({
       provider
     );
     const [res, encodeCID] = await Promise.all([
-      api.post("/files.cid"),
+      api.post("/files.root.cid"),
       contract.getCID(wallet.address),
     ]);
     const cid = res.data;
@@ -139,10 +139,17 @@ export const useUserStore = create<State>((set, get) => ({
         set({ rootCID });
       } else {
         // 导入根目录 CID
-        const res = await api.put(`/files.import/${rootCID}`);
-        if (res.data.ok) {
+        try {
+          await api({
+            method: "put",
+            url: "/files.import",
+            params: {
+              cid: rootCID,
+            },
+          });
+
           set({ rootCID });
-        } else {
+        } catch (error) {
           notifications.show({
             message: "根目录 CID 导入失败",
             color: "red",
