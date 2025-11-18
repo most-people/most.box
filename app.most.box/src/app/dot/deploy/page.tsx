@@ -1,7 +1,17 @@
 "use client";
 import { useEffect, useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
-import { Anchor, Blockquote, Button, Text, Stack, Center } from "@mantine/core";
+import {
+  Anchor,
+  Blockquote,
+  Button,
+  Text,
+  Stack,
+  Center,
+  Group,
+  Divider,
+  Title,
+} from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { BrowserProvider, getAddress } from "ethers";
 import { useRouter } from "next/navigation";
@@ -25,6 +35,10 @@ export default function PageDeploy() {
   const [token, setToken] = useState<string>("");
   const [updateRestartLoading, setUpdateRestartLoading] =
     useState<boolean>(false);
+  const [ipfsUpdateLoading, setIpfsUpdateLoading] = useState<boolean>(false);
+  const [ipfsShutdownLoading, setIpfsShutdownLoading] =
+    useState<boolean>(false);
+  const [ipfsRestartLoading, setIpfsRestartLoading] = useState<boolean>(false);
 
   useEffect(() => {
     const query = new URLSearchParams(window.location.search);
@@ -168,6 +182,121 @@ export default function PageDeploy() {
       });
     }
   };
+
+  const doIpfsConfigUpdate = async () => {
+    if (!dotApi) return;
+    let text = "IPFS 更新完成";
+    try {
+      setIpfsUpdateLoading(true);
+      const message = Date.now().toString();
+      const ethereum = (window as any).okexchain || (window as any).ethereum;
+      if (!ethereum) {
+        notifications.show({ title: "提示", message: "请先安装 OKX Wallet" });
+        return;
+      }
+      const ethersProvider = new BrowserProvider(ethereum);
+      const signer = await ethersProvider.getSigner();
+      const signature = await signer.signMessage(message);
+      const tokenLocal = [signer.address, message, signature].join(".");
+      const res = await axios({
+        method: "put",
+        url: dotApi + "/ipfs.config.update",
+        headers: { Authorization: tokenLocal },
+      });
+      if (!res.data?.ok) {
+        text = "更新未确认";
+      }
+    } catch (error) {
+      text = "更新失败";
+    } finally {
+      setIpfsUpdateLoading(false);
+      modals.open({
+        centered: true,
+        children: (
+          <Center>
+            <Text c="green">{text}</Text>
+          </Center>
+        ),
+        withCloseButton: false,
+      });
+    }
+  };
+  const doIpfsShutdown = async () => {
+    if (!dotApi) return;
+    let text = "IPFS 已关闭";
+    try {
+      setIpfsShutdownLoading(true);
+      const message = Date.now().toString();
+      const ethereum = (window as any).okexchain || (window as any).ethereum;
+      if (!ethereum) {
+        notifications.show({ title: "提示", message: "请先安装 OKX Wallet" });
+        return;
+      }
+      const ethersProvider = new BrowserProvider(ethereum);
+      const signer = await ethersProvider.getSigner();
+      const signature = await signer.signMessage(message);
+      const tokenLocal = [signer.address, message, signature].join(".");
+      const res = await axios({
+        method: "post",
+        url: dotApi + "/ipfs.shutdown",
+        headers: { Authorization: tokenLocal },
+      });
+      if (!res.data?.ok) {
+        text = "关闭未确认";
+      }
+    } catch (error) {
+      text = "关闭失败";
+    } finally {
+      setIpfsShutdownLoading(false);
+      modals.open({
+        centered: true,
+        children: (
+          <Center>
+            <Text c="green">{text}</Text>
+          </Center>
+        ),
+        withCloseButton: false,
+      });
+    }
+  };
+  const doIpfsRestart = async () => {
+    if (!dotApi) return;
+    let text = "IPFS 已重启";
+    try {
+      setIpfsRestartLoading(true);
+      const message = Date.now().toString();
+      const ethereum = (window as any).okexchain || (window as any).ethereum;
+      if (!ethereum) {
+        notifications.show({ title: "提示", message: "请先安装 OKX Wallet" });
+        return;
+      }
+      const ethersProvider = new BrowserProvider(ethereum);
+      const signer = await ethersProvider.getSigner();
+      const signature = await signer.signMessage(message);
+      const tokenLocal = [signer.address, message, signature].join(".");
+      const res = await axios({
+        method: "post",
+        url: dotApi + "/ipfs.restart",
+        headers: { Authorization: tokenLocal },
+      });
+      if (!res.data?.ok) {
+        text = "重启未确认";
+      }
+    } catch (error) {
+      text = "重启失败";
+    } finally {
+      setIpfsRestartLoading(false);
+      modals.open({
+        centered: true,
+        children: (
+          <Center>
+            <Text c="green">{text}</Text>
+          </Center>
+        ),
+        withCloseButton: false,
+      });
+    }
+  };
   return (
     <Stack px="md">
       <AppHeader title="更新节点代码" />
@@ -187,9 +316,11 @@ export default function PageDeploy() {
             : `当前版本：${version || "未知"}`}
         </Text>
         <Text c="dimmed">{`最新版本：${latestVersion || "未知"}`}</Text>
-        <Text c="dimmed">
-          {updateAvailable ? "有可用更新" : "当前已是最新"}
-        </Text>
+        <Center>
+          <Text variant="gradient">
+            {updateAvailable ? "有可用更新" : "当前已是最新"}
+          </Text>
+        </Center>
       </Blockquote>
 
       {address ? (
@@ -215,6 +346,12 @@ export default function PageDeploy() {
         <>
           {dotApi && dotAddress === address ? (
             <Stack>
+              <Divider
+                variant="dashed"
+                labelPosition="center"
+                my="md"
+                label="dot"
+              />
               <Center>
                 <Button
                   leftSection={<IconSignature />}
@@ -226,6 +363,37 @@ export default function PageDeploy() {
                 >
                   签名更新并重启
                 </Button>
+              </Center>
+              <Divider
+                variant="dashed"
+                labelPosition="center"
+                my="md"
+                label="IPFS"
+              />
+              <Center>
+                <Group>
+                  <Button
+                    loading={ipfsUpdateLoading}
+                    loaderProps={{ type: "dots" }}
+                    onClick={doIpfsConfigUpdate}
+                  >
+                    更新 IPFS
+                  </Button>
+                  <Button
+                    loading={ipfsShutdownLoading}
+                    loaderProps={{ type: "dots" }}
+                    onClick={doIpfsShutdown}
+                  >
+                    关闭 IPFS
+                  </Button>
+                  <Button
+                    loading={ipfsRestartLoading}
+                    loaderProps={{ type: "dots" }}
+                    onClick={doIpfsRestart}
+                  >
+                    重启 IPFS
+                  </Button>
+                </Group>
               </Center>
             </Stack>
           ) : (

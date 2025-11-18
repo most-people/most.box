@@ -135,11 +135,15 @@ export default function PageWeb3Ed25519() {
       if (EdKeyPair) {
         const privatePEM = ed25519ToPKCS8PEM(EdKeyPair.secretKey);
         const publicPEM = ed25519PublicKeyToPEM(EdKeyPair.publicKey);
-        setPrivateKeyPEM(privatePEM);
-        setPublicKeyPEM(publicPEM);
+        queueMicrotask(() => {
+          setPrivateKeyPEM(privatePEM);
+          setPublicKeyPEM(publicPEM);
+        });
       }
       const ipns = mp.getIPNS(wallet.private_key, wallet.ed_public_key);
-      setIPNS(ipns);
+      queueMicrotask(() => {
+        setIPNS(ipns);
+      });
     }
   }, [wallet]);
 
