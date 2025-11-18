@@ -159,6 +159,16 @@ export default function HomeFile() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
   };
 
+  const formatFilePath = (file: File) => {
+    const rel = (file.webkitRelativePath || "").replace(/\\/g, "/");
+    const dir = rel ? rel.split("/").slice(0, -1).join("/") : "";
+    const parts: string[] = [];
+    if (filesPath) parts.push(filesPath);
+    if (dir) parts.push(dir);
+    parts.push(file.name);
+    return parts.join("/");
+  };
+
   // 过滤文件列表
   const filteredFiles = files
     ? files
@@ -203,10 +213,8 @@ export default function HomeFile() {
         const file = files[i];
         const formData = new FormData();
         formData.append("file", file);
-        // 如果在子目录中，需要包含当前路径
-        const path = file.webkitRelativePath;
-        const filePath = filesPath ? `${filesPath}/${path}` : path;
-        formData.append("path", filePath + file.name);
+        const targetPath = formatFilePath(file);
+        formData.append("path", targetPath);
         const res = await api.put("/files.upload", formData);
         const cid = res.data?.cid;
         if (cid) {
