@@ -64,7 +64,9 @@ chmod +x dot-linux-amd64
 pm2 start dot-linux-amd64 --interpreter none
 ```
 
-Windows Git Bash
+Windows
+
+Git Bash
 
 ```bash
 # path C:\Users\<用户名>\AppData\Local\Programs\IPFS Desktop\resources\app.asar.unpacked\node_modules\kubo\kubo
@@ -79,3 +81,30 @@ pm2 start dot-windows-amd64.exe --interpreter none
 cd /c/caddy
 pm2 start caddy.exe --interpreter none -- run
 ```
+
+Windows 开发
+
+> 安装 Go 与 Node.js
+> 确保 go 与 npm 可用： go version 、 node -v
+
+Git Bash
+
+```bash
+go install github.com/cosmtrek/air@latest
+```
+
+PowerShell
+
+```powershell
+iwr -useb get.scoop.sh | iex
+
+scoop install goreleaser
+
+scoop install upx
+```
+
+重启编辑器
+
+环境变量
+C:\Users\<用户名>\go\bin
+C:\Users\<用户名>\scoop\shims
