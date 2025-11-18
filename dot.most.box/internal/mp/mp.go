@@ -123,6 +123,18 @@ func IsOwner(token string) bool {
 	if privateKeyHex == "" {
 		return false
 	}
+	parts := strings.Split(token, ".")
+	if len(parts) != 3 {
+		return false
+	}
+	message := parts[1]
+	if ms, err := parseInt64(message); err == nil {
+		if nowMillis()-ms > 1000*60*5 {
+			return false
+		}
+	} else {
+		return false
+	}
 	privateKey, err := crypto.HexToECDSA(strings.TrimPrefix(privateKeyHex, "0x"))
 	if err != nil {
 		return false

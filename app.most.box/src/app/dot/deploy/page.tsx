@@ -5,152 +5,10 @@ import { Anchor, Blockquote, Button, Text, Stack, Center } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { BrowserProvider, getAddress } from "ethers";
 import { useRouter } from "next/navigation";
-import {
-  IconInfoCircle,
-  IconRefreshAlert,
-  IconSignature,
-} from "@tabler/icons-react";
+import { IconInfoCircle, IconSignature } from "@tabler/icons-react";
 import axios from "axios";
 import Link from "next/link";
 import { modals } from "@mantine/modals";
-
-const SignMessage = ({ dotApi }: { dotApi: string }) => {
-  const [deployLoading, setDeployLoading] = useState(false);
-  const [reloadLoading, setReloadLoading] = useState(false);
-
-  const [showReload, setShowReload] = useState(false);
-
-  useEffect(() => {
-    const query = new URLSearchParams(window.location.search);
-    const reload = query.get("reload");
-    if (reload !== null) {
-      setShowReload(true);
-    }
-  }, []);
-
-  const isLoading = deployLoading || reloadLoading;
-
-  const deploy = async (token: string) => {
-    try {
-      const res = await axios({
-        method: "put",
-        url: dotApi + "/api.deploy",
-        headers: {
-          Authorization: token,
-        },
-      });
-      if (res.data?.ok) {
-        modals.open({
-          centered: true,
-          children: (
-            <Center>
-              <Text c="green">部署成功</Text>
-            </Center>
-          ),
-          withCloseButton: false,
-        });
-      }
-    } catch (error) {
-      console.error(error);
-      notifications.show({
-        color: "red",
-        title: "提示",
-        message: "部署失败",
-      });
-    }
-  };
-
-  const reload = async (token: string) => {
-    try {
-      const res = await axios({
-        method: "put",
-        url: dotApi + "/api.reload",
-        headers: {
-          Authorization: token,
-        },
-      });
-
-      if (res.data?.ok) {
-        notifications.show({
-          color: "green",
-          title: "提示",
-          message: "重启成功",
-        });
-      }
-    } catch (error) {
-      console.error(error);
-      notifications.show({
-        color: "red",
-        title: "提示",
-        message: "重启失败",
-      });
-    }
-  };
-
-  const sign = async (type: "deploy" | "reload") => {
-    const message = Date.now().toString();
-
-    // @ts-expect-error window.ethereum
-    const ethereum = window.okexchain || window.ethereum;
-    if (ethereum) {
-      try {
-        if (type === "deploy") {
-          setDeployLoading(true);
-        } else {
-          setReloadLoading(true);
-        }
-        const ethersProvider = new BrowserProvider(ethereum);
-        const signer = await ethersProvider.getSigner();
-        const signature = await signer.signMessage(message);
-        const token = [signer.address, message, signature].join(".");
-        if (type === "deploy") {
-          await deploy(token);
-        } else {
-          await reload(token);
-        }
-      } catch {
-        notifications.show({
-          color: "red",
-          title: "提示",
-          message: "签名失败",
-        });
-      } finally {
-        if (type === "deploy") {
-          setDeployLoading(false);
-        } else {
-          setReloadLoading(false);
-        }
-      }
-    }
-  };
-  return (
-    <Stack>
-      <Button
-        leftSection={<IconSignature />}
-        variant="gradient"
-        disabled={isLoading}
-        loading={deployLoading}
-        loaderProps={{ type: "dots" }}
-        onClick={() => sign("deploy")}
-      >
-        签名部署
-      </Button>
-
-      {showReload && (
-        <Button
-          leftSection={<IconRefreshAlert />}
-          variant="outline"
-          disabled={isLoading}
-          loading={reloadLoading}
-          loaderProps={{ type: "dots" }}
-          onClick={() => sign("reload")}
-        >
-          签名重启
-        </Button>
-      )}
-    </Stack>
-  );
-};
 
 export default function PageDeploy() {
   const router = useRouter();
@@ -160,6 +18,13 @@ export default function PageDeploy() {
   const [dotApi, setDotApi] = useState("");
   const [dotGit, setDotGit] = useState("");
   const [dotDeploy, setDotDeploy] = useState("");
+  const [version, setVersion] = useState<string>("");
+  const [latestVersion, setLatestVersion] = useState<string>("");
+  const [updateAvailable, setUpdateAvailable] = useState<boolean>(false);
+  const [versionLoading, setVersionLoading] = useState<boolean>(false);
+  const [token, setToken] = useState<string>("");
+  const [updateRestartLoading, setUpdateRestartLoading] =
+    useState<boolean>(false);
 
   useEffect(() => {
     const query = new URLSearchParams(window.location.search);
@@ -169,6 +34,17 @@ export default function PageDeploy() {
       setDotAddress(address);
       setDotApi(api);
       setDotDeploy(api + window.location.pathname + window.location.search);
+      setVersionLoading(true);
+      fetch(api + "/app.version")
+        .then((res) => res.json())
+        .then((data) => {
+          try {
+            setVersion(data?.version || "");
+            setLatestVersion(data?.latest_version || "");
+            setUpdateAvailable(Boolean(data?.update_available));
+          } catch {}
+        })
+        .finally(() => setVersionLoading(false));
       fetch(api + "/api.git")
         .then((res) => res.text())
         .then((text) => {
@@ -239,6 +115,59 @@ export default function PageDeploy() {
   useEffect(() => {
     initAccount();
   }, []);
+  const doSignUpdateAndRestart = async () => {
+    if (!dotApi) return;
+
+    let text = "更新完成";
+    try {
+      setUpdateRestartLoading(true);
+      const message = Date.now().toString();
+      // @ts-expect-error window.ethereum
+      const ethereum = window.okexchain || window.ethereum;
+      if (!ethereum) {
+        notifications.show({ title: "提示", message: "请先安装 OKX Wallet" });
+        return;
+      }
+      const ethersProvider = new BrowserProvider(ethereum);
+      const signer = await ethersProvider.getSigner();
+      const signature = await signer.signMessage(message);
+      const tokenLocal = [signer.address, message, signature].join(".");
+      const updateRes = await axios({
+        method: "put",
+        url: dotApi + "/app.update",
+        headers: { Authorization: tokenLocal },
+      });
+      if (updateRes.data?.ok) {
+        const restartRes = await axios({
+          method: "post",
+          url: dotApi + "/app.restart",
+          headers: { Authorization: tokenLocal },
+        });
+        if (restartRes.data?.ok) {
+          text = "更新完成，服务已重启";
+        } else {
+          text = "更新成功，但重启未确认";
+        }
+        setUpdateAvailable(false);
+      } else {
+        text = "当前已是最新";
+      }
+    } catch (error) {
+      text = "更新失败";
+    } finally {
+      // setUpdateRestartLoading(false);
+      modals.open({
+        centered: true,
+        children: (
+          <Center>
+            <Text c="green">{text}</Text>
+          </Center>
+        ),
+        withCloseButton: false,
+        onClose: () => location.reload(),
+      });
+    }
+  };
   return (
     <Stack px="md">
       <AppHeader title="更新节点代码" />
@@ -251,6 +180,15 @@ export default function PageDeploy() {
         </Text>
         <Text mt="md" c="dimmed">
           开源代码：{dotGit}
+        </Text>
+        <Text mt="md">
+          {versionLoading
+            ? "版本信息加载中..."
+            : `当前版本：${version || "未知"}`}
+        </Text>
+        <Text c="dimmed">{`最新版本：${latestVersion || "未知"}`}</Text>
+        <Text c="dimmed">
+          {updateAvailable ? "有可用更新" : "当前已是最新"}
         </Text>
       </Blockquote>
 
@@ -276,7 +214,20 @@ export default function PageDeploy() {
       {address && (
         <>
           {dotApi && dotAddress === address ? (
-            <SignMessage dotApi={dotApi} />
+            <Stack>
+              <Center>
+                <Button
+                  leftSection={<IconSignature />}
+                  variant="gradient"
+                  loading={updateRestartLoading}
+                  loaderProps={{ type: "dots" }}
+                  onClick={doSignUpdateAndRestart}
+                  disabled={!updateAvailable}
+                >
+                  签名更新并重启
+                </Button>
+              </Center>
+            </Stack>
           ) : (
             <Blockquote
               color="gray"

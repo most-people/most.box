@@ -17,6 +17,8 @@ import (
 	"dotmostbox/internal/mp"
 	"dotmostbox/internal/update"
 
+	selfupdate "github.com/creativeprojects/go-selfupdate"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -74,11 +76,29 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 	})
 
 	mux.HandleFunc("/app.version", func(w http.ResponseWriter, r *http.Request) {
-		v := strings.TrimSpace(update.Version)
-		if v == "" {
-			v = "dev"
+		curr := strings.TrimSpace(update.Version)
+		if curr == "" || curr == "dev" {
+			curr = "0.0.0"
 		}
-		json.NewEncoder(w).Encode(map[string]any{"version": v, "timestamp": time.Now().Format(time.RFC3339)})
+		want := strings.TrimSpace(r.URL.Query().Get("want"))
+		compatible := true
+		if want != "" {
+			compatible = compareSemver(curr, want) >= 0
+		}
+		repo := selfupdate.ParseSlug("most-people/most.box")
+		latest, found, err := selfupdate.DetectLatest(r.Context(), repo)
+		out := map[string]any{
+			"version":    curr,
+			"compatible": compatible,
+			"wanted":     want,
+			"timestamp":  time.Now().Format(time.RFC3339),
+		}
+		if err == nil && found {
+			out["latest_version"] = latest.Version()
+			out["update_available"] = !latest.LessOrEqual(curr)
+		}
+
+		json.NewEncoder(w).Encode(out)
 	})
 
 	mux.HandleFunc("/app.update", func(w http.ResponseWriter, r *http.Request) {
@@ -239,4 +259,28 @@ func waitReceipt(ctx context.Context, c *ethclient.Client, h common.Hash) (*type
 		time.Sleep(1 * time.Second)
 	}
 	return nil, fmt.Errorf("receipt timeout")
+}
+
+func compareSemver(a, b string) int {
+	as := strings.Split(a, ".")
+	bs := strings.Split(b, ".")
+	for len(as) < 3 {
+		as = append(as, "0")
+	}
+	for len(bs) < 3 {
+		bs = append(bs, "0")
+	}
+	for i := 0; i < 3; i++ {
+		ai := 0
+		bi := 0
+		fmt.Sscanf(as[i], "%d", &ai)
+		fmt.Sscanf(bs[i], "%d", &bi)
+		if ai < bi {
+			return -1
+		}
+		if ai > bi {
+			return 1
+		}
+	}
+	return 0
 }

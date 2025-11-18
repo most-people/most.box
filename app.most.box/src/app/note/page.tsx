@@ -80,8 +80,7 @@ const PageContent = () => {
       );
       if (decrypted) {
         // 解密成功
-        setIsSecret(true);
-        setContent(decrypted);
+        queueMicrotask(() => setIsSecret(true));
       }
     }
   }, [inited, wallet, content]);
@@ -207,7 +206,7 @@ const PageContent = () => {
       t = "🔒 " + t;
     }
     return t;
-  }, [isSecret]);
+  }, [isSecret, params]);
 
   // 根据编辑状态渲染不同的按钮
   const renderHeaderButtons = () => {
