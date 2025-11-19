@@ -9,7 +9,6 @@ import (
 	"math/big"
 	"net/http"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
 
@@ -63,16 +62,6 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 		}
 		iohex := hex.EncodeToString(b[:])
 		w.Write([]byte(iohex))
-	})
-
-	// /api.git 返回 git remote -v 的输出
-	mux.HandleFunc("/api.git", func(w http.ResponseWriter, r *http.Request) {
-		out, err := exec.Command("git", "remote", "-v").CombinedOutput()
-		if err != nil {
-			w.Write(out)
-			return
-		}
-		w.Write(out)
 	})
 
 	mux.HandleFunc("/app.version", func(w http.ResponseWriter, r *http.Request) {

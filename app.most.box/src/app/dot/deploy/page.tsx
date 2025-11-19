@@ -10,7 +10,6 @@ import {
   Center,
   Group,
   Divider,
-  Title,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { BrowserProvider, getAddress } from "ethers";
@@ -26,13 +25,11 @@ export default function PageDeploy() {
   const [address, setAddress] = useState("");
   const [dotAddress, setDotAddress] = useState("");
   const [dotApi, setDotApi] = useState("");
-  const [dotGit, setDotGit] = useState("");
   const [dotDeploy, setDotDeploy] = useState("");
   const [version, setVersion] = useState<string>("");
   const [latestVersion, setLatestVersion] = useState<string>("");
   const [updateAvailable, setUpdateAvailable] = useState<boolean>(false);
   const [versionLoading, setVersionLoading] = useState<boolean>(false);
-  const [token, setToken] = useState<string>("");
   const [updateRestartLoading, setUpdateRestartLoading] =
     useState<boolean>(false);
   const [ipfsUpdateLoading, setIpfsUpdateLoading] = useState<boolean>(false);
@@ -59,17 +56,6 @@ export default function PageDeploy() {
           } catch {}
         })
         .finally(() => setVersionLoading(false));
-      fetch(api + "/api.git")
-        .then((res) => res.text())
-        .then((text) => {
-          // 截取 origin 和 (fetch) 之间的内容
-          const match = text.match(/origin\s+(.+?)\s+\(fetch\)/);
-          if (match) {
-            try {
-              setDotGit(match[1]);
-            } catch {}
-          }
-        });
     } else {
       router.back();
     }
@@ -308,7 +294,7 @@ export default function PageDeploy() {
           </Anchor>
         </Text>
         <Text mt="md" c="dimmed">
-          开源代码：{dotGit}
+          开源代码：https://github.com/most-people/most.box/releases/latest
         </Text>
         <Text mt="md">
           {versionLoading
