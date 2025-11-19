@@ -28,6 +28,7 @@ import {
   IconRefresh,
   IconDotsVertical,
   IconPlus,
+  IconDownload,
 } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import mp from "@/constants/mp";
@@ -68,6 +69,10 @@ export default function HomeFile() {
   const [newFolderLoading, setNewFolderLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [importCID, setImportCID] = useState("");
+  const [importName, setImportName] = useState("");
+  const [importLoading, setImportLoading] = useState(false);
 
   const fetchFiles = async (path: string) => {
     try {
@@ -262,6 +267,63 @@ export default function HomeFile() {
 
   const handleFolderUpload = () => {
     folderInputRef.current?.click();
+  };
+
+  const normalizeCIDInput = (s: string) => {
+    const m = (s || "").match(
+      /(baf[a-z0-9]{30,}|Qm[1-9A-HJ-NP-Za-km-z]{44,})/i
+    );
+    if (m) return m[1];
+    let input = (s || "").trim();
+    input = input.replace(/^ipfs:\/\//i, "");
+    input = input.replace(/^https?:\/\/[^/]+\/ipfs\//i, "");
+    input = input.replace(/^\/?ipfs\//i, "");
+    input = input.replace(/^\/+/, "");
+    input = input.replace(/\?.*$/, "");
+    input = input.replace(/#.*/, "");
+    input = input.replace(/\/.*/, "");
+    return input;
+  };
+
+  const extractFilename = (s: string) => {
+    const m = (s || "").match(/[?&]filename=([^&#]+)/i);
+    return m ? decodeURIComponent(m[1]) : "";
+  };
+
+  const executeImport = async () => {
+    const cid = normalizeCIDInput(importCID);
+    if (!cid) {
+      notifications.show({
+        title: "提示",
+        message: "请输入有效的 CID",
+        color: "red",
+      });
+      return;
+    }
+    try {
+      setImportLoading(true);
+      const name = (importName || cid).trim();
+      const targetPath = filesPath ? `${filesPath}/${name}` : name;
+      await api({
+        method: "put",
+        url: "/files.import.cid",
+        params: { cid, path: targetPath },
+      });
+      updateRootCID();
+      notifications.show({
+        message: `已导入 CID: ${cid}${importName ? `（${importName}）` : ""}`,
+        color: "green",
+      });
+      await fetchFiles(filesPath);
+      setImportModalOpen(false);
+      setImportCID("");
+      setImportName("");
+    } catch (error: any) {
+      const msg = error?.response?.data || "导入失败，请重试";
+      notifications.show({ title: "错误", message: msg, color: "red" });
+    } finally {
+      setImportLoading(false);
+    }
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -551,6 +613,16 @@ export default function HomeFile() {
                 disabled={!wallet || uploadLoading}
               >
                 <IconFolderPlus size={18} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label="从 CID 导入">
+              <ActionIcon
+                size="lg"
+                onClick={() => setImportModalOpen(true)}
+                color="violet"
+                disabled={!wallet || importLoading}
+              >
+                <IconDownload size={18} />
               </ActionIcon>
             </Tooltip>
           </Group>
@@ -863,6 +935,67 @@ export default function HomeFile() {
             </Button>
             <Button onClick={createFolder} loading={newFolderLoading}>
               确认
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      {/* 从 IPFS 导入模态框 */}
+      <Modal
+        opened={importModalOpen}
+        onClose={() => {
+          setImportModalOpen(false);
+          setImportCID("");
+          setImportName("");
+        }}
+        title="从 IPFS 路径导入"
+        centered
+      >
+        <Stack gap="md">
+          <TextInput
+            label="CID"
+            required
+            placeholder="/ipfs/xxxx 或 CID"
+            value={importCID}
+            onChange={(event) => {
+              const v = event.currentTarget.value;
+              setImportCID(v);
+              const fn = extractFilename(v);
+              if (fn) setImportName(fn);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                executeImport();
+              }
+            }}
+            disabled={importLoading}
+            autoFocus
+          />
+          <TextInput
+            label="文件名"
+            value={importName}
+            onChange={(event) => setImportName(event.currentTarget.value)}
+            disabled={importLoading}
+          />
+
+          <Group justify="flex-end" gap="sm">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setImportModalOpen(false);
+                setImportCID("");
+                setImportName("");
+              }}
+              disabled={importLoading}
+            >
+              取消
+            </Button>
+            <Button
+              onClick={executeImport}
+              loading={importLoading}
+              disabled={!wallet || !importCID.trim()}
+            >
+              导入
             </Button>
           </Group>
         </Stack>
