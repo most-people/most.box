@@ -91,11 +91,13 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			return
 		}
 		if !authorized(r) {
-			writeJSON(w, http.StatusUnauthorized, map[string]any{"ok": false, "message": "管理员 token 无效"})
+			http.Error(w, "管理员 token 无效", http.StatusUnauthorized)
 			return
 		}
 		var cfg map[string]any
-		if err := sh.Request("config/show").Exec(context.Background(), &cfg); err != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), idTimeout)
+		defer cancel()
+		if err := sh.Request("config/show").Exec(ctx, &cfg); err != nil {
 			http.Error(w, "读取当前配置失败 "+err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -109,7 +111,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			return
 		}
 		if !authorized(r) {
-			writeJSON(w, http.StatusUnauthorized, map[string]any{"ok": false, "message": "管理员 token 无效"})
+			http.Error(w, "管理员 token 无效", http.StatusUnauthorized)
 			return
 		}
 		// 读取链上节点清单
@@ -139,7 +141,9 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 		peerID := idInfo.ID
 		// 拉取当前配置
 		var currentCfg map[string]any
-		if err := sh.Request("config/show").Exec(context.Background(), &currentCfg); err != nil {
+		ctxCfg, cancelCfg := context.WithTimeout(context.Background(), idTimeout)
+		defer cancelCfg()
+		if err := sh.Request("config/show").Exec(ctxCfg, &currentCfg); err != nil {
 			http.Error(w, "读取当前配置失败 "+err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -182,7 +186,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			return
 		}
 		if !authorized(r) {
-			writeJSON(w, http.StatusUnauthorized, map[string]any{"ok": false, "message": "管理员 token 无效"})
+			http.Error(w, "管理员 token 无效", http.StatusUnauthorized)
 			return
 		}
 		client := httpClientShutdown
@@ -206,7 +210,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			return
 		}
 		if !authorized(r) {
-			writeJSON(w, http.StatusUnauthorized, map[string]any{"ok": false, "message": "管理员 token 无效"})
+			http.Error(w, "管理员 token 无效", http.StatusUnauthorized)
 			return
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), restartTimeout)

@@ -14,9 +14,6 @@ app.most.box@gmail.com
 # 测试启动
 ipfs daemon --enable-gc
 
-# 静默启动
-nohup ipfs daemon --enable-gc > ~/ipfs.log 2>&1 &
-
 # 关闭
 ipfs shutdown
 ```
@@ -32,9 +29,6 @@ chmod +x dot-linux-amd64
 
 # 测试启动
 ./dot-linux-amd64
-
-# 静默启动
-nohup ./dot-linux-amd64 > ~/dot.log 2>&1 &
 
 # 关闭
 kill -9 $(pgrep -f dot-linux-amd64)
@@ -69,7 +63,8 @@ Windows
 Git Bash
 
 ```bash
-# path C:\Users\<用户名>\AppData\Local\Programs\IPFS Desktop\resources\app.asar.unpacked\node_modules\kubo\kubo
+# IPFS Desktop path
+# C:\Users\<用户名>\AppData\Local\Programs\IPFS Desktop\resources\app.asar.unpacked\node_modules\kubo\kubo
 
 # ipfs
 pm2 start ipfs --interpreter none -- daemon --enable-gc
