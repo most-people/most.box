@@ -15,7 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
-	shell "github.com/ipfs/go-ipfs-api"
+    "dotmostbox/internal/config"
 )
 
 // dotContractAddress Dot 合约地址（Base 网络）。
@@ -32,7 +32,7 @@ type Dot struct {
 
 // GetIP 使用 IPFS 节点与已发现的接口构建当前节点信息。
 func GetIP() (name string, apis []string, cids []string, err error) {
-	ipfsShell := shell.NewShell("http://127.0.0.1:5001")
+    ipfsShell := config.NewIPFSShell()
 	idInfo, ipfsErr := ipfsShell.ID()
 	if ipfsErr != nil {
 		err = ipfsErr

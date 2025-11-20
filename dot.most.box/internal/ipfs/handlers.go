@@ -22,7 +22,8 @@ import (
 	"sync"
 	"time"
 
-	"dotmostbox/internal/mp"
+    "dotmostbox/internal/mp"
+    "dotmostbox/internal/config"
 
 	shell "github.com/ipfs/go-ipfs-api"
 )
@@ -59,16 +60,15 @@ type nodeDef struct {
 
 // 配置生成常量：默认端口、选择数量等
 const (
-	defaultPort     = 4001
-	bootstrapK      = 8
-	peeringRing     = 3
-	peeringRandom   = 3
-	ipfsAPIBase     = "http://127.0.0.1:5001"
-	dialTCPTimeout  = 1200 * time.Millisecond
-	shutdownTimeout = 8 * time.Second
-	idTimeout       = 700 * time.Millisecond
-	applyTimeout    = 12 * time.Second
-	restartTimeout  = 10 * time.Second
+    defaultPort     = 4001
+    bootstrapK      = 8
+    peeringRing     = 3
+    peeringRandom   = 3
+    dialTCPTimeout  = 1200 * time.Millisecond
+    shutdownTimeout = 8 * time.Second
+    idTimeout       = 700 * time.Millisecond
+    applyTimeout    = 12 * time.Second
+    restartTimeout  = 10 * time.Second
 )
 
 func authorized(r *http.Request) bool {
@@ -163,10 +163,10 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			"defaultCfg":     defaultCfg,
 		})
 		// 通过 IPFS HTTP API 替换配置
-		if err := applyConfigViaHTTP(ipfsAPIBase, finalCfg); err != nil {
-			http.Error(w, "替换配置失败 "+err.Error(), http.StatusInternalServerError)
-			return
-		}
+        if err := applyConfigViaHTTP(config.IPFSAPIBase(), finalCfg); err != nil {
+            http.Error(w, "替换配置失败 "+err.Error(), http.StatusInternalServerError)
+            return
+        }
 		out := map[string]any{
 			"ok":             true,
 			"message":        "配置已更新",
@@ -190,12 +190,12 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			return
 		}
 		client := httpClientShutdown
-		req, _ := http.NewRequest("POST", ipfsAPIBase+"/api/v0/shutdown", nil)
-		resp, err := client.Do(req)
-		if err == nil {
-			io.ReadAll(resp.Body)
-			resp.Body.Close()
-		}
+        req, _ := http.NewRequest("POST", config.IPFSAPIBase()+"/api/v0/shutdown", nil)
+        resp, err := client.Do(req)
+        if err == nil {
+            io.ReadAll(resp.Body)
+            resp.Body.Close()
+        }
 		ok := err == nil
 		writeJSON(w, http.StatusOK, map[string]any{
 			"ok":      ok,

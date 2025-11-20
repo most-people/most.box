@@ -11,14 +11,14 @@ import (
 	"strings"
 	"time"
 
-	"dotmostbox/internal/apis"
-	"dotmostbox/internal/files"
-	"dotmostbox/internal/ipfs"
-	"dotmostbox/internal/mp"
+    "dotmostbox/internal/apis"
+    "dotmostbox/internal/files"
+    "dotmostbox/internal/ipfs"
+    "dotmostbox/internal/mp"
+    "dotmostbox/internal/config"
     "dotmostbox/internal/sse"
 
-	shell "github.com/ipfs/go-ipfs-api"
-	"github.com/joho/godotenv"
+    "github.com/joho/godotenv"
 )
 
 // 嵌入 ./out 目录下的所有静态文件，便于单文件分发
@@ -34,8 +34,8 @@ func main() {
 
     
 
-	// 初始化 IPFS Shell
-	sh := shell.NewShell("http://127.0.0.1:5001")
+    // 初始化 IPFS Shell
+    sh := config.NewIPFSShell()
 
 	if _, err := sh.ID(); err != nil {
 		log.Println("IPFS 节点未运行，请启动 IPFS 节点。")

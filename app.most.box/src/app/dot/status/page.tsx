@@ -141,58 +141,6 @@ export default function PageDotStatus() {
     return [];
   };
 
-  // 查找特定节点
-  const findPeer = async (peerId: string) => {
-    try {
-      const response = await fetch(
-        `${IPFS_API_BASE}/routing/findpeer?arg=${peerId}`,
-        {
-          method: "POST",
-        }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        if (data.Responses && data.Responses.length > 0) {
-          return data.Responses[0];
-        }
-      }
-    } catch (error) {
-      console.error("Failed to find peer:", error);
-    }
-    return null;
-  };
-
-  // Ping节点
-  const pingPeer = async (peerId: string, count: number = 3) => {
-    try {
-      const response = await fetch(
-        `${IPFS_API_BASE}/ping?arg=${peerId}&count=${count}`,
-        {
-          method: "POST",
-        }
-      );
-      if (response.ok) {
-        const text = await response.text();
-        const lines = text.trim().split("\n");
-        const results: PingResult[] = [];
-
-        for (const line of lines) {
-          try {
-            const result = JSON.parse(line);
-            results.push(result);
-          } catch {
-            // 忽略解析错误的行
-          }
-        }
-
-        return results;
-      }
-    } catch (error) {
-      console.error("Failed to ping peer:", error);
-    }
-    return [];
-  };
-
   // 测试单个节点（链上节点）
   const testNode = async (nodeIndex: number) => {
     const node = nodeTests[nodeIndex]?.node;
