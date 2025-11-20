@@ -1,7 +1,6 @@
 version: 2
 project_name: dot
 
-# 输出目录（默认 dist）
 dist: dist
 
 before:
@@ -32,7 +31,6 @@ archives:
     ids:
       - dot
     formats: ["binary"]
-    # go-selfupdate 必须按默认命名习惯输出文件名
     name_template: >-
       {{ .Binary }}-{{ .Os }}-{{ .Arch }}
 
@@ -46,11 +44,9 @@ changelog:
       - "^docs:"
       - "^test:"
 
-# 解决重复上传同名资产导致的 422 错误
 release:
   replace_existing_artifacts: true
 
-# 使用 UPX 压缩（macOS Ventura 暂不支持，过滤 macOS）
 upx:
   - enabled: true
     ids: [dot]
@@ -59,34 +55,20 @@ upx:
     lzma: true
     brute: false
 
-dockers:
-  - ids: [dot]
-    goos: linux
-    goarch: amd64
-    image_templates:
-      - docker.io/mostpeople/dot:{{ .Version }}-amd64
-      - docker.io/mostpeople/dot:latest-amd64
+dockers_v2:
+  - images:
+      - docker.io/mostpeople/dot
+    tags:
+      - "{{ .Version }}"
+      - "latest"
     dockerfile: ./Dockerfile
-    use: buildx
-    build_flag_templates:
-      - --platform=linux/amd64
-  - ids: [dot]
-    goos: linux
-    goarch: arm64
-    image_templates:
-      - docker.io/mostpeople/dot:{{ .Version }}-arm64
-      - docker.io/mostpeople/dot:latest-arm64
-    dockerfile: ./Dockerfile
-    use: buildx
-    build_flag_templates:
-      - --platform=linux/arm64
-
-docker_manifests:
-  - name_template: docker.io/mostpeople/dot:{{ .Version }}
-    image_templates:
-      - docker.io/mostpeople/dot:{{ .Version }}-amd64
-      - docker.io/mostpeople/dot:{{ .Version }}-arm64
-  - name_template: docker.io/mostpeople/dot:latest
-    image_templates:
-      - docker.io/mostpeople/dot:latest-amd64
-      - docker.io/mostpeople/dot:latest-arm64
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    labels:
+      org.opencontainers.image.description: Dot service
+      org.opencontainers.image.created: "{{ .Date }}"
+      org.opencontainers.image.name: "{{ .ProjectName }}"
+      org.opencontainers.image.revision: "{{ .FullCommit }}"
+      org.opencontainers.image.version: "{{ .Version }}"
+      org.opencontainers.image.source: "{{ .GitURL }}"

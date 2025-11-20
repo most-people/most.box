@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	stdurl "net/url"
+	"os"
 	"strings"
 
 	selfupdate "github.com/creativeprojects/go-selfupdate"
@@ -46,4 +47,17 @@ func CheckAndDownload(ctx context.Context) (bool, error) {
 		}
 	}
 	return false, fmt.Errorf("IPNS 下载出错")
+}
+
+func IsContainer() bool {
+	if _, err := os.Stat("/.dockerenv"); err == nil {
+		return true
+	}
+	if b, err := os.ReadFile("/proc/1/cgroup"); err == nil {
+		s := strings.ToLower(string(b))
+		if strings.Contains(s, "docker") || strings.Contains(s, "containerd") || strings.Contains(s, "kubepods") {
+			return true
+		}
+	}
+	return false
 }

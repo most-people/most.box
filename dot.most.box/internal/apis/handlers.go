@@ -100,6 +100,10 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			json.NewEncoder(w).Encode(map[string]any{"ok": false, "message": "管理员 token 无效"})
 			return
 		}
+		if update.IsContainer() {
+			json.NewEncoder(w).Encode(map[string]any{"ok": true, "message": "容器环境下请通过拉取新镜像并重启更新", "timestamp": time.Now().Format(time.RFC3339)})
+			return
+		}
 		downloaded, err := update.CheckAndDownload(r.Context())
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
