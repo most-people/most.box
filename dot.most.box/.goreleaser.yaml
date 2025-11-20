@@ -70,7 +70,6 @@ dockers:
     use: buildx
     build_flag_templates:
       - --platform=linux/amd64
-      - --build-arg=BINARY=dot-linux-amd64
   - ids: [dot]
     goos: linux
     goarch: arm64
@@ -81,7 +80,6 @@ dockers:
     use: buildx
     build_flag_templates:
       - --platform=linux/arm64
-      - --build-arg=BINARY=dot-linux-arm64
 
 docker_manifests:
   - name_template: docker.io/mostpeople/dot:{{ .Version }}
