@@ -58,3 +58,28 @@ upx:
     compress: best
     lzma: true
     brute: false
+
+dockers:
+  - ids: [dot]
+    goos: linux
+    goarch:
+      - amd64
+      - arm64
+    image_templates:
+      - docker.io/mostpeople/dot:{{ .Version }}-{{ .Arch }}
+      - docker.io/mostpeople/dot:latest-{{ .Arch }}
+    dockerfile: ./Dockerfile
+    use: buildx
+    build_flag_templates:
+      - --platform=linux/{{ .Arch }}
+      - --build-arg=BINARY=dot-linux-{{ .Arch }}
+
+docker_manifests:
+  - name_template: docker.io/mostpeople/dot:{{ .Version }}
+    image_templates:
+      - docker.io/mostpeople/dot:{{ .Version }}-amd64
+      - docker.io/mostpeople/dot:{{ .Version }}-arm64
+  - name_template: docker.io/mostpeople/dot:latest
+    image_templates:
+      - docker.io/mostpeople/dot:latest-amd64
+      - docker.io/mostpeople/dot:latest-arm64
