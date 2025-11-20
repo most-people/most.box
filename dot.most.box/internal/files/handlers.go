@@ -253,6 +253,16 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			http.Error(w, "新文件名已存在", http.StatusConflict)
 			return
 		}
+
+		parentDir := path.Dir(newPath)
+		var parentStat map[string]any
+		if err := sh.Request("files/stat", parentDir).Exec(context.Background(), &parentStat); err != nil {
+			req := sh.Request("files/mkdir", parentDir).Option("parents", true)
+			if resp, sendErr := req.Send(context.Background()); sendErr == nil {
+				defer resp.Close()
+				_ = resp.Error
+			}
+		}
 		requestBuilder := sh.Request("files/mv", oldPath, newPath)
 		response, err := requestBuilder.Send(context.Background())
 		if err != nil {
@@ -267,7 +277,7 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 		json.NewEncoder(w).Encode(map[string]any{"ok": true, "message": "重命名成功", "oldName": body.OldName, "newName": body.NewName})
 	})
 
-	// 导入文件或目录
+	// 导入根目录 CID
 	mux.HandleFunc("/files.import", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPut {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -293,6 +303,50 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			return
 		}
 		json.NewEncoder(w).Encode(map[string]any{"ok": true, "message": "导入成功", "cid": cid})
+	})
+
+	// 导入文件或目录 files.import.cid
+	mux.HandleFunc("/files.import.cid", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		address := mp.GetAddress(r.Header.Get("Authorization"))
+		if address == "" {
+			http.Error(w, "token 无效", http.StatusBadRequest)
+			return
+		}
+		cid := r.URL.Query().Get("cid")
+		target := r.URL.Query().Get("path")
+		if cid == "" {
+			http.Error(w, "缺少 cid 参数", http.StatusBadRequest)
+			return
+		}
+		if target == "" {
+			http.Error(w, "缺少 path 参数", http.StatusBadRequest)
+			return
+		}
+		targetPath := path.Join("/", address, strings.TrimPrefix(target, "/"))
+
+		var existingStat map[string]any
+		if err := sh.Request("files/stat", targetPath).Exec(context.Background(), &existingStat); err == nil {
+			http.Error(w, "目标已存在", http.StatusConflict)
+			return
+		}
+
+		requestBuilder := sh.Request("files/cp", "/ipfs/"+cid, targetPath).Option("parents", true)
+		response, err := requestBuilder.Send(context.Background())
+		if err != nil {
+			http.Error(w, "导入失败 "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer response.Close()
+		if response.Error != nil {
+			http.Error(w, "导入失败 "+response.Error.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		json.NewEncoder(w).Encode(map[string]any{"ok": true, "message": "导入成功", "cid": cid, "path": target})
 	})
 }
 

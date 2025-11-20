@@ -28,7 +28,7 @@ import {
   IconRefresh,
   IconDotsVertical,
   IconPlus,
-  IconDownload,
+  IconFileImport,
 } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import mp from "@/constants/mp";
@@ -305,13 +305,13 @@ export default function HomeFile() {
       const name = (importName || cid).trim();
       const targetPath = filesPath ? `${filesPath}/${name}` : name;
       await api({
-        method: "put",
+        method: "post",
         url: "/files.import.cid",
         params: { cid, path: targetPath },
       });
       updateRootCID();
       notifications.show({
-        message: `已导入 CID: ${cid}${importName ? `（${importName}）` : ""}`,
+        message: `已导入 CID: ${cid}${importName ? `「${importName}」` : ""}`,
         color: "green",
       });
       await fetchFiles(filesPath);
@@ -622,7 +622,7 @@ export default function HomeFile() {
                 color="violet"
                 disabled={!wallet || importLoading}
               >
-                <IconDownload size={18} />
+                <IconFileImport size={18} />
               </ActionIcon>
             </Tooltip>
           </Group>
@@ -736,7 +736,7 @@ export default function HomeFile() {
                         </Menu.Target>
 
                         <Menu.Dropdown>
-                          <Menu.Item
+                          {/* <Menu.Item
                             leftSection="📖"
                             onClick={() => {
                               if (item.type === "directory") {
@@ -747,15 +747,15 @@ export default function HomeFile() {
                             }}
                           >
                             {item.type === "directory" ? "打开" : "查看"}
-                          </Menu.Item>
+                          </Menu.Item> */}
 
                           <Menu.Item
-                            leftSection="📤"
+                            leftSection="📖"
                             onClick={() => {
                               handleShareFile(item);
                             }}
                           >
-                            分享
+                            查看
                           </Menu.Item>
 
                           <Menu.Item
@@ -1015,7 +1015,7 @@ export default function HomeFile() {
         <Stack gap="md">
           <TextInput
             label="目录路径"
-            placeholder="根目录留空，例如: foo/bar"
+            placeholder="根目录留空，例如: image/like"
             value={newDirPath}
             onChange={(event) => setNewDirPath(event.currentTarget.value)}
             onKeyDown={(event) => {

@@ -123,7 +123,7 @@ const PageContent = () => {
         <Group justify="space-between">
           <Group gap={8}>
             📖
-            <Title order={4}>查看 / 下载</Title>
+            <Title order={4}>预览 / 下载</Title>
           </Group>
         </Group>
 
@@ -167,7 +167,7 @@ const PageContent = () => {
             target="_blank"
             href={previewUrl}
           >
-            查看
+            预览
           </Button>
           {filename ? (
             <Button
