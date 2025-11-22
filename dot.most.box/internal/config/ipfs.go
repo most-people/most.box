@@ -1,8 +1,6 @@
 package config
 
 import (
-	"dotmostbox/internal/update"
-
 	shell "github.com/ipfs/go-ipfs-api"
 )
 
