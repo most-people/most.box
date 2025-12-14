@@ -33,11 +33,13 @@ export default function PageUser() {
   const [owner, setOwner] = useState("");
   const [username, setUsername] = useState("");
 
-  const noteName = pathname.split("/")[2] || ".profile";
+  const noteName = pathname?.split("/")[2] || ".profile";
   const [CID, setCID] = useState("");
 
   useEffect(() => {
-    setUid(pathname.split("/")[1].slice(1));
+    if (pathname) {
+      setUid(pathname.split("/")[1].slice(1));
+    }
   }, [pathname]);
 
   const fetchOwner = async (name: string) => {
@@ -83,7 +85,7 @@ export default function PageUser() {
   };
   const updateName = (name: string) => {
     setUsername(name);
-    const list = pathname.split("/");
+    const list = pathname?.split("/") || [];
     list[1] = "@" + name;
     const url = new URL(window.location.href);
     url.pathname = list.join("/");

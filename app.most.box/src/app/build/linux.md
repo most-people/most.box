@@ -30,20 +30,20 @@ sudo apt update
 sudo apt install wget curl tar -y
 
 # 下载最新版本的 Kubo 在上面文档查找最新版本
-wget https://dist.ipfs.tech/kubo/v0.38.1/kubo_v0.38.1_linux-amd64.tar.gz
+wget https://dist.ipfs.tech/kubo/v0.39.0/kubo_v0.39.0_linux-amd64.tar.gz
 # 也可以使用 IPNS 下载
-wget http://129.226.147.127:8080/ipns/dist.ipfs.tech/kubo/v0.38.1/kubo_v0.38.1_linux-amd64.tar.gz
+wget http://129.226.147.127:8080/ipns/dist.ipfs.tech/kubo/v0.39.0/kubo_v0.39.0_linux-amd64.tar.gz
 
 # 解压
-tar -xvzf kubo_v0.38.1_linux-amd64.tar.gz
+tar -xvzf kubo_v0.39.0_linux-amd64.tar.gz
 
 # 进入目录并安装
 cd kubo
 sudo bash install.sh
 
 # 验证安装
-ipfs --version
-# ipfs version 0.38.1
+ipfs version
+# ipfs version 0.39.0
 
 # 初始化 IPFS 仓库
 ipfs init

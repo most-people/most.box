@@ -68,6 +68,7 @@ export const useUserStore = create<State>((set, get) => ({
   notes: undefined,
   notesQuery: "",
   nodeDark: "",
+
   // 文件系统
   files: undefined,
   filesPath: "",
@@ -147,7 +148,6 @@ export const useUserStore = create<State>((set, get) => ({
               cid: rootCID,
             },
           });
-
           set({ rootCID });
         } catch (error) {
           notifications.show({

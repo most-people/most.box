@@ -278,32 +278,32 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 	})
 
 	// 导入根目录 CID
-	mux.HandleFunc("/files.import", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPut {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-		address := mp.GetAddress(r.Header.Get("Authorization"))
-		if address == "" {
-			http.Error(w, "token 无效", http.StatusBadRequest)
-			return
-		}
-		cid := r.URL.Query().Get("cid")
-		if cid == "" {
-			http.Error(w, "缺少 cid 参数", http.StatusBadRequest)
-			return
-		}
-		requestBuilder := sh.Request("files/rm", path.Join("/", address)).Option("recursive", true).Option("force", true)
-		if response, err := requestBuilder.Send(context.Background()); err == nil {
-			defer response.Close()
-			_ = response.Error
-		}
-		if err := sh.FilesCp(context.Background(), "/ipfs/"+cid, path.Join("/", address)); err != nil {
-			http.Error(w, "导入失败 "+err.Error(), http.StatusInternalServerError)
-			return
-		}
-		json.NewEncoder(w).Encode(map[string]any{"ok": true, "message": "导入成功", "cid": cid})
-	})
+	// mux.HandleFunc("/files.import", func(w http.ResponseWriter, r *http.Request) {
+	// 	if r.Method != http.MethodPut {
+	// 		w.WriteHeader(http.StatusMethodNotAllowed)
+	// 		return
+	// 	}
+	// 	address := mp.GetAddress(r.Header.Get("Authorization"))
+	// 	if address == "" {
+	// 		http.Error(w, "token 无效", http.StatusBadRequest)
+	// 		return
+	// 	}
+	// 	cid := r.URL.Query().Get("cid")
+	// 	if cid == "" {
+	// 		http.Error(w, "缺少 cid 参数", http.StatusBadRequest)
+	// 		return
+	// 	}
+	// 	requestBuilder := sh.Request("files/rm", path.Join("/", address)).Option("recursive", true).Option("force", true)
+	// 	if response, err := requestBuilder.Send(context.Background()); err == nil {
+	// 		defer response.Close()
+	// 		_ = response.Error
+	// 	}
+	// 	if err := sh.FilesCp(context.Background(), "/ipfs/"+cid, path.Join("/", address)); err != nil {
+	// 		http.Error(w, "导入失败 "+err.Error(), http.StatusInternalServerError)
+	// 		return
+	// 	}
+	// 	json.NewEncoder(w).Encode(map[string]any{"ok": true, "message": "导入成功", "cid": cid})
+	// })
 
 	// 导入文件或目录 files.import.cid
 	mux.HandleFunc("/files.import.cid", func(w http.ResponseWriter, r *http.Request) {

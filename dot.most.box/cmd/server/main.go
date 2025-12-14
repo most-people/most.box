@@ -1,24 +1,27 @@
 package main
 
 import (
-    "embed"
-    "io/fs"
-    "log"
-    "net/http"
-    "os"
+	"context"
+	"embed"
+	"io/fs"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
 	"path"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
-    "dotmostbox/internal/apis"
-    "dotmostbox/internal/files"
-    "dotmostbox/internal/ipfs"
-    "dotmostbox/internal/mp"
-    "dotmostbox/internal/config"
-    "dotmostbox/internal/sse"
+	"dotmostbox/internal/apis"
+	"dotmostbox/internal/config"
+	"dotmostbox/internal/files"
+	"dotmostbox/internal/ipfs"
+	"dotmostbox/internal/mp"
+	"dotmostbox/internal/sse"
 
-    "github.com/joho/godotenv"
+	"github.com/joho/godotenv"
 )
 
 // 嵌入 ./out 目录下的所有静态文件，便于单文件分发
@@ -32,10 +35,8 @@ func main() {
 	dir := filepath.Dir(exe)
 	_ = godotenv.Load(filepath.Join(dir, ".env"))
 
-    
-
-    // 初始化 IPFS Shell
-    sh := config.NewIPFSShell()
+	// 初始化 IPFS Shell
+	sh := config.NewIPFSShell()
 
 	if _, err := sh.ID(); err != nil {
 		log.Println("IPFS 节点未运行，请启动 IPFS 节点。")
@@ -65,9 +66,22 @@ func main() {
 		}
 	}()
 
+	srv := &http.Server{Addr: ":" + mp.PORT, Handler: handler}
 	log.Println("服务器正在监听", "http://localhost:"+mp.PORT)
-	if err := http.ListenAndServe(":"+mp.PORT, handler); err != nil {
-		log.Fatal(err)
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatal(err)
+		}
+	}()
+	<-stop
+	log.Println("收到停止信号，正在关闭")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Println("服务器关闭错误", err)
 	}
 }
 
