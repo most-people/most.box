@@ -54,7 +54,7 @@ export default function PageUser() {
       const owners = await contract.getOwners(name, filter);
       if (owners.length > 0) {
         setOwner(owners[0]);
-        fetchName(owners[0]);
+        fetchName(owners[0], filter);
       } else {
         notifications.show({
           message: `没有绑定用户名`,
@@ -68,7 +68,7 @@ export default function PageUser() {
       });
     }
   };
-  const fetchName = async (address: string) => {
+  const fetchName = async (address: string, filter = "") => {
     try {
       const provider = new JsonRpcProvider(RPC);
       const contract = new Contract(
@@ -79,7 +79,7 @@ export default function PageUser() {
 
       const name = await contract.getName(address);
       if (name) {
-        updateName(name);
+        updateName(name, filter);
       } else {
         notifications.show({
           message: `没有绑定用户名`,
@@ -89,10 +89,11 @@ export default function PageUser() {
       console.warn("获取用户名失败", err);
     }
   };
-  const updateName = (name: string) => {
-    setUsername(name);
+  const updateName = (name: string, filter = "") => {
+    const uid = name + (filter ? "-" + filter : "");
+    setUsername(uid);
     const list = pathname?.split("/") || [];
-    list[1] = "@" + name;
+    list[1] = "@" + uid;
     const url = new URL(window.location.href);
     url.pathname = list.join("/");
     window.history.replaceState(null, "", url.href);
@@ -100,11 +101,12 @@ export default function PageUser() {
 
   useEffect(() => {
     if (uid) {
+      const [name, filter] = uid.split("-");
       if (isAddress(uid)) {
         setOwner(uid);
-        fetchName(uid);
+        fetchName(uid, uid.slice(-3).toUpperCase());
       } else {
-        fetchOwner(uid);
+        fetchOwner(name, filter);
         setUsername(uid);
       }
     }
@@ -150,30 +152,26 @@ export default function PageUser() {
         provider
       );
 
-      const json = await contract.getData(owner);
-      if (json) {
-        const data = JSON.parse(json);
-        if (data?.dot) {
-          const baseURL = data.dot;
-          setDotAPI(baseURL);
-          const res = await api.get("/api.dot", { baseURL });
-          const dot = res.data as Dot;
-          if (dot) {
-            let dotCID = dot.CIDs[0];
-            if (baseURL.endsWith(":1976")) {
-              dotCID = baseURL.slice(0, -5) + ":8080";
-            }
-            if (dotCID) {
-              fetchNote(owner, baseURL, dotCID);
-            } else {
-              throw new Error("获取 IPFS 网关失败");
-            }
+      const dotAPI = await contract.getDot(owner);
+      if (dotAPI) {
+        setDotAPI(dotAPI);
+        const res = await api.get("/api.dot", { baseURL: dotAPI });
+        const dot = res.data as Dot;
+        if (dot) {
+          let dotCID = dot.CIDs[0];
+          if (dotAPI.endsWith(":1976")) {
+            dotCID = dotAPI.slice(0, -5) + ":8080";
+          }
+          if (dotCID) {
+            fetchNote(owner, dotAPI, dotCID);
           } else {
-            throw new Error("获取推荐节点失败");
+            throw new Error("获取 IPFS 网关失败");
           }
         } else {
-          throw new Error("获取 data.dot 失败");
+          throw new Error("获取节点失败");
         }
+      } else {
+        throw new Error("获取 data.dot 失败");
       }
     } catch (error: any) {
       notifications.show({
@@ -216,7 +214,7 @@ export default function PageUser() {
       />
       <Text>用户名：{username}</Text>
       <Text>地址：{owner}</Text>
-      <Text>推荐节点：{dotAPI}</Text>
+      <Text>节点：{dotAPI}</Text>
       <Text>CID：{CID}</Text>
 
       {CID === " " ? (

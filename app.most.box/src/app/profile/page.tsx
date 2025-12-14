@@ -116,7 +116,7 @@ const UserName = () => {
       await tx.wait();
       notifications.show({ message: "设置成功", color: "green" });
       setCurrentName(value);
-      fetchName();
+      // fetchName();
     } catch (err: any) {
       console.warn(err);
       notifications.show({
@@ -204,123 +204,12 @@ const UserName = () => {
   );
 };
 
-const UserRootCID = () => {
-  const setItem = useUserStore((state) => state.setItem);
-  const wallet = useUserStore((state) => state.wallet);
-  const rootCID = useUserStore((state) => state.rootCID);
-  const [customCID, setCustomCID] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  // 校验 CID 是否有效（支持 v0/v1），使用 multiformats 解析
-  const isValidCID = (cid: string): boolean => {
-    try {
-      CID.parse(cid.trim().split("?")[0]);
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
-  // 设置根目录 CID
-  const setRootCID = async () => {
-    if (!isValidCID(customCID)) {
-      return notifications.show({
-        message: "无效的 CID",
-        color: "red",
-      });
-    }
-    if (wallet) {
-      try {
-        setLoading(true);
-        const { RPC } = useDotStore.getState();
-        const provider = new JsonRpcProvider(RPC);
-        const signer = HDNodeWallet.fromPhrase(wallet.mnemonic).connect(
-          provider
-        );
-        const contract = new Contract(
-          CONTRACT_ADDRESS_NAME,
-          CONTRACT_ABI_NAME,
-          signer
-        );
-        const encodeCID = mostEncode(
-          customCID,
-          wallet.public_key,
-          wallet.private_key
-        );
-        const tx = await contract.setCID(encodeCID);
-        notifications.show({ message: "交易已提交，等待确认…", color: "blue" });
-        await tx.wait();
-        notifications.show({ message: "设置成功", color: "green" });
-        setItem("rootCID", encodeCID);
-      } catch (err: any) {
-        console.warn(err);
-        notifications.show({
-          message: err?.shortMessage || err?.message || "设置失败",
-          color: "red",
-        });
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
-
-  const getRootCID = async () => {
-    const res = await api.post("/files.root.cid");
-    const cid = res.data;
-    if (cid) {
-      setCustomCID(cid);
-    }
-  };
-
-  return (
-    <Stack>
-      <Text>根目录 CID「自动加密」</Text>
-
-      <TextInput
-        description="链上 CID"
-        leftSection={<IconAbc size={16} />}
-        variant="filled"
-        placeholder="请设置"
-        disabled
-        value={rootCID}
-      />
-      <Group align="flex-start">
-        <TextInput
-          flex={1}
-          description="当前 CID"
-          leftSection={<IconAbc size={16} />}
-          variant="filled"
-          placeholder="自定义"
-          value={customCID}
-          onChange={(e) => setCustomCID(e.currentTarget.value)}
-          error={
-            customCID && !isValidCID(customCID) ? "请输入有效的 CID" : undefined
-          }
-        />
-        <Button mt="21.8px" onClick={getRootCID}>
-          获取当前
-        </Button>
-      </Group>
-      <Group>
-        <Button
-          size="sm"
-          loading={loading}
-          onClick={setRootCID}
-          disabled={!wallet || !isValidCID(customCID) || rootCID === customCID}
-        >
-          设为根目录 CID
-        </Button>
-      </Group>
-    </Stack>
-  );
-};
-
-const UserData = () => {
+const UserDot = () => {
   const wallet = useUserStore((state) => state.wallet);
   const RPC = useDotStore((state) => state.RPC);
   const dotAPI = useDotStore((state) => state.dotAPI);
   const [loadingSetData, setLoadingSetData] = useState(false);
-  const [currentData, setCurrentData] = useState("");
+  const [currentDot, setCurrentDot] = useState("");
 
   // 读取链上数据
   const fetchData = async () => {
@@ -332,8 +221,8 @@ const UserData = () => {
         CONTRACT_ABI_NAME,
         provider
       );
-      const str = await contract.getData(wallet.address);
-      setCurrentData(str || "");
+      const str = await contract.getDot(wallet.address);
+      setCurrentDot(str || "");
     } catch (err) {
       console.warn("获取用户数据失败", err);
     }
@@ -343,19 +232,7 @@ const UserData = () => {
     fetchData();
   }, [wallet]);
 
-  // 解析链上 JSON 的 dot 地址
-  const currentDot = useMemo(() => {
-    if (!currentData) return "";
-    try {
-      const data = JSON.parse(currentData);
-      if (data?.dot) {
-        return data.dot;
-      }
-    } catch {}
-    return "";
-  }, [currentData]);
-
-  const onSetData = async () => {
+  const onSetDot = async () => {
     if (!wallet) {
       return notifications.show({ message: "请先登录", color: "red" });
     }
@@ -368,8 +245,6 @@ const UserData = () => {
       signer
     );
 
-    const data = JSON.stringify({ dot: dotAPI });
-
     try {
       setLoadingSetData(true);
       // 交易前检查余额是否足够支付 Gas（运行时估算）
@@ -381,7 +256,7 @@ const UserData = () => {
       if (gasPrice) {
         let gas: bigint = 0n;
         try {
-          gas = await contract.setData.estimateGas(data);
+          gas = await contract.setDot.estimateGas(dotAPI);
         } catch {
           // 无法估算时，继续交由链上处理
         }
@@ -397,14 +272,14 @@ const UserData = () => {
         }
       }
 
-      const tx = await contract.setData(data);
+      const tx = await contract.setDot(dotAPI);
       notifications.show({
         message: "交易已提交，等待确认…",
         color: "blue",
       });
       await tx.wait();
       notifications.show({ message: "设置成功", color: "green" });
-      setCurrentData(data);
+      setCurrentDot(dotAPI);
     } catch (err: any) {
       console.warn(err);
       notifications.show({
@@ -421,10 +296,10 @@ const UserData = () => {
       <Text>用户数据</Text>
 
       <TextInput
-        description="推荐节点"
+        description="我的节点"
         leftSection={<Icon name="Earth" size={16} />}
         variant="filled"
-        placeholder="请设置推荐节点"
+        placeholder="请设置我的节点"
         value={currentDot}
         disabled
       />
@@ -448,10 +323,10 @@ const UserData = () => {
         <Button
           size="sm"
           loading={loadingSetData}
-          onClick={onSetData}
+          onClick={onSetDot}
           disabled={!wallet || !dotAPI || currentDot === dotAPI}
         >
-          设为推荐节点
+          设为我的节点
         </Button>
       </Group>
     </Stack>
@@ -465,8 +340,7 @@ export default function PageProfile() {
       <AppHeader title="个人资料" />
       <Stack>
         <UserName />
-        <UserData />
-        <UserRootCID />
+        <UserDot />
         <Group>
           <Anchor
             size="sm"
