@@ -24,7 +24,8 @@ describe("NameContract", function () {
       const newName = "Alice";
       await nameContract.connect(addr1).setName(newName);
       expect(await nameContract.getName(addr1.address)).to.equal(newName);
-      expect(await nameContract.getOwner(newName)).to.equal(addr1.address);
+      const owners = await nameContract.getOwners(newName, "");
+      expect(owners).to.deep.equal([addr1.address]);
     });
 
     it("应该成功更新一个已有的名字", async function () {
@@ -35,8 +36,12 @@ describe("NameContract", function () {
       await nameContract.connect(addr1).setName(newName);
 
       expect(await nameContract.getName(addr1.address)).to.equal(newName);
-      expect(await nameContract.getOwner(oldName)).to.equal(ethers.ZeroAddress);
-      expect(await nameContract.getOwner(newName)).to.equal(addr1.address);
+
+      const oldOwners = await nameContract.getOwners(oldName, "");
+      expect(oldOwners).to.be.empty;
+
+      const newOwners = await nameContract.getOwners(newName, "");
+      expect(newOwners).to.deep.equal([addr1.address]);
     });
 
     it("应该因为名字太短而失败", async function () {
@@ -53,12 +58,17 @@ describe("NameContract", function () {
       ).to.be.revertedWith("Name too long");
     });
 
-    it("应该因为名字已被占用而失败", async function () {
+    it("应该允许重复名字", async function () {
       const name = "Bob";
       await nameContract.connect(addr1).setName(name);
-      await expect(
-        nameContract.connect(addr2).setName(name)
-      ).to.be.revertedWith("Name already taken");
+      // addr2 设置相同的名字，不应该失败
+      await expect(nameContract.connect(addr2).setName(name)).to.not.be
+        .reverted;
+
+      const owners = await nameContract.getOwners(name, "");
+      expect(owners.length).to.equal(2);
+      expect(owners).to.include(addr1.address);
+      expect(owners).to.include(addr2.address);
     });
 
     it("用户可以重新设置自己的名字", async function () {
@@ -81,17 +91,43 @@ describe("NameContract", function () {
     });
   });
 
-  describe("getOwner", function () {
-    it("应该返回指定名字的拥有者地址", async function () {
+  describe("getOwners", function () {
+    it("应该返回指定名字的拥有者地址列表", async function () {
       const name = "David";
       await nameContract.connect(addr1).setName(name);
-      expect(await nameContract.getOwner(name)).to.equal(addr1.address);
+      const owners = await nameContract.getOwners(name, "");
+      expect(owners).to.deep.equal([addr1.address]);
     });
 
-    it("对于不存在的名字应该返回零地址", async function () {
-      expect(await nameContract.getOwner("Unknown")).to.equal(
-        ethers.ZeroAddress
-      );
+    it("对于不存在的名字应该返回空数组", async function () {
+      const owners = await nameContract.getOwners("Unknown", "");
+      expect(owners).to.be.empty;
+    });
+
+    it("应该支持过滤查询 (Suffix Match)", async function () {
+      const name = "FilterTest";
+      // Addr1 and Addr2 both use name
+      await nameContract.connect(addr1).setName(name);
+      await nameContract.connect(addr2).setName(name);
+
+      // Get last 2 bytes (4 chars) of addr1
+      const addr1Hex = addr1.address.toLowerCase();
+      const suffix1 = addr1Hex.slice(-4);
+
+      // Get last 2 bytes of addr2
+      const addr2Hex = addr2.address.toLowerCase();
+      const suffix2 = addr2Hex.slice(-4);
+
+      // Assuming they are different (highly likely)
+      if (suffix1 !== suffix2) {
+        const owners1 = await nameContract.getOwners(name, suffix1);
+        expect(owners1).to.include(addr1.address);
+        expect(owners1).to.not.include(addr2.address);
+
+        const owners2 = await nameContract.getOwners(name, suffix2);
+        expect(owners2).to.include(addr2.address);
+        expect(owners2).to.not.include(addr1.address);
+      }
     });
   });
 
@@ -103,13 +139,27 @@ describe("NameContract", function () {
       await nameContract.connect(addr1).delName();
 
       expect(await nameContract.getName(addr1.address)).to.equal("");
-      expect(await nameContract.getOwner(name)).to.equal(ethers.ZeroAddress);
+      const owners = await nameContract.getOwners(name, "");
+      expect(owners).to.be.empty;
     });
 
     it("当用户没有名字时应该失败", async function () {
       await expect(nameContract.connect(addr1).delName()).to.be.revertedWith(
         "Name not set"
       );
+    });
+
+    it("删除名字应该只移除调用者", async function () {
+      const name = "Shared";
+      await nameContract.connect(addr1).setName(name);
+      await nameContract.connect(addr2).setName(name);
+
+      await nameContract.connect(addr1).delName();
+
+      const owners = await nameContract.getOwners(name, "");
+      expect(owners).to.deep.equal([addr2.address]);
+      expect(await nameContract.getName(addr1.address)).to.equal("");
+      expect(await nameContract.getName(addr2.address)).to.equal(name);
     });
   });
 
@@ -119,45 +169,20 @@ describe("NameContract", function () {
       const nameUpper = "Frank";
 
       await nameContract.connect(addr1).setName(nameLower);
+      await nameContract.connect(addr2).setName(nameUpper); // Allowed now
 
-      // addr2 无法设置 "Frank" 因为 "frank" 已被占用
-      await expect(
-        nameContract.connect(addr2).setName(nameUpper)
-      ).to.be.revertedWith("Name already taken");
+      const owners = await nameContract.getOwners(nameLower, "");
+      expect(owners.length).to.equal(2);
     });
 
-    it("getOwner 不应该区分大小写", async function () {
+    it("getOwners 不应该区分大小写", async function () {
       const nameLower = "grace";
       const nameUpper = "Grace";
 
       await nameContract.connect(addr1).setName(nameLower);
 
-      expect(await nameContract.getOwner(nameUpper)).to.equal(addr1.address);
-    });
-
-    it("更新名字时不应该区分大小写", async function () {
-      const oldName = "Heidi";
-      const newName = "Ivan";
-
-      await nameContract.connect(addr1).setName(oldName);
-      expect(await nameContract.getOwner("heidi")).to.equal(addr1.address);
-
-      await nameContract.connect(addr1).setName(newName);
-      expect(await nameContract.getOwner("heidi")).to.equal(ethers.ZeroAddress);
-      expect(await nameContract.getOwner("ivan")).to.equal(addr1.address);
-    });
-
-    it("删除名字时不应该区分大小写", async function () {
-      const name = "Judy";
-      await nameContract.connect(addr1).setName(name);
-
-      // 即使旧名字的大小写不同，也应该能正确删除
-      const oldNameFromContract = await nameContract.getName(addr1.address);
-      await nameContract.connect(addr1).delName();
-
-      expect(
-        await nameContract.getOwner(oldNameFromContract.toLowerCase())
-      ).to.equal(ethers.ZeroAddress);
+      const owners = await nameContract.getOwners(nameUpper, "");
+      expect(owners).to.deep.equal([addr1.address]);
     });
   });
 
@@ -197,47 +222,47 @@ describe("NameContract", function () {
     });
   });
 
-  // 新增 CID 相关测试
-  describe("CID", function () {
-    it("getCID: 对未设置的地址返回空字符串", async function () {
-      expect(await nameContract.getCID(addr1.address)).to.equal("");
+  // 新增 Dot 相关测试
+  describe("Dot", function () {
+    it("getDot: 对未设置的地址返回空字符串", async function () {
+      expect(await nameContract.getDot(addr1.address)).to.equal("");
     });
 
-    it("setCID: 能设置并读取调用者的 CID", async function () {
-      await nameContract.connect(addr1).setCID("cid-v1");
-      expect(await nameContract.getCID(addr1.address)).to.equal("cid-v1");
+    it("setDot: 能设置并读取调用者的 Dot", async function () {
+      await nameContract.connect(addr1).setDot("dot-v1");
+      expect(await nameContract.getDot(addr1.address)).to.equal("dot-v1");
     });
 
-    it("setCID: 再次设置会更新旧值", async function () {
-      await nameContract.connect(addr1).setCID("cid-v1");
-      await nameContract.connect(addr1).setCID("cid-v2");
-      expect(await nameContract.getCID(addr1.address)).to.equal("cid-v2");
+    it("setDot: 再次设置会更新旧值", async function () {
+      await nameContract.connect(addr1).setDot("dot-v1");
+      await nameContract.connect(addr1).setDot("dot-v2");
+      expect(await nameContract.getDot(addr1.address)).to.equal("dot-v2");
     });
 
-    it("setCID: 超过最大长度应 revert (140)", async function () {
-      const tooLongCID = "a".repeat(141);
+    it("setDot: 超过最大长度应 revert (140)", async function () {
+      const tooLongDot = "a".repeat(141);
       await expect(
-        nameContract.connect(addr1).setCID(tooLongCID)
-      ).to.be.revertedWith("CID too long");
+        nameContract.connect(addr1).setDot(tooLongDot)
+      ).to.be.revertedWith("Dot too long");
     });
 
-    it("setCID: 边界长度 140 应成功", async function () {
-      const boundaryCID = "a".repeat(140);
-      await expect(nameContract.connect(addr1).setCID(boundaryCID)).to.not.be
+    it("setDot: 边界长度 140 应成功", async function () {
+      const boundaryDot = "a".repeat(140);
+      await expect(nameContract.connect(addr1).setDot(boundaryDot)).to.not.be
         .reverted;
-      expect(await nameContract.getCID(addr1.address)).to.equal(boundaryCID);
+      expect(await nameContract.getDot(addr1.address)).to.equal(boundaryDot);
     });
 
-    it("delCID: 未设置时应 revert", async function () {
-      await expect(nameContract.connect(addr1).delCID()).to.be.revertedWith(
-        "CID not set"
+    it("delDot: 未设置时应 revert", async function () {
+      await expect(nameContract.connect(addr1).delDot()).to.be.revertedWith(
+        "Dot not set"
       );
     });
 
-    it("delCID: 已设置则成功删除", async function () {
-      await nameContract.connect(addr1).setCID("cid-v1");
-      await nameContract.connect(addr1).delCID();
-      expect(await nameContract.getCID(addr1.address)).to.equal("");
+    it("delDot: 已设置则成功删除", async function () {
+      await nameContract.connect(addr1).setDot("dot-v1");
+      await nameContract.connect(addr1).delDot();
+      expect(await nameContract.getDot(addr1.address)).to.equal("");
     });
   });
 });

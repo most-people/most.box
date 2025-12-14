@@ -170,7 +170,6 @@ const UserName = () => {
       </Group>
 
       <TextInput
-        description="链上唯一，可修改"
         leftSection={<IconAt size={16} />}
         variant="filled"
         placeholder="请输入新用户名"

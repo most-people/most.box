@@ -92,71 +92,71 @@ export const useUserStore = create<State>((set, get) => ({
         signer
       );
 
-      const [res, encodeCID] = await Promise.all([
-        api.post("/files.root.cid"),
-        contract.getCID(wallet.address),
-      ]);
-      const cid = res.data;
-      const rootCID = mostDecode(
-        encodeCID,
-        wallet.public_key,
-        wallet.private_key
-      );
-      if (cid && cid !== rootCID) {
-        const encodeCID = mostEncode(
-          cid,
-          wallet.public_key,
-          wallet.private_key
-        );
-        const tx = await contract.setCID(encodeCID);
-        await tx.wait();
-        set({ rootCID: cid });
-      }
+      // const [res, encodeCID] = await Promise.all([
+      //   api.post("/files.root.cid"),
+      //   contract.getCID(wallet.address),
+      // ]);
+      // const cid = res.data;
+      // const rootCID = mostDecode(
+      //   encodeCID,
+      //   wallet.public_key,
+      //   wallet.private_key
+      // );
+      // if (cid && cid !== rootCID) {
+      //   const encodeCID = mostEncode(
+      //     cid,
+      //     wallet.public_key,
+      //     wallet.private_key
+      //   );
+      //   const tx = await contract.setCID(encodeCID);
+      //   await tx.wait();
+      //   set({ rootCID: cid });
+      // }
     }
   },
   async initRootCID() {
     const { wallet } = get();
     if (!wallet) return console.log("未登录");
 
-    const { RPC } = useDotStore.getState();
-    const provider = new JsonRpcProvider(RPC);
-    const contract = new Contract(
-      CONTRACT_ADDRESS_NAME,
-      CONTRACT_ABI_NAME,
-      provider
-    );
-    const [res, encodeCID] = await Promise.all([
-      api.post("/files.root.cid"),
-      contract.getCID(wallet.address),
-    ]);
-    const cid = res.data;
-    const rootCID = mostDecode(
-      encodeCID,
-      wallet.public_key,
-      wallet.private_key
-    );
-    if (rootCID) {
-      if (rootCID === cid) {
-        set({ rootCID });
-      } else {
-        // 导入根目录 CID
-        try {
-          await api({
-            method: "put",
-            url: "/files.import",
-            params: {
-              cid: rootCID,
-            },
-          });
-          set({ rootCID });
-        } catch (error) {
-          notifications.show({
-            message: "根目录 CID 导入失败",
-            color: "red",
-          });
-        }
-      }
-    }
+    // const { RPC } = useDotStore.getState();
+    // const provider = new JsonRpcProvider(RPC);
+    // const contract = new Contract(
+    //   CONTRACT_ADDRESS_NAME,
+    //   CONTRACT_ABI_NAME,
+    //   provider
+    // );
+    // const [res, encodeCID] = await Promise.all([
+    //   api.post("/files.root.cid"),
+    //   contract.getCID(wallet.address),
+    // ]);
+    // const cid = res.data;
+    // const rootCID = mostDecode(
+    //   encodeCID,
+    //   wallet.public_key,
+    //   wallet.private_key
+    // );
+    // if (rootCID) {
+    //   if (rootCID === cid) {
+    //     set({ rootCID });
+    //   } else {
+    //     // 导入根目录 CID
+    //     try {
+    //       await api({
+    //         method: "put",
+    //         url: "/files.import",
+    //         params: {
+    //           cid: rootCID,
+    //         },
+    //       });
+    //       set({ rootCID });
+    //     } catch (error) {
+    //       notifications.show({
+    //         message: "根目录 CID 导入失败",
+    //         color: "red",
+    //       });
+    //     }
+    //   }
+    // }
   },
   // 余额
   balance: "",

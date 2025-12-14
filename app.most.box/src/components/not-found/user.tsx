@@ -42,7 +42,7 @@ export default function PageUser() {
     }
   }, [pathname]);
 
-  const fetchOwner = async (name: string) => {
+  const fetchOwner = async (name: string, filter = "") => {
     try {
       const provider = new JsonRpcProvider(RPC);
       const contract = new Contract(
@@ -51,9 +51,15 @@ export default function PageUser() {
         provider
       );
 
-      const owner = await contract.getOwner(name);
-      setOwner(owner);
-      fetchName(owner);
+      const owners = await contract.getOwners(name, filter);
+      if (owners.length > 0) {
+        setOwner(owners[0]);
+        fetchName(owners[0]);
+      } else {
+        notifications.show({
+          message: `没有绑定用户名`,
+        });
+      }
     } catch (err) {
       console.warn("获取地址失败", err);
       notifications.show({

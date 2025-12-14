@@ -8,7 +8,7 @@ export const CONTRACT_ADDRESS_DOT =
 
 // 名称合约
 export const CONTRACT_ADDRESS_NAME =
-  "0x8F175B89C1A5Bb27f050FC88F0894d684A45f299";
+  "0x01e20A1a1c5740A37838f8b80f5222916500Bc1e";
 
 // 网络类型
 export type NETWORK_TYPE = "mainnet" | "testnet";
