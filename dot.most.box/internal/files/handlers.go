@@ -346,6 +346,15 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			return
 		}
 
+		// 异步执行 pin 操作，确保数据从远程节点完整拉取到本地，避免源节点关闭后无法访问
+		// go func(cidStr string) {
+		// 	// 1. 显式 pin 触发递归下载
+		// 	if err := sh.Request("pin/add", cidStr).Option("recursive", true).Exec(context.Background(), nil); err == nil {
+		// 		// 2. 下载完成后移除显式 pin（因为文件已在 MFS 中，受 MFS 根 pin 保护）
+		// 		sh.Request("pin/rm", cidStr).Exec(context.Background(), nil)
+		// 	}
+		// }(cid)
+
 		json.NewEncoder(w).Encode(map[string]any{"ok": true, "message": "导入成功", "cid": cid, "path": target})
 	})
 }
