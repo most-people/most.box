@@ -29,7 +29,6 @@ export default function HomeNote() {
   const wallet = useUserStore((state) => state.wallet);
   const notes = useUserStore((state) => state.notes);
   const rootCID = useUserStore((state) => state.rootCID);
-  const updateRootCID = useUserStore((state) => state.updateRootCID);
   const notesQuery = useUserStore((state) => state.notesQuery);
   const setItem = useUserStore((state) => state.setItem);
 
@@ -146,7 +145,6 @@ export default function HomeNote() {
       const res = await api.put("/files.upload", formData);
       const cid = res.data?.cid;
       if (cid) {
-        updateRootCID();
         notifications.show({
           color: "green",
           message: "笔记创建成功",
@@ -226,7 +224,6 @@ export default function HomeNote() {
         oldName: `/.note/${currentNote.name}`,
         newName: `/.note/${name}`,
       });
-      updateRootCID();
       notifications.show({
         color: "green",
         message: "重命名成功",
@@ -254,7 +251,6 @@ export default function HomeNote() {
           params: { path: `.note/${note.name}` },
         });
 
-        updateRootCID();
         notifications.show({
           color: "green",
           message: "删除成功",

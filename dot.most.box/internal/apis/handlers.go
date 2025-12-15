@@ -188,8 +188,8 @@ func Register(mux *http.ServeMux, sh *shell.Shell) {
 			http.Error(w, "查询 chainID 失败 "+err.Error(), http.StatusInternalServerError)
 			return
 		}
-		// 转账金额：0.00001976 ETH
-		value := etherToWei("0.00001976")
+		// 转账金额：0.000001976 ETH
+		value := etherToWei("0.000001976")
 		to := common.HexToAddress(address)
 		tx := types.NewTransaction(nonce, to, value, 21000, gasPrice, nil)
 		signer := types.LatestSignerForChainID(chainID)

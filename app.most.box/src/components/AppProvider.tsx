@@ -1,9 +1,10 @@
 "use client";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { useUserStore } from "@/stores/userStore";
-import { checkNode, useDotStore } from "@/stores/dotStore";
+import { useDotStore } from "@/stores/dotStore";
 import { useEffect } from "react";
 import { api } from "@/constants/api";
+// import { useRouter } from "next/navigation";
 import { useComputedColorScheme, useMantineColorScheme } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import mp from "@/constants/mp";
@@ -15,7 +16,7 @@ export default function AppProvider() {
   const setDotItem = useDotStore((state) => state.setItem);
   const setNetwork = useDotStore((state) => state.setNetwork);
   const updateDot = useDotStore((state) => state.updateDot);
-  const fetchNodes = useDotStore((state) => state.fetchNodes);
+  // const router = useRouter();
 
   const initWallet = (fingerprint: string) => {
     setItem("fingerprint", fingerprint);
@@ -49,21 +50,6 @@ export default function AppProvider() {
     }
   };
 
-  const autoDot = async () => {
-    const nodes = await fetchNodes();
-    const dotNodes = await Promise.all(
-      nodes.map(async (node) => {
-        const { isOnline, responseTime } = await checkNode(node);
-        return { ...node, isOnline, responseTime };
-      })
-    );
-    const node = dotNodes.sort((a, b) => a.responseTime - b.responseTime)[0];
-    const url = node?.APIs?.[0];
-    if (url) {
-      updateDot(url);
-    }
-  };
-
   const initDot = () => {
     const host = window.location.hash.slice(1);
     const protocol = `http${host.endsWith(":1976") ? "" : "s"}://`;
@@ -77,7 +63,7 @@ export default function AppProvider() {
     // 切换节点
     updateDot(dotAPI || location.origin).then((list) => {
       if (list === null) {
-        autoDot();
+        notifications.show({ message: `节点 ${dotAPI} 不可用`, color: "red" });
       }
     });
     const dotCID = localStorage.getItem("dotCID");

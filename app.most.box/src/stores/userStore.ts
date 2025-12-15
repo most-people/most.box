@@ -25,6 +25,7 @@ export interface Note {
 }
 
 interface UserStore {
+  dotAPI: string;
   wallet?: MostWallet;
   setWallet: (wallet: MostWallet) => void;
   firstPath: string;
@@ -41,7 +42,6 @@ interface UserStore {
   // 根目录
   rootCID: string;
   initRootCID: () => Promise<void>;
-  updateRootCID: () => Promise<void>;
   // 余额
   balance: string;
   initBalance: () => Promise<void>;
@@ -52,6 +52,7 @@ interface State extends UserStore {
 }
 
 export const useUserStore = create<State>((set, get) => ({
+  dotAPI: "",
   // 钱包
   wallet: undefined,
   setWallet(wallet: MostWallet) {
@@ -59,8 +60,6 @@ export const useUserStore = create<State>((set, get) => ({
     const { initRootCID, initBalance } = get();
     initRootCID();
     initBalance();
-    // 自动获取测试网 Gas
-    // api.post("/api.testnet.gas");
   },
   // 返回
   firstPath: "",
@@ -80,83 +79,30 @@ export const useUserStore = create<State>((set, get) => ({
   },
   // 根目录 CID
   rootCID: "",
-  async updateRootCID() {
-    const { wallet } = get();
-    if (wallet) {
-      const { RPC } = useDotStore.getState();
-      const provider = new JsonRpcProvider(RPC);
-      const signer = HDNodeWallet.fromPhrase(wallet.mnemonic).connect(provider);
-      const contract = new Contract(
-        CONTRACT_ADDRESS_NAME,
-        CONTRACT_ABI_NAME,
-        signer
-      );
-
-      // const [res, encodeCID] = await Promise.all([
-      //   api.post("/files.root.cid"),
-      //   contract.getCID(wallet.address),
-      // ]);
-      // const cid = res.data;
-      // const rootCID = mostDecode(
-      //   encodeCID,
-      //   wallet.public_key,
-      //   wallet.private_key
-      // );
-      // if (cid && cid !== rootCID) {
-      //   const encodeCID = mostEncode(
-      //     cid,
-      //     wallet.public_key,
-      //     wallet.private_key
-      //   );
-      //   const tx = await contract.setCID(encodeCID);
-      //   await tx.wait();
-      //   set({ rootCID: cid });
-      // }
-    }
-  },
   async initRootCID() {
     const { wallet } = get();
     if (!wallet) return console.log("未登录");
 
-    // const { RPC } = useDotStore.getState();
-    // const provider = new JsonRpcProvider(RPC);
-    // const contract = new Contract(
-    //   CONTRACT_ADDRESS_NAME,
-    //   CONTRACT_ABI_NAME,
-    //   provider
-    // );
-    // const [res, encodeCID] = await Promise.all([
-    //   api.post("/files.root.cid"),
-    //   contract.getCID(wallet.address),
-    // ]);
-    // const cid = res.data;
-    // const rootCID = mostDecode(
-    //   encodeCID,
-    //   wallet.public_key,
-    //   wallet.private_key
-    // );
-    // if (rootCID) {
-    //   if (rootCID === cid) {
-    //     set({ rootCID });
-    //   } else {
-    //     // 导入根目录 CID
-    //     try {
-    //       await api({
-    //         method: "put",
-    //         url: "/files.import",
-    //         params: {
-    //           cid: rootCID,
-    //         },
-    //       });
-    //       set({ rootCID });
-    //     } catch (error) {
-    //       notifications.show({
-    //         message: "根目录 CID 导入失败",
-    //         color: "red",
-    //       });
-    //     }
-    //   }
-    // }
+    const { RPC, updateDot } = useDotStore.getState();
+    const provider = new JsonRpcProvider(RPC);
+    const contract = new Contract(
+      CONTRACT_ADDRESS_NAME,
+      CONTRACT_ABI_NAME,
+      provider
+    );
+    const dotAPI = await contract.getDot(wallet.address);
+    if (!dotAPI) {
+      notifications.show({
+        message: "未配置选择节点",
+        color: "red",
+      });
+      return;
+    }
+    updateDot(dotAPI).then((list) => {
+      if (list !== null) {
+        set({ dotAPI });
+      }
+    });
   },
   // 余额
   balance: "",

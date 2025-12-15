@@ -49,7 +49,6 @@ export default function HomeFile() {
   const filesPath = useUserStore((state) => state.filesPath);
   const setItem = useUserStore((state) => state.setItem);
   const rootCID = useUserStore((state) => state.rootCID);
-  const updateRootCID = useUserStore((state) => state.updateRootCID);
 
   const dotCID = useDotStore((state) => state.dotCID);
 
@@ -134,7 +133,6 @@ export default function HomeFile() {
       const res = await api.put("/files.upload", formData);
       const cid = res.data?.cid;
       if (cid) {
-        updateRootCID();
         notifications.show({
           message: "文件夹创建成功",
           color: "green",
@@ -239,7 +237,6 @@ export default function HomeFile() {
         autoClose: true,
       });
 
-      updateRootCID();
       // 上传完成后刷新文件列表
       await fetchFiles(filesPath);
       setShowPreview(false);
@@ -309,7 +306,6 @@ export default function HomeFile() {
         url: "/files.import.cid",
         params: { cid, path: targetPath },
       });
-      updateRootCID();
       notifications.show({
         message: `已导入 CID: ${cid}${importName ? `「${importName}」` : ""}`,
         color: "green",
@@ -391,7 +387,6 @@ export default function HomeFile() {
         color: "green",
       });
 
-      updateRootCID();
       // 删除成功后刷新文件列表
       await fetchFiles(filesPath);
     } catch (error) {
@@ -449,7 +444,6 @@ export default function HomeFile() {
         oldName: `/${normalize(oldPath)}`,
         newName: `/${normalize(newPath)}`,
       });
-      updateRootCID();
       notifications.show({
         title: "重命名成功",
         message: `新路径名称 "${normalize(newPath)}"`,

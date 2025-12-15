@@ -29,7 +29,6 @@ import { modals } from "@mantine/modals";
 const PageContent = () => {
   const params = useSearchParams();
   const wallet = useUserStore((state) => state.wallet);
-  const updateRootCID = useUserStore((state) => state.updateRootCID);
   const dotCID = useDotStore((state) => state.dotCID);
 
   const [loading, setLoading] = useState(true);
@@ -105,7 +104,6 @@ const PageContent = () => {
       const cid = res.data?.cid;
       if (cid) {
         updateUrl(cid, wallet?.address);
-        updateRootCID();
         notifications.show({
           message: `${name} 保存成功`,
           color: "green",
@@ -128,7 +126,7 @@ const PageContent = () => {
     if (editor) {
       const newContent = editor.getMarkdown();
       setContent(newContent);
-      const name = params.get("name");
+      const name = params?.get("name");
       if (name) {
         updateNote(name, newContent);
       } else {
@@ -173,8 +171,8 @@ const PageContent = () => {
   };
 
   const init = async () => {
-    const uid = params.get("uid");
-    const name = params.get("name");
+    const uid = params?.get("uid");
+    const name = params?.get("name");
     // 获取最新 CID
     if (uid && name) {
       try {
@@ -189,7 +187,7 @@ const PageContent = () => {
         console.info(error);
       }
     }
-    const cid = params.get("cid");
+    const cid = params?.get("cid");
     if (cid) {
       fetchNote(cid);
     }
@@ -198,7 +196,7 @@ const PageContent = () => {
   // 使用 useMemo 缓存标题提取结果
   const title = useMemo(() => {
     let t = "笔记";
-    const name = params.get("name");
+    const name = params?.get("name");
     if (name) {
       t = name;
     }
