@@ -41,7 +41,7 @@ interface UserStore {
   exit: () => void;
   // 根目录
   rootCID: string;
-  initRootCID: () => Promise<void>;
+  initDotAPI: () => Promise<void>;
   // 余额
   balance: string;
   initBalance: () => Promise<void>;
@@ -57,8 +57,8 @@ export const useUserStore = create<State>((set, get) => ({
   wallet: undefined,
   setWallet(wallet: MostWallet) {
     set({ wallet });
-    const { initRootCID, initBalance } = get();
-    initRootCID();
+    const { initDotAPI, initBalance } = get();
+    initDotAPI();
     initBalance();
   },
   // 返回
@@ -79,7 +79,7 @@ export const useUserStore = create<State>((set, get) => ({
   },
   // 根目录 CID
   rootCID: "",
-  async initRootCID() {
+  async initDotAPI() {
     const { wallet } = get();
     if (!wallet) return console.log("未登录");
 
