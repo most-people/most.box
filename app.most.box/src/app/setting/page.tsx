@@ -205,7 +205,7 @@ const UserName = () => {
           href={`https://most.box/@${uid}/`}
           target="_blank"
         >
-          个人主页 most.box/@{uid}
+          主页 most.box/@{uid}
         </Anchor>
       )}
     </Stack>

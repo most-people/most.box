@@ -20,7 +20,8 @@
 
 @font-face {
   font-family: "Work Sans";
-  src: url("/fonts/WorkSans.ttf") format("truetype-variations"),
+  src:
+    url("/fonts/WorkSans.ttf") format("truetype-variations"),
     url("/fonts/WorkSans.ttf") format("truetype");
   font-weight: 100 900;
   font-style: normal;
@@ -49,7 +50,7 @@ body::after {
   background-size: 109px;
   background-repeat: repeat;
   opacity: 0.06;
-  z-index: 100;
+  z-index: 1000;
 }
 
 a {

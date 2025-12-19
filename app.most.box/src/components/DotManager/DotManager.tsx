@@ -408,13 +408,13 @@ export function DotManager({ isModal, onClose }: DotManagerProps) {
       style={{ wordBreak: "break-all" }}
       p={isModal ? 0 : undefined}
     >
-      {!isModal && <AppHeader title="请选择节点" />}
+      {!isModal && <AppHeader title="我的节点" />}
 
       {/* 当前节点信息区域 */}
       <Box mb="lg">
         <Stack align="center">
           <Title mt="md">{title}</Title>
-          <Group gap={0}>
+          {/* <Group gap={0}>
             <IconBrandGithub />
             <Anchor
               c="dimmed"
@@ -424,7 +424,7 @@ export function DotManager({ isModal, onClose }: DotManagerProps) {
             >
               「轻松简单、开源免费、部署自己的节点」
             </Anchor>
-          </Group>
+          </Group> */}
           {ApiList.length > 0 ? (
             <>
               <Text>已成功接入</Text>
@@ -808,7 +808,7 @@ export function DotManager({ isModal, onClose }: DotManagerProps) {
       )}
 
       {/* 底部控制区域 */}
-      <Group mt="lg" gap="xs" justify="space-between">
+      {/* <Group mt="lg" gap="xs" justify="space-between">
         <Button
           size="sm"
           color="yellow"
@@ -838,7 +838,7 @@ export function DotManager({ isModal, onClose }: DotManagerProps) {
             <IconRefresh size={18} />
           </ActionIcon>
         </Tooltip>
-      </Group>
+      </Group> */}
 
       <Group gap="xs" mt="lg" justify="center">
         <Anchor
