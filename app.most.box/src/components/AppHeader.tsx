@@ -40,7 +40,7 @@ export const AppHeader = ({ title, variant, right, left }: AppHeaderProps) => {
               leftSection={<Icon name="Earth" size={16} />}
               onClick={openDotManager}
             >
-              节点管理
+              我的节点
             </Menu.Item>
           </Menu.Dropdown>
         </Menu>
