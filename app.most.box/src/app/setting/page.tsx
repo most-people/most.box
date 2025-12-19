@@ -30,6 +30,7 @@ import { useUserStore } from "@/stores/userStore";
 import { useDotStore } from "@/stores/dotStore";
 import { Contract, JsonRpcProvider, HDNodeWallet } from "ethers";
 import { CONTRACT_ABI_NAME, CONTRACT_ADDRESS_NAME } from "@/constants/dot";
+import { openDotManager } from "@/components/DotManager/open";
 
 const UserName = () => {
   const wallet = useUserStore((state) => state.wallet);
@@ -321,9 +322,7 @@ const UserDot = () => {
           readOnly
         />
 
-        <Button component={Link} href={"/dot/?back"}>
-          切换节点
-        </Button>
+        <Button onClick={openDotManager}>切换节点</Button>
       </Group>
 
       <Group>

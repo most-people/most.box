@@ -1,9 +1,9 @@
 "use client";
-import { Text, Group, ActionIcon, TextVariant } from "@mantine/core";
+import { Text, Group, ActionIcon, TextVariant, Menu } from "@mantine/core";
 import { Icon } from "@/components/Icon";
 import { useBack } from "@/hooks/useBack";
-import { notifications } from "@mantine/notifications";
 import { useDocumentTitle } from "@mantine/hooks";
+import { openDotManager } from "@/components/DotManager/open";
 
 interface AppHeaderProps {
   title: string | string[];
@@ -29,13 +29,21 @@ export const AppHeader = ({ title, variant, right, left }: AppHeaderProps) => {
       {right ? (
         right
       ) : (
-        <ActionIcon
-          variant="transparent"
-          color="--text-color"
-          onClick={() => notifications.show({ message: "没有更多" })}
-        >
-          <Icon name="More" size={24} />
-        </ActionIcon>
+        <Menu shadow="md" width={200} position="bottom-end">
+          <Menu.Target>
+            <ActionIcon variant="transparent" color="--text-color">
+              <Icon name="More" size={24} />
+            </ActionIcon>
+          </Menu.Target>
+          <Menu.Dropdown>
+            <Menu.Item
+              leftSection={<Icon name="Earth" size={16} />}
+              onClick={openDotManager}
+            >
+              节点管理
+            </Menu.Item>
+          </Menu.Dropdown>
+        </Menu>
       )}
     </Group>
   );

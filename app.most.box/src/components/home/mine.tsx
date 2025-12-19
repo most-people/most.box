@@ -6,6 +6,7 @@ import { Avatar, Text, Stack, Group, Box, ActionIcon } from "@mantine/core";
 import { Icon, type IconName } from "@/components/Icon";
 import { useUserStore } from "@/stores/userStore";
 import mp from "@/constants/mp";
+import { openDotManager } from "@/components/DotManager/open";
 
 export default function HomeMine() {
   const wallet = useUserStore((state) => state.wallet);
@@ -49,7 +50,15 @@ export default function HomeMine() {
       <Stack className="menu-list" mb="xs" gap={0}>
         <MenuItem icon="Web3" label="Web3" link="/web3" />
         <MenuItem icon="Website" label="个人主页" link={`/@${address}`} />
-        <MenuItem icon="Earth" label="节点" link="/dot" />
+        <MenuItem
+          icon="Earth"
+          label="节点"
+          link="/dot"
+          onClick={(e) => {
+            e.preventDefault();
+            openDotManager();
+          }}
+        />
         <MenuItem icon="Chat" label="聊天" link="/chat/?id=001" />
       </Stack>
       <Stack className="menu-list" gap={0}>
@@ -73,7 +82,7 @@ interface MenuItemProps {
   icon: IconName;
   label: string;
   link: string;
-  onClick?: () => void;
+  onClick?: (e: any) => void;
 }
 
 function MenuItem({ icon, label, link, onClick }: MenuItemProps) {

@@ -1,5 +1,4 @@
 "use client";
-import { useEffect, useState } from "react";
 import { ActionIcon, Tabs, Text } from "@mantine/core";
 import { Icon } from "@/components/Icon";
 import HomeMine from "@/components/home/mine";
@@ -9,20 +8,19 @@ import "@/app/page.scss";
 import HomeNote from "@/components/home/note";
 import HomeExplore from "@/components/home/explore";
 import { AppHeader } from "@/components/AppHeader";
-import Link from "next/link";
+import { openDotManager } from "@/components/DotManager/open";
+import { useLocalStorage } from "@mantine/hooks";
 
 export default function PageHome() {
-  const [homeTab, setHomeTab] = useState<string | null>(null);
+  const [homeTab, setHomeTab] = useLocalStorage({
+    key: "homeTab",
+    defaultValue: "explore",
+    getInitialValueInEffect: true,
+  });
 
   const tabChange = (value: string | null) => {
-    setHomeTab(value);
-    localStorage.setItem("homeTab", value || "explore");
+    setHomeTab(value || "explore");
   };
-
-  useEffect(() => {
-    const activeTab = localStorage.getItem("homeTab");
-    setHomeTab(activeTab || "explore");
-  }, []);
 
   return (
     <>
@@ -32,8 +30,7 @@ export default function PageHome() {
           <ActionIcon
             variant="transparent"
             color="--text-color"
-            component={Link}
-            href="/dot"
+            onClick={openDotManager}
           >
             <Icon name="Earth" size={24} />
           </ActionIcon>
