@@ -106,7 +106,7 @@ export function DotManager({ isModal, onClose }: DotManagerProps) {
     try {
       return new URL(dotAPI).host.toUpperCase();
     } catch {
-      return "DOT.MOST.BOX";
+      return "请选择节点";
     }
   }, [dotAPI]);
 
@@ -499,7 +499,6 @@ export function DotManager({ isModal, onClose }: DotManagerProps) {
                 { value: "testnet", label: "🧪 Base 测试网" },
                 { value: "mainnet", label: "🌐 Base 主网" },
               ]}
-              leftSection={<IconNetwork size={16} />}
               variant="filled"
               radius="md"
               w={180}
@@ -643,9 +642,11 @@ export function DotManager({ isModal, onClose }: DotManagerProps) {
                   </ThemeIcon>
                   <Box>
                     <Group gap="xs">
-                      <Text fw={600} size="md" lineClamp={1}>
-                        {node.name.split("-")[0]}
-                      </Text>
+                      <Tooltip label={node.name}>
+                        <Text fw={600} size="md" lineClamp={1}>
+                          {node.name.split("-")[0]}
+                        </Text>
+                      </Tooltip>
                       {isCurrentNode(node) && (
                         <Badge size="xs" color="blue" variant="filled">
                           当前
@@ -798,7 +799,7 @@ export function DotManager({ isModal, onClose }: DotManagerProps) {
                     loading={switchingNode === node.address}
                     disabled={isDisabledNode(node)}
                   >
-                    {isCurrentNode(node) ? "当前节点" : "切换节点"}
+                    {isCurrentNode(node) ? "当前节点" : "选择节点"}
                   </Button>
                 </Group>
               </Stack>
@@ -841,7 +842,7 @@ export function DotManager({ isModal, onClose }: DotManagerProps) {
       </Group> */}
 
       <Group gap="xs" mt="lg" justify="center">
-        <Anchor
+        {/* <Anchor
           size="sm"
           c="blue"
           component={Link}
@@ -858,7 +859,7 @@ export function DotManager({ isModal, onClose }: DotManagerProps) {
           target="_blank"
         >
           主网 RPC
-        </Anchor>
+        </Anchor> */}
         <Anchor
           size="sm"
           c="blue"

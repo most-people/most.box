@@ -56,7 +56,7 @@ export default function RootLayout({
         <div id="app">
           <MantineProvider defaultColorScheme="auto" theme={theme}>
             <AppProvider />
-            <Notifications limit={3} position="bottom-center" />
+            <Notifications limit={3} position="top-center" />
             <ModalsProvider>{children}</ModalsProvider>
           </MantineProvider>
         </div>

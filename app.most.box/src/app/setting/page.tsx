@@ -322,7 +322,7 @@ const UserDot = () => {
           readOnly
         />
 
-        <Button onClick={openDotManager}>切换节点</Button>
+        <Button onClick={openDotManager}>选择节点</Button>
       </Group>
 
       <Group>
