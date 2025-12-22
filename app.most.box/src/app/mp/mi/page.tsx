@@ -157,7 +157,9 @@ export default function PageMpMi() {
     const url = new URL(window.location.href);
     const mi = url.searchParams.get("mi");
     if (mi) {
-      setCipherText(mi);
+      (async () => {
+        setCipherText(mi);
+      })();
     }
   }, []);
 

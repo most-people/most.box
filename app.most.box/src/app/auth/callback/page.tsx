@@ -97,7 +97,9 @@ export default function AuthCallback() {
   };
 
   useEffect(() => {
-    authCallback();
+    (async () => {
+      await authCallback();
+    })();
   }, []);
 
   useEffect(() => {

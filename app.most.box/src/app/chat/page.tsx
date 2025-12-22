@@ -661,11 +661,15 @@ export default function PageChat() {
 
   useEffect(() => {
     const uuid = Math.random().toString(36).slice(2, 10).toUpperCase();
-    setClientId(uuid);
+    (async () => {
+      setClientId(uuid);
+    })();
 
     const id = new URLSearchParams(window.location.search).get("id");
-    setRoomId(id || roomId);
-    updateRoomId(id || roomId);
+    (async () => {
+      setRoomId(id || roomId);
+      updateRoomId(id || roomId);
+    })();
 
     init();
 
