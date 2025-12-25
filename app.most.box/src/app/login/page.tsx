@@ -318,7 +318,7 @@ export default function PageLogin() {
             {isLogin ? "登录" : "游客"}
           </Button>
 
-          <Divider label="Or" labelPosition="center" />
+          <Divider label="MOST" labelPosition="center" />
 
           <Group justify="center" gap="md">
             <Tooltip label="使用邮箱登录">
