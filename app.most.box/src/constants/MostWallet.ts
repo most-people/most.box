@@ -24,7 +24,7 @@ export interface MostWallet {
 export const mostWallet = (
   username: string,
   password: string,
-  danger?: string
+  danger?: string,
 ): MostWallet => {
   const isDanger = danger === "I know loss mnemonic will lose my wallet.";
   const p = toUtf8Bytes(password);
@@ -62,7 +62,7 @@ export const mostWallet = (
 export const mostEncode = (
   text: string,
   public_key: string,
-  private_key: string
+  private_key: string,
 ) => {
   const bytes = new TextEncoder().encode(text);
   const nonce = nacl.randomBytes(nacl.box.nonceLength);
@@ -70,7 +70,7 @@ export const mostEncode = (
     bytes,
     nonce,
     new Uint8Array(getBytes(public_key)),
-    new Uint8Array(getBytes(private_key))
+    new Uint8Array(getBytes(private_key)),
   );
   if (!encrypted) {
     console.info("加密失败");
@@ -82,7 +82,7 @@ export const mostEncode = (
 export const mostDecode = (
   data: string,
   public_key: string,
-  private_key: string
+  private_key: string,
 ) => {
   const [prefix, nonce64, encrypted64] = data.split(".");
   if (prefix !== "mp://2") {
@@ -93,7 +93,7 @@ export const mostDecode = (
     decodeBase64(encrypted64),
     decodeBase64(nonce64),
     new Uint8Array(getBytes(public_key)),
-    new Uint8Array(getBytes(private_key))
+    new Uint8Array(getBytes(private_key)),
   );
   if (!decrypted) {
     console.info("无法解密");

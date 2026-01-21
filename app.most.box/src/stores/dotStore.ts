@@ -5,7 +5,6 @@ import {
   NETWORK_CONFIG,
   type NETWORK_TYPE,
 } from "@/constants/dot";
-import { api } from "@/constants/api";
 import { Contract, JsonRpcProvider } from "ethers";
 
 export interface Dot {
@@ -41,7 +40,7 @@ interface State extends DotState {
   setItem: <K extends keyof State>(key: K, value: State[K]) => void;
 }
 export const checkNode = (
-  node: DotNode
+  node: DotNode,
 ): Promise<{ isOnline: boolean; responseTime: number }> => {
   return new Promise((resolve) => {
     if (!node.APIs || node.APIs.length === 0) {
@@ -82,7 +81,7 @@ export const useDotStore = create<State>((set, get) => ({
     const contract = new Contract(
       CONTRACT_ADDRESS_DOT,
       CONTRACT_ABI_DOT,
-      provider
+      provider,
     );
     const [addresses, names, APIss, CIDss, updates] =
       await contract.getAllDots();
@@ -98,27 +97,6 @@ export const useDotStore = create<State>((set, get) => ({
     return nodes;
   },
   async updateDot(url: string) {
-    // try {
-    //   const dotAPI = new URL(url).origin;
-    //   const res = await api.get("/api.dot", { baseURL: dotAPI });
-    //   const dot = res.data as Dot;
-    //   api.defaults.baseURL = dotAPI;
-    //   set({ dotAPI });
-    //   localStorage.setItem("dotAPI", dotAPI);
-
-    //   let dotCID = dot.CIDs[0];
-    //   if (dotAPI.endsWith(":1976")) {
-    //     dotCID = dotAPI.slice(0, -5) + ":8080";
-    //   }
-    //   if (dotCID) {
-    //     set({ dotCID });
-    //     localStorage.setItem("dotCID", dotCID);
-    //   }
-    //   return dot.APIs;
-    // } catch (error) {
-    //   console.info(error);
-    //   set({ dotAPI: api.defaults.baseURL || "" });
-    // }
     return null;
   },
   // 网络相关状态
