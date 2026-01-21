@@ -2,10 +2,6 @@ import axios from "axios";
 
 export const isDev = process.env.NODE_ENV !== "production";
 
-export const SupabaseURL = isDev
-  ? "http://localhost:2025/auth/callback"
-  : "https://most.box/auth/callback";
-
 export const api = axios.create({
   baseURL: "",
 });
@@ -21,7 +17,7 @@ api.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 // 添加响应拦截器，自动处理 token 失效
@@ -31,5 +27,5 @@ api.interceptors.response.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
