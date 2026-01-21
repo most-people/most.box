@@ -23,7 +23,7 @@ import { AppHeader } from "@/components/AppHeader";
 
 export default function PageLogin() {
   const back = useBack();
-  const [visible, { toggle }] = useDisclosure(true);
+  const [visible, { toggle }] = useDisclosure(false);
 
   const setWallet = useUserStore((state) => state.setWallet);
 
@@ -55,7 +55,7 @@ export default function PageLogin() {
       <Stack gap="md" mt="md">
         <Stack align="center">
           <Text size="xl" fw={500}>
-            Most.Box
+            Most People
           </Text>
           <Avatar
             size="xl"
