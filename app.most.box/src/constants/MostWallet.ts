@@ -17,6 +17,7 @@ export interface MostWallet {
   public_key: string;
   private_key: string;
   mnemonic: string;
+  mnemonic12: string;
   // Ed25519 key pair for IPNS publishing
   ed_public_key: string;
 }
@@ -44,9 +45,12 @@ export const mostWallet = (
   const ed_public_key = hexlify(EdKeyPair.publicKey);
 
   // wallet all in one
+  // Use 16 bytes (128 bits) for 12-word mnemonic
+  const mnemonic12 = Mnemonic.entropyToPhrase(bytes.slice(0, 16));
   // Use 32 bytes (256 bits) for 24-word mnemonic
-  const mnemonic = Mnemonic.entropyToPhrase(bytes);
+  const mnemonic24 = Mnemonic.entropyToPhrase(bytes);
 
+  const mnemonic = mnemonic24;
   const wallet = HDNodeWallet.fromPhrase(mnemonic);
   const address = wallet.address;
 
@@ -56,6 +60,7 @@ export const mostWallet = (
     public_key,
     private_key,
     mnemonic: isDanger ? mnemonic : "",
+    mnemonic12: isDanger ? mnemonic12 : "",
     ed_public_key,
   };
   return mostWallet;

@@ -11,12 +11,10 @@ import {
   Input,
   Switch,
   Textarea,
-  Center,
-  Group,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { mostWallet } from "@/constants/MostWallet";
-import { HDNodeWallet, Mnemonic } from "ethers";
+import { HDNodeWallet } from "ethers";
 import { QRCodeSVG } from "qrcode.react";
 import { AppHeader } from "@/components/AppHeader";
 import mp from "@/constants/mp";
@@ -26,19 +24,6 @@ interface DeriveAddress {
   address: string;
   privateKey: string;
 }
-
-const getMnemonic12 = (mnemonic24: string): string => {
-  try {
-    const mnemonic = Mnemonic.fromPhrase(mnemonic24);
-    const entropy = mnemonic.entropy;
-    // 0x + 32 hex chars = 16 bytes
-    const entropy16 = entropy.slice(0, 34);
-    return Mnemonic.entropyToPhrase(entropy16);
-  } catch (error) {
-    console.error("Invalid mnemonic", error);
-    return "";
-  }
-};
 
 export default function PageWeb3Tool() {
   const [username, setUsername] = useState("");
@@ -110,7 +95,7 @@ export default function PageWeb3Tool() {
         );
         setAddress(danger.address);
         setMnemonic(danger.mnemonic);
-        setMnemonic12(getMnemonic12(danger.mnemonic));
+        setMnemonic12(danger.mnemonic12);
       } else {
         setAddress(mp.ZeroAddress);
         setMnemonic("");
@@ -150,17 +135,12 @@ export default function PageWeb3Tool() {
 
   return (
     <Container maw={1200} w="100%" p={20}>
-      <AppHeader title="Web3 工具集" />
+      <AppHeader title="工具集" />
       <Stack gap="md">
-        <Stack gap="md" align="center">
-          <Avatar
-            size={100}
-            radius="sm"
-            src={mp.avatar(address)}
-            alt="it's me"
-          />
-          <Text size="xl">Most Wallet 账户查询</Text>
-        </Stack>
+        <Avatar size={100} radius="sm" src={mp.avatar(address)} alt="it's me" />
+
+        <Text size="xl">Most Wallet 账户查询</Text>
+
         {/* 模式切换开关 */}
         <Switch
           label={useMnemonicMode ? "直接输入助记词" : "用户名 + 密码生成账户"}
@@ -262,7 +242,12 @@ export default function PageWeb3Tool() {
         <Paper p="md" bg="red.1" c="var(--red)">
           {showMnemonic ? (
             mnemonic ? (
-              <Text>{mnemonic}</Text>
+              <Stack>
+                <Text>
+                  {useMnemonicMode ? "助记词" : "24位助记词"}：{mnemonic}
+                </Text>
+                {mnemonic12 && <Text>12位助记词：{mnemonic12}</Text>}
+              </Stack>
             ) : useMnemonicMode ? (
               "请输入有效的助记词"
             ) : (
@@ -273,14 +258,6 @@ export default function PageWeb3Tool() {
           )}
         </Paper>
 
-        {showMnemonic && (
-          <Paper p="md" bg="red.1" c="var(--red)">
-            <Group justify="space-between">
-              <Text>{mnemonic12} </Text>
-              <Text>Curst Wallet 12 位助记词</Text>
-            </Group>
-          </Paper>
-        )}
         {showMnemonic && (
           <Paper
             p={10}
