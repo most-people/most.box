@@ -138,8 +138,8 @@ export default function PageChat() {
   const p2pStatusColor: any = p2pConnected
     ? "green"
     : connectionState === "connecting"
-    ? "yellow"
-    : "gray";
+      ? "yellow"
+      : "gray";
 
   // ---- Helpers ----
   const safePlay = async (el: HTMLVideoElement | null) => {
@@ -153,7 +153,7 @@ export default function PageChat() {
 
   const attachLocalStream = async (
     pc: RTCPeerConnection,
-    stream: MediaStream
+    stream: MediaStream,
   ) => {
     localStreamRef.current = stream;
     if (localVideoRef.current) {
@@ -212,7 +212,7 @@ export default function PageChat() {
 
   const applyRemoteDescriptionAndDrain = async (
     pc: RTCPeerConnection,
-    desc: RTCSessionDescriptionInit
+    desc: RTCSessionDescriptionInit,
   ) => {
     await pc.setRemoteDescription(new RTCSessionDescription(desc));
     await drainPendingCandidates(pc);
@@ -220,7 +220,7 @@ export default function PageChat() {
 
   const queueOrAddCandidate = async (
     pc: RTCPeerConnection,
-    candidate: RTCIceCandidateInit
+    candidate: RTCIceCandidateInit,
   ) => {
     try {
       if (!pc.remoteDescription) {
@@ -661,15 +661,11 @@ export default function PageChat() {
 
   useEffect(() => {
     const uuid = Math.random().toString(36).slice(2, 10).toUpperCase();
-    (async () => {
-      setClientId(uuid);
-    })();
+    setClientId(uuid);
 
     const id = new URLSearchParams(window.location.search).get("id");
-    (async () => {
-      setRoomId(id || roomId);
-      updateRoomId(id || roomId);
-    })();
+    setRoomId(id || roomId);
+    updateRoomId(id || roomId);
 
     init();
 
@@ -854,8 +850,8 @@ export default function PageChat() {
                     connectionState === "connected"
                       ? "green"
                       : connectionState === "connecting"
-                      ? "yellow"
-                      : "gray"
+                        ? "yellow"
+                        : "gray"
                   }
                 >
                   {connectionState}
@@ -877,8 +873,8 @@ export default function PageChat() {
                     iceConnectionState === "completed"
                       ? "green"
                       : iceConnectionState === "checking"
-                      ? "yellow"
-                      : "gray"
+                        ? "yellow"
+                        : "gray"
                   }
                 >
                   {iceConnectionState}

@@ -30,6 +30,7 @@ export default function PageWeb3Tool() {
   const [password, setPassword] = useState("");
   const [address, setAddress] = useState(mp.ZeroAddress);
   const [mnemonic, setMnemonic] = useState("");
+  const [mnemonic12, setMnemonic12] = useState("");
   const [showAddress, setShowAddress] = useState(false);
   const [showMnemonic, setShowMnemonic] = useState(false);
 
@@ -40,7 +41,7 @@ export default function PageWeb3Tool() {
   const [validatedMnemonic, setValidatedMnemonic] = useState("");
 
   const [deriveAddressList, setDeriveAddressList] = useState<DeriveAddress[]>(
-    []
+    [],
   );
   const [deriveIndex, setDeriveIndex] = useState(0);
   const [deriveShowIndex, setDeriveShowIndex] = useState(true);
@@ -78,9 +79,11 @@ export default function PageWeb3Tool() {
       if (validatedMnemonic) {
         setAddress(HDNodeWallet.fromPhrase(validatedMnemonic).address);
         setMnemonic(validatedMnemonic);
+        setMnemonic12("");
       } else {
         setAddress(mp.ZeroAddress);
         setMnemonic("");
+        setMnemonic12("");
       }
     } else {
       // 用户名密码模式
@@ -88,13 +91,15 @@ export default function PageWeb3Tool() {
         const danger = mostWallet(
           username,
           password,
-          "I know loss mnemonic will lose my wallet."
+          "I know loss mnemonic will lose my wallet.",
         );
         setAddress(danger.address);
         setMnemonic(danger.mnemonic);
+        setMnemonic12(danger.mnemonic12);
       } else {
         setAddress(mp.ZeroAddress);
         setMnemonic("");
+        setMnemonic12("");
       }
     }
     setDeriveAddressList([]);
@@ -235,10 +240,22 @@ export default function PageWeb3Tool() {
         </Button>
 
         <Paper p="md" bg="red.1" c="var(--red)">
-          {showMnemonic
-            ? mnemonic ||
-              (useMnemonicMode ? "请输入有效的助记词" : "请输入用户名")
-            : "任何拥有您助记词的人都可以窃取您账户中的任何资产，切勿泄露！！！"}
+          {showMnemonic ? (
+            mnemonic ? (
+              <Stack>
+                <Text>
+                  {useMnemonicMode ? "助记词" : "24位助记词"}：{mnemonic}
+                </Text>
+                {mnemonic12 && <Text>12位助记词：{mnemonic12}</Text>}
+              </Stack>
+            ) : useMnemonicMode ? (
+              "请输入有效的助记词"
+            ) : (
+              "请输入用户名"
+            )
+          ) : (
+            "任何拥有您助记词的人都可以窃取您账户中的任何资产，切勿泄露！！！"
+          )}
         </Paper>
 
         {showMnemonic && (

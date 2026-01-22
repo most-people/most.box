@@ -30,9 +30,7 @@ export default function PageBuild() {
   };
 
   useEffect(() => {
-    (async () => {
-      await init();
-    })();
+    init();
   }, []);
 
   useEffect(() => {

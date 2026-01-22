@@ -97,7 +97,7 @@ export default function PageDotStatus() {
         addresses: [],
         pingResults: [],
         status: "idle",
-      }))
+      })),
     );
   };
   // 初始化节点测试结果
@@ -147,8 +147,8 @@ export default function PageDotStatus() {
 
     setNodeTests((prev) =>
       prev.map((test, i) =>
-        i === nodeIndex ? { ...test, status: "testing" } : test
-      )
+        i === nodeIndex ? { ...test, status: "testing" } : test,
+      ),
     );
 
     try {
@@ -165,15 +165,15 @@ export default function PageDotStatus() {
                 avgLatency: result.responseTime,
                 status: result.isOnline ? "success" : "error",
               }
-            : test
-        )
+            : test,
+        ),
       );
     } catch (error) {
       console.error(`Failed to test node ${node.name}:`, error);
       setNodeTests((prev) =>
         prev.map((test, i) =>
-          i === nodeIndex ? { ...test, status: "error" } : test
-        )
+          i === nodeIndex ? { ...test, status: "error" } : test,
+        ),
       );
     }
   };
@@ -261,8 +261,8 @@ export default function PageDotStatus() {
                   ipfsOnline === true
                     ? "green"
                     : ipfsOnline === false
-                    ? "red"
-                    : "gray"
+                      ? "red"
+                      : "gray"
                 }
               >
                 {ipfsOnline === true ? (

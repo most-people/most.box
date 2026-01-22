@@ -79,7 +79,7 @@ export default function PageMpMi() {
       const encrypted = mostEncode(
         plaintext,
         wallet.public_key,
-        wallet.private_key
+        wallet.private_key,
       );
 
       if (encrypted) {
@@ -126,7 +126,7 @@ export default function PageMpMi() {
       const decrypted = mostDecode(
         cipherText,
         wallet.public_key,
-        wallet.private_key
+        wallet.private_key,
       );
 
       if (decrypted) {
@@ -157,9 +157,7 @@ export default function PageMpMi() {
     const url = new URL(window.location.href);
     const mi = url.searchParams.get("mi");
     if (mi) {
-      (async () => {
-        setCipherText(mi);
-      })();
+      setCipherText(mi);
     }
   }, []);
 
