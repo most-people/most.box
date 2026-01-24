@@ -1,32 +1,34 @@
 import { mnemonicToAccount } from "viem/accounts";
 import { create } from "kubo-rpc-client";
 import axios from "axios";
+import { ApiPromise, WsProvider } from "@polkadot/api";
+import { typesBundleForPolkadot } from "@crustio/type-definitions";
+import { Keyring } from "@polkadot/keyring";
 
-// Crust IPFS Web3 Auth Gateway
+// Crust IPFS Web3 Auth 网关
 const CRUST_GW = "https://gw.crustfiles.app";
 const CRUST_PIN_URL = "https://pin.crustcode.com/psa";
+const CRUST_RPC_URL = "wss://rpc.crust.network";
 
 /**
- * Upload file to Crust Network via Web3 Auth Gateway
- * @param file File object to upload
- * @param mnemonic Wallet mnemonic to sign the request
- * @returns Upload result with CID
+ * 创建 Crust Web3 认证头
+ * @param address 以太坊地址
+ * @param signature 地址签名
+ * @returns Base64 编码的认证头
  */
-export const uploadToCrust = async (file: File, mnemonic: string) => {
-  if (!mnemonic) throw new Error("Wallet mnemonic is required");
-
-  // Create signer from mnemonic
-  const account = mnemonicToAccount(mnemonic);
-  const address = account.address;
-  // Sign the address itself as the message
-  const signature = await account.signMessage({ message: address });
-
-  // Construct Auth Header
-  // Format: eth-{address}:{signature}
+export const createCrustAuthHeader = (address: string, signature: string) => {
   const authHeaderRaw = `eth-${address}:${signature}`;
-  const authHeader = Buffer.from(authHeaderRaw).toString("base64");
+  return Buffer.from(authHeaderRaw).toString("base64");
+};
 
-  // Create IPFS client connected to Crust Gateway
+/**
+ * 上传文件到 IPFS 网关（不进行 Pin）
+ * @param file 要上传的文件对象
+ * @param authHeader Base64 编码的认证头
+ * @returns 包含 CID 和大小的上传结果
+ */
+export const uploadToIpfsGateway = async (file: File, authHeader: string) => {
+  // 创建连接到 Crust 网关的 IPFS 客户端
   const ipfs = create({
     url: `${CRUST_GW}/api/v0`,
     headers: {
@@ -35,39 +37,148 @@ export const uploadToCrust = async (file: File, mnemonic: string) => {
   });
 
   try {
-    // 1. Upload to IPFS Gateway
     const result = await ipfs.add(file);
-    const cid = result.cid.toString();
-
-    // 2. Pin file to Crust Network
-    try {
-      await axios.post(
-        `${CRUST_PIN_URL}/pins`,
-        {
-          cid: cid,
-          name: file.name,
-        },
-        {
-          headers: {
-            authorization: `Bearer ${authHeader}`,
-          },
-        },
-      );
-    } catch (pinError) {
-      console.warn(
-        "Pinning failed, possibly due to insufficient balance:",
-        pinError,
-      );
-      // We don't throw here to allow returning the CID, but user should know pinning failed
-    }
-
     return {
-      cid: cid,
+      cid: result.cid.toString(),
       size: result.size,
-      url: `${CRUST_GW}/ipfs/${cid}`,
+      url: `${CRUST_GW}/ipfs/${result.cid.toString()}`,
     };
   } catch (error) {
-    console.error("Crust upload failed:", error);
+    console.error("IPFS 上传失败:", error);
     throw error;
+  }
+};
+
+/**
+ * 使用网关 Pinning 服务将文件 Pin 到 Crust 网络
+ * @param cid IPFS 内容 ID
+ * @param name 文件名
+ * @param authHeader Base64 编码的认证头
+ */
+export const pinToCrustGateway = async (
+  cid: string,
+  name: string,
+  authHeader: string,
+) => {
+  try {
+    await axios.post(
+      `${CRUST_PIN_URL}/pins`,
+      {
+        cid: cid,
+        name: name,
+      },
+      {
+        headers: {
+          authorization: `Bearer ${authHeader}`,
+        },
+      },
+    );
+  } catch (pinError) {
+    console.warn("Pin 失败，可能是因为余额不足:", pinError);
+    // 这里不抛出异常，允许返回 CID（如果是从 uploadWithAuthHeader 调用的），
+    // 但通常这应该由调用者处理。
+  }
+};
+
+/**
+ * 使用预计算的认证头上传文件到 Crust 网络
+ * @param file 要上传的文件对象
+ * @param authHeader Base64 编码的认证头
+ * @returns 带 CID 的上传结果
+ */
+export const uploadWithAuthHeader = async (file: File, authHeader: string) => {
+  try {
+    // 1. 上传到 IPFS 网关
+    const result = await uploadToIpfsGateway(file, authHeader);
+
+    // 2. 将文件 Pin 到 Crust 网络
+    await pinToCrustGateway(result.cid, file.name, authHeader);
+
+    return result;
+  } catch (error) {
+    console.error("Crust 上传失败:", error);
+    throw error;
+  }
+};
+
+/**
+ * 通过 Web3 Auth 网关上传文件到 Crust 网络
+ * @param file 要上传的文件对象
+ * @param mnemonic 签名请求的钱包助记词
+ * @returns 带 CID 的上传结果
+ */
+export const uploadToCrust = async (file: File, mnemonic: string) => {
+  if (!mnemonic) throw new Error("需要钱包助记词");
+
+  // 从助记词创建签名者
+  const account = mnemonicToAccount(mnemonic);
+  const address = account.address;
+  // 签名地址本身作为消息
+  const signature = await account.signMessage({ message: address });
+
+  // 构造认证头
+  const authHeader = createCrustAuthHeader(address, signature);
+
+  return uploadWithAuthHeader(file, authHeader);
+};
+
+/**
+ * 使用 CRU 代币在 Crust 网络上下存储订单（自费）
+ * @param cid IPFS 内容 ID
+ * @param fileSize 文件大小（字节）
+ * @param seed Substrate 账户种子/助记词（注意：通常与 ETH 助记词不同）
+ * @param tips 订单小费（可选）
+ * @returns 交易哈希
+ */
+export const placeStorageOrder = async (
+  cid: string,
+  fileSize: number,
+  seed: string,
+  tips = 0,
+) => {
+  // 1. 初始化 API
+  const api = new ApiPromise({
+    provider: new WsProvider(CRUST_RPC_URL),
+    typesBundle: typesBundleForPolkadot,
+  });
+
+  try {
+    await api.isReady;
+
+    // 2. 创建 Keyring
+    const keyring = new Keyring({ type: "sr25519" });
+    const krp = keyring.addFromUri(seed);
+
+    // 3. 创建交易
+    // market.placeStorageOrder(cid, size, tips, memo)
+    // memo 是可选的，默认为空
+    const tx = api.tx.market.placeStorageOrder(cid, fileSize, tips, "");
+
+    // 4. 发送并等待确认
+    const result = await new Promise<string>((resolve, reject) => {
+      tx.signAndSend(krp, ({ status, events, dispatchError }) => {
+        if (status.isFinalized) {
+          console.log(`交易在区块 ${status.asFinalized} 确认`);
+          resolve(status.asFinalized.toString());
+        } else if (dispatchError) {
+          if (dispatchError.isModule) {
+            const decoded = api.registry.findMetaError(dispatchError.asModule);
+            const { docs, name, section } = decoded;
+            reject(new Error(`${section}.${name}: ${docs.join(" ")}`));
+          } else {
+            reject(new Error(dispatchError.toString()));
+          }
+        }
+      }).catch((error) => {
+        reject(error);
+      });
+    });
+
+    return result;
+  } catch (error) {
+    console.error("下存储订单失败:", error);
+    throw error;
+  } finally {
+    await api.disconnect();
   }
 };

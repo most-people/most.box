@@ -38,7 +38,7 @@ export default function PageWeb3() {
   }, [wallet]);
 
   return (
-    <Container py={20}>
+    <Container py={20} w="61.8%">
       <AppHeader title="Web3" />
       <Stack gap="md">
         <Text size="lg" fw={500}>
@@ -89,9 +89,12 @@ export default function PageWeb3() {
         </Text>
         <Text>{wallet?.public_key || "-"}</Text>
 
+        <Text size="lg" fw={500}>
+          x25519 & Ed25519 私钥
+        </Text>
         <Group align="center" gap="xs">
-          <Text size="lg" fw={500}>
-            x25519 & Ed25519 私钥
+          <Text size="sm" c="dimmed">
+            点击右侧眼睛图标查看私钥
           </Text>
           <ActionIcon
             variant="subtle"
@@ -102,7 +105,34 @@ export default function PageWeb3() {
             {showX25519 ? <IconEye size={16} /> : <IconEyeOff size={16} />}
           </ActionIcon>
         </Group>
-        <Text>{showX25519 ? wallet?.private_key || "-" : "-"}</Text>
+        <Text>
+          {showX25519 ? wallet?.private_key || "-" : "****************"}
+        </Text>
+
+        <Text size="lg" fw={500}>
+          Crust 地址
+        </Text>
+        <Text>{wallet?.crust_address || "-"}</Text>
+
+        <Text size="lg" fw={500}>
+          Crust 助记词
+        </Text>
+        <Group align="center" gap="xs">
+          <Text size="sm" c="dimmed">
+            此助记词用于 Crust 网络交互，请妥善保管
+          </Text>
+          <ActionIcon
+            variant="subtle"
+            size="sm"
+            ml="xs"
+            onClick={() => setShowX25519(!showX25519)}
+          >
+            {showX25519 ? <IconEye size={16} /> : <IconEyeOff size={16} />}
+          </ActionIcon>
+        </Group>
+        <Text>
+          {showX25519 ? wallet?.crust_mnemonic || "-" : "****************"}
+        </Text>
 
         <Text size="lg" fw={500}>
           IPNS ID

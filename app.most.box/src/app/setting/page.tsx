@@ -36,12 +36,14 @@ import {
   type Address,
   formatEther,
 } from "viem";
+import { useWalletClient } from "wagmi";
 import { mnemonicToAccount } from "viem/accounts";
 import { base, baseSepolia } from "viem/chains";
 import { CONTRACT_ABI_NAME, CONTRACT_ADDRESS_NAME } from "@/constants/dot";
 import { openDotManager } from "@/components/DotManager/open";
 
 const UserName = () => {
+  const { data: walletClientFromWagmi } = useWalletClient();
   const wallet = useUserStore((state) => state.wallet);
   const RPC = useDotStore((state) => state.RPC);
   const network = useDotStore((state) => state.network);
@@ -80,7 +82,7 @@ const UserName = () => {
   }, [wallet]);
 
   const onSetName = async () => {
-    if (!wallet || !wallet.mnemonic)
+    if (!wallet)
       return notifications.show({ message: "请先登录", color: "red" });
     const value = nameInput.trim();
     if (!value)
@@ -96,21 +98,35 @@ const UserName = () => {
         color: "yellow",
       });
 
-    const account = mnemonicToAccount(wallet.mnemonic);
+    let account: any;
+    let walletClient: any;
+
     const client = createPublicClient({
       chain,
       transport: http(RPC),
     });
-    const walletClient = createWalletClient({
-      account,
-      chain,
-      transport: http(RPC),
-    });
+
+    if (wallet.mnemonic) {
+      account = mnemonicToAccount(wallet.mnemonic);
+      walletClient = createWalletClient({
+        account,
+        chain,
+        transport: http(RPC),
+      });
+    } else {
+      if (!walletClientFromWagmi) {
+        return notifications.show({ message: "请连接钱包", color: "red" });
+      }
+      account = wallet.address as Address;
+      walletClient = walletClientFromWagmi;
+    }
 
     try {
       setLoadingSet(true);
       // 交易前检查余额是否足够支付 Gas（运行时估算）
-      const balance = await client.getBalance({ address: account.address });
+      const balance = await client.getBalance({
+        address: wallet.address as Address,
+      });
       const gasPrice = await client.getGasPrice();
 
       if (gasPrice) {
@@ -143,6 +159,7 @@ const UserName = () => {
         abi: CONTRACT_ABI_NAME,
         functionName: "setName",
         args: [value],
+        account,
       });
       notifications.show({ message: "交易已提交，等待确认…", color: "blue" });
       await client.waitForTransactionReceipt({ hash });
@@ -239,6 +256,7 @@ const UserName = () => {
 };
 
 const UserDot = () => {
+  const { data: walletClientFromWagmi } = useWalletClient();
   const wallet = useUserStore((state) => state.wallet);
   const RPC = useDotStore((state) => state.RPC);
   const dotAPI = useDotStore((state) => state.dotAPI);
@@ -273,25 +291,39 @@ const UserDot = () => {
   }, [wallet]);
 
   const onSetDot = async () => {
-    if (!wallet || !wallet.mnemonic) {
+    if (!wallet) {
       return notifications.show({ message: "请先登录", color: "red" });
     }
 
-    const account = mnemonicToAccount(wallet.mnemonic);
+    let account: any;
+    let walletClient: any;
+
     const client = createPublicClient({
       chain,
       transport: http(RPC),
     });
-    const walletClient = createWalletClient({
-      account,
-      chain,
-      transport: http(RPC),
-    });
+
+    if (wallet.mnemonic) {
+      account = mnemonicToAccount(wallet.mnemonic);
+      walletClient = createWalletClient({
+        account,
+        chain,
+        transport: http(RPC),
+      });
+    } else {
+      if (!walletClientFromWagmi) {
+        return notifications.show({ message: "请连接钱包", color: "red" });
+      }
+      account = wallet.address as Address;
+      walletClient = walletClientFromWagmi;
+    }
 
     try {
       setLoadingSetData(true);
       // 交易前检查余额是否足够支付 Gas（运行时估算）
-      const balance = await client.getBalance({ address: account.address });
+      const balance = await client.getBalance({
+        address: wallet.address as Address,
+      });
       const gasPrice = await client.getGasPrice();
 
       if (gasPrice) {
@@ -324,6 +356,7 @@ const UserDot = () => {
         abi: CONTRACT_ABI_NAME,
         functionName: "setDot",
         args: [dotAPI],
+        account,
       });
       notifications.show({
         message: "交易已提交，等待确认…",
