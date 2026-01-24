@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "api-most-box",
   "main": "src/index.ts",
-  "compatibility_date": "2026-01-24"
+  "compatibility_date": "2026-01-24",
   // "compatibility_flags": [
   //   "nodejs_compat"
   // ],
@@ -21,13 +21,13 @@
   //     "bucket_name": "my-bucket"
   //   }
   // ],
-  // "d1_databases": [
-  //   {
-  //     "binding": "MY_DB",
-  //     "database_name": "my-database",
-  //     "database_id": ""
-  //   }
-  // ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "most-box-db",
+      "database_id": "4916d83d-d653-4955-8f6b-d86b309ca393"
+    }
+  ],
   // "ai": {
   //   "binding": "AI"
   // },
