@@ -1,8 +1,0 @@
-{
-  "scripts": {
-    "start": "air -c .air.yaml",
-    "build": "goreleaser build --snapshot --single-target --clean",
-    "release": "goreleaser release --clean",
-    "run": "go run ./cmd/server"
-  }
-}

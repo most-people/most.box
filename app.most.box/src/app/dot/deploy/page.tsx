@@ -12,7 +12,7 @@ import {
   Divider,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { BrowserProvider, getAddress } from "ethers";
+import { createWalletClient, custom, getAddress } from "viem";
 import { useRouter } from "next/navigation";
 import { IconInfoCircle, IconSignature } from "@tabler/icons-react";
 import axios from "axios";
@@ -128,10 +128,15 @@ export default function PageDeploy() {
         notifications.show({ title: "提示", message: "请先安装 OKX Wallet" });
         return;
       }
-      const ethersProvider = new BrowserProvider(ethereum);
-      const signer = await ethersProvider.getSigner();
-      const signature = await signer.signMessage(message);
-      const tokenLocal = [signer.address, message, signature].join(".");
+      const walletClient = createWalletClient({
+        transport: custom(ethereum),
+      });
+      const [account] = await walletClient.getAddresses();
+      const signature = await walletClient.signMessage({
+        account,
+        message,
+      });
+      const tokenLocal = [account, message, signature].join(".");
       const updateRes = await axios({
         method: "put",
         url: dotApi + "/app.update",
@@ -180,10 +185,15 @@ export default function PageDeploy() {
         notifications.show({ title: "提示", message: "请先安装 OKX Wallet" });
         return;
       }
-      const ethersProvider = new BrowserProvider(ethereum);
-      const signer = await ethersProvider.getSigner();
-      const signature = await signer.signMessage(message);
-      const tokenLocal = [signer.address, message, signature].join(".");
+      const walletClient = createWalletClient({
+        transport: custom(ethereum),
+      });
+      const [account] = await walletClient.getAddresses();
+      const signature = await walletClient.signMessage({
+        account,
+        message,
+      });
+      const tokenLocal = [account, message, signature].join(".");
       const res = await axios({
         method: "put",
         url: dotApi + "/ipfs.config.update",
@@ -218,10 +228,15 @@ export default function PageDeploy() {
         notifications.show({ title: "提示", message: "请先安装 OKX Wallet" });
         return;
       }
-      const ethersProvider = new BrowserProvider(ethereum);
-      const signer = await ethersProvider.getSigner();
-      const signature = await signer.signMessage(message);
-      const tokenLocal = [signer.address, message, signature].join(".");
+      const walletClient = createWalletClient({
+        transport: custom(ethereum),
+      });
+      const [account] = await walletClient.getAddresses();
+      const signature = await walletClient.signMessage({
+        account,
+        message,
+      });
+      const tokenLocal = [account, message, signature].join(".");
       const res = await axios({
         method: "post",
         url: dotApi + "/ipfs.shutdown",
@@ -256,10 +271,15 @@ export default function PageDeploy() {
         notifications.show({ title: "提示", message: "请先安装 OKX Wallet" });
         return;
       }
-      const ethersProvider = new BrowserProvider(ethereum);
-      const signer = await ethersProvider.getSigner();
-      const signature = await signer.signMessage(message);
-      const tokenLocal = [signer.address, message, signature].join(".");
+      const walletClient = createWalletClient({
+        transport: custom(ethereum),
+      });
+      const [account] = await walletClient.getAddresses();
+      const signature = await walletClient.signMessage({
+        account,
+        message,
+      });
+      const tokenLocal = [account, message, signature].join(".");
       const res = await axios({
         method: "post",
         url: dotApi + "/ipfs.restart",

@@ -23,8 +23,8 @@ import {
   Anchor,
   Radio,
 } from "@mantine/core";
-import { JsonRpcProvider } from "ethers";
 import { notifications } from "@mantine/notifications";
+import { JsonRpcProvider } from "ethers";
 import {
   IconCheck,
   IconX,
@@ -92,7 +92,7 @@ export function DotManager({ isModal, onClose }: DotManagerProps) {
 
   // ===== CID检测状态 =====
   const [customCid, setCustomCid] = useState(
-    "bafkreihp5o7tdipf6ajkgkdxknnffkuxpeecwqydi4q5iqt4gko6r2agk4?filename=长征.jpg"
+    "bafkreihp5o7tdipf6ajkgkdxknnffkuxpeecwqydi4q5iqt4gko6r2agk4?filename=长征.jpg",
   );
   const [isDetecting, setIsDetecting] = useState(false);
   const [detectionResults, setDetectionResults] = useState<
@@ -124,7 +124,7 @@ export function DotManager({ isModal, onClose }: DotManagerProps) {
     const CIDs = node.CIDs.map((url) => `${url}/ipfs`);
     const defaultCID = node.APIs.find((api) => api.endsWith(":1976"))?.replace(
       ":1976",
-      ":8080/ipfs"
+      ":8080/ipfs",
     );
     if (defaultCID) {
       CIDs.push(defaultCID);
@@ -164,7 +164,7 @@ export function DotManager({ isModal, onClose }: DotManagerProps) {
 
   // ===== CID检测相关函数 =====
   const checkCidOnGateway = async (
-    fullUrl: string
+    fullUrl: string,
   ): Promise<DetectionResult> => {
     const startTime = Date.now();
     const controller = new AbortController();
@@ -255,7 +255,7 @@ export function DotManager({ isModal, onClose }: DotManagerProps) {
       showNotification(
         "网络错误",
         `网络 ID 为 ${chainId}，不支持 Base 协议`,
-        "red"
+        "red",
       );
       setCustomRPC("");
       return false;
@@ -300,7 +300,7 @@ export function DotManager({ isModal, onClose }: DotManagerProps) {
         dotNodes.map(async (node) => {
           const { isOnline, responseTime } = await checkNode(node);
           return { ...node, isOnline, responseTime };
-        })
+        }),
       );
 
       setItem("dotNodes", updatedNodes);
@@ -309,7 +309,7 @@ export function DotManager({ isModal, onClose }: DotManagerProps) {
       showNotification(
         "连通性检测完成",
         `${onlineCount}/${updatedNodes.length} 个节点在线`,
-        onlineCount > 0 ? "green" : "orange"
+        onlineCount > 0 ? "green" : "orange",
       );
     } catch (error) {
       console.log("连通性检测失败:", error);
@@ -628,8 +628,8 @@ export function DotManager({ isModal, onClose }: DotManagerProps) {
                       node.isOnline
                         ? "green"
                         : node.isOnline === false
-                        ? "red"
-                        : "gray"
+                          ? "red"
+                          : "gray"
                     }
                   >
                     {node.isOnline ? (

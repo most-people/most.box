@@ -5,7 +5,8 @@ import {
   NETWORK_CONFIG,
   type NETWORK_TYPE,
 } from "@/constants/dot";
-import { Contract, JsonRpcProvider } from "ethers";
+import { createPublicClient, http, getContract, type Address } from "viem";
+import { base, baseSepolia } from "viem/chains";
 
 export interface Dot {
   name: string;
@@ -76,15 +77,25 @@ export const useDotStore = create<State>((set, get) => ({
   dotCID: "",
   dotNodes: [],
   fetchNodes: async (rpc?: string) => {
-    const { RPC } = get();
-    const provider = new JsonRpcProvider(rpc || RPC);
-    const contract = new Contract(
-      CONTRACT_ADDRESS_DOT,
-      CONTRACT_ABI_DOT,
-      provider,
-    );
+    const { RPC, network } = get();
+    const chain = network === "mainnet" ? base : baseSepolia;
+    const client = createPublicClient({
+      chain,
+      transport: http(rpc || RPC),
+    });
+    const contract = getContract({
+      address: CONTRACT_ADDRESS_DOT as Address,
+      abi: CONTRACT_ABI_DOT,
+      client,
+    });
     const [addresses, names, APIss, CIDss, updates] =
-      await contract.getAllDots();
+      (await contract.read.getAllDots()) as [
+        string[],
+        string[],
+        string[][],
+        string[][],
+        bigint[],
+      ];
     const nodes: DotNode[] = addresses.map((address: string, index: number) => {
       return {
         address,

@@ -1,14 +1,13 @@
-import {
-  mostDecode,
-  mostEncode,
-  type MostWallet,
-} from "@/constants/MostWallet";
+import { type MostWallet } from "@/constants/MostWallet";
 import { create } from "zustand";
 import { notifications } from "@mantine/notifications";
 import { CONTRACT_ABI_NAME, CONTRACT_ADDRESS_NAME } from "@/constants/dot";
 import { api } from "@/constants/api";
-import { Contract, formatEther, HDNodeWallet, JsonRpcProvider } from "ethers";
+import { formatEther } from "viem";
 import { useDotStore } from "@/stores/dotStore";
+import { JsonRpcProvider, Contract } from "ethers";
+import { disconnect } from "@wagmi/core";
+import { adapter } from "@/context/Web3Modal";
 
 export interface FileItem {
   name: string;
@@ -58,7 +57,7 @@ export const useUserStore = create<State>((set, get) => ({
   setWallet(wallet: MostWallet) {
     set({ wallet });
     const { initDotAPI, initBalance } = get();
-    initDotAPI();
+    // initDotAPI();
     initBalance();
   },
   // 返回
@@ -76,6 +75,7 @@ export const useUserStore = create<State>((set, get) => ({
     set({ wallet: undefined, notes: undefined, files: undefined });
     localStorage.removeItem("jwt");
     localStorage.removeItem("token");
+    disconnect(adapter.wagmiConfig);
   },
   // 根目录 CID
   rootCID: "",
@@ -88,7 +88,7 @@ export const useUserStore = create<State>((set, get) => ({
     const contract = new Contract(
       CONTRACT_ADDRESS_NAME,
       CONTRACT_ABI_NAME,
-      provider
+      provider,
     );
     const dotAPI = await contract.getDot(wallet.address);
     if (!dotAPI) {

@@ -11,13 +11,18 @@ import {
   Input,
   Switch,
   Textarea,
+  Center,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { mostWallet } from "@/constants/MostWallet";
-import { HDNodeWallet } from "ethers";
+import { mnemonicToAccount } from "viem/accounts";
+import { HDKey } from "@scure/bip32";
+import { mnemonicToSeedSync } from "@scure/bip39";
+import { toHex } from "viem";
 import { QRCodeSVG } from "qrcode.react";
 import { AppHeader } from "@/components/AppHeader";
 import mp from "@/constants/mp";
+import { HDNodeWallet } from "ethers";
 
 interface DeriveAddress {
   index: number;
@@ -25,12 +30,16 @@ interface DeriveAddress {
   privateKey: string;
 }
 
+const mnemonicToHDKey = (mnemonic: string) => {
+  const seed = mnemonicToSeedSync(mnemonic);
+  return HDKey.fromMasterSeed(seed);
+};
+
 export default function PageWeb3Tool() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [address, setAddress] = useState(mp.ZeroAddress);
+  const [address, setAddress] = useState<string>(mp.zeroAddress);
   const [mnemonic, setMnemonic] = useState("");
-  const [mnemonic12, setMnemonic12] = useState("");
   const [showAddress, setShowAddress] = useState(false);
   const [showMnemonic, setShowMnemonic] = useState(false);
 
@@ -62,12 +71,12 @@ export default function PageWeb3Tool() {
           message: "无效助记词",
           color: "red",
         });
-        setAddress(mp.ZeroAddress);
+        setAddress(mp.zeroAddress);
         setMnemonic("");
         setValidatedMnemonic("");
       }
     } else {
-      setAddress(mp.ZeroAddress);
+      setAddress(mp.zeroAddress);
       setMnemonic("");
       setValidatedMnemonic("");
     }
@@ -79,11 +88,9 @@ export default function PageWeb3Tool() {
       if (validatedMnemonic) {
         setAddress(HDNodeWallet.fromPhrase(validatedMnemonic).address);
         setMnemonic(validatedMnemonic);
-        setMnemonic12("");
       } else {
-        setAddress(mp.ZeroAddress);
+        setAddress(mp.zeroAddress);
         setMnemonic("");
-        setMnemonic12("");
       }
     } else {
       // 用户名密码模式
@@ -95,11 +102,9 @@ export default function PageWeb3Tool() {
         );
         setAddress(danger.address);
         setMnemonic(danger.mnemonic);
-        setMnemonic12(danger.mnemonic12);
       } else {
-        setAddress(mp.ZeroAddress);
+        setAddress(mp.zeroAddress);
         setMnemonic("");
-        setMnemonic12("");
       }
     }
     setDeriveAddressList([]);
@@ -113,13 +118,18 @@ export default function PageWeb3Tool() {
 
   const deriveAddress = () => {
     const list: DeriveAddress[] = [];
+    const rootKey = mnemonicToHDKey(mnemonic);
     for (let i = deriveIndex; i < deriveIndex + deriveNumber; i++) {
       const path = `m/44'/60'/0'/0/${i}`;
-      const wallet = HDNodeWallet.fromPhrase(mnemonic, undefined, path);
+      const account = mnemonicToAccount(mnemonic, { path: path as any });
+      // viem accounts doesn't expose private key directly on account object,
+      // so we use HDKey to derive it.
+      const childKey = rootKey.derive(path);
+
       list.push({
         index: i,
-        address: wallet.address,
-        privateKey: wallet.privateKey,
+        address: account.address,
+        privateKey: childKey.privateKey ? toHex(childKey.privateKey) : "",
       });
     }
     setDeriveAddressList((prev) => [...prev, ...list]);
@@ -130,16 +140,25 @@ export default function PageWeb3Tool() {
 
   // 判断是否有有效的钱包信息
   const hasValidWallet = useMnemonicMode
-    ? validatedMnemonic && address !== mp.ZeroAddress
+    ? validatedMnemonic && address !== mp.zeroAddress
     : username;
 
   return (
     <Container maw={1200} w="100%" p={20}>
       <AppHeader title="工具集" />
       <Stack gap="md">
-        <Avatar size={100} radius="sm" src={mp.avatar(address)} alt="it's me" />
+        <Center>
+          <Stack gap="md" align="center">
+            <Avatar
+              size={100}
+              radius="sm"
+              src={mp.avatar(address)}
+              alt="it's me"
+            />
 
-        <Text size="xl">Most Wallet 账户查询</Text>
+            <Text size="xl">Most People 账户查询</Text>
+          </Stack>
+        </Center>
 
         {/* 模式切换开关 */}
         <Switch
@@ -243,10 +262,7 @@ export default function PageWeb3Tool() {
           {showMnemonic ? (
             mnemonic ? (
               <Stack>
-                <Text>
-                  {useMnemonicMode ? "助记词" : "24位助记词"}：{mnemonic}
-                </Text>
-                {mnemonic12 && <Text>12位助记词：{mnemonic12}</Text>}
+                <Text>{mnemonic}</Text>
               </Stack>
             ) : useMnemonicMode ? (
               "请输入有效的助记词"

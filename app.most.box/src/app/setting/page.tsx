@@ -28,13 +28,24 @@ import mp from "@/constants/mp";
 import { Icon } from "@/components/Icon";
 import { useUserStore } from "@/stores/userStore";
 import { useDotStore } from "@/stores/dotStore";
-import { Contract, JsonRpcProvider, HDNodeWallet } from "ethers";
+import {
+  createPublicClient,
+  http,
+  getContract,
+  createWalletClient,
+  type Address,
+  formatEther,
+} from "viem";
+import { mnemonicToAccount } from "viem/accounts";
+import { base, baseSepolia } from "viem/chains";
 import { CONTRACT_ABI_NAME, CONTRACT_ADDRESS_NAME } from "@/constants/dot";
 import { openDotManager } from "@/components/DotManager/open";
 
 const UserName = () => {
   const wallet = useUserStore((state) => state.wallet);
   const RPC = useDotStore((state) => state.RPC);
+  const network = useDotStore((state) => state.network);
+  const chain = network === "mainnet" ? base : baseSepolia;
 
   const [currentName, setCurrentName] = useState("");
   const [nameInput, setNameInput] = useState("");
@@ -45,13 +56,16 @@ const UserName = () => {
     if (!wallet) return;
     try {
       setLoadingGet(true);
-      const provider = new JsonRpcProvider(RPC);
-      const contract = new Contract(
-        CONTRACT_ADDRESS_NAME,
-        CONTRACT_ABI_NAME,
-        provider
-      );
-      const name: string = await contract.getName(wallet.address);
+      const client = createPublicClient({
+        chain,
+        transport: http(RPC),
+      });
+      const contract = getContract({
+        address: CONTRACT_ADDRESS_NAME as Address,
+        abi: CONTRACT_ABI_NAME,
+        client,
+      });
+      const name = (await contract.read.getName([wallet.address])) as string;
       setCurrentName(name);
       if (!nameInput && name) setNameInput(name);
     } catch (err) {
@@ -66,7 +80,7 @@ const UserName = () => {
   }, [wallet]);
 
   const onSetName = async () => {
-    if (!wallet)
+    if (!wallet || !wallet.mnemonic)
       return notifications.show({ message: "请先登录", color: "red" });
     const value = nameInput.trim();
     if (!value)
@@ -82,26 +96,33 @@ const UserName = () => {
         color: "yellow",
       });
 
-    const provider = new JsonRpcProvider(RPC);
-    const signer = HDNodeWallet.fromPhrase(wallet.mnemonic).connect(provider);
-    const contract = new Contract(
-      CONTRACT_ADDRESS_NAME,
-      CONTRACT_ABI_NAME,
-      signer
-    );
+    const account = mnemonicToAccount(wallet.mnemonic);
+    const client = createPublicClient({
+      chain,
+      transport: http(RPC),
+    });
+    const walletClient = createWalletClient({
+      account,
+      chain,
+      transport: http(RPC),
+    });
 
     try {
       setLoadingSet(true);
       // 交易前检查余额是否足够支付 Gas（运行时估算）
-      const [balance, fee] = await Promise.all([
-        provider.getBalance(wallet.address),
-        provider.getFeeData(),
-      ]);
-      const gasPrice = fee.maxFeePerGas ?? fee.gasPrice;
+      const balance = await client.getBalance({ address: account.address });
+      const gasPrice = await client.getGasPrice();
+
       if (gasPrice) {
         let gas: bigint = 0n;
         try {
-          gas = await contract.setName.estimateGas(value);
+          gas = await client.estimateContractGas({
+            address: CONTRACT_ADDRESS_NAME as Address,
+            abi: CONTRACT_ABI_NAME,
+            functionName: "setName",
+            args: [value],
+            account,
+          });
         } catch {
           // 无法估算时，继续交由链上处理
         }
@@ -117,9 +138,14 @@ const UserName = () => {
         }
       }
 
-      const tx = await contract.setName(value);
+      const hash = await walletClient.writeContract({
+        address: CONTRACT_ADDRESS_NAME as Address,
+        abi: CONTRACT_ABI_NAME,
+        functionName: "setName",
+        args: [value],
+      });
       notifications.show({ message: "交易已提交，等待确认…", color: "blue" });
-      await tx.wait();
+      await client.waitForTransactionReceipt({ hash });
       notifications.show({ message: "设置成功", color: "green" });
       setCurrentName(value);
       // fetchName();
@@ -149,7 +175,7 @@ const UserName = () => {
 
   return (
     <Stack>
-      <Text>地址 {wallet?.address || mp.ZeroAddress}</Text>
+      <Text>地址 {wallet?.address || mp.zeroAddress}</Text>
       <Avatar
         size={100}
         radius="lg"
@@ -216,6 +242,9 @@ const UserDot = () => {
   const wallet = useUserStore((state) => state.wallet);
   const RPC = useDotStore((state) => state.RPC);
   const dotAPI = useDotStore((state) => state.dotAPI);
+  const network = useDotStore((state) => state.network);
+  const chain = network === "mainnet" ? base : baseSepolia;
+
   const [loadingSetData, setLoadingSetData] = useState(false);
   const [currentDot, setCurrentDot] = useState("");
 
@@ -223,13 +252,16 @@ const UserDot = () => {
   const fetchData = async () => {
     if (!wallet) return;
     try {
-      const provider = new JsonRpcProvider(RPC);
-      const contract = new Contract(
-        CONTRACT_ADDRESS_NAME,
-        CONTRACT_ABI_NAME,
-        provider
-      );
-      const str = await contract.getDot(wallet.address);
+      const client = createPublicClient({
+        chain,
+        transport: http(RPC),
+      });
+      const contract = getContract({
+        address: CONTRACT_ADDRESS_NAME as Address,
+        abi: CONTRACT_ABI_NAME,
+        client,
+      });
+      const str = (await contract.read.getDot([wallet.address])) as string;
       setCurrentDot(str || "");
     } catch (err) {
       console.warn("获取用户数据失败", err);
@@ -241,30 +273,37 @@ const UserDot = () => {
   }, [wallet]);
 
   const onSetDot = async () => {
-    if (!wallet) {
+    if (!wallet || !wallet.mnemonic) {
       return notifications.show({ message: "请先登录", color: "red" });
     }
 
-    const provider = new JsonRpcProvider(RPC);
-    const signer = HDNodeWallet.fromPhrase(wallet.mnemonic).connect(provider);
-    const contract = new Contract(
-      CONTRACT_ADDRESS_NAME,
-      CONTRACT_ABI_NAME,
-      signer
-    );
+    const account = mnemonicToAccount(wallet.mnemonic);
+    const client = createPublicClient({
+      chain,
+      transport: http(RPC),
+    });
+    const walletClient = createWalletClient({
+      account,
+      chain,
+      transport: http(RPC),
+    });
 
     try {
       setLoadingSetData(true);
       // 交易前检查余额是否足够支付 Gas（运行时估算）
-      const [balance, fee] = await Promise.all([
-        provider.getBalance(wallet.address),
-        provider.getFeeData(),
-      ]);
-      const gasPrice = fee.maxFeePerGas ?? fee.gasPrice;
+      const balance = await client.getBalance({ address: account.address });
+      const gasPrice = await client.getGasPrice();
+
       if (gasPrice) {
         let gas: bigint = 0n;
         try {
-          gas = await contract.setDot.estimateGas(dotAPI);
+          gas = await client.estimateContractGas({
+            address: CONTRACT_ADDRESS_NAME as Address,
+            abi: CONTRACT_ABI_NAME,
+            functionName: "setDot",
+            args: [dotAPI],
+            account,
+          });
         } catch {
           // 无法估算时，继续交由链上处理
         }
@@ -280,12 +319,17 @@ const UserDot = () => {
         }
       }
 
-      const tx = await contract.setDot(dotAPI);
+      const hash = await walletClient.writeContract({
+        address: CONTRACT_ADDRESS_NAME as Address,
+        abi: CONTRACT_ABI_NAME,
+        functionName: "setDot",
+        args: [dotAPI],
+      });
       notifications.show({
         message: "交易已提交，等待确认…",
         color: "blue",
       });
-      await tx.wait();
+      await client.waitForTransactionReceipt({ hash });
       notifications.show({ message: "设置成功", color: "green" });
       setCurrentDot(dotAPI);
     } catch (err: any) {

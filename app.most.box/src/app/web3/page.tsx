@@ -24,6 +24,11 @@ export default function PageWeb3() {
 
   const [showX25519, setShowX25519] = useState(false);
   const [ipns, setIPNS] = useState("-");
+  const [currentTime, setCurrentTime] = useState<number>(0);
+
+  useEffect(() => {
+    setCurrentTime(Date.now());
+  }, []);
 
   useEffect(() => {
     if (wallet) {
@@ -106,15 +111,15 @@ export default function PageWeb3() {
 
         <Divider variant="dashed" labelPosition="center" my="md" />
 
-        <Anchor component={Link} href="/web3/ethers">
-          <Text>Ethers</Text>
+        <Anchor component={Link} href="/web3/viem">
+          <Text>Viem</Text>
         </Anchor>
 
         <Anchor component={Link} href="/ipns">
           <Text>IPFS 二维码</Text>
         </Anchor>
 
-        <Text>{mp.formatTime(Date.now())}</Text>
+        <Text>{currentTime ? mp.formatTime(currentTime) : ""}</Text>
       </Stack>
     </Container>
   );

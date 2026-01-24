@@ -4,19 +4,15 @@ import "./mine.scss";
 import Link from "next/link";
 import { Avatar, Text, Stack, Group, Box, ActionIcon } from "@mantine/core";
 import { Icon, type IconName } from "@/components/Icon";
+import { openDotManager } from "@/components/DotManager/open";
 import { useUserStore } from "@/stores/userStore";
 import mp from "@/constants/mp";
-import { openDotManager } from "../DotManager/open";
 
 export default function HomeMine() {
   const wallet = useUserStore((state) => state.wallet);
-  const address = wallet?.address || mp.ZeroAddress;
-
+  const address = wallet?.address || mp.zeroAddress;
   const exit = useUserStore((state) => state.exit);
 
-  const quit = () => {
-    if (wallet) exit();
-  };
   return (
     <>
       <Box className="header">
@@ -69,9 +65,9 @@ export default function HomeMine() {
       <Stack className="menu-list" mt="xs">
         <MenuItem
           icon="Exit"
-          label={wallet ? "退出账户" : "去登录"}
+          label={wallet ? "退出登录" : "去登录"}
           link="/login"
-          onClick={quit}
+          onClick={exit}
         />
       </Stack>
     </>

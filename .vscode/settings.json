@@ -1,21 +1,23 @@
 {
   "cSpell.words": [
+    "appkit",
     "dicebear",
     "fingerprintjs",
     "hexlify",
     "inited",
     "IPFS",
+    "IPNS",
     "kubo",
     "mantine",
     "nacl",
     "Qrcode",
     "rdrand",
+    "reown",
     "supabase",
     "tabler",
     "toastui",
-    "turbopack"
-  ],
-  "search.exclude": {
-    "**/out": true
-  }
+    "turbopack",
+    "viem",
+    "Wagmi"
+  ]
 }

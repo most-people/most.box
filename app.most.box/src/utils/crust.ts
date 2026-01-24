@@ -1,4 +1,4 @@
-import { HDNodeWallet, toUtf8Bytes, encodeBase64 } from "ethers";
+import { mnemonicToAccount } from "viem/accounts";
 import { create } from "kubo-rpc-client";
 import axios from "axios";
 
@@ -16,15 +16,15 @@ export const uploadToCrust = async (file: File, mnemonic: string) => {
   if (!mnemonic) throw new Error("Wallet mnemonic is required");
 
   // Create signer from mnemonic
-  const signer = HDNodeWallet.fromPhrase(mnemonic);
-  const address = signer.address;
+  const account = mnemonicToAccount(mnemonic);
+  const address = account.address;
   // Sign the address itself as the message
-  const signature = await signer.signMessage(address);
+  const signature = await account.signMessage({ message: address });
 
   // Construct Auth Header
   // Format: eth-{address}:{signature}
   const authHeaderRaw = `eth-${address}:${signature}`;
-  const authHeader = encodeBase64(toUtf8Bytes(authHeaderRaw));
+  const authHeader = Buffer.from(authHeaderRaw).toString("base64");
 
   // Create IPFS client connected to Crust Gateway
   const ipfs = create({
