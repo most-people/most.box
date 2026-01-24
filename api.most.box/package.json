@@ -2,7 +2,7 @@
   "name": "api.most.box",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
+    "start": "wrangler dev",
     "deploy": "wrangler deploy --minify",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings"
   },
