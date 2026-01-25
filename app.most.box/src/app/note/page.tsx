@@ -20,9 +20,9 @@ import "@/app/note/note.scss";
 import { useSearchParams } from "next/navigation";
 import { useUserStore } from "@/stores/userStore";
 import { useDotStore } from "@/stores/dotStore";
-import { api } from "@/constants/api";
+import { api } from "@/utils/api";
 import { notifications } from "@mantine/notifications";
-import { mostDecode, mostEncode } from "@/constants/MostWallet";
+import { mostDecode, mostEncode } from "@/utils/MostWallet";
 import Link from "next/link";
 import { modals } from "@mantine/modals";
 
@@ -75,7 +75,7 @@ const PageContent = () => {
       const decrypted = mostDecode(
         content,
         wallet.public_key,
-        wallet.private_key
+        wallet.private_key,
       );
       if (decrypted) {
         // 解密成功
@@ -90,7 +90,7 @@ const PageContent = () => {
       newContent = mostEncode(
         newContent,
         wallet.public_key,
-        wallet.private_key
+        wallet.private_key,
       );
     }
 

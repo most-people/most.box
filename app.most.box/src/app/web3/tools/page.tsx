@@ -14,14 +14,14 @@ import {
   Center,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { mostWallet } from "@/constants/MostWallet";
+import { mostWallet } from "@/utils/MostWallet";
 import { mnemonicToAccount } from "viem/accounts";
 import { HDKey } from "@scure/bip32";
 import { mnemonicToSeedSync } from "@scure/bip39";
 import { toHex } from "viem";
 import { QRCodeSVG } from "qrcode.react";
 import { AppHeader } from "@/components/AppHeader";
-import mp from "@/constants/mp";
+import mp from "@/utils/mp";
 import { HDNodeWallet } from "ethers";
 
 interface DeriveAddress {

@@ -6,7 +6,7 @@ import {
   mostEncode,
   type MostWallet,
   mostWallet,
-} from "@/constants/MostWallet";
+} from "@/utils/MostWallet";
 import { match } from "pinyin-pro";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";

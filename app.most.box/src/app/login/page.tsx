@@ -15,8 +15,8 @@ import {
 
 import Link from "next/link";
 import { useState } from "react";
-import mp from "@/constants/mp";
-import { mostWallet, mostWalletAddress } from "@/constants/MostWallet";
+import mp from "@/utils/mp";
+import { mostWallet, mostWalletAddress } from "@/utils/MostWallet";
 import { useUserStore } from "@/stores/userStore";
 import { notifications } from "@mantine/notifications";
 import { useBack } from "@/hooks/useBack";

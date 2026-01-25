@@ -2,7 +2,7 @@
 
 import { Suspense } from "react";
 import { AppHeader } from "@/components/AppHeader";
-import mp from "@/constants/mp";
+import mp from "@/utils/mp";
 import {
   Avatar,
   Container,

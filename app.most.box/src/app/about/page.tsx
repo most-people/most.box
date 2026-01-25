@@ -1,5 +1,5 @@
 import { AppHeader } from "@/components/AppHeader";
-import mp from "@/constants/mp";
+import mp from "@/utils/mp";
 import { Box, Text, Stack } from "@mantine/core";
 import Link from "next/link";
 

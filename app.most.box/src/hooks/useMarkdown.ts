@@ -1,4 +1,4 @@
-import { api } from "@/constants/api";
+import { api } from "@/utils/api";
 import { parse, HtmlGenerator } from "latex.js";
 
 interface CodeBlockMdNode {
@@ -27,7 +27,7 @@ const getEditorModules = () => {
 
 const uploadImage = async (
   file: File | Blob,
-  callback: (url: string, altText: string) => void
+  callback: (url: string, altText: string) => void,
 ) => {
   const formData = new FormData();
   const params = new URLSearchParams(location.search);
@@ -161,7 +161,7 @@ const initEditor = async (el: HTMLDivElement) => {
   const $math = () => {
     const latex = "a^{2}+b^{2}=c^{2}";
     editor.replaceSelection(
-      "\n$$math\n" + latex + "\n$$\n\n" + "LaTeX公式编辑 latexlive.com\n"
+      "\n$$math\n" + latex + "\n$$\n\n" + "LaTeX公式编辑 latexlive.com\n",
     );
     // if (editor.isWysiwygMode()) {
     //   editor.setMarkdown(editor.getMarkdown());

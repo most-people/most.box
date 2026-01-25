@@ -1,7 +1,7 @@
 "use client";
 
 import { AppHeader } from "@/components/AppHeader";
-import mp from "@/constants/mp";
+import mp from "@/utils/mp";
 import { useUserStore } from "@/stores/userStore";
 import {
   Container,
@@ -130,7 +130,7 @@ export default function PageWeb3Ed25519() {
     if (wallet) {
       const EdKeyPair = mp.getEdKeyPair(
         wallet.private_key,
-        wallet.ed_public_key
+        wallet.ed_public_key,
       );
       if (EdKeyPair) {
         const privatePEM = ed25519ToPKCS8PEM(EdKeyPair.secretKey);

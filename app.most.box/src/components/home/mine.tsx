@@ -6,7 +6,7 @@ import { Avatar, Text, Stack, Group, Box, ActionIcon } from "@mantine/core";
 import { Icon, type IconName } from "@/components/Icon";
 import { openDotManager } from "@/components/DotManager/open";
 import { useUserStore } from "@/stores/userStore";
-import mp from "@/constants/mp";
+import mp from "@/utils/mp";
 
 export default function HomeMine() {
   const wallet = useUserStore((state) => state.wallet);

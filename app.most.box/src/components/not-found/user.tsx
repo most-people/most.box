@@ -1,4 +1,4 @@
-import { CONTRACT_ABI_NAME, CONTRACT_ADDRESS_NAME } from "@/constants/dot";
+import { CONTRACT_ABI_NAME, CONTRACT_ADDRESS_NAME } from "@/utils/dot";
 import {
   ActionIcon,
   Anchor,
@@ -21,8 +21,8 @@ import { base, baseSepolia } from "viem/chains";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
-import mp from "@/constants/mp";
-import { api } from "@/constants/api";
+import mp from "@/utils/mp";
+import { api } from "@/utils/api";
 import { useUserStore } from "@/stores/userStore";
 import { useMarkdown } from "@/hooks/useMarkdown";
 import { Icon } from "../Icon";

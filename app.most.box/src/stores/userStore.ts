@@ -1,4 +1,4 @@
-import { type MostWallet } from "@/constants/MostWallet";
+import { type MostWallet } from "@/utils/MostWallet";
 import { create } from "zustand";
 import { disconnect } from "@wagmi/core";
 import { adapter } from "@/context/Web3Modal";

@@ -1,7 +1,7 @@
 "use client";
 import { AppHeader } from "@/components/AppHeader";
 import { Icon } from "@/components/Icon";
-import { api } from "@/constants/api";
+import { api } from "@/utils/api";
 import {
   Button,
   Container,
@@ -34,7 +34,7 @@ import { useRef, useState, useEffect } from "react";
 import IPv6 from "@/assets/docs/IPv6.md";
 import { useUserStore } from "@/stores/userStore";
 import { useMarkdown } from "@/hooks/useMarkdown";
-import mp from "@/constants/mp";
+import mp from "@/utils/mp";
 
 type Role = "joiner" | "creator";
 

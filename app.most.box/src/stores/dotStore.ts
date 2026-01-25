@@ -4,7 +4,7 @@ import {
   CONTRACT_ADDRESS_DOT,
   NETWORK_CONFIG,
   type NETWORK_TYPE,
-} from "@/constants/dot";
+} from "@/utils/dot";
 import { createPublicClient, http, getContract, type Address } from "viem";
 import { base, baseSepolia } from "viem/chains";
 

@@ -1,7 +1,7 @@
 import AppProvider from "@/context/AppProvider";
 import { AppKitProvider } from "@/context/Web3Modal";
 import type { Metadata, Viewport } from "next";
-import { theme } from "@/constants/theme";
+import { theme } from "@/utils/theme";
 
 import { MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";

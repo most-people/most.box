@@ -13,7 +13,7 @@ import {
   Group,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
-import { mostEncode, mostDecode, mostWallet } from "@/constants/MostWallet";
+import { mostEncode, mostDecode, mostWallet } from "@/utils/MostWallet";
 import { notifications } from "@mantine/notifications";
 import { IconInfoCircle, IconCopy } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";

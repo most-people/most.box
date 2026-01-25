@@ -13,7 +13,7 @@ import { useUserStore } from "@/stores/userStore";
 import { AppHeader } from "@/components/AppHeader";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import Link from "next/link";
-import mp from "@/constants/mp";
+import mp from "@/utils/mp";
 
 export default function PageWeb3() {
   const wallet = useUserStore((state) => state.wallet);

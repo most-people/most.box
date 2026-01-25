@@ -41,8 +41,8 @@ import {
   IconSettings,
   IconBrandGithub,
 } from "@tabler/icons-react";
-import { CONTRACT_ADDRESS_DOT, NETWORK_CONFIG } from "@/constants/dot";
-import mp from "@/constants/mp";
+import { CONTRACT_ADDRESS_DOT, NETWORK_CONFIG } from "@/utils/dot";
+import mp from "@/utils/mp";
 import { CID } from "multiformats";
 import Link from "next/link";
 import { checkNode, DotNode, useDotStore } from "@/stores/dotStore";

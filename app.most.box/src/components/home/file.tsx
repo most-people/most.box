@@ -19,7 +19,7 @@ import {
   Breadcrumbs,
   Anchor,
 } from "@mantine/core";
-import { api } from "@/constants/api";
+import { api } from "@/utils/api";
 import "./file.scss";
 import Link from "next/link";
 import {
@@ -31,7 +31,7 @@ import {
   IconFileImport,
 } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
-import mp from "@/constants/mp";
+import mp from "@/utils/mp";
 import { FileItem, useUserStore } from "@/stores/userStore";
 import { useDotStore } from "@/stores/dotStore";
 
@@ -111,7 +111,7 @@ export default function HomeFile() {
     }
 
     const folderExists = files?.some(
-      (file) => file.type === "directory" && file.name === newFolderName
+      (file) => file.type === "directory" && file.name === newFolderName,
     );
 
     if (folderExists) {
@@ -268,7 +268,7 @@ export default function HomeFile() {
 
   const normalizeCIDInput = (s: string) => {
     const m = (s || "").match(
-      /(baf[a-z0-9]{30,}|Qm[1-9A-HJ-NP-Za-km-z]{44,})/i
+      /(baf[a-z0-9]{30,}|Qm[1-9A-HJ-NP-Za-km-z]{44,})/i,
     );
     if (m) return m[1];
     let input = (s || "").trim();
@@ -365,7 +365,7 @@ export default function HomeFile() {
   const getTotalSize = () => {
     const totalBytes = previewFiles.reduce(
       (sum, item) => sum + item.file.size,
-      0
+      0,
     );
     return formatFileSize(totalBytes);
   };
@@ -536,11 +536,11 @@ export default function HomeFile() {
   const normalizePath = (s: string) => (s || "").replace(/^\/+|\/+$/g, "");
   const oldPathForCompare = renamingItem
     ? normalizePath(
-        filesPath ? `${filesPath}/${renamingItem.name}` : renamingItem.name
+        filesPath ? `${filesPath}/${renamingItem.name}` : renamingItem.name,
       )
     : "";
   const newPathForCompare = normalizePath(
-    ((newDirPath ? `${newDirPath}/` : "") + newName).trim()
+    ((newDirPath ? `${newDirPath}/` : "") + newName).trim(),
   );
   const isUnchangedRename = oldPathForCompare === newPathForCompare;
 

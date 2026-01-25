@@ -24,7 +24,7 @@ import { useEffect, useState } from "react";
 import { notifications } from "@mantine/notifications";
 import { modals } from "@mantine/modals";
 import Link from "next/link";
-import mp from "@/constants/mp";
+import mp from "@/utils/mp";
 import { Icon } from "@/components/Icon";
 import { useUserStore } from "@/stores/userStore";
 import { useDotStore } from "@/stores/dotStore";
@@ -39,7 +39,7 @@ import {
 import { useWalletClient } from "wagmi";
 import { mnemonicToAccount } from "viem/accounts";
 import { base, baseSepolia } from "viem/chains";
-import { CONTRACT_ABI_NAME, CONTRACT_ADDRESS_NAME } from "@/constants/dot";
+import { CONTRACT_ABI_NAME, CONTRACT_ADDRESS_NAME } from "@/utils/dot";
 import { openDotManager } from "@/components/DotManager/open";
 
 const UserName = () => {

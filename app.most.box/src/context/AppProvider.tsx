@@ -5,7 +5,7 @@ import { useDotStore } from "@/stores/dotStore";
 import { useEffect } from "react";
 import { useComputedColorScheme, useMantineColorScheme } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import mp from "@/constants/mp";
+import mp from "@/utils/mp";
 
 export default function AppProvider() {
   const exit = useUserStore((state) => state.exit);

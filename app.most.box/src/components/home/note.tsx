@@ -17,11 +17,11 @@ import {
 } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { IconDotsVertical, IconPlus, IconRefresh } from "@tabler/icons-react";
-import { api } from "@/constants/api";
+import { api } from "@/utils/api";
 import { Note, useUserStore } from "@/stores/userStore";
 import Link from "next/link";
 import "./note.scss";
-import mp from "@/constants/mp";
+import mp from "@/utils/mp";
 import { notifications } from "@mantine/notifications";
 import { useDisclosure } from "@mantine/hooks";
 
