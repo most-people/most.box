@@ -101,7 +101,7 @@ export default function PageWeb3Tool() {
           "I know loss mnemonic will lose my wallet.",
         );
         setAddress(danger.address);
-        setMnemonic(danger.mnemonic);
+        setMnemonic(danger.mnemonic || "");
       } else {
         setAddress(mp.zeroAddress);
         setMnemonic("");

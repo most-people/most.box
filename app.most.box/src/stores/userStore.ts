@@ -1,13 +1,8 @@
 import { type MostWallet } from "@/constants/MostWallet";
 import { create } from "zustand";
-import { notifications } from "@mantine/notifications";
-import { CONTRACT_ABI_NAME, CONTRACT_ADDRESS_NAME } from "@/constants/dot";
-import { api } from "@/constants/api";
-import { formatEther } from "viem";
-import { useDotStore } from "@/stores/dotStore";
-import { JsonRpcProvider, Contract } from "ethers";
 import { disconnect } from "@wagmi/core";
 import { adapter } from "@/context/Web3Modal";
+import { getCrustBalance } from "@/utils/crust";
 
 export interface FileItem {
   name: string;
@@ -40,7 +35,6 @@ interface UserStore {
   exit: () => void;
   // 根目录
   rootCID: string;
-  initDotAPI: () => Promise<void>;
   // 余额
   balance: string;
   initBalance: () => Promise<void>;
@@ -56,8 +50,7 @@ export const useUserStore = create<State>((set, get) => ({
   wallet: undefined,
   setWallet(wallet: MostWallet) {
     set({ wallet });
-    const { initDotAPI, initBalance } = get();
-    // initDotAPI();
+    const { initBalance } = get();
     initBalance();
   },
   // 返回
@@ -79,44 +72,18 @@ export const useUserStore = create<State>((set, get) => ({
   },
   // 根目录 CID
   rootCID: "",
-  async initDotAPI() {
-    const { wallet } = get();
-    if (!wallet) return console.log("未登录");
 
-    const { RPC, updateDot } = useDotStore.getState();
-    const provider = new JsonRpcProvider(RPC);
-    const contract = new Contract(
-      CONTRACT_ADDRESS_NAME,
-      CONTRACT_ABI_NAME,
-      provider,
-    );
-    const dotAPI = await contract.getDot(wallet.address);
-    if (!dotAPI) {
-      notifications.show({
-        message: "未配置选择节点",
-        color: "red",
-      });
-      return;
-    }
-    updateDot(dotAPI).then((list) => {
-      if (list !== null) {
-        set({ dotAPI });
-      }
-    });
-  },
   // 余额
-  balance: "",
+  balance: "0",
   async initBalance() {
     const { wallet } = get();
-    if (!wallet) return console.log("未登录");
-
-    const { RPC } = useDotStore.getState();
-    const provider = new JsonRpcProvider(RPC);
-    const balance = await provider.getBalance(wallet.address);
-    set({ balance: formatEther(balance) });
-
-    if (Number(balance) === 0) {
-      api.post("/api.testnet.gas");
+    if (wallet) {
+      try {
+        const balance = await getCrustBalance(wallet.crust_address);
+        set({ balance });
+      } catch (error) {
+        console.error("获取 Crust 余额失败", error);
+      }
     }
   },
   // 通用设置器

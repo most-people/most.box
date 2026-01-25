@@ -122,6 +122,17 @@ export const mostWallet = (
   return mostWallet;
 };
 
+export const mostWalletAddress = (username: string, password: string) => {
+  const p = stringToBytes(password);
+  const salt = stringToBytes("/most.box/" + username);
+  const kdf = pbkdf2(sha512, p, salt, { c: 3, dkLen: 32 });
+  const seed = toBytes(sha256(kdf));
+  const mnemonic = entropyToMnemonic(seed, english);
+  const account = mnemonicToAccount(mnemonic);
+  const address = account.address;
+  return address;
+};
+
 export const mostEncode = (
   text: string,
   public_key: string,

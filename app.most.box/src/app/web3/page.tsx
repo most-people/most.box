@@ -10,19 +10,17 @@ import {
   Divider,
 } from "@mantine/core";
 import { useUserStore } from "@/stores/userStore";
-import { useDotStore } from "@/stores/dotStore";
 import { AppHeader } from "@/components/AppHeader";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import Link from "next/link";
 import mp from "@/constants/mp";
+
 export default function PageWeb3() {
   const wallet = useUserStore((state) => state.wallet);
   const balance = useUserStore((state) => state.balance);
 
-  const Explorer = useDotStore((state) => state.Explorer);
-  const network = useDotStore((state) => state.network);
-
   const [showX25519, setShowX25519] = useState(false);
+  const [showCrust, setShowCrust] = useState(false);
   const [ipns, setIPNS] = useState("-");
   const [currentTime, setCurrentTime] = useState<number>(0);
 
@@ -52,27 +50,42 @@ export default function PageWeb3() {
           <Text>导出钱包</Text>
         </Anchor>
 
-        <Text size="lg" fw={500}>
-          ETH 地址
-        </Text>
-
-        <Text>{wallet?.address.toLowerCase() || "-"}</Text>
-
-        <Text size="lg" fw={500}>
-          余额
-        </Text>
-
-        <Group>
-          <Text>
-            {balance} Base {network} ETH
+        <Stack>
+          <Text size="lg" fw={500}>
+            ETH 地址
           </Text>
+
+          <Text>{wallet?.address.toLowerCase() || "-"}</Text>
+        </Stack>
+
+        <Text size="lg" fw={500}>
+          Crust 地址
+        </Text>
+        <Group>
+          <Text>{wallet?.crust_address || "-"}</Text>
           <Anchor
-            href={`${Explorer}/address/${wallet?.address || ""}`}
+            href={`https://crust.subscan.io/account/${wallet?.crust_address || ""}`}
             target="_blank"
           >
             查看
           </Anchor>
         </Group>
+
+        <Stack>
+          <Text size="lg" fw={500}>
+            余额
+          </Text>
+
+          <Group>
+            <Text>{balance} CRU</Text>
+            <Anchor
+              href={`https://crust.subscan.io/account/${wallet?.crust_address || ""}`}
+              target="_blank"
+            >
+              查看
+            </Anchor>
+          </Group>
+        </Stack>
 
         <Text size="lg" fw={500}>
           Ed25519 公钥
@@ -110,28 +123,23 @@ export default function PageWeb3() {
         </Text>
 
         <Text size="lg" fw={500}>
-          Crust 地址
-        </Text>
-        <Text>{wallet?.crust_address || "-"}</Text>
-
-        <Text size="lg" fw={500}>
           Crust 助记词
         </Text>
         <Group align="center" gap="xs">
           <Text size="sm" c="dimmed">
-            此助记词用于 Crust 网络交互，请妥善保管
+            此助记词用于 Crust 网络交互
           </Text>
           <ActionIcon
             variant="subtle"
             size="sm"
             ml="xs"
-            onClick={() => setShowX25519(!showX25519)}
+            onClick={() => setShowCrust(!showCrust)}
           >
-            {showX25519 ? <IconEye size={16} /> : <IconEyeOff size={16} />}
+            {showCrust ? <IconEye size={16} /> : <IconEyeOff size={16} />}
           </ActionIcon>
         </Group>
         <Text>
-          {showX25519 ? wallet?.crust_mnemonic || "-" : "****************"}
+          {showCrust ? wallet?.crust_mnemonic || "-" : "****************"}
         </Text>
 
         <Text size="lg" fw={500}>

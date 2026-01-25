@@ -182,3 +182,27 @@ export const placeStorageOrder = async (
     await api.disconnect();
   }
 };
+
+/**
+ * 查询 Crust 账户余额
+ * @param address Crust 地址
+ * @returns 余额（单位：CRU）
+ */
+export const getCrustBalance = async (address: string) => {
+  const api = new ApiPromise({
+    provider: new WsProvider(CRUST_RPC_URL),
+    typesBundle: typesBundleForPolkadot,
+  });
+
+  try {
+    await api.isReady;
+    const account: any = await api.query.system.account(address);
+    // 转换为人类可读格式 (CRU 有 12 位小数)
+    return account.data.free.toHuman();
+  } catch (error) {
+    console.error("查询余额失败:", error);
+    throw error;
+  } finally {
+    await api.disconnect();
+  }
+};

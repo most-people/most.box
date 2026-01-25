@@ -197,22 +197,6 @@ const pinyin = (t: string, v: string, jump = 2) => {
   return false;
 };
 
-const openDot = (dot: string) => {
-  const url = new URL("/auth/jwt/", dot);
-  const jwt = localStorage.getItem("jwt");
-
-  if (jwt) {
-    const wallet = mp.verifyJWT(jwt);
-    if (wallet) {
-      const key = dayjs().format("YY/M/D HH:mm");
-      const { public_key, private_key } = mostWallet("auth/jwt", key);
-      const token = mostEncode(JSON.stringify(wallet), public_key, private_key);
-      url.searchParams.set("token", token);
-    }
-  }
-  window.open(url.href);
-};
-
 // Ed25519 变长整型编码（protobuf varint）
 const encodeVarint = (value: number): number[] => {
   const bytes: number[] = [];
@@ -305,7 +289,6 @@ const mp = {
   loginSave,
   zeroAddress,
   pinyin,
-  openDot,
   getEdKeyPair,
   getIPNS,
 };

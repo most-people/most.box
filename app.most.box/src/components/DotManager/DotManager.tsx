@@ -434,7 +434,6 @@ export function DotManager({ isModal, onClose }: DotManagerProps) {
                     key={index}
                     onClick={(e) => {
                       e.preventDefault();
-                      mp.openDot(url);
                     }}
                     lineClamp={1}
                     component={Link}
@@ -735,7 +734,6 @@ export function DotManager({ isModal, onClose }: DotManagerProps) {
                               c="blue"
                               onClick={(e) => {
                                 e.preventDefault();
-                                mp.openDot(api);
                               }}
                               lineClamp={1}
                               component={Link}

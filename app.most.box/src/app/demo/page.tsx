@@ -20,6 +20,7 @@ import {
   createCrustAuthHeader,
   uploadToIpfsGateway,
   placeStorageOrder,
+  getCrustBalance,
 } from "@/utils/crust";
 import { notifications } from "@mantine/notifications";
 import { useAccount, useSignMessage } from "wagmi";
@@ -34,16 +35,66 @@ export default function PageDemo() {
   const [uploading, setUploading] = useState(false);
   const [cid, setCid] = useState<string>("");
   const [txHash, setTxHash] = useState<string>("");
+  const [fileSize, setFileSize] = useState<number>(0);
 
   // CRU 支付状态
   const [useCru, setUseCru] = useState(false);
-  const [cruSeed, setCruSeed] = useState("");
+  const [cruBalance, setCruBalance] = useState<string>("0");
 
   useEffect(() => {
-    if (wallet) {
-      console.log(wallet);
+    if (useCru && wallet?.crust_address) {
+      getCrustBalance(wallet.crust_address)
+        .then(setCruBalance)
+        .catch(console.error);
     }
-  }, [wallet]);
+  }, [useCru, wallet?.crust_address]);
+
+  const handlePlaceOrder = async () => {
+    if (!cid || !fileSize) {
+      notifications.show({
+        message: "没有可用的 CID 或文件大小信息",
+        color: "red",
+      });
+      return;
+    }
+
+    try {
+      setUploading(true);
+      setTxHash("");
+
+      // 1. 确定用于 CRU 交易的种子
+      const seedToUse = wallet?.crust_mnemonic;
+      if (!seedToUse) {
+        notifications.show({
+          message: "要使用 CRU 支付，您必须登录并拥有有效的 Crust 助记词。",
+          color: "red",
+        });
+        setUploading(false);
+        return;
+      }
+
+      notifications.show({
+        message: "正在下存储订单...",
+        color: "blue",
+      });
+
+      // 2. 在 Crust 网络上下存储订单
+      const tx = await placeStorageOrder(cid, fileSize, seedToUse);
+      setTxHash(tx);
+      notifications.show({
+        message: "存储订单下单成功！",
+        color: "green",
+      });
+    } catch (error) {
+      console.error(error);
+      notifications.show({
+        message: "下单失败: " + (error as Error).message,
+        color: "red",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleUpload = async () => {
     if (!file) {
@@ -58,25 +109,14 @@ export default function PageDemo() {
       setUploading(true);
       setCid("");
       setTxHash("");
+      setFileSize(0);
       let resultCid = "";
 
       // ---------------------------------------------------------
-      // 场景 A: 使用 CRU 支付 (链上订单)
+      // 场景 A: 仅上传到 IPFS 网关 (为后续下单做准备)
       // ---------------------------------------------------------
       if (useCru) {
-        // 1. 确定用于 CRU 交易的种子
-        const seedToUse = cruSeed || wallet?.mnemonic;
-        if (!seedToUse) {
-          notifications.show({
-            message:
-              "要使用 CRU 支付，您必须提供 Crust/Polkadot 种子或拥有本地钱包助记词。",
-            color: "red",
-          });
-          setUploading(false);
-          return;
-        }
-
-        // 2. 向 IPFS 网关认证 (先上传文件)
+        // 1. 向 IPFS 网关认证
         let authHeader = "";
         if (wallet?.mnemonic) {
           const account = mnemonicToAccount(wallet.mnemonic);
@@ -86,8 +126,6 @@ export default function PageDemo() {
           const sig = await signMessageAsync({ message: address });
           authHeader = createCrustAuthHeader(address, sig);
         } else {
-          // 如果没有连接钱包，甚至无法上传到网关获取 CID。
-          // (除非我们使用公共网关，为了可靠性我们坚持使用认证网关)
           notifications.show({
             message: "请连接钱包（本地或 EVM）以授权 IPFS 上传。",
             color: "red",
@@ -96,26 +134,15 @@ export default function PageDemo() {
           return;
         }
 
-        // 3. 上传到 IPFS 网关 (暂不 Pin)
+        // 2. 上传到 IPFS 网关 (暂不 Pin)
         const uploadResult = await uploadToIpfsGateway(file, authHeader);
         resultCid = uploadResult.cid;
         setCid(resultCid);
+        setFileSize(uploadResult.size);
 
         notifications.show({
-          message: "文件已上传至 IPFS。正在下存储订单...",
+          message: "文件已上传至 IPFS。请点击“下单”按钮进行存储。",
           color: "blue",
-        });
-
-        // 4. 在 Crust 网络上下存储订单
-        const tx = await placeStorageOrder(
-          resultCid,
-          uploadResult.size,
-          seedToUse,
-        );
-        setTxHash(tx);
-        notifications.show({
-          message: "存储订单下单成功！",
-          color: "green",
         });
       }
       // ---------------------------------------------------------
@@ -179,10 +206,8 @@ export default function PageDemo() {
         <Stack
           gap="xs"
           p="md"
-          style={{
-            borderRadius: 8,
-            border: "1px solid var(--red)",
-          }}
+          bg="var(--mantine-color-gray-1)"
+          style={{ borderRadius: 8 }}
         >
           <Group justify="space-between">
             <Text size="sm" fw={500}>
@@ -194,33 +219,36 @@ export default function PageDemo() {
               onChange={(event) => setUseCru(event.currentTarget.checked)}
             />
           </Group>
-
           {useCru && (
-            <PasswordInput
-              label="Crust/Polkadot 种子 (可选)"
-              placeholder={
-                wallet?.mnemonic ? "使用本地钱包助记词" : "输入种子/助记词"
-              }
-              value={cruSeed}
-              onChange={(e) => setCruSeed(e.currentTarget.value)}
-              description="如果可用，留空以使用本地钱包助记词。"
-            />
+            <Text
+              size="xs"
+              c={parseFloat(cruBalance) < 0.001 ? "red" : "dimmed"}
+            >
+              当前余额: {cruBalance} CRU{" "}
+              {parseFloat(cruBalance) < 0.001 && "(余额不足，请充值)"}
+            </Text>
           )}
         </Stack>
 
         <Button
           onClick={handleUpload}
           loading={uploading}
-          disabled={!canUpload && !cruSeed}
+          disabled={!canUpload}
         >
           {useCru
-            ? "上传并下单 (CRU)"
+            ? "上传到 IPFS"
             : wallet?.mnemonic
               ? "使用本地钱包上传"
               : isConnected
                 ? "使用连接的钱包上传"
                 : "连接钱包以上传"}
         </Button>
+
+        {useCru && cid && (
+          <Button onClick={handlePlaceOrder} loading={uploading} color="orange">
+            下单存储 (支付 CRU)
+          </Button>
+        )}
 
         {cid && (
           <Stack gap="xs">

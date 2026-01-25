@@ -16,7 +16,7 @@ import {
 import Link from "next/link";
 import { useState } from "react";
 import mp from "@/constants/mp";
-import { mostWallet } from "@/constants/MostWallet";
+import { mostWallet, mostWalletAddress } from "@/constants/MostWallet";
 import { useUserStore } from "@/stores/userStore";
 import { notifications } from "@mantine/notifications";
 import { useBack } from "@/hooks/useBack";
@@ -90,7 +90,7 @@ export default function PageLogin() {
             size="xl"
             radius="md"
             src={mp.avatar(
-              username ? mostWallet(username, password).address : undefined,
+              username ? mostWalletAddress(username, password) : undefined,
             )}
             alt="it's me"
           />
