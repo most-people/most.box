@@ -156,10 +156,10 @@ export const placeStorageOrder = async (
 
     // 4. 发送并等待确认
     const result = await new Promise<string>((resolve, reject) => {
-      tx.signAndSend(krp, ({ status, events, dispatchError }) => {
+      tx.signAndSend(krp, ({ status, events, dispatchError, txHash }) => {
         if (status.isFinalized) {
           console.log(`交易在区块 ${status.asFinalized} 确认`);
-          resolve(status.asFinalized.toString());
+          resolve(txHash.toHex());
         } else if (dispatchError) {
           if (dispatchError.isModule) {
             const decoded = api.registry.findMetaError(dispatchError.asModule);

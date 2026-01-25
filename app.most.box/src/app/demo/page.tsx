@@ -64,8 +64,8 @@ export default function PageDemo() {
       setTxHash("");
 
       // 1. 确定用于 CRU 交易的种子
-      const seedToUse = wallet?.crust_mnemonic;
-      if (!seedToUse) {
+      const crust_mnemonic = wallet?.crust_mnemonic;
+      if (!crust_mnemonic) {
         notifications.show({
           message: "要使用 CRU 支付，您必须登录并拥有有效的 Crust 助记词。",
           color: "red",
@@ -80,7 +80,7 @@ export default function PageDemo() {
       });
 
       // 2. 在 Crust 网络上下存储订单
-      const tx = await placeStorageOrder(cid, fileSize, seedToUse);
+      const tx = await placeStorageOrder(cid, fileSize, crust_mnemonic);
       setTxHash(tx);
       notifications.show({
         message: "存储订单下单成功！",

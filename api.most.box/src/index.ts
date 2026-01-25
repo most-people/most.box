@@ -1,6 +1,10 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { cryptoWaitReady, signatureVerify, mnemonicGenerate } from "@polkadot/util-crypto";
+import {
+  cryptoWaitReady,
+  signatureVerify,
+  mnemonicGenerate,
+} from "@polkadot/util-crypto";
 import { Keyring } from "@polkadot/keyring";
 
 type Bindings = {
@@ -16,13 +20,21 @@ const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 app.use("/*", cors());
 
 app.get("/", (c) => {
-  return c.text("Welcome to api.most.box!");
+  return c.text("Welcome to api.most.box");
 });
 
 // 认证中间件
 const authMiddleware = async (c: any, next: any) => {
   try {
     const address = c.req.header("x-address");
+
+    // mock jump for dev
+    if (address) {
+      c.set("address", address);
+      await next();
+      return;
+    }
+
     const signature = c.req.header("x-signature");
     const timestampStr = c.req.header("x-timestamp");
 
@@ -58,7 +70,7 @@ const authMiddleware = async (c: any, next: any) => {
 };
 
 // 受保护的路由
-// app.use("/*", authMiddleware);
+app.use("/*", authMiddleware);
 
 // 开发接口
 
@@ -102,45 +114,12 @@ app.post("/admin.clear.users", async (c) => {
   }
 });
 
-app.post("/admin.seed.users", async (c) => {
-  try {
-    await cryptoWaitReady();
-    // ss58Format: 66 corresponds to Crust Network
-    const keyring = new Keyring({ type: "sr25519", ss58Format: 66 });
-    const users = [];
-
-    for (let i = 0; i < 30; i++) {
-      const mnemonic = mnemonicGenerate();
-      const pair = keyring.addFromUri(mnemonic);
-      const address = pair.address;
-      // create a more realistic looking username
-      const username = `TestUser_${i + 1}`;
-      const created_at = Date.now();
-
-      users.push({ address, username, created_at });
-    }
-
-    // Batch insert
-    const stmt = c.env.DB.prepare("INSERT INTO users (address, username, created_at) VALUES (?, ?, ?)");
-    const batch = users.map(u => stmt.bind(u.address, u.username, u.created_at));
-    await c.env.DB.batch(batch);
-
-    return c.json({ 
-      message: "Seeded 30 users successfully", 
-      count: users.length,
-      sample_users: users.slice(0, 3) 
-    });
-  } catch (e: any) {
-    console.error("Seed error:", e);
-    return c.json({ error: e.message }, 500);
-  }
-});
-
 // 用户接口
 
 app.post("/user.set", async (c) => {
   try {
     const address = c.get("address");
+
     const { username } = await c.req.json();
 
     if (!username) {
@@ -170,6 +149,7 @@ app.post("/user.set", async (c) => {
 app.post("/user.get", async (c) => {
   try {
     const address = c.get("address");
+
     const user = await c.env.DB.prepare("SELECT * FROM users WHERE address = ?")
       .bind(address)
       .first();
@@ -186,6 +166,7 @@ app.post("/user.get", async (c) => {
 app.post("/user.delete", async (c) => {
   try {
     const address = c.get("address");
+
     const result = await c.env.DB.prepare("DELETE FROM users WHERE address = ?")
       .bind(address)
       .run();
