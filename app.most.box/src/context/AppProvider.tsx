@@ -1,4 +1,5 @@
 "use client";
+import { ProgressProvider } from "@bprogress/next/app";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { useUserStore } from "@/stores/userStore";
 import { useDotStore } from "@/stores/dotStore";
@@ -7,7 +8,7 @@ import { useComputedColorScheme, useMantineColorScheme } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import mp from "@/utils/mp";
 
-export default function AppProvider() {
+const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const exit = useUserStore((state) => state.exit);
   const setWallet = useUserStore((state) => state.setWallet);
   const setItem = useUserStore((state) => state.setItem);
@@ -60,5 +61,15 @@ export default function AppProvider() {
     setItem("nodeDark", theme === "dark" ? "toastui-editor-dark" : "");
   }, [colorScheme, computedColorScheme]);
 
-  return null;
-}
+  return (
+    <ProgressProvider
+      color="var(--mantine-primary-color-filled)"
+      options={{ showSpinner: false }}
+      shallowRouting
+    >
+      {children}
+    </ProgressProvider>
+  );
+};
+
+export default AppProvider;

@@ -57,9 +57,10 @@ export default function RootLayout({
         <div id="app">
           <AppKitProvider>
             <MantineProvider defaultColorScheme="auto" theme={theme}>
-              <AppProvider />
               <Notifications limit={3} position="top-center" />
-              <ModalsProvider>{children}</ModalsProvider>
+              <ModalsProvider>
+                <AppProvider>{children}</AppProvider>
+              </ModalsProvider>
             </MantineProvider>
           </AppKitProvider>
         </div>
