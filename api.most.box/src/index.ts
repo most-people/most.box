@@ -83,10 +83,10 @@ app.get("/admin.users", async (c) => {
   }
 });
 
-app.post("/admin.clear.users", async (c) => {
+app.post("/admin.clear.tables", async (c) => {
   try {
     // 硬编码需要清空的表名列表，避免访问 sqlite_master 导致的权限错误
-    const tables = ["users"];
+    const tables = ["users", "files"];
     const clearedTables = [];
 
     for (const table of tables) {
@@ -109,6 +109,100 @@ app.post("/admin.clear.users", async (c) => {
       message: "Database cleared successfully",
       cleared_tables: clearedTables,
     });
+  } catch (e: any) {
+    return c.json({ error: e.message }, 500);
+  }
+});
+
+// 文件接口
+
+app.post("/file.add", async (c) => {
+  try {
+    const address = c.get("address");
+    const { cid, file_name, file_size, file_type, tx_hash, path, expired_at } =
+      await c.req.json();
+
+    if (!cid || !file_name) {
+      return c.json({ error: "CID and file_name are required" }, 400);
+    }
+
+    const now = Date.now();
+    // 默认为根目录 "/"
+    const filePath = path || "/";
+
+    // 默认过期时间：如果未提供，则默认为 6 个月后 (Crust 默认订单时长)
+    // 6 months = 180 days * 24 hours * 60 minutes * 60 seconds * 1000 ms
+    const defaultExpiredAt = now + 180 * 24 * 60 * 60 * 1000;
+    const finalExpiredAt = expired_at || defaultExpiredAt;
+
+    await c.env.DB.prepare(
+      `
+      INSERT INTO files (cid, file_name, file_size, file_type, tx_hash, created_at, expired_at, address, path)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(address, cid) DO UPDATE SET
+        file_name = excluded.file_name,
+        path = excluded.path,
+        tx_hash = excluded.tx_hash,
+        expired_at = excluded.expired_at
+    `,
+    )
+      .bind(
+        cid,
+        file_name,
+        file_size,
+        file_type,
+        tx_hash,
+        now,
+        finalExpiredAt,
+        address,
+        filePath,
+      )
+      .run();
+
+    return c.json({ message: "File saved successfully" });
+  } catch (e: any) {
+    return c.json({ error: e.message }, 500);
+  }
+});
+
+app.post("/file.list", async (c) => {
+  try {
+    const address = c.get("address");
+    const { path } = await c.req.json();
+    const searchPath = path || "/";
+
+    const { results } = await c.env.DB.prepare(
+      "SELECT * FROM files WHERE address = ? AND path = ? ORDER BY created_at DESC",
+    )
+      .bind(address, searchPath)
+      .all();
+
+    return c.json(results);
+  } catch (e: any) {
+    return c.json({ error: e.message }, 500);
+  }
+});
+
+app.post("/file.delete", async (c) => {
+  try {
+    const address = c.get("address");
+    const { cid } = await c.req.json();
+
+    if (!cid) {
+      return c.json({ error: "CID is required" }, 400);
+    }
+
+    const result = await c.env.DB.prepare(
+      "DELETE FROM files WHERE address = ? AND cid = ?",
+    )
+      .bind(address, cid)
+      .run();
+
+    if (result.success) {
+      return c.json({ message: "File deleted successfully" });
+    } else {
+      return c.json({ error: "Failed to delete file" }, 500);
+    }
   } catch (e: any) {
     return c.json({ error: e.message }, 500);
   }

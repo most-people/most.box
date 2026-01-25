@@ -37,18 +37,8 @@ export default function PageDemo() {
   const [cid, setCid] = useState<string>("");
   const [txHash, setTxHash] = useState<string>("");
   const [fileSize, setFileSize] = useState<number>(0);
-
-  // CRU 支付状态
   const [useCru, setUseCru] = useState(false);
-  const [cruBalance, setCruBalance] = useState<string>("0");
-
-  useEffect(() => {
-    if (useCru && wallet?.crust_address) {
-      getCrustBalance(wallet.crust_address)
-        .then(setCruBalance)
-        .catch(console.error);
-    }
-  }, [useCru, wallet?.crust_address]);
+  const balance = useUserStore((state) => state.balance);
 
   const handlePlaceOrder = async () => {
     if (!cid || !fileSize) {
@@ -207,7 +197,7 @@ export default function PageDemo() {
         <Stack
           gap="xs"
           p="md"
-          bg="var(--mantine-color-gray-1)"
+          bg="var(--message-background)"
           style={{ borderRadius: 8 }}
         >
           <Group justify="space-between">
@@ -221,12 +211,9 @@ export default function PageDemo() {
             />
           </Group>
           {useCru && (
-            <Text
-              size="xs"
-              c={parseFloat(cruBalance) < 0.001 ? "red" : "dimmed"}
-            >
-              当前余额: {cruBalance} CRU{" "}
-              {parseFloat(cruBalance) < 0.001 && "(余额不足，请充值)"}
+            <Text size="xs" c={parseFloat(balance) < 0.001 ? "red" : "dimmed"}>
+              当前余额: {balance}
+              {parseFloat(balance) < 0.001 && "(余额不足，请充值)"}
             </Text>
           )}
         </Stack>
