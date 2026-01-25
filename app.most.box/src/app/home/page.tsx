@@ -13,6 +13,7 @@ import {
   Stack,
   rem,
   Badge,
+  Paper,
 } from "@mantine/core";
 import {
   IconShieldLock,
@@ -24,11 +25,9 @@ import {
   IconServer,
   IconWorld,
   IconRocket,
+  IconCheck,
 } from "@tabler/icons-react";
-
-// We'll define some styles inline or use Mantine props for simplicity,
-// but for a real project, CSS modules or styled-components are preferred.
-// I'll use Mantine's style props where possible.
+import classes from "./page.module.css";
 
 export default function LandingPage() {
   return (
@@ -45,53 +44,44 @@ export default function LandingPage() {
 
 function HeroSection() {
   return (
-    <Container size="lg" py={100}>
-      <Stack align="center" gap="xl">
-        <Badge variant="filled" size="lg" radius="xl" color="blue">
-          Web3 Storage
-        </Badge>
+    <div className={classes.hero}>
+      <Container size="lg">
+        <Stack align="center" gap="xl">
+          <Badge variant="light" size="lg" radius="xl" color="blue">
+            Web3 Storage Redefined
+          </Badge>
 
-        <Title
-          order={1}
-          style={{
-            fontSize: rem(48),
-            fontWeight: 900,
-            lineHeight: 1.1,
-            textAlign: "center",
-          }}
-        >
-          Most.Box - 如影随形
-          <Text
-            component="span"
-            inherit
-            variant="gradient"
-            gradient={{ from: "blue", to: "cyan" }}
-            style={{ display: "block", marginTop: rem(10) }}
-          >
-            你的数字资产，从此永生。
+          <h1 className={classes.heroTitle}>
+            Most.Box 如影随形 <br />
+            <span className={classes.gradientText}>数字资产，从此永生。</span>
+          </h1>
+
+          <Text c="dimmed" size="xl" maw={600} ta="center" lh={1.6}>
+            基于 Crust Network 物理级加密存储，配合 Cloudflare 全球加速。
+            告别传统云盘的审查与断电风险，让每一份数据都拥有“自动续费”的永久生命力。
           </Text>
-        </Title>
 
-        <Text c="dimmed" size="xl" maw={600} ta="center">
-          基于 Crust Network 物理级加密存储，配合 Cloudflare 全球加速。
-          告别传统云盘的审查与断电风险，让每一份数据都拥有“自动续费”的永久生命力。
-        </Text>
-
-        <Group mt="xl">
-          <Button
-            size="xl"
-            radius="xl"
-            variant="gradient"
-            gradient={{ from: "blue", to: "cyan" }}
-          >
-            立即开始存储
-          </Button>
-          <Button size="xl" radius="xl" variant="default">
-            了解更多
-          </Button>
-        </Group>
-      </Stack>
-    </Container>
+          <Group mt="xl">
+            <Button
+              size="xl"
+              radius="xl"
+              variant="gradient"
+              gradient={{ from: "blue", to: "cyan" }}
+            >
+              立即开始存储
+            </Button>
+            <Button
+              size="xl"
+              radius="xl"
+              variant="default"
+              leftSection={<IconRocket size={20} />}
+            >
+              了解更多
+            </Button>
+          </Group>
+        </Stack>
+      </Container>
+    </div>
   );
 }
 
@@ -118,35 +108,35 @@ function PainPointsSection() {
   ];
 
   return (
-    <Container size="lg" py={80} id="pain-points">
-      <Title order={2} ta="center" mb={50}>
+    <Container size="lg" py={100} id="pain-points">
+      <Title order={2} className={classes.sectionTitle}>
         直击核心痛点
       </Title>
       <SimpleGrid cols={{ base: 1, md: 3 }} spacing={30}>
         {points.map((item) => (
-          <Card
+          <Paper
             key={item.title}
-            shadow="sm"
             radius="md"
-            padding="xl"
+            p="xl"
             withBorder
+            className={classes.card}
           >
             <ThemeIcon
-              size={50}
-              radius={50}
+              size={60}
+              radius={60}
               variant="light"
               color="blue"
               mb="md"
             >
-              <item.icon style={{ width: rem(28), height: rem(28) }} />
+              <item.icon style={{ width: rem(32), height: rem(32) }} />
             </ThemeIcon>
-            <Text fz="lg" fw={700} mb="sm">
+            <Text fz="xl" fw={700} mb="sm">
               {item.title}
             </Text>
             <Text fz="sm" c="dimmed" lh={1.6}>
               {item.description}
             </Text>
-          </Card>
+          </Paper>
         ))}
       </SimpleGrid>
     </Container>
@@ -182,30 +172,33 @@ function FeaturesSection() {
   ];
 
   return (
-    <Container size="lg" py={80} bg="var(--mantine-color-body)">
-      <Title order={2} ta="center" mb={50}>
+    <Container size="lg" py={100}>
+      <Title order={2} className={classes.sectionTitle}>
         核心功能
       </Title>
       <SimpleGrid cols={{ base: 1, md: 2 }} spacing={50}>
         {features.map((feature) => (
-          <Group key={feature.title} align="flex-start">
-            <ThemeIcon
-              size={44}
-              radius="md"
-              variant="gradient"
-              gradient={{ from: "blue", to: "cyan" }}
-            >
-              <feature.icon style={{ width: rem(26), height: rem(26) }} />
-            </ThemeIcon>
-            <div style={{ flex: 1 }}>
-              <Text fz="lg" fw={700} mb="xs">
-                {feature.title}
-              </Text>
-              <Text c="dimmed" lh={1.6}>
-                {feature.description}
-              </Text>
-            </div>
-          </Group>
+          <Card
+            key={feature.title}
+            radius="md"
+            padding="lg"
+            className={classes.card}
+            withBorder
+          >
+            <Group align="flex-start">
+              <div className={classes.featureIcon}>
+                <feature.icon style={{ width: rem(26), height: rem(26) }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <Text fz="lg" fw={700} mb="xs">
+                  {feature.title}
+                </Text>
+                <Text c="dimmed" lh={1.6} fz="sm">
+                  {feature.description}
+                </Text>
+              </div>
+            </Group>
+          </Card>
         ))}
       </SimpleGrid>
     </Container>
@@ -215,41 +208,55 @@ function FeaturesSection() {
 function TechStackSection() {
   const stack = [
     {
-      label: "存储层：Crust Network (基于 TEE 的去中心化存储层)",
+      label: "存储层：Crust Network",
+      desc: "基于 TEE 的去中心化存储层",
       icon: IconServer,
     },
     {
-      label: "逻辑层：Cloudflare Workers (毫秒级响应的边缘计算)",
+      label: "逻辑层：Cloudflare Workers",
+      desc: "毫秒级响应的边缘计算",
       icon: IconCloud,
     },
     {
-      label: "数据层：Cloudflare D1 (高性能边缘 SQL 数据库)",
+      label: "数据层：Cloudflare D1",
+      desc: "高性能边缘 SQL 数据库",
       icon: IconDatabase,
     },
-    { label: "协议层：IPFS (内容寻址，全球唯一标识)", icon: IconWorld },
+    { label: "协议层：IPFS", desc: "内容寻址，全球唯一标识", icon: IconWorld },
   ];
 
   return (
-    <Container size="lg" py={80}>
-      <Title order={2} ta="center" mb="xl">
-        技术背书
-      </Title>
-      <Text c="dimmed" ta="center" mb={50}>
-        透明、开放、不可篡改
-      </Text>
+    <Container size="lg" py={100} bg="var(--mantine-color-gray-light)">
+      <Stack align="center" mb={50}>
+        <Title order={2} className={classes.sectionTitle} mb={0}>
+          技术背书
+        </Title>
+        <Text c="dimmed">透明、开放、不可篡改</Text>
+      </Stack>
 
       <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="lg">
         {stack.map((item, index) => (
-          <Card key={index} padding="lg" radius="md" withBorder>
+          <Paper
+            key={index}
+            p="lg"
+            radius="md"
+            withBorder
+            className={classes.card}
+          >
             <Group>
-              <ThemeIcon variant="light" size="lg" color="gray">
-                <item.icon size={20} />
+              <ThemeIcon variant="light" size="xl" radius="md" color="gray">
+                <item.icon size={24} />
               </ThemeIcon>
-              <Text fw={500} size="sm">
-                {item.label}
-              </Text>
+              <div>
+                <Text fw={700} size="md">
+                  {item.label}
+                </Text>
+                <Text size="xs" c="dimmed">
+                  {item.desc}
+                </Text>
+              </div>
             </Group>
-          </Card>
+          </Paper>
         ))}
       </SimpleGrid>
     </Container>
@@ -258,33 +265,43 @@ function TechStackSection() {
 
 function FaqSection() {
   return (
-    <Container size="sm" py={80}>
-      <Title order={2} ta="center" mb={50}>
+    <Container size="sm" py={100}>
+      <Title order={2} className={classes.sectionTitle}>
         常见问题
       </Title>
 
-      <Accordion variant="separated" radius="md">
-        <Accordion.Item value="expire">
-          <Accordion.Control>6个月到期后文件会丢吗？</Accordion.Control>
-          <Accordion.Panel>
+      <Accordion variant="separated" radius="md" chevronPosition="left">
+        <Accordion.Item value="expire" mb="sm">
+          <Accordion.Control
+            icon={<IconCheck size={20} color="var(--mantine-color-blue-6)" />}
+          >
+            <Text fw={500}>6个月到期后文件会丢吗？</Text>
+          </Accordion.Control>
+          <Accordion.Panel c="dimmed">
             不会。Most.box
             会自动管理你的“续费池”。只要你的账户余额充足，系统会自动在链上发起续费交易，确保存储周期无限顺延。
           </Accordion.Panel>
         </Accordion.Item>
 
-        <Accordion.Item value="token">
-          <Accordion.Control>我需要买 CRU 代币吗？</Accordion.Control>
-          <Accordion.Panel>
+        <Accordion.Item value="token" mb="sm">
+          <Accordion.Control
+            icon={<IconCheck size={20} color="var(--mantine-color-blue-6)" />}
+          >
+            <Text fw={500}>我需要买 CRU 代币吗？</Text>
+          </Accordion.Control>
+          <Accordion.Panel c="dimmed">
             不需要。我们通过 Hono
             后端逻辑帮你完成了复杂的链上交互，你只需像使用普通网盘一样操作即可。
           </Accordion.Panel>
         </Accordion.Item>
 
-        <Accordion.Item value="why">
-          <Accordion.Control>
-            为什么选 Most.box 而不是百度网盘？
+        <Accordion.Item value="why" mb="sm">
+          <Accordion.Control
+            icon={<IconCheck size={20} color="var(--mantine-color-blue-6)" />}
+          >
+            <Text fw={500}>为什么选 Most.box 而不是百度网盘？</Text>
           </Accordion.Control>
-          <Accordion.Panel>
+          <Accordion.Panel c="dimmed">
             因为在
             Most.box，数据真正属于你。没有限速，没有审查，没有服务停摆导致文件丢失的风险。
           </Accordion.Panel>
@@ -296,15 +313,15 @@ function FaqSection() {
 
 function CtaSection() {
   return (
-    <Container size="lg" py={80} ta="center">
-      <Card radius="lg" padding={60} bg="var(--mantine-color-blue-light)">
-        <Title order={2} mb="md">
+    <Container size="lg" py={100}>
+      <Card radius="lg" p={80} className={classes.ctaCard} ta="center">
+        <Title order={2} mb="md" c="white">
           准备好开始了吗？
         </Title>
-        <Text size="lg" c="dimmed" mb="xl" maw={600} mx="auto">
+        <Text size="lg" c="white" opacity={0.9} mb="xl" maw={600} mx="auto">
           无需注册，连接钱包或邮箱即可免费体验 100MB 永久存储。
         </Text>
-        <Button size="xl" radius="xl" variant="filled" color="blue">
+        <Button size="xl" radius="xl" variant="white" c="blue">
           立即开始存储
         </Button>
       </Card>
