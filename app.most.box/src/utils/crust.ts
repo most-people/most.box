@@ -37,7 +37,7 @@ export const uploadToIpfsGateway = async (file: File, authHeader: string) => {
   });
 
   try {
-    const result = await ipfs.add(file);
+    const result = await ipfs.add(file, { cidVersion: 1 });
     return {
       cid: result.cid.toString(),
       size: result.size,

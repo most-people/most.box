@@ -23,13 +23,14 @@ import {
   getCrustBalance,
 } from "@/utils/crust";
 import { notifications } from "@mantine/notifications";
-import { useAccount, useSignMessage } from "wagmi";
+import { useSignMessage } from "wagmi";
+import { useAppKitAccount } from "@reown/appkit/react";
 import { mnemonicToAccount } from "viem/accounts";
 
 export default function PageDemo() {
   const wallet = useUserStore((state) => state.wallet);
-  const { address, isConnected } = useAccount();
-  const { signMessageAsync } = useSignMessage();
+  const { address, isConnected } = useAppKitAccount();
+  const { mutateAsync: signMessageAsync } = useSignMessage();
 
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);

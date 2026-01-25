@@ -58,7 +58,7 @@ export default function PageWeb3() {
           <Group>
             <Text>{wallet?.address.toLowerCase() || "-"}</Text>
             <Anchor
-              href={`https://etherscan.io/address/${wallet?.crust_address || ""}`}
+              href={`https://web3.okx.com/zh-hans/portfolio/${wallet?.address || ""}`}
               target="_blank"
             >
               查看
