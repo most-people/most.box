@@ -157,10 +157,6 @@ export default function PageWeb3() {
 
         <Divider variant="dashed" labelPosition="center" my="md" />
 
-        <Anchor component={Link} href="/web3/viem">
-          <Text>Viem</Text>
-        </Anchor>
-
         <Anchor component={Link} href="/ipns">
           <Text>IPFS 二维码</Text>
         </Anchor>
