@@ -1,0 +1,98 @@
+#page-game-5 {
+  // 定义变量
+  $board-border-color: #b58863;
+  $board-bg-color: #f0d9b5;
+  $stone-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  $black-stone-gradient: radial-gradient(circle at 35% 35%, #666, #000);
+  $white-stone-gradient: radial-gradient(circle at 35% 35%, #fff, #ddd);
+  $highlight-color: #ff5252;
+
+  position: fixed;
+  inset: 64px 0 0 0; // 使用 inset 替代 top/left/right/bottom
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+
+  .gomoku-board {
+    width: min(95vw, 85vmin, 1000px);
+    margin: 0 auto;
+    aspect-ratio: 1 / 1;
+    border: 2px solid $board-border-color;
+    border-radius: 12px;
+    background: $board-bg-color;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.08);
+    display: grid;
+    grid-template-columns: repeat(15, 1fr);
+    grid-template-rows: repeat(15, 1fr);
+    // overflow: hidden; // 移除 overflow: hidden 以免切断边缘棋子的阴影（如果需要圆角裁切背景，可以加在伪元素或保持原样，视效果而定，这里保留原样为了稳妥，但如果觉得阴影被切不好看可以去掉）
+    // 原代码有 overflow: hidden，可能是为了圆角。保留它。
+    overflow: hidden;
+
+    .gomoku-cell {
+      position: relative;
+      cursor: default;
+      transition: background 160ms ease;
+
+      // 网格线
+      border-top: 1px solid $board-border-color;
+      border-left: 1px solid $board-border-color;
+
+      // 第一行去掉上边框
+      &:nth-child(-n + 15) {
+        border-top: none;
+      }
+
+      // 第一列去掉左边框
+      &:nth-child(15n + 1) {
+        border-left: none;
+      }
+
+      &.clickable {
+        cursor: pointer;
+
+        &:hover {
+          background-color: rgba(0, 0, 0, 0.04);
+        }
+      }
+    }
+  }
+
+  .gomoku-stone {
+    width: 80%;
+    height: 80%;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: $stone-shadow;
+
+    &.black {
+      background: #222;
+      background: $black-stone-gradient; // 增加立体感
+    }
+
+    &.white {
+      background: #fff;
+      background: $white-stone-gradient; // 增加立体感
+      border: 1px solid #ccc;
+    }
+  }
+
+  .gomoku-last-move {
+    width: 88%;
+    height: 88%;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    outline: 2px solid $highlight-color;
+    outline-offset: -4px;
+    pointer-events: none;
+    box-shadow: 0 0 8px rgba($highlight-color, 0.4);
+  }
+}

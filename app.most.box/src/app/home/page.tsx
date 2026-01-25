@@ -27,33 +27,33 @@ import {
   IconRocket,
   IconCheck,
 } from "@tabler/icons-react";
-import classes from "./page.module.css";
+import "./page.scss";
 
 export default function LandingPage() {
   return (
-    <>
+    <div id="page-home">
       <HeroSection />
       <PainPointsSection />
       <FeaturesSection />
       <TechStackSection />
       <FaqSection />
       <CtaSection />
-    </>
+    </div>
   );
 }
 
 function HeroSection() {
   return (
-    <div className={classes.hero}>
+    <div className="hero">
       <Container size="lg">
         <Stack align="center" gap="xl">
           <Badge variant="light" size="lg" radius="xl" color="blue">
             Web3 Storage
           </Badge>
 
-          <Stack className={classes.heroTitle}>
+          <Stack className="heroTitle">
             <span>Most.Box 如影随形</span>
-            <span className={classes.gradientText}>数字资产，从此永生</span>
+            <span className="gradientText">数字资产，从此永生</span>
           </Stack>
 
           <Text c="dimmed" size="xl" maw={600} ta="center" lh={1.6}>
@@ -109,7 +109,7 @@ function PainPointsSection() {
 
   return (
     <Container size="lg" py={100} id="pain-points">
-      <Title order={2} className={classes.sectionTitle}>
+      <Title order={2} className="sectionTitle">
         直击核心痛点
       </Title>
       <SimpleGrid cols={{ base: 1, md: 3 }} spacing={30}>
@@ -119,7 +119,7 @@ function PainPointsSection() {
             radius="md"
             p="xl"
             withBorder
-            className={classes.card}
+            className="card"
           >
             <ThemeIcon
               size={60}
@@ -173,7 +173,7 @@ function FeaturesSection() {
 
   return (
     <Container size="lg" py={100}>
-      <Title order={2} className={classes.sectionTitle}>
+      <Title order={2} className="sectionTitle">
         核心功能
       </Title>
       <SimpleGrid cols={{ base: 1, md: 2 }} spacing={50}>
@@ -182,11 +182,11 @@ function FeaturesSection() {
             key={feature.title}
             radius="md"
             padding="lg"
-            className={classes.card}
+            className="card"
             withBorder
           >
             <Group align="flex-start">
-              <div className={classes.featureIcon}>
+              <div className="featureIcon">
                 <feature.icon style={{ width: rem(26), height: rem(26) }} />
               </div>
               <div style={{ flex: 1 }}>
@@ -228,7 +228,7 @@ function TechStackSection() {
   return (
     <Container size="lg" py={100} bg="var(--mantine-color-gray-light)">
       <Stack align="center" mb={50}>
-        <Title order={2} className={classes.sectionTitle} mb={0}>
+        <Title order={2} className="sectionTitle" mb={0}>
           技术背书
         </Title>
         <Text c="dimmed">透明、开放、不可篡改</Text>
@@ -236,13 +236,7 @@ function TechStackSection() {
 
       <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="lg">
         {stack.map((item, index) => (
-          <Paper
-            key={index}
-            p="lg"
-            radius="md"
-            withBorder
-            className={classes.card}
-          >
+          <Paper key={index} p="lg" radius="md" withBorder className="card">
             <Group>
               <ThemeIcon variant="light" size="xl" radius="md" color="gray">
                 <item.icon size={24} />
@@ -266,7 +260,7 @@ function TechStackSection() {
 function FaqSection() {
   return (
     <Container size="sm" py={100}>
-      <Title order={2} className={classes.sectionTitle}>
+      <Title order={2} className="sectionTitle">
         常见问题
       </Title>
 
@@ -314,7 +308,7 @@ function FaqSection() {
 function CtaSection() {
   return (
     <Container size="lg" py={100}>
-      <Card radius="lg" p={80} className={classes.ctaCard} ta="center">
+      <Card radius="lg" p={80} className="ctaCard" ta="center">
         <Title order={2} mb="md" c="white">
           准备好开始了吗？
         </Title>

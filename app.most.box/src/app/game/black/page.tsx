@@ -13,7 +13,7 @@ import {
   Text,
   Tooltip,
 } from "@mantine/core";
-import "@/app/game/black/black-and-white-chess.scss";
+import "@/app/game/black/page.scss";
 
 // ======= Types & Constants =======
 const BOARD_SIZE = 8;
@@ -41,7 +41,7 @@ function inBounds(r: number, c: number) {
 
 function createInitialBoard(): Board {
   const board: Board = Array.from({ length: BOARD_SIZE }, () =>
-    Array.from({ length: BOARD_SIZE }, () => 0)
+    Array.from({ length: BOARD_SIZE }, () => 0),
   );
   const mid = BOARD_SIZE / 2;
   board[mid - 1][mid - 1] = -1; // white
@@ -154,7 +154,7 @@ export default function PageGameBlack() {
   const [current, setCurrent] = useState<Player>(1); // Black starts
   // removed AI-related states: human/ai/aiThinking/aiTimerRef
   const [lastMove, setLastMove] = useState<{ r: number; c: number } | null>(
-    null
+    null,
   );
   const [autoPassInfo, setAutoPassInfo] = useState<string | null>(null);
 
@@ -168,7 +168,7 @@ export default function PageGameBlack() {
 
   const validMoves = useMemo(
     () => listValidMoves(board, current),
-    [board, current]
+    [board, current],
   );
 
   const scores = useMemo(() => countPieces(board), [board]);
@@ -242,8 +242,8 @@ export default function PageGameBlack() {
         const tooltipLabel = isValid
           ? "可落子"
           : val === 0
-          ? null
-          : toLabel(val as Player);
+            ? null
+            : toLabel(val as Player);
 
         rows.push(
           <Box key={key} className="cell-wrapper">
@@ -261,7 +261,7 @@ export default function PageGameBlack() {
                 />
               </Box>
             </Tooltip>
-          </Box>
+          </Box>,
         );
       }
     }

@@ -4,7 +4,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { Stack, Text, Box, Button, Group } from "@mantine/core";
 
 import { useState } from "react";
-import "./5.scss";
+import "@/app/game/5/page.scss";
 
 export default function PageGame5() {
   // 五子棋逻辑
@@ -12,7 +12,7 @@ export default function PageGame5() {
   type Cell = 0 | 1 | 2; // 0: 空, 1: 黑, 2: 白
   const createEmptyBoard = (): Cell[][] =>
     Array.from({ length: SIZE }, () =>
-      Array.from({ length: SIZE }, () => 0 as Cell)
+      Array.from({ length: SIZE }, () => 0 as Cell),
     );
 
   const [board, setBoard] = useState<Cell[][]>(createEmptyBoard());
@@ -103,7 +103,7 @@ export default function PageGame5() {
       setLastMove(
         newMoves.length
           ? [newMoves[newMoves.length - 1].r, newMoves[newMoves.length - 1].c]
-          : null
+          : null,
       );
 
       return newMoves;
@@ -123,7 +123,7 @@ export default function PageGame5() {
     : `${current === 1 ? "黑" : "白"}棋落子`;
 
   return (
-    <Box className="gomoku-container">
+    <Box id="page-game-5">
       <AppHeader title="五子棋" />
       <Stack gap={12}>
         <Group justify="space-between">
@@ -164,7 +164,7 @@ export default function PageGame5() {
                   <Box className="gomoku-last-move" />
                 )}
               </Box>
-            ))
+            )),
           )}
         </Box>
       </Stack>
