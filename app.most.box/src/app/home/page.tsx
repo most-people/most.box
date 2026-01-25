@@ -48,13 +48,13 @@ function HeroSection() {
       <Container size="lg">
         <Stack align="center" gap="xl">
           <Badge variant="light" size="lg" radius="xl" color="blue">
-            Web3 Storage Redefined
+            Web3 Storage
           </Badge>
 
-          <h1 className={classes.heroTitle}>
-            Most.Box 如影随形 <br />
-            <span className={classes.gradientText}>数字资产，从此永生。</span>
-          </h1>
+          <Stack className={classes.heroTitle}>
+            <span>Most.Box 如影随形</span>
+            <span className={classes.gradientText}>数字资产，从此永生</span>
+          </Stack>
 
           <Text c="dimmed" size="xl" maw={600} ta="center" lh={1.6}>
             基于 Crust Network 物理级加密存储，配合 Cloudflare 全球加速。
