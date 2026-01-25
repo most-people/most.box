@@ -55,7 +55,15 @@ export default function PageWeb3() {
             ETH 地址
           </Text>
 
-          <Text>{wallet?.address.toLowerCase() || "-"}</Text>
+          <Group>
+            <Text>{wallet?.address.toLowerCase() || "-"}</Text>
+            <Anchor
+              href={`https://etherscan.io/address/${wallet?.crust_address || ""}`}
+              target="_blank"
+            >
+              查看
+            </Anchor>
+          </Group>
         </Stack>
 
         <Text size="lg" fw={500}>
@@ -77,7 +85,7 @@ export default function PageWeb3() {
           </Text>
 
           <Group>
-            <Text>{balance} CRU</Text>
+            <Text>{balance}</Text>
             <Anchor
               href={`https://crust.subscan.io/account/${wallet?.crust_address || ""}`}
               target="_blank"
