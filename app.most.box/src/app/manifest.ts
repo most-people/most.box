@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Most.Box",
     short_name: "Most.Box",
-    description: "完全去中心化节点",
+    description: "去中心化存储，数字资产，从此永生",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",

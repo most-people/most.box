@@ -21,7 +21,6 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         const wallet = mp.verifyJWT(jwt);
         if (wallet) {
-          // mp.createToken(wallet);
           setWallet(wallet);
         }
       } catch (error) {

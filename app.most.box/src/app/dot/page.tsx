@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { AppHeader } from "@/components/AppHeader";
 import {
   Box,
@@ -9,166 +9,126 @@ import {
   Stack,
   Group,
   Button,
-  Alert,
-  Select,
   Container,
   Title,
-  Paper,
   Divider,
   ActionIcon,
-  Tooltip,
   ThemeIcon,
-  Flex,
   TextInput,
   Anchor,
-  Radio,
+  Grid,
+  LoadingOverlay,
 } from "@mantine/core";
-import { JsonRpcProvider } from "ethers";
 import { notifications } from "@mantine/notifications";
 import {
   IconCheck,
   IconX,
   IconRefresh,
-  IconNetwork,
   IconServer,
-  IconClock,
-  IconDatabase,
-  IconWifi,
-  IconWifiOff,
-  IconWorldWww,
-  IconSwitchHorizontal,
   IconSearch,
-  IconSettings,
+  IconWorldWww,
+  IconRocket,
 } from "@tabler/icons-react";
-import { CONTRACT_ADDRESS_DOT, NETWORK_CONFIG } from "@/utils/dot";
-import mp from "@/utils/mp";
-import { CID } from "multiformats";
 import Link from "next/link";
-import { checkNode, DotNode, useDotStore } from "@/stores/dotStore";
-import { useBack } from "@/hooks/useBack";
+import { useDotStore } from "@/stores/dotStore";
+import { CID } from "multiformats";
 
 // ===== 类型定义 =====
-type DetectionStatus = "success" | "error" | "timeout" | "pending";
+type GatewayCategory = {
+  title: string;
+  description: string;
+  gateways: string[];
+};
+
+type DetectionStatus = "success" | "error" | "timeout" | "pending" | "idle";
 type DetectionResult = {
   status: DetectionStatus;
   responseTime?: number;
 };
 
-export default function DotManager() {
+// ===== 网关列表配置 =====
+const GATEWAY_CATEGORIES: GatewayCategory[] = [
+  {
+    title: "官方及基金会维护",
+    description: "最权威，由 IPFS 官方团队或相关基金会直接运营",
+    gateways: [
+      "https://ipfs.io",
+      "https://dweb.link",
+      // "https://trustless-gateway.link",
+    ],
+  },
+  {
+    title: "基础设施服务商提供",
+    description: "速度较快，由 Web3 云存储公司维护，通常带有 CDN 加速",
+    gateways: [
+      "https://gateway.pinata.cloud",
+      "https://ipfs.filebase.io",
+      "https://w3s.link",
+      "https://4everland.io",
+      // "https://ipfs.infura.io",
+      // "https://gateway.lighthouse.storage",
+      // "https://flk-ipfs.xyz",
+    ],
+  },
+  {
+    title: "活跃的社区/第三方网关",
+    description: "由社区维护的公共网关",
+    gateways: [
+      // "https://ipfs.eth.aragon.network",
+      "https://ipfs.cyou",
+      // "https://dlunar.net",
+      // "https://storry.tv",
+      "https://apac.orbitor.dev",
+      "https://eu.orbitor.dev",
+      "https://latam.orbitor.dev",
+      "https://dget.top",
+    ],
+  },
+];
+
+export default function GatewayManager() {
   // ===== Zustand Store =====
   const setItem = useDotStore((state) => state.setItem);
   const dotAPI = useDotStore((state) => state.dotAPI);
-  const dotNodes = useDotStore((state) => state.dotNodes);
-  const updateDot = useDotStore((state) => state.updateDot);
-  const network = useDotStore((state) => state.network);
-  const setNetwork = useDotStore((state) => state.setNetwork);
-  const fetchNodes = useDotStore((state) => state.fetchNodes);
 
-  // ===== 网络和RPC状态 =====
-  const RPC = useDotStore((state) => state.RPC);
-  const Explorer = useDotStore((state) => state.Explorer);
-  const [customRPC, setCustomRPC] = useState(RPC);
-
-  // ===== 当前节点状态 =====
-  const [apiLoading, setApiLoading] = useState(false);
-  const [ApiList, setApiList] = useState<string[]>([]);
-  const [apiURL, setApiURL] = useState("http://localhost:1976");
-
-  // ===== 节点列表状态 =====
-  const [loading, setLoading] = useState(true);
-  const [checkingConnectivity, setCheckingConnectivity] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [switchingNode, setSwitchingNode] = useState<string | null>(null);
-  // 每个节点的选中 API（默认第一个）
-  const [selectedApiByNode, setSelectedApiByNode] = useState<
-    Record<string, string>
-  >({});
-
-  // ===== CID检测状态 =====
+  // ===== 状态管理 =====
   const [customCid, setCustomCid] = useState(
-    "bafkreihp5o7tdipf6ajkgkdxknnffkuxpeecwqydi4q5iqt4gko6r2agk4?filename=长征.jpg"
+    "bafkreihp5o7tdipf6ajkgkdxknnffkuxpeecwqydi4q5iqt4gko6r2agk4",
   );
   const [isDetecting, setIsDetecting] = useState(false);
   const [detectionResults, setDetectionResults] = useState<
     Record<string, DetectionResult>
   >({});
+  const [customGateway, setCustomGateway] = useState("");
 
-  const onlineNodes = dotNodes.filter((node) => node.isOnline);
-  const offlineNodes = dotNodes.filter((node) => node.isOnline === false);
-
-  const title = useMemo(() => {
-    try {
-      return new URL(dotAPI).host.toUpperCase();
-    } catch {
-      return "请选择节点";
+  // ===== 初始化 =====
+  useEffect(() => {
+    const savedGateway = localStorage.getItem("selectedGateway");
+    if (savedGateway) {
+      setItem("dotAPI", savedGateway);
     }
-  }, [dotAPI]);
+  }, [setItem]);
 
-  // ===== 工具函数 =====
-  const formatTime = (timestamp: number) => {
-    if (!timestamp) return "未知";
-    return new Date(timestamp * 1000).toLocaleString("zh-CN");
-  };
-
-  const formatResponseTime = (time?: number) => {
-    return time === undefined ? "" : `${time}ms`;
-  };
-
-  const getCIDs = (node: DotNode) => {
-    const CIDs = node.CIDs.map((url) => `${url}/ipfs`);
-    const defaultCID = node.APIs.find((api) => api.endsWith(":1976"))?.replace(
-      ":1976",
-      ":8080/ipfs"
-    );
-    if (defaultCID) {
-      CIDs.push(defaultCID);
-    }
-    return [...new Set(CIDs)];
-  };
-
-  const isCurrentNode = (node: DotNode) => {
-    return node.APIs.some((api) => {
-      try {
-        return new URL(api).origin === new URL(dotAPI).origin;
-      } catch {
-        return false;
-      }
-    });
-  };
-  const isRadioDisabled = (node: DotNode, api: string) => {
-    if (isCurrentNode(node)) {
-      return true;
-    }
-    if (window.location.protocol === "https:" && api.startsWith("http:")) {
-      return true;
-    }
-    return false;
-  };
-
-  const isDisabledNode = (node: DotNode) => {
-    if (!node.APIs.length) return true;
-    if (location.protocol === "https:" && node.APIs[0].startsWith("http:"))
-      return true;
-    return isCurrentNode(node);
-  };
-
-  const showNotification = (title: string, message: string, color: string) => {
-    notifications.show({ title, message, color });
-  };
-
-  // ===== CID检测相关函数 =====
-  const checkCidOnGateway = async (
-    fullUrl: string
+  // ===== 检测函数 =====
+  const checkGateway = async (
+    gateway: string,
+    cid: string,
   ): Promise<DetectionResult> => {
+    // 移除末尾斜杠
+    const baseUrl = gateway.replace(/\/$/, "");
+    const testUrl = `${baseUrl}/ipfs/${cid}`;
+
     const startTime = Date.now();
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 2000);
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
 
     try {
-      const response = await fetch(fullUrl, {
-        headers: { Range: "bytes=0-1023" },
+      const response = await fetch(testUrl, {
+        method: "GET",
+        headers: { Range: "bytes=0-0" }, // 请求极小部分数据以测试连通性
         signal: controller.signal,
       });
+
       const responseTime = Date.now() - startTime;
       clearTimeout(timeoutId);
 
@@ -186,699 +146,416 @@ export default function DotManager() {
     }
   };
 
-  const validateCID = (cid: string): boolean => {
-    cid = cid.trim().split("?")[0];
-    if (!cid) {
-      showNotification("CID不能为空", "请输入一个CID进行检测", "orange");
-      return false;
-    }
-
-    try {
-      CID.parse(cid);
-      return true;
-    } catch {
-      showNotification("无效的 CID", "输入的值不是有效的 CID", "red");
-      return false;
-    }
-  };
-
-  const buildDetectionUrls = (): string[] => {
-    const allUrls: string[] = [];
-    dotNodes.forEach((node) => {
-      const gateways = getCIDs(node).filter((url): url is string => !!url);
-
-      gateways.forEach((gatewayBase) => {
-        allUrls.push(`${gatewayBase}/${customCid}`);
-      });
-    });
-    return [...new Set(allUrls)];
-  };
-
-  const handleDetectCid = async () => {
-    if (!validateCID(customCid)) return;
-
-    setIsDetecting(true);
-    const uniqueUrls = buildDetectionUrls();
-
-    // 初始化检测结果
-    const initialResults: typeof detectionResults = {};
-    uniqueUrls.forEach((url) => {
-      initialResults[url] = { status: "pending" };
-    });
-    setDetectionResults(initialResults);
-
-    // 并行检测所有URL
-    const detectionPromises = uniqueUrls.map(async (fullUrl) => {
-      const result = await checkCidOnGateway(fullUrl);
-      setDetectionResults((prev) => ({ ...prev, [fullUrl]: result }));
-    });
-
-    await Promise.all(detectionPromises);
-    setIsDetecting(false);
-  };
-
-  // ===== 节点管理相关函数 =====
-  const verifyNetwork = (chainId: number): boolean => {
-    if (chainId === NETWORK_CONFIG.mainnet.chainId) {
-      setNetwork("mainnet");
-      return true;
-    } else if (chainId === NETWORK_CONFIG.testnet.chainId) {
-      setNetwork("testnet");
-      return true;
-    } else {
-      showNotification(
-        "网络错误",
-        `网络 ID 为 ${chainId}，不支持 Base 协议`,
-        "red"
-      );
-      setCustomRPC("");
-      return false;
-    }
-  };
-
-  const fetchDotNodes = async (rpc?: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const rpcUrl = rpc || customRPC || RPC;
-      const provider = new JsonRpcProvider(rpcUrl);
-
-      // 验证网络
-      if (rpc) {
-        const networkInfo = await provider.getNetwork();
-        const chainId = Number(networkInfo.chainId);
-        if (!verifyNetwork(chainId)) return;
-      }
-
-      const nodes = await fetchNodes(rpcUrl);
-      localStorage.setItem("dotNodes", JSON.stringify(nodes));
-      setItem("RPC", rpcUrl);
-      if (nodes) {
-        setItem("dotNodes", nodes);
-      }
-    } catch (err) {
-      console.info("获取节点列表失败:", err);
-      setError("获取节点列表失败，请更换 RPC");
-      showNotification("获取失败", "无法获取节点列表", "red");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const checkAllConnectivity = async () => {
-    setCheckingConnectivity(true);
-
-    try {
-      const updatedNodes = await Promise.all(
-        dotNodes.map(async (node) => {
-          const { isOnline, responseTime } = await checkNode(node);
-          return { ...node, isOnline, responseTime };
-        })
-      );
-
-      setItem("dotNodes", updatedNodes);
-
-      const onlineCount = updatedNodes.filter((node) => node.isOnline).length;
-      showNotification(
-        "连通性检测完成",
-        `${onlineCount}/${updatedNodes.length} 个节点在线`,
-        onlineCount > 0 ? "green" : "orange"
-      );
-    } catch (error) {
-      console.log("连通性检测失败:", error);
-      showNotification("检测失败", "连通性检测过程中出现错误", "red");
-    } finally {
-      setCheckingConnectivity(false);
-    }
-  };
-
-  const apiUrlChange = async () => {
-    setApiLoading(true);
-    const list = await updateDot(apiURL);
-    if (list) {
-      setApiList(list);
-      showNotification("节点切换成功", list[0], "green");
-    } else {
-      showNotification("节点切换失败", "无法连接到该节点", "red");
-    }
-    setApiLoading(false);
-  };
-
-  const back = useBack();
-  const switchNode = async (node: DotNode) => {
-    setSwitchingNode(node.address);
-    try {
-      // 使用当前单选中的 API 值，默认取第一个
-      const nodeAPI = selectedApiByNode[node.address] || node.APIs[0];
-      const list = await updateDot(nodeAPI);
-      if (list) {
-        setApiList(list);
-        showNotification("节点切换成功", `已切换到 ${node.name}`, "green");
-
-        if (window.location.search.includes("back")) {
-          back();
-        }
-      } else {
-        showNotification("节点切换失败", "无法连接到该节点", "red");
-      }
-    } catch (error) {
-      console.error(error);
-      showNotification("节点切换失败", "无法连接到该节点", "red");
-    } finally {
-      setSwitchingNode(null);
-    }
-  };
-
-  const changeNetwork = (value: string | null) => {
-    if (value && (value === "mainnet" || value === "testnet")) {
-      const rpc = NETWORK_CONFIG[value].rpc;
-      setCustomRPC(rpc);
-      setNetwork(value);
-      fetchDotNodes(rpc);
+  const handleDetectAll = async () => {
+    if (!customCid) {
       notifications.show({
-        title: "网络已切换",
-        message: `已切换到 ${NETWORK_CONFIG[value].name}`,
-        color: NETWORK_CONFIG[value].color,
-        icon: <IconNetwork size={16} />,
+        title: "CID 不能为空",
+        message: "请输入用于测试的 CID",
+        color: "orange",
       });
-    }
-  };
-
-  // ===== 初始化 =====
-  useEffect(() => {
-    if (dotNodes.length > 0) {
-      setLoading(false);
       return;
     }
 
-    // 尝试从缓存加载
-    const nodes = localStorage.getItem("dotNodes");
-    if (nodes) {
-      try {
-        setItem("dotNodes", JSON.parse(nodes));
-        setLoading(false);
-        return;
-      } catch {}
+    try {
+      CID.parse(customCid);
+    } catch (e) {
+      notifications.show({
+        title: "无效的 CID",
+        message: "检测到非法的 IPFS CID 格式，请检查输入",
+        color: "red",
+        icon: <IconX size={16} />,
+      });
+      return;
     }
 
-    // 从区块链获取最新数据
-    fetchDotNodes();
-  }, []);
+    setIsDetecting(true);
+    const newResults: Record<string, DetectionResult> = {};
 
-  const randomRPC = () => {
-    return NETWORK_CONFIG[network].RPCs[
-      Math.floor(Math.random() * NETWORK_CONFIG[network].RPCs.length)
-    ];
+    // 收集所有网关
+    const allGateways: string[] = [];
+    GATEWAY_CATEGORIES.forEach((cat) => allGateways.push(...cat.gateways));
+    if (customGateway) allGateways.push(customGateway);
+
+    // 初始化状态
+    allGateways.forEach((gw) => {
+      newResults[gw] = { status: "pending" };
+    });
+    setDetectionResults(newResults);
+
+    // 并发检测
+    const promises = allGateways.map(async (gateway) => {
+      const result = await checkGateway(gateway, customCid);
+      setDetectionResults((prev) => ({
+        ...prev,
+        [gateway]: result,
+      }));
+    });
+
+    await Promise.all(promises);
+    setIsDetecting(false);
+
+    // 统计结果
+    const successCount = Object.values(detectionResults).filter(
+      (r) => r.status === "success",
+    ).length;
+    // 注意：这里拿到的 detectionResults 可能是旧的闭包值，所以最好不依赖它做即时统计，或者用 setState 回调
+    // 简单起见，检测完成后弹窗提示
+    notifications.show({
+      title: "检测完成",
+      message: "所有网关连通性测试已完成",
+      color: "green",
+    });
   };
 
-  // ===== 主渲染 =====
+  const handleTestSingle = async (gateway: string) => {
+    if (!customCid) {
+      notifications.show({
+        title: "CID 不能为空",
+        message: "请输入用于测试的 CID",
+        color: "orange",
+      });
+      return;
+    }
+
+    setDetectionResults((prev) => ({
+      ...prev,
+      [gateway]: { status: "pending" },
+    }));
+
+    const result = await checkGateway(gateway, customCid);
+
+    setDetectionResults((prev) => ({
+      ...prev,
+      [gateway]: result,
+    }));
+  };
+
+  const selectGateway = (gateway: string) => {
+    setItem("dotAPI", gateway);
+    localStorage.setItem("selectedGateway", gateway);
+    notifications.show({
+      title: "已选择网关",
+      message: `当前网关已设置为: ${new URL(gateway).hostname}`,
+      color: "blue",
+      icon: <IconCheck size={16} />,
+    });
+  };
+
+  const getStatusColor = (status?: DetectionStatus) => {
+    switch (status) {
+      case "success":
+        return "green";
+      case "error":
+        return "red";
+      case "timeout":
+        return "orange";
+      case "pending":
+        return "blue";
+      default:
+        return "gray";
+    }
+  };
+
+  const getStatusLabel = (result?: DetectionResult) => {
+    if (!result) return "未检测";
+    switch (result.status) {
+      case "success":
+        return `${result.responseTime}ms`;
+      case "error":
+        return "错误";
+      case "timeout":
+        return "超时";
+      case "pending":
+        return "检测中...";
+      default:
+        return "未检测";
+    }
+  };
+
+  // 页面加载时自动检测一次? 或者留给用户手动点击
+  // 为了不浪费资源，留给用户点击
+
   return (
-    <Container
-      size="lg"
-      w="100%"
-      style={{ wordBreak: "break-all" }}
-    >
-      <AppHeader title="我的节点" />
+    <Container size="lg" w="100%" pb="xl">
+      <AppHeader title="IPFS 网关选择" />
 
-      {/* 当前节点信息区域 */}
-      <Box mb="lg">
-        <Stack align="center">
-          <Title mt="md">{title}</Title>
-          {/* <Group gap={0}>
-            <IconBrandGithub />
-            <Anchor
-              c="dimmed"
-              component={Link}
-              href="https://github.com/most-people/most.box"
-              target="_blank"
-            >
-              「轻松简单、开源免费、部署自己的节点」
-            </Anchor>
-          </Group> */}
-          {ApiList.length > 0 ? (
-            <>
-              <Text>已成功接入</Text>
-              <Stack justify="center">
-                {ApiList.map((url, index) => (
-                  <Anchor
-                    key={index}
-                    onClick={(e) => {
-                      e.preventDefault();
-                    }}
-                    lineClamp={1}
-                    component={Link}
-                    href={url}
-                  >
-                    {url}
-                  </Anchor>
-                ))}
-              </Stack>
-            </>
-          ) : (
-            <Anchor component={Link} href={dotAPI} target="_blank">
-              {dotAPI}
-            </Anchor>
-          )}
-
-          <Group w="100%" justify="space-between">
-            <TextInput
-              flex={1}
-              leftSection={<IconWorldWww />}
-              value={apiURL}
-              onChange={(event) => setApiURL(event.currentTarget.value)}
-              placeholder="私有节点地址"
-            />
-            <Button
-              leftSection={<IconSettings size={16} />}
-              onClick={apiUrlChange}
-              loading={apiLoading}
-            >
-              私有节点
-            </Button>
-          </Group>
-        </Stack>
-      </Box>
-
-      {/* 节点列表控制区域 */}
-      <Box mb="lg">
-        <Flex justify="space-between" align="center" wrap="wrap" gap="md">
-          <Group>
-            <ThemeIcon size={40} radius="md" variant="light" color="blue">
-              <IconServer size={20} />
-            </ThemeIcon>
+      {/* 顶部控制区 */}
+      <Card shadow="sm" p="lg" radius="md" withBorder mb="lg">
+        <Stack>
+          <Group justify="space-between" align="center">
             <Box>
-              <Title order={2}>节点列表</Title>
-              <Text size="sm" c="dimmed">
-                共 {dotNodes.length} 个节点
-                {dotNodes.some((n) => n.isOnline !== undefined) && (
-                  <>
-                    {" "}
-                    • {onlineNodes.length} 在线 • {offlineNodes.length} 离线
-                  </>
-                )}
+              <Title order={3}>网关测试与选择</Title>
+              <Text c="dimmed" size="sm">
+                测试各个公共 IPFS 网关的连通性和速度，选择最适合您的网关。
               </Text>
             </Box>
+            <Button
+              size="md"
+              leftSection={
+                isDetecting ? (
+                  <LoadingOverlay
+                    visible
+                    overlayProps={{ radius: "sm", blur: 2 }}
+                    loaderProps={{ type: "dots" }}
+                  />
+                ) : (
+                  <IconRocket size={20} />
+                )
+              }
+              onClick={handleDetectAll}
+              loading={isDetecting}
+              gradient={{ from: "blue", to: "cyan" }}
+              variant="gradient"
+            >
+              开始测试
+            </Button>
+          </Group>
+
+          <Divider />
+
+          <Group align="flex-end">
+            <TextInput
+              label="测试 CID"
+              description="用于测试网关响应速度的资源 CID"
+              style={{ flex: 1 }}
+              value={customCid}
+              onChange={(e) => setCustomCid(e.currentTarget.value)}
+              rightSection={
+                <ActionIcon
+                  variant="subtle"
+                  onClick={() =>
+                    setCustomCid(
+                      "bafkreihp5o7tdipf6ajkgkdxknnffkuxpeecwqydi4q5iqt4gko6r2agk4",
+                    )
+                  }
+                >
+                  <IconRefresh size={16} />
+                </ActionIcon>
+              }
+            />
+            <TextInput
+              label="自定义网关"
+              description="添加自定义网关地址"
+              style={{ flex: 1 }}
+              value={customGateway}
+              onChange={(e) => setCustomGateway(e.currentTarget.value)}
+              placeholder="https://..."
+            />
           </Group>
 
           <Group>
-            <Select
-              value={network}
-              onChange={changeNetwork}
-              data={[
-                { value: "testnet", label: "🧪 Base 测试网" },
-                { value: "mainnet", label: "🌐 Base 主网" },
-              ]}
-              variant="filled"
-              radius="md"
-              w={180}
-            />
-
-            <Tooltip label="刷新节点列表">
-              <ActionIcon
-                size="lg"
-                variant="light"
-                color="blue"
-                onClick={() => fetchDotNodes()}
-                loading={loading}
-              >
-                <IconRefresh size={18} />
-              </ActionIcon>
-            </Tooltip>
-
-            <Button
-              leftSection={<IconWifi size={16} />}
-              onClick={checkAllConnectivity}
-              loading={checkingConnectivity}
-              disabled={dotNodes.length === 0}
-              variant="gradient"
-              gradient={{ from: "blue", to: "cyan" }}
-            >
-              检测连通性
-            </Button>
+            <Text size="sm" fw={500}>
+              当前 IPFS 网关:
+            </Text>
+            <Badge size="lg" variant="dot" color="blue">
+              {dotAPI ? new URL(dotAPI).hostname : "未选择"}
+            </Badge>
           </Group>
-        </Flex>
-      </Box>
+        </Stack>
+      </Card>
 
-      {/* CID检测区域 */}
-      <Group align="flex-end" mb="lg">
-        <TextInput
-          style={{ flex: 1 }}
-          placeholder="输入要查询的 CID..."
-          value={customCid}
-          onChange={(event) => setCustomCid(event.currentTarget.value)}
-        />
-        <Button
-          onClick={handleDetectCid}
-          loading={isDetecting}
-          disabled={!customCid}
-        >
-          <IconSearch size={16} />
-          <Text ml="xs">CID</Text>
-        </Button>
-      </Group>
+      {/* 网关列表 */}
+      <Stack gap="xl">
+        {GATEWAY_CATEGORIES.map((category, idx) => (
+          <Box key={idx}>
+            <Title order={4} mb="xs" c="blue.7">
+              {category.title}
+            </Title>
+            <Text c="dimmed" size="sm" mb="md">
+              {category.description}
+            </Text>
 
-      {/* 节点列表 */}
-      {loading ? (
-        <Paper p="xl" radius="md" style={{ textAlign: "center" }}>
-          <ThemeIcon size={60} radius="xl" variant="light" color="blue" mb="md">
-            <IconServer size={30} />
-          </ThemeIcon>
-          <Title order={3} c="dimmed">
-            正在加载节点列表...
-          </Title>
-          <Text size="sm" c="dimmed" mt="xs">
-            请稍候，正在从区块链获取数据
-          </Text>
-        </Paper>
-      ) : error ? (
-        <Paper shadow="sm" p="xl" radius="md">
-          <Alert color="red" title="加载失败" icon={<IconX size={16} />}>
-            {error}
-          </Alert>
+            <Grid gutter="md">
+              {category.gateways.map((gateway) => {
+                const result = detectionResults[gateway];
+                const isSelected = dotAPI === gateway;
 
-          <Group mt="md">
-            <Button
-              size="sm"
-              color="orange"
-              variant="light"
-              onClick={() => {
-                setCustomRPC(randomRPC());
-                fetchDotNodes();
-              }}
-            >
-              重新尝试
-            </Button>
-          </Group>
-        </Paper>
-      ) : dotNodes.length === 0 ? (
-        <Paper shadow="sm" p="xl" radius="md" style={{ textAlign: "center" }}>
-          <ThemeIcon size={60} radius="xl" variant="light" color="gray" mb="md">
-            <IconServer size={30} />
-          </ThemeIcon>
-          <Title order={3} c="dimmed" mb="xs">
-            暂无节点
-          </Title>
-          <Text size="sm" c="dimmed">
-            当前网络没有注册的节点
-          </Text>
-        </Paper>
-      ) : (
-        <Flex wrap="wrap" gap="md">
-          {dotNodes.map((node, index) => (
-            <Card
-              key={node.address}
-              shadow="sm"
-              padding="lg"
-              radius="md"
-              withBorder
-              maw="100%"
-              w={358}
-              style={{
-                transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                border: isCurrentNode(node) ? "2px solid #228be6" : undefined,
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.1)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "";
-              }}
-            >
-              {/* 节点头部 */}
-              <Group justify="space-between" mb="md">
-                <Group>
-                  <ThemeIcon
-                    size={36}
-                    radius="md"
-                    variant="light"
-                    color={
-                      node.isOnline
-                        ? "green"
-                        : node.isOnline === false
-                        ? "red"
-                        : "gray"
-                    }
-                  >
-                    {node.isOnline ? (
-                      <IconWifi size={18} />
-                    ) : node.isOnline === false ? (
-                      <IconWifiOff size={18} />
-                    ) : (
-                      <IconServer size={18} />
-                    )}
-                  </ThemeIcon>
-                  <Box>
-                    <Group gap="xs">
-                      <Tooltip label={node.name}>
-                        <Text fw={600} size="md" lineClamp={1}>
-                          {node.name.split("-")[0]}
-                        </Text>
-                      </Tooltip>
-                      {isCurrentNode(node) && (
-                        <Badge size="xs" color="blue" variant="filled">
-                          当前
-                        </Badge>
-                      )}
-                    </Group>
-                    <Text size="xs" c="dimmed">
-                      节点地址 {network.slice(0, 1).toUpperCase()}
-                      {index + 1}
-                    </Text>
-                  </Box>
-                </Group>
+                return (
+                  <Grid.Col key={gateway} span={{ base: 12, md: 6, lg: 4 }}>
+                    <Card
+                      shadow="sm"
+                      padding="lg"
+                      radius="md"
+                      withBorder
+                      style={{
+                        transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                        border: isSelected ? "2px solid #228be6" : undefined,
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateY(-2px)";
+                        e.currentTarget.style.boxShadow =
+                          "0 4px 20px rgba(0,0,0,0.1)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "";
+                      }}
+                    >
+                      <Group justify="space-between" mb="md">
+                        <Group gap="xs">
+                          <ThemeIcon
+                            size={36}
+                            radius="md"
+                            variant="light"
+                            color="blue"
+                          >
+                            <IconServer size={20} />
+                          </ThemeIcon>
+                          <Text fw={600} size="md">
+                            {new URL(gateway).hostname}
+                          </Text>
+                        </Group>
+                        <ActionIcon
+                          variant="light"
+                          color="blue"
+                          size="sm"
+                          onClick={() => handleTestSingle(gateway)}
+                          loading={result?.status === "pending"}
+                          title="测试连接"
+                        >
+                          <IconSearch size={16} />
+                        </ActionIcon>
+                      </Group>
 
-                {node.isOnline !== undefined && (
-                  <Badge
-                    color={node.isOnline ? "green" : "red"}
-                    variant="light"
-                    leftSection={
-                      node.isOnline ? (
-                        <IconCheck size={12} />
-                      ) : (
-                        <IconX size={12} />
-                      )
-                    }
-                  >
-                    {node.isOnline ? "在线" : "离线"}
-                    {node.responseTime !== undefined &&
-                      ` (${formatResponseTime(node.responseTime)})`}
-                  </Badge>
-                )}
-              </Group>
-
-              <Divider mb="md" />
-
-              {/* 节点详细信息 */}
-              <Stack justify="space-between" flex={1}>
-                <Stack gap="sm">
-                  <Group gap="xs" wrap="nowrap">
-                    <IconDatabase
-                      size={14}
-                      color="gray"
-                      style={{ flexShrink: 0 }}
-                    />
-                    <Text size="xs" c="dimmed">
-                      {mp.formatAddress(node.address)}{" "}
                       <Anchor
                         component={Link}
-                        href={{
-                          pathname: "/dot/deploy",
-                          query: { address: node.address, api: node.APIs[0] },
-                        }}
+                        href={gateway + "/ipfs/" + customCid}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         c="dimmed"
+                        mb="md"
+                        lineClamp={1}
                       >
-                        Deploy
+                        {gateway}
                       </Anchor>
-                    </Text>
+
+                      <Group justify="space-between" align="center">
+                        <Badge
+                          color={getStatusColor(result?.status)}
+                          variant="light"
+                          size="lg"
+                        >
+                          {getStatusLabel(result)}
+                        </Badge>
+
+                        <Button
+                          size="md"
+                          variant={isSelected ? "filled" : "light"}
+                          color={isSelected ? "green" : "blue"}
+                          onClick={() => selectGateway(gateway)}
+                          disabled={isSelected}
+                        >
+                          {isSelected ? "当前 IPFS 网关" : "选择"}
+                        </Button>
+                      </Group>
+                    </Card>
+                  </Grid.Col>
+                );
+              })}
+            </Grid>
+          </Box>
+        ))}
+
+        {/* 自定义网关显示 */}
+        {customGateway && (
+          <Box>
+            <Title order={4} mb="xs" c="violet.7">
+              自定义网关
+            </Title>
+            <Grid gutter="md">
+              <Grid.Col span={{ base: 12, md: 6, lg: 4 }}>
+                <Card
+                  shadow="sm"
+                  padding="lg"
+                  radius="md"
+                  withBorder
+                  style={{
+                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                    border:
+                      dotAPI === customGateway
+                        ? "2px solid #228be6"
+                        : undefined,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow =
+                      "0 4px 20px rgba(0,0,0,0.1)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "";
+                  }}
+                >
+                  <Group justify="space-between" mb="md">
+                    <Group gap="xs">
+                      <ThemeIcon
+                        size={36}
+                        radius="md"
+                        variant="light"
+                        color="violet"
+                      >
+                        <IconWorldWww size={20} />
+                      </ThemeIcon>
+                      <Text fw={600} size="md">
+                        Custom
+                      </Text>
+                    </Group>
+                    {dotAPI === customGateway && (
+                      <Badge size="xs" color="blue" variant="filled">
+                        当前
+                      </Badge>
+                    )}
                   </Group>
 
-                  <Group gap="xs">
-                    <IconClock size={14} color="gray" />
-                    <Text size="xs" c="dimmed">
-                      {formatTime(node.lastUpdate)}
-                    </Text>
-                  </Group>
-
-                  {node.APIs.length > 0 && (
-                    <Radio.Group
-                      size="xs"
-                      value={selectedApiByNode[node.address] || node.APIs[0]}
-                      onChange={(val) =>
-                        setSelectedApiByNode((prev) => ({
-                          ...prev,
-                          [node.address]: val,
-                        }))
-                      }
-                    >
-                      <Stack gap={2} align="flex-start">
-                        {node.APIs.map((api, apiIndex) => (
-                          <Group key={apiIndex} gap="xs" wrap="nowrap">
-                            <Radio
-                              disabled={isRadioDisabled(node, api)}
-                              value={api}
-                            />
-                            <Anchor
-                              key={apiIndex}
-                              c="blue"
-                              onClick={(e) => {
-                                e.preventDefault();
-                              }}
-                              lineClamp={1}
-                              component={Link}
-                              href={api}
-                            >
-                              {api}
-                            </Anchor>
-                          </Group>
-                        ))}
-                      </Stack>
-                    </Radio.Group>
-                  )}
-                  <Box>
-                    <Text size="xs" fw={500} mb={4} c="gray">
-                      IPFS 网关
-                    </Text>
-                    <Stack gap="xs" align="flex-start">
-                      {getCIDs(node).map((gatewayBase, index) => {
-                        const finalUrl = customCid
-                          ? `${gatewayBase}/${customCid}`
-                          : gatewayBase;
-                        const result = detectionResults[finalUrl];
-
-                        return (
-                          <Stack key={index} gap="xs">
-                            <Anchor
-                              component={Link}
-                              c="blue"
-                              href={finalUrl}
-                              target="_blank"
-                              lineClamp={1}
-                            >
-                              {finalUrl}
-                            </Anchor>
-                            <Badge
-                              flex={1}
-                              size="sm"
-                              color={
-                                result?.status === "success" ? "green" : "gray"
-                              }
-                              variant="light"
-                              >
-                              {result?.status || "CID"}
-                              {result?.responseTime != null &&
-                                ` (${result?.responseTime}ms)`}
-                            </Badge>
-                          </Stack>
-                        );
-                      })}
-                    </Stack>
-                  </Box>
-                </Stack>
-
-                <Group>
-                  <Button
-                    flex={1}
-                    variant={isCurrentNode(node) ? "filled" : "light"}
-                    color={isCurrentNode(node) ? "green" : "blue"}
-                    leftSection={<IconSwitchHorizontal size={16} />}
-                    onClick={() => switchNode(node)}
-                    loading={switchingNode === node.address}
-                    disabled={isDisabledNode(node)}
+                  <Text
+                    size="xs"
+                    c="dimmed"
+                    mb="md"
+                    lineClamp={1}
+                    title={customGateway}
                   >
-                    {isCurrentNode(node) ? "当前节点" : "选择节点"}
-                  </Button>
-                </Group>
-              </Stack>
-            </Card>
-          ))}
-        </Flex>
-      )}
+                    {customGateway}
+                  </Text>
 
-      {/* 底部控制区域 */}
-      {/* <Group mt="lg" gap="xs" justify="space-between">
-        <Button
-          size="sm"
-          color="yellow"
-          variant="light"
-          onClick={() => setCustomRPC(randomRPC())}
-        >
-          更换 RPC
-        </Button>
+                  <Group justify="space-between" align="center">
+                    <Badge
+                      color={getStatusColor(
+                        detectionResults[customGateway]?.status,
+                      )}
+                      variant="light"
+                      size="lg"
+                    >
+                      {getStatusLabel(detectionResults[customGateway])}
+                    </Badge>
 
-        <TextInput
-          size="sm"
-          flex={1}
-          leftSection={<IconServer size={16} />}
-          value={customRPC}
-          onChange={(event) => setCustomRPC(event.currentTarget.value)}
-          placeholder="自定义 RPC"
-        />
+                    <Button
+                      variant={dotAPI === customGateway ? "filled" : "light"}
+                      color={dotAPI === customGateway ? "green" : "blue"}
+                      onClick={() => selectGateway(customGateway)}
+                      disabled={dotAPI === customGateway}
+                    >
+                      {dotAPI === customGateway ? "当前节点" : "选择节点"}
+                    </Button>
+                  </Group>
+                </Card>
+              </Grid.Col>
+            </Grid>
+          </Box>
+        )}
+      </Stack>
 
-        <Tooltip label="刷新节点列表">
-          <ActionIcon
-            size="lg"
-            variant="light"
-            color="blue"
-            onClick={() => fetchDotNodes()}
-            loading={loading}
-          >
-            <IconRefresh size={18} />
-          </ActionIcon>
-        </Tooltip>
-      </Group> */}
+      <Divider my="xl" label="相关工具" labelPosition="center" />
 
-      <Group gap="xs" mt="lg" justify="center">
-        {/* <Anchor
-          size="sm"
-          c="blue"
-          component={Link}
-          href="https://docs.base.org/chain/connecting-to-base"
-          target="_blank"
-        >
-          官方 RPC
-        </Anchor>
+      <Group justify="center">
         <Anchor
-          size="sm"
-          c="blue"
           component={Link}
-          href="https://chainlist.org/chain/8453"
           target="_blank"
-        >
-          主网 RPC
-        </Anchor> */}
-        <Anchor
+          rel="noopener noreferrer"
+          href="http://localhost:5001/webui"
+          c="dimmed"
           size="sm"
-          c="blue"
-          component={Link}
-          href="https://docs.base.org/chain/network-faucets"
-          target="_blank"
         >
-          水龙头列表
-        </Anchor>
-        <Anchor
-          size="sm"
-          c="blue"
-          component={Link}
-          href="https://portal.cdp.coinbase.com/products/faucet?projectId=0b869244-5000-43dd-8aba-c9feee07f6ab"
-          target="_blank"
-        >
-          注册领水
-        </Anchor>
-        <Anchor
-          size="sm"
-          c="blue"
-          component={Link}
-          href={Explorer + "/address/" + CONTRACT_ADDRESS_DOT}
-          target="_blank"
-        >
-          节点合约 {mp.formatAddress(CONTRACT_ADDRESS_DOT)}
-        </Anchor>
-
-        <Anchor size="sm" c="blue" component={Link} href="/dot/status">
-          本地 IPFS 节点状态
+          查看本地 IPFS 节点状态
         </Anchor>
       </Group>
     </Container>

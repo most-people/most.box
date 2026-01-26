@@ -179,7 +179,6 @@ const loginSave = (wallet: MostWallet) => {
     // 验证并存储
     if (verifyJWT(jwt)?.address === wallet.address) {
       localStorage.setItem("jwt", jwt);
-      // createToken(wallet);
       return wallet;
     }
   } catch (error) {

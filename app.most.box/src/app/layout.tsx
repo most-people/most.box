@@ -3,7 +3,7 @@ import { AppKitProvider } from "@/context/Web3Modal";
 import type { Metadata, Viewport } from "next";
 import { theme } from "@/utils/theme";
 
-import { MantineProvider } from "@mantine/core";
+import { ColorSchemeScript, MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
 import { ModalsProvider } from "@mantine/modals";
 import "@mantine/core/styles.css";
@@ -53,6 +53,9 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="zh-CN" suppressHydrationWarning>
+      <head>
+        <ColorSchemeScript defaultColorScheme="dark" />
+      </head>
       <body>
         <div id="app">
           <AppKitProvider>
