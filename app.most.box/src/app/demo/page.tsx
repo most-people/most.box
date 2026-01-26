@@ -10,17 +10,15 @@ import {
   Text,
   Code,
   Switch,
-  PasswordInput,
   Group,
 } from "@mantine/core";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   uploadToCrust,
   uploadWithAuthHeader,
   createCrustAuthHeader,
   uploadToIpfsGateway,
   placeStorageOrder,
-  getCrustBalance,
 } from "@/utils/crust";
 import { notifications } from "@mantine/notifications";
 import { useSignMessage } from "wagmi";
