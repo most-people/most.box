@@ -3,7 +3,7 @@ import { Text, Group, ActionIcon, TextVariant, Menu } from "@mantine/core";
 import { Icon } from "@/components/Icon";
 import { useBack } from "@/hooks/useBack";
 import { useDocumentTitle } from "@mantine/hooks";
-import { openDotManager } from "@/components/DotManager/open";
+import Link from "next/link";
 
 interface AppHeaderProps {
   title: string | string[];
@@ -38,7 +38,8 @@ export const AppHeader = ({ title, variant, right, left }: AppHeaderProps) => {
           <Menu.Dropdown>
             <Menu.Item
               leftSection={<Icon name="Earth" size={16} />}
-              onClick={openDotManager}
+              component={Link}
+              href="/dot"
             >
               我的节点
             </Menu.Item>
