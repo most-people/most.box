@@ -45,10 +45,10 @@ export default function PageWeb3() {
       setPublicKey(public_key);
       setPrivateKey(private_key);
 
-      mostCrust(wallet.danger).then(({ crust_address, crust_mnemonic }) => {
-        setCrustAddress(crust_address);
-        setCrustMnemonic(crust_mnemonic);
-      });
+      // mostCrust(wallet.danger).then(({ crust_address, crust_mnemonic }) => {
+      //   setCrustAddress(crust_address);
+      //   setCrustMnemonic(crust_mnemonic);
+      // });
     }
   }, [wallet]);
 

@@ -74,9 +74,9 @@ export const useUserStore = create<State>((set, get) => ({
     const { wallet } = get();
     if (wallet) {
       try {
-        const { crust_address } = await mostCrust(wallet.danger);
-        const balance = await getCrustBalance(crust_address);
-        set({ balance });
+        // const { crust_address } = await mostCrust(wallet.danger);
+        // const balance = await getCrustBalance(crust_address);
+        // set({ balance });
       } catch (error) {
         console.error("获取 Crust 余额失败", error);
       }

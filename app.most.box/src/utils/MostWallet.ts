@@ -75,15 +75,15 @@ export const most25519 = (danger: string) => {
 
 // Crust key pair
 export const mostCrust = async (danger: string) => {
-  const { Keyring } = await import("@polkadot/keyring");
+  // const { Keyring } = await import("@polkadot/keyring");
   // Crust 的 SS58 前缀是 66
-  const keyring = new Keyring({ type: "sr25519", ss58Format: 66 });
-  const crust_mnemonic = Mnemonic.entropyToPhrase(getBytes(danger));
-  const crustPair = keyring.addFromUri(crust_mnemonic);
-  const crust_address = crustPair.address;
+  // const keyring = new Keyring({ type: "sr25519", ss58Format: 66 });
+  // const crust_mnemonic = Mnemonic.entropyToPhrase(getBytes(danger));
+  // const crustPair = keyring.addFromUri(crust_mnemonic);
+  // const crust_address = crustPair.address;
   return {
-    crust_address,
-    crust_mnemonic,
+    crust_address: "",
+    crust_mnemonic: "",
   };
 };
 
