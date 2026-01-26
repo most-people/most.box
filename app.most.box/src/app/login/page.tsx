@@ -43,7 +43,7 @@ export default function PageLogin() {
   const { address, isConnected } = useAppKitAccount();
   const { walletProvider } = useAppKitProvider("eip155");
 
-  const handleWalletLogin = async () => {
+  const walletLogin = async () => {
     if (!isConnected || !address) {
       open();
       return;
@@ -142,10 +142,7 @@ export default function PageLogin() {
           </Anchor>
         </Stack>
         <Divider label="Or" labelPosition="center" />
-        <Button
-          onClick={handleWalletLogin}
-          variant={isConnected ? "red" : "light"}
-        >
+        <Button onClick={walletLogin} variant={isConnected ? "red" : "light"}>
           {isConnected ? "签名登录" : "连接钱包"}
         </Button>
       </Stack>

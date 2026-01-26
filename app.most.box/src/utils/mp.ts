@@ -72,7 +72,7 @@ const formatTime = (time: number | string) => {
   } else {
     timeOfDay = "深夜";
   }
-  return date.format(`YYYY年M月D日 ${timeOfDay}h点m分`);
+  return date.format(`YYYY年M月D日 ${timeOfDay}h点`);
 };
 
 // 日期格式化

@@ -82,10 +82,10 @@ export default function PageWeb3() {
           <Group>
             <Text>{balance || "-"}</Text>
             <Anchor
-              href={`https://crust.subscan.io/account/${wallet?.crust_address || ""}`}
+              href="https://www.gate.com/zh/trade/CRU_USDT"
               target="_blank"
             >
-              查看
+              购买
             </Anchor>
           </Group>
         </Stack>
@@ -160,7 +160,7 @@ export default function PageWeb3() {
           <Text>IPFS 二维码</Text>
         </Anchor>
 
-        <Text>{mp.formatTime(Date.now())}</Text>
+        <Text>{mp.formatTime(new Date().getTime())}</Text>
       </Stack>
     </Container>
   );

@@ -11,6 +11,7 @@ import {
   Input,
   Switch,
   Textarea,
+  Center,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { mostWallet } from "@/utils/MostWallet";
@@ -132,9 +133,17 @@ export default function PageWeb3Tool() {
     <Container maw={1200} w="100%" p={20}>
       <AppHeader title="工具集" />
       <Stack gap="md">
-        <Avatar size={100} radius="sm" src={mp.avatar(address)} alt="it's me" />
-
-        <Text size="xl">Most Wallet 账户查询</Text>
+        <Center>
+          <Stack gap="md" align="center">
+            <Avatar
+              size={100}
+              radius="sm"
+              src={mp.avatar(address)}
+              alt="avatar"
+            />
+            <Text size="xl">Most Wallet 账户查询</Text>
+          </Stack>
+        </Center>
 
         {/* 模式切换开关 */}
         <Switch
@@ -235,16 +244,10 @@ export default function PageWeb3Tool() {
         </Button>
 
         <Paper p="md" bg="red.1" c="var(--red)">
-          {showMnemonic ? (
-            mnemonic ? (
-              <Stack>
-                <Text>{mnemonic}</Text>
-              </Stack>
-            ) : useMnemonicMode ? (
-              "请输入有效的助记词"
-            ) : (
-              "请输入用户名"
-            )
+          {showMnemonic && mnemonic ? (
+            <Stack>
+              <Text>{mnemonic}</Text>
+            </Stack>
           ) : (
             "任何拥有您助记词的人都可以窃取您账户中的任何资产，切勿泄露！！！"
           )}

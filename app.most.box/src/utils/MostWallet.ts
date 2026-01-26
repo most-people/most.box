@@ -49,12 +49,12 @@ export const mostWallet = (
     const salt = toUtf8Bytes("/most.box/" + username);
     const kdf = pbkdf2(p, salt, 3, 32, "sha512");
     seed = getBytes(sha256(getBytes(kdf)));
-  }
 
-  // wallet all in one
-  mnemonic = Mnemonic.entropyToPhrase(seed);
-  const account = HDNodeWallet.fromPhrase(mnemonic);
-  address = account.address;
+    // wallet all in one
+    mnemonic = Mnemonic.entropyToPhrase(seed);
+    const account = HDNodeWallet.fromPhrase(mnemonic);
+    address = account.address;
+  }
 
   // x25519 key pair
   const x25519KeyPair = nacl.box.keyPair.fromSecretKey(seed);
