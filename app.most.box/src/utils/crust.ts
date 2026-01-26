@@ -1,9 +1,6 @@
-import { mnemonicToAccount } from "viem/accounts";
+import { Wallet } from "ethers";
 import { create } from "kubo-rpc-client";
 import axios from "axios";
-import { ApiPromise, WsProvider } from "@polkadot/api";
-import { typesBundleForPolkadot } from "@crustio/type-definitions";
-import { Keyring } from "@polkadot/keyring";
 
 // Crust IPFS Web3 Auth 网关
 const CRUST_GW = "https://gw.crustfiles.app";
@@ -111,10 +108,10 @@ export const uploadToCrust = async (file: File, mnemonic: string) => {
   if (!mnemonic) throw new Error("需要钱包助记词");
 
   // 从助记词创建签名者
-  const account = mnemonicToAccount(mnemonic);
+  const account = Wallet.fromPhrase(mnemonic);
   const address = account.address;
   // 签名地址本身作为消息
-  const signature = await account.signMessage({ message: address });
+  const signature = await account.signMessage(address);
 
   // 构造认证头
   const authHeader = createCrustAuthHeader(address, signature);
@@ -136,6 +133,10 @@ export const placeStorageOrder = async (
   seed: string,
   tips = 0,
 ) => {
+  const { ApiPromise, WsProvider } = await import("@polkadot/api");
+  const { typesBundleForPolkadot } = await import("@crustio/type-definitions");
+  const { Keyring } = await import("@polkadot/keyring");
+
   // 1. 初始化 API
   const api = new ApiPromise({
     provider: new WsProvider(CRUST_RPC_URL),
@@ -189,6 +190,9 @@ export const placeStorageOrder = async (
  * @returns 余额（单位：CRU）
  */
 export const getCrustBalance = async (address: string) => {
+  const { ApiPromise, WsProvider } = await import("@polkadot/api");
+  const { typesBundleForPolkadot } = await import("@crustio/type-definitions");
+
   const api = new ApiPromise({
     provider: new WsProvider(CRUST_RPC_URL),
     typesBundle: typesBundleForPolkadot,

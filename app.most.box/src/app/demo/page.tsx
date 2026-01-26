@@ -21,14 +21,21 @@ import {
   placeStorageOrder,
 } from "@/utils/crust";
 import { notifications } from "@mantine/notifications";
-import { useSignMessage } from "wagmi";
-import { useAppKitAccount } from "@reown/appkit/react";
-import { mnemonicToAccount } from "viem/accounts";
+import { useAppKitAccount, useAppKitProvider } from "@reown/appkit/react";
+import { BrowserProvider, Wallet } from "ethers";
 
 export default function PageDemo() {
   const wallet = useUserStore((state) => state.wallet);
   const { address, isConnected } = useAppKitAccount();
-  const { mutateAsync: signMessageAsync } = useSignMessage();
+  const { walletProvider } = useAppKitProvider("eip155");
+
+  const signMessageAsync = async ({ message }: { message: string }) => {
+    if (!isConnected || !walletProvider)
+      throw new Error("Wallet not connected");
+    const provider = new BrowserProvider(walletProvider as any);
+    const signer = await provider.getSigner();
+    return await signer.signMessage(message);
+  };
 
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -108,8 +115,8 @@ export default function PageDemo() {
         // 1. 向 IPFS 网关认证
         let authHeader = "";
         if (wallet?.mnemonic) {
-          const account = mnemonicToAccount(wallet.mnemonic);
-          const sig = await account.signMessage({ message: account.address });
+          const account = Wallet.fromPhrase(wallet.mnemonic);
+          const sig = await account.signMessage(account.address);
           authHeader = createCrustAuthHeader(account.address, sig);
         } else if (isConnected && address) {
           const sig = await signMessageAsync({ message: address });

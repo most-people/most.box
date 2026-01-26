@@ -10,14 +10,7 @@ import {
   Stack,
   Text,
 } from "@mantine/core";
-import {
-  createPublicClient,
-  http,
-  getContract,
-  type Address,
-  isAddress,
-} from "viem";
-import { base, baseSepolia } from "viem/chains";
+import { Contract, isAddress, JsonRpcProvider } from "ethers";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
@@ -29,15 +22,12 @@ import { Icon } from "../Icon";
 import { notifications } from "@mantine/notifications";
 import { Dot, useDotStore } from "@/stores/dotStore";
 import Link from "next/link";
-import { Contract, JsonRpcProvider } from "ethers";
 
 export default function PageUser() {
   const pathname = usePathname();
   const [uid, setUid] = useState("");
   const RPC = useDotStore((state) => state.RPC);
   const Explorer = useDotStore((state) => state.Explorer);
-  const network = useDotStore((state) => state.network);
-  const chain = network === "mainnet" ? base : baseSepolia;
 
   const [dotAPI, setDotAPI] = useState("");
   const [owner, setOwner] = useState("");
@@ -54,20 +44,14 @@ export default function PageUser() {
 
   const fetchOwner = async (name: string, filter = "") => {
     try {
-      const client = createPublicClient({
-        chain,
-        transport: http(RPC),
-      });
-      const contract = getContract({
-        address: CONTRACT_ADDRESS_NAME as Address,
-        abi: CONTRACT_ABI_NAME,
-        client,
-      });
+      const provider = new JsonRpcProvider(RPC);
+      const contract = new Contract(
+        CONTRACT_ADDRESS_NAME,
+        CONTRACT_ABI_NAME,
+        provider
+      );
 
-      const owners = (await contract.read.getOwners([
-        name,
-        filter,
-      ])) as string[];
+      const owners = await contract.getOwners(name, filter);
       if (owners.length > 0) {
         setOwner(owners[0]);
         fetchName(owners[0], filter);
@@ -90,7 +74,7 @@ export default function PageUser() {
       const contract = new Contract(
         CONTRACT_ADDRESS_NAME,
         CONTRACT_ABI_NAME,
-        provider,
+        provider
       );
 
       const name = await contract.getName(address);
@@ -165,7 +149,7 @@ export default function PageUser() {
       const contract = new Contract(
         CONTRACT_ADDRESS_NAME,
         CONTRACT_ABI_NAME,
-        provider,
+        provider
       );
 
       const dotAPI = await contract.getDot(owner);

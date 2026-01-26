@@ -10,7 +10,6 @@ import {
   Avatar,
   Anchor,
   Container,
-  Divider,
 } from "@mantine/core";
 
 import Link from "next/link";
@@ -21,8 +20,6 @@ import { useUserStore } from "@/stores/userStore";
 import { notifications } from "@mantine/notifications";
 import { useBack } from "@/hooks/useBack";
 import { AppHeader } from "@/components/AppHeader";
-import { useAppKit, useAppKitAccount } from "@reown/appkit/react";
-import { useSignMessage } from "wagmi";
 
 export default function PageLogin() {
   const back = useBack();
@@ -33,34 +30,6 @@ export default function PageLogin() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const isLogin = Boolean(username || password);
-
-  // Reown hooks
-  const { open } = useAppKit();
-  const { address, isConnected } = useAppKitAccount();
-  const { mutateAsync } = useSignMessage();
-
-  const handleWalletLogin = async () => {
-    if (!isConnected || !address) {
-      open();
-      return;
-    }
-    try {
-      const message = "most.box";
-      const signature = await mutateAsync({ message });
-      const wallet = mostWallet(address, signature, "From Signature");
-      const loggedIn = mp.loginSave(wallet);
-      if (loggedIn) {
-        setWallet(loggedIn);
-        back();
-      }
-    } catch (e) {
-      console.error("Login failed", e);
-      notifications.show({
-        message: "登录失败: " + (e as Error).message,
-        color: "red",
-      });
-    }
-  };
 
   const login = () => {
     if (!username) {
@@ -85,7 +54,9 @@ export default function PageLogin() {
       <AppHeader title="登录" />
       <Stack gap="md" mt="md">
         <Stack align="center">
-          <Text size="xl">Most People</Text>
+          <Text size="xl" fw={500}>
+            Most People
+          </Text>
           <Avatar
             size="xl"
             radius="md"
@@ -132,13 +103,6 @@ export default function PageLogin() {
             完全去中心化，无需注册
           </Anchor>
         </Stack>
-        <Divider label="Or" labelPosition="center" />
-        <Button
-          onClick={handleWalletLogin}
-          variant={isConnected ? "red" : "light"}
-        >
-          {isConnected ? "签名登录" : "连接钱包"}
-        </Button>
       </Stack>
     </Container>
   );

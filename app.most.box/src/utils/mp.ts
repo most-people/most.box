@@ -1,4 +1,12 @@
-import { zeroAddress, toBytes } from "viem";
+import {
+  toUtf8Bytes,
+  encodeBase64,
+  decodeBase64,
+  toUtf8String,
+  ZeroAddress,
+  HDNodeWallet,
+  getBytes,
+} from "ethers";
 import { createAvatar } from "@dicebear/core";
 import { botttsNeutral, icons } from "@dicebear/collection";
 import {
@@ -13,7 +21,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/zh-cn";
 
 import isoWeek from "dayjs/plugin/isoWeek";
-import { ed25519 } from "@noble/curves/ed25519.js";
+import nacl from "tweetnacl";
 dayjs.extend(isoWeek);
 
 dayjs.extend(relativeTime);
@@ -21,7 +29,7 @@ dayjs.locale("zh-cn");
 
 // 头像生成
 const avatar = (address?: string) => {
-  if (!address || address === zeroAddress) {
+  if (!address || address === ZeroAddress) {
     return "/icons/pwa-512x512.png";
   }
   return createAvatar(botttsNeutral, {
@@ -102,10 +110,10 @@ const formatAddress = (address?: string) => {
 };
 
 // Base64 编码
-const enBase64 = (str: string) => Buffer.from(str).toString("base64");
+const enBase64 = (str: string) => encodeBase64(toUtf8Bytes(str));
 
 // Base64 解码
-const deBase64 = (str: string) => Buffer.from(str, "base64").toString("utf-8");
+const deBase64 = (str: string) => toUtf8String(decodeBase64(str));
 
 // 创建 JWT
 const createJWT = (wallet: MostWallet, template = "YYYYMM") => {
@@ -145,6 +153,14 @@ const verifyJWT = (jwt: string, template = "YYYYMM") => {
   return wallet;
 };
 
+// 创建 token
+// const createToken = async (wallet: MostWallet) => {
+//   const message = Date.now().toString();
+//   const ethWallet = HDNodeWallet.fromPhrase(wallet.mnemonic);
+//   const signature = await ethWallet.signMessage(message);
+//   localStorage.token = [wallet.address, message, signature].join(".");
+// };
+
 // 登录
 const login = (username: string, password: string): MostWallet | null => {
   const wallet = mostWallet(
@@ -163,6 +179,7 @@ const loginSave = (wallet: MostWallet) => {
     // 验证并存储
     if (verifyJWT(jwt)?.address === wallet.address) {
       localStorage.setItem("jwt", jwt);
+      // createToken(wallet);
       return wallet;
     }
   } catch (error) {
@@ -251,12 +268,12 @@ const baseXEncode = (bytes: Uint8Array, alphabet: string): string => {
 };
 // Ed25519 获取密钥对
 const getEdKeyPair = (private_key: string, ed_public_key: string) => {
-  const seed = toBytes(private_key);
-  const publicKey = ed25519.getPublicKey(seed);
-  return {
-    publicKey,
-    secretKey: seed,
-  };
+  const public_key = ed_public_key.slice(2);
+  // 从十六进制私钥字符串转换为 Uint8Array
+  const secretKey = new Uint8Array(getBytes(private_key + public_key));
+  // 使用私钥重新构建密钥对
+  const EdKeyPair = nacl.sign.keyPair.fromSecretKey(secretKey);
+  return EdKeyPair;
 };
 // Ed25519 获取 IPNS 地址
 const getIPNS = (private_key: string, ed_public_key: string) => {
@@ -287,7 +304,8 @@ const mp = {
   verifyJWT,
   login,
   loginSave,
-  zeroAddress,
+  ZeroAddress,
+  // createToken,
   pinyin,
   getEdKeyPair,
   getIPNS,

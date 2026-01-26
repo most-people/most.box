@@ -20,7 +20,7 @@ import { IconCopy, IconShare } from "@tabler/icons-react";
 
 const PageContent = () => {
   const params = useSearchParams();
-  const uid = params.get("uid") || mp.zeroAddress;
+  const uid = params.get("uid") || mp.ZeroAddress;
 
   const handleCopyAddress = async () => {
     try {

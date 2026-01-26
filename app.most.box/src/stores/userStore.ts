@@ -1,8 +1,6 @@
 import { type MostWallet } from "@/utils/MostWallet";
 import { create } from "zustand";
-import { disconnect } from "@wagmi/core";
-import { adapter } from "@/context/Web3Modal";
-import { getCrustBalance } from "@/utils/crust";
+// import { getCrustBalance } from "@/utils/crust";
 
 export interface FileItem {
   name: string;
@@ -68,19 +66,17 @@ export const useUserStore = create<State>((set, get) => ({
     set({ wallet: undefined, notes: undefined, files: undefined });
     localStorage.removeItem("jwt");
     localStorage.removeItem("token");
-    disconnect(adapter.wagmiConfig);
   },
   // 根目录 CID
   rootCID: "",
-
   // 余额
   balance: "0",
   async initBalance() {
     const { wallet } = get();
     if (wallet) {
       try {
-        const balance = await getCrustBalance(wallet.crust_address);
-        set({ balance });
+        // const balance = await getCrustBalance(wallet.crust_address);
+        // set({ balance });
       } catch (error) {
         console.error("获取 Crust 余额失败", error);
       }
