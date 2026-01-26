@@ -14,6 +14,7 @@ import {
 } from "@mantine/core";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { most25519 } from "@/utils/MostWallet";
 
 // Base64 编码函数
 const base64Encode = (bytes: Uint8Array): string => {
@@ -128,10 +129,8 @@ export default function PageWeb3Ed25519() {
 
   useEffect(() => {
     if (wallet) {
-      const EdKeyPair = mp.getEdKeyPair(
-        wallet.private_key,
-        wallet.ed_public_key,
-      );
+      const { private_key, ed_public_key } = most25519(wallet.danger);
+      const EdKeyPair = mp.getEdKeyPair(private_key, ed_public_key);
       if (EdKeyPair) {
         const privatePEM = ed25519ToPKCS8PEM(EdKeyPair.secretKey);
         const publicPEM = ed25519PublicKeyToPEM(EdKeyPair.publicKey);
@@ -140,7 +139,7 @@ export default function PageWeb3Ed25519() {
           setPublicKeyPEM(publicPEM);
         });
       }
-      const ipns = mp.getIPNS(wallet.private_key, wallet.ed_public_key);
+      const ipns = mp.getIPNS(private_key, ed_public_key);
       queueMicrotask(() => {
         setIPNS(ipns);
       });
@@ -189,12 +188,14 @@ export default function PageWeb3Ed25519() {
 
         <Stack gap="sm">
           <Text>Ed25519 公钥 (hex):</Text>
-          <Text>{wallet?.ed_public_key || "-"}</Text>
+          <Text>
+            {(wallet && most25519(wallet.danger).ed_public_key) || "-"}
+          </Text>
         </Stack>
 
         <Stack gap="sm">
           <Text>Ed25519 私钥 (hex):</Text>
-          <Text>{wallet?.private_key || "-"}</Text>
+          <Text>{(wallet && most25519(wallet.danger).private_key) || "-"}</Text>
         </Stack>
       </Stack>
 

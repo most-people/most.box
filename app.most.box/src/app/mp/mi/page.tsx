@@ -13,7 +13,12 @@ import {
   Group,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
-import { mostEncode, mostDecode, mostWallet } from "@/utils/MostWallet";
+import {
+  mostEncode,
+  mostDecode,
+  mostWallet,
+  most25519,
+} from "@/utils/MostWallet";
 import { notifications } from "@mantine/notifications";
 import { IconInfoCircle, IconCopy } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
@@ -75,12 +80,9 @@ export default function PageMpMi() {
 
     try {
       // 使用密码生成密钥对
-      const wallet = mostWallet(username, password);
-      const encrypted = mostEncode(
-        plaintext,
-        wallet.public_key,
-        wallet.private_key,
-      );
+      const { danger } = mostWallet(username, password);
+      const { public_key, private_key } = most25519(danger);
+      const encrypted = mostEncode(plaintext, public_key, private_key);
 
       if (encrypted) {
         setCipherText(encrypted);
@@ -122,12 +124,9 @@ export default function PageMpMi() {
 
     try {
       // 使用密码生成密钥对
-      const wallet = mostWallet(username, password);
-      const decrypted = mostDecode(
-        cipherText,
-        wallet.public_key,
-        wallet.private_key,
-      );
+      const { danger } = mostWallet(username, password);
+      const { public_key, private_key } = most25519(danger);
+      const decrypted = mostDecode(cipherText, public_key, private_key);
 
       if (decrypted) {
         setPlaintext(decrypted);

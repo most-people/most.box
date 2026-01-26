@@ -23,6 +23,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { useAppKitAccount, useAppKitProvider } from "@reown/appkit/react";
 import { BrowserProvider, Wallet } from "ethers";
+import { mostCrust } from "@/utils/MostWallet";
 
 export default function PageDemo() {
   const wallet = useUserStore((state) => state.wallet);
@@ -59,8 +60,7 @@ export default function PageDemo() {
       setTxHash("");
 
       // 1. 确定用于 CRU 交易的种子
-      const crust_mnemonic = wallet?.crust_mnemonic;
-      if (!crust_mnemonic) {
+      if (!wallet) {
         notifications.show({
           message: "要使用 CRU 支付，您必须登录并拥有有效的 Crust 助记词。",
           color: "red",
@@ -69,6 +69,7 @@ export default function PageDemo() {
         return;
       }
 
+      const { crust_mnemonic } = await mostCrust(wallet.danger);
       notifications.show({
         message: "正在下存储订单...",
         color: "blue",
@@ -114,8 +115,9 @@ export default function PageDemo() {
       if (useCru) {
         // 1. 向 IPFS 网关认证
         let authHeader = "";
-        if (wallet?.mnemonic) {
-          const account = Wallet.fromPhrase(wallet.mnemonic);
+        if (wallet && wallet?.type !== "From Signature") {
+          const { crust_mnemonic } = await mostCrust(wallet.danger);
+          const account = Wallet.fromPhrase(crust_mnemonic);
           const sig = await account.signMessage(account.address);
           authHeader = createCrustAuthHeader(account.address, sig);
         } else if (isConnected && address) {
@@ -147,8 +149,9 @@ export default function PageDemo() {
       else {
         let result;
         // 情况 1: 如果可用，使用本地助记词
-        if (wallet?.mnemonic) {
-          result = await uploadToCrust(file, wallet.mnemonic);
+        if (wallet && wallet?.type !== "From Signature") {
+          const { crust_mnemonic } = await mostCrust(wallet.danger);
+          result = await uploadToCrust(file, crust_mnemonic);
         }
         // 情况 2: 使用 Reown/Web3Model 连接的钱包
         else if (isConnected && address) {
@@ -185,7 +188,8 @@ export default function PageDemo() {
     }
   };
 
-  const canUpload = !!file && (!!wallet?.mnemonic || isConnected);
+  const canUpload =
+    !!file && ((wallet && wallet?.type !== "From Signature") || isConnected);
 
   return (
     <Container py={20}>
@@ -230,7 +234,7 @@ export default function PageDemo() {
         >
           {useCru
             ? "上传到 IPFS"
-            : wallet?.mnemonic
+            : wallet && wallet?.type !== "From Signature"
               ? "使用本地钱包上传"
               : isConnected
                 ? "使用连接的钱包上传"

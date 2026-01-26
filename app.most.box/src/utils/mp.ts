@@ -10,6 +10,7 @@ import {
 import { createAvatar } from "@dicebear/core";
 import { botttsNeutral, icons } from "@dicebear/collection";
 import {
+  most25519,
   mostDecode,
   mostEncode,
   type MostWallet,
@@ -125,7 +126,8 @@ const createJWT = (wallet: MostWallet, template = "YYYYMM") => {
     throw new Error("请先获取设备指纹");
   }
   const key = [location.origin, fingerprint].join("/");
-  const { public_key, private_key } = mostWallet(time, key);
+  const { danger } = mostWallet(time, key);
+  const { public_key, private_key } = most25519(danger);
   const jwt = mostEncode(JSON.stringify(wallet), public_key, private_key);
   return jwt;
 };
@@ -141,7 +143,8 @@ const verifyJWT = (jwt: string, template = "YYYYMM") => {
   }
   const key = [location.origin, fingerprint].join("/");
   // 获取设备指纹ID
-  const { public_key, private_key } = mostWallet(time, key);
+  const { danger } = mostWallet(time, key);
+  const { public_key, private_key } = most25519(danger);
   const json = mostDecode(jwt, public_key, private_key);
   if (!json) {
     throw new Error("jwt 解析失败");
@@ -163,11 +166,7 @@ const verifyJWT = (jwt: string, template = "YYYYMM") => {
 
 // 登录
 const login = (username: string, password: string): MostWallet | null => {
-  const wallet = mostWallet(
-    username,
-    password,
-    "I know loss mnemonic will lose my wallet.",
-  );
+  const wallet = mostWallet(username, password);
   return loginSave(wallet);
 };
 

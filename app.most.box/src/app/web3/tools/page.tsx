@@ -14,7 +14,7 @@ import {
   Center,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { mostWallet } from "@/utils/MostWallet";
+import { mostMnemonic, mostWallet } from "@/utils/MostWallet";
 import { HDNodeWallet } from "ethers";
 import { QRCodeSVG } from "qrcode.react";
 import { AppHeader } from "@/components/AppHeader";
@@ -86,13 +86,10 @@ export default function PageWeb3Tool() {
     } else {
       // 用户名密码模式
       if (username) {
-        const danger = mostWallet(
-          username,
-          password,
-          "I know loss mnemonic will lose my wallet.",
-        );
-        setAddress(danger.address);
-        setMnemonic(danger.mnemonic || "");
+        const { danger, address } = mostWallet(username, password);
+        const mnemonic = mostMnemonic(danger);
+        setAddress(address);
+        setMnemonic(mnemonic);
       } else {
         setAddress(mp.ZeroAddress);
         setMnemonic("");

@@ -14,6 +14,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import Link from "next/link";
 import mp from "@/utils/mp";
+import { most25519, mostCrust } from "@/utils/MostWallet";
 
 export default function PageWeb3() {
   const wallet = useUserStore((state) => state.wallet);
@@ -23,10 +24,31 @@ export default function PageWeb3() {
   const [showCrust, setShowCrust] = useState(false);
   const [ipns, setIPNS] = useState("-");
 
+  const [ed_public_key, setEdPublicKey] = useState("-");
+
+  const [public_key, setPublicKey] = useState("-");
+  const [private_key, setPrivateKey] = useState("-");
+
+  const [crust_address, setCrustAddress] = useState("-");
+  const [crust_mnemonic, setCrustMnemonic] = useState("-");
+
   useEffect(() => {
     if (wallet) {
-      const ipns = mp.getIPNS(wallet.private_key, wallet.ed_public_key);
+      const { public_key, private_key, ed_public_key } = most25519(
+        wallet.danger,
+      );
+      setEdPublicKey(ed_public_key);
+
+      const ipns = mp.getIPNS(private_key, ed_public_key);
       setIPNS(ipns);
+
+      setPublicKey(public_key);
+      setPrivateKey(private_key);
+
+      mostCrust(wallet.danger).then(({ crust_address, crust_mnemonic }) => {
+        setCrustAddress(crust_address);
+        setCrustMnemonic(crust_mnemonic);
+      });
     }
   }, [wallet]);
 
@@ -65,9 +87,9 @@ export default function PageWeb3() {
           Crust 地址
         </Text>
         <Group>
-          <Text>{wallet?.crust_address || "-"}</Text>
+          <Text>{crust_address || "-"}</Text>
           <Anchor
-            href={`https://crust.subscan.io/account/${wallet?.crust_address || ""}`}
+            href={`https://crust.subscan.io/account/${crust_address || ""}`}
             target="_blank"
           >
             查看
@@ -94,7 +116,7 @@ export default function PageWeb3() {
           Ed25519 公钥
         </Text>
         <Group>
-          <Text>{wallet?.ed_public_key || "-"}</Text>
+          <Text>{ed_public_key || "-"}</Text>
           <Anchor href="/web3/ed25519" component={Link}>
             PEM 格式
           </Anchor>
@@ -103,7 +125,7 @@ export default function PageWeb3() {
         <Text size="lg" fw={500}>
           x25519 公钥
         </Text>
-        <Text>{wallet?.public_key || "-"}</Text>
+        <Text>{public_key || "-"}</Text>
 
         <Text size="lg" fw={500}>
           x25519 & Ed25519 私钥
@@ -121,9 +143,7 @@ export default function PageWeb3() {
             {showX25519 ? <IconEye size={16} /> : <IconEyeOff size={16} />}
           </ActionIcon>
         </Group>
-        <Text>
-          {showX25519 ? wallet?.private_key || "-" : "****************"}
-        </Text>
+        <Text>{showX25519 ? private_key || "-" : "****************"}</Text>
 
         <Text size="lg" fw={500}>
           Crust 助记词
@@ -141,9 +161,7 @@ export default function PageWeb3() {
             {showCrust ? <IconEye size={16} /> : <IconEyeOff size={16} />}
           </ActionIcon>
         </Group>
-        <Text>
-          {showCrust ? wallet?.crust_mnemonic || "-" : "****************"}
-        </Text>
+        <Text>{showCrust ? crust_mnemonic || "-" : "****************"}</Text>
 
         <Text size="lg" fw={500}>
           IPNS ID
