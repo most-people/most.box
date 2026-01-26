@@ -10,6 +10,7 @@ import {
   decodeBase64,
 } from "ethers";
 import nacl from "tweetnacl";
+import { Keyring } from "@polkadot/keyring";
 
 export interface MostWallet {
   username: string;
@@ -26,43 +27,50 @@ export interface MostWallet {
 }
 
 export const mostWallet = (
-  username: string,
-  password: string,
-  danger?: string,
+  username_address: string,
+  password_signature: string,
+  type?: "I know loss mnemonic will lose my wallet." | "From Signature",
 ): MostWallet => {
-  const isDanger = danger === "I know loss mnemonic will lose my wallet.";
-  const p = toUtf8Bytes(password);
-  const salt = toUtf8Bytes("/most.box/" + username);
-  const kdf = pbkdf2(p, salt, 3, 32, "sha512");
-  const bytes = getBytes(sha256(kdf));
+  const isDanger = type === "I know loss mnemonic will lose my wallet.";
 
-  // x25519 key pair
-  const seed = bytes.slice(0, 32);
-  const keyPair = nacl.box.keyPair.fromSecretKey(seed);
+  let seed: Uint8Array;
+  let address: string;
+  let mnemonic: string | null = null;
+  let username = username_address;
 
-  const public_key = hexlify(keyPair.publicKey);
-  const private_key = hexlify(keyPair.secretKey);
-
-  // Ed25519 key pair
-  const EdKeyPair = nacl.sign.keyPair.fromSeed(seed);
-  const ed_public_key = hexlify(EdKeyPair.publicKey);
+  if (type === "From Signature") {
+    address = username_address;
+    username = username_address.slice(-4).toUpperCase();
+    const signature = password_signature;
+    seed = getBytes(sha256(getBytes(signature)));
+  } else {
+    const password = password_signature;
+    const p = toUtf8Bytes(password);
+    const salt = toUtf8Bytes("/most.box/" + username);
+    const kdf = pbkdf2(p, salt, 3, 32, "sha512");
+    seed = getBytes(sha256(getBytes(kdf)));
+  }
 
   // wallet all in one
-  // Use 16 bytes (128 bits) for 12-word mnemonic
-  const mnemonic12 = Mnemonic.entropyToPhrase(bytes.slice(0, 16));
-  // Use 32 bytes (256 bits) for 24-word mnemonic
-  const mnemonic24 = Mnemonic.entropyToPhrase(bytes);
+  mnemonic = Mnemonic.entropyToPhrase(seed);
+  const account = HDNodeWallet.fromPhrase(mnemonic);
+  address = account.address;
 
-  const mnemonic = mnemonic24;
-  const wallet = HDNodeWallet.fromPhrase(mnemonic);
-  const address = wallet.address;
+  // x25519 key pair
+  const x25519KeyPair = nacl.box.keyPair.fromSecretKey(seed);
+  const public_key = hexlify(x25519KeyPair.publicKey);
+  const private_key = hexlify(x25519KeyPair.secretKey); // Seed is used as secret key in NaCl box
+
+  // Ed25519 key pair
+  const ed25519KeyPair = nacl.sign.keyPair.fromSeed(seed);
+  const ed_public_key = hexlify(ed25519KeyPair.publicKey);
 
   // 生成 Crust Wallet
   // Crust 的 SS58 前缀是 66
-  // const keyring = new Keyring({ type: "sr25519", ss58Format: 66 });
-  // const crust_mnemonic = entropyToMnemonic(seed, english);
-  // const crustPair = keyring.addFromUri(crust_mnemonic);
-  // const crust_address = crustPair.address;
+  const keyring = new Keyring({ type: "sr25519", ss58Format: 66 });
+  const crust_mnemonic = Mnemonic.entropyToPhrase(seed);
+  const crustPair = keyring.addFromUri(crust_mnemonic);
+  const crust_address = crustPair.address;
 
   const mostWallet: MostWallet = {
     username,
@@ -71,8 +79,8 @@ export const mostWallet = (
     private_key,
     mnemonic: isDanger ? mnemonic : null,
     ed_public_key,
-    crust_address: "",
-    crust_mnemonic: "",
+    crust_address,
+    crust_mnemonic,
   };
   return mostWallet;
 };

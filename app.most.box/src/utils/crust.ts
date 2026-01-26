@@ -1,4 +1,4 @@
-import { Wallet } from "ethers";
+import { formatUnits, parseEther, parseUnits, Wallet } from "ethers";
 import { create } from "kubo-rpc-client";
 import axios from "axios";
 
@@ -187,9 +187,9 @@ export const placeStorageOrder = async (
 /**
  * 查询 Crust 账户余额
  * @param address Crust 地址
- * @returns 余额（单位：CRU）
+ * @returns 余额（单位：CRU，类型：string）
  */
-export const getCrustBalance = async (address: string) => {
+export const getCrustBalance = async (address: string): Promise<string> => {
   const { ApiPromise, WsProvider } = await import("@polkadot/api");
   const { typesBundleForPolkadot } = await import("@crustio/type-definitions");
 
@@ -201,8 +201,8 @@ export const getCrustBalance = async (address: string) => {
   try {
     await api.isReady;
     const account: any = await api.query.system.account(address);
-    // 转换为人类可读格式 (CRU 有 12 位小数)
-    return account.data.free.toHuman();
+    const balance = account.data.free.toBigInt();
+    return formatUnits(balance, 12);
   } catch (error) {
     console.error("查询余额失败:", error);
     throw error;

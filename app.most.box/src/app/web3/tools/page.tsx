@@ -30,7 +30,6 @@ export default function PageWeb3Tool() {
   const [password, setPassword] = useState("");
   const [address, setAddress] = useState(mp.ZeroAddress);
   const [mnemonic, setMnemonic] = useState("");
-  const [mnemonic12, setMnemonic12] = useState("");
   const [showAddress, setShowAddress] = useState(false);
   const [showMnemonic, setShowMnemonic] = useState(false);
 
@@ -239,10 +238,7 @@ export default function PageWeb3Tool() {
           {showMnemonic ? (
             mnemonic ? (
               <Stack>
-                <Text>
-                  {useMnemonicMode ? "助记词" : "24位助记词"}：{mnemonic}
-                </Text>
-                {mnemonic12 && <Text>12位助记词：{mnemonic12}</Text>}
+                <Text>{mnemonic}</Text>
               </Stack>
             ) : useMnemonicMode ? (
               "请输入有效的助记词"

@@ -80,7 +80,7 @@ export default function PageWeb3() {
           </Text>
 
           <Group>
-            <Text>{balance}</Text>
+            <Text>{balance || "-"}</Text>
             <Anchor
               href={`https://crust.subscan.io/account/${wallet?.crust_address || ""}`}
               target="_blank"

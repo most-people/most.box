@@ -1,6 +1,6 @@
+import { getCrustBalance } from "@/utils/crust";
 import { type MostWallet } from "@/utils/MostWallet";
 import { create } from "zustand";
-// import { getCrustBalance } from "@/utils/crust";
 
 export interface FileItem {
   name: string;
@@ -48,8 +48,7 @@ export const useUserStore = create<State>((set, get) => ({
   wallet: undefined,
   setWallet(wallet: MostWallet) {
     set({ wallet });
-    const { initBalance } = get();
-    initBalance();
+    get().initBalance();
   },
   // 返回
   firstPath: "",
@@ -70,13 +69,13 @@ export const useUserStore = create<State>((set, get) => ({
   // 根目录 CID
   rootCID: "",
   // 余额
-  balance: "0",
+  balance: "",
   async initBalance() {
     const { wallet } = get();
     if (wallet) {
       try {
-        // const balance = await getCrustBalance(wallet.crust_address);
-        // set({ balance });
+        const balance = await getCrustBalance(wallet.crust_address);
+        set({ balance });
       } catch (error) {
         console.error("获取 Crust 余额失败", error);
       }
