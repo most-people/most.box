@@ -19,6 +19,7 @@ import {
   Box,
   Card,
   Textarea,
+  List,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import {
@@ -31,9 +32,7 @@ import {
 } from "@tabler/icons-react";
 import { useRef, useState, useEffect } from "react";
 import type { DataConnection, MediaConnection } from "peerjs";
-import IPv6 from "@/assets/docs/IPv6.md";
 import { useUserStore } from "@/stores/userStore";
-import { useMarkdown } from "@/hooks/useMarkdown";
 import mp from "@/utils/mp";
 
 type Role = "joiner" | "creator";
@@ -286,7 +285,7 @@ export default function PageChat() {
     setRole(null);
     setP2pConnected(false);
     setChatReady(false);
-    
+
     // Clear chat messages on disconnect
     setChatMessages([]);
 
@@ -301,15 +300,7 @@ export default function PageChat() {
     setIsCameraOn(false);
   };
 
-  const markdown = useMarkdown();
-  const ipv6Element = useRef<HTMLDivElement>(null);
   const nodeDark = useUserStore((state) => state.nodeDark);
-  const init = async () => {
-    if (ipv6Element.current) {
-      const viewer = await markdown.initViewer(ipv6Element.current);
-      viewer.setMarkdown(IPv6);
-    }
-  };
 
   useEffect(() => {
     const uuid = Math.random().toString(36).slice(2, 10).toUpperCase();
@@ -318,8 +309,6 @@ export default function PageChat() {
     const id = new URLSearchParams(window.location.search).get("id");
     setRoomId(id || roomId);
     updateRoomId(id || roomId);
-
-    init();
 
     return () => {
       disconnect();
@@ -395,13 +384,18 @@ export default function PageChat() {
 
   return (
     <Container py="md">
-      <AppHeader title="点对点聊天" />
+      <AppHeader title="加密聊天" />
       <Stack gap="md">
         <Center>
           <Icon name="Chat" size={40} />
         </Center>
+        <Center>
+          <Text size="sm" c="dimmed">
+            无需服务器中转，浏览器直接对话
+          </Text>
+        </Center>
         <Group justify="space-between" align="center">
-          <Title size="h2">WebRTC + PeerJS</Title>
+          <Title size="h2">WebRTC 实时通信</Title>
           <Group gap="sm">
             <Badge
               size="lg"
@@ -693,9 +687,41 @@ export default function PageChat() {
           </Group>
         </Paper>
 
-        <Card withBorder>
-          <Box className={nodeDark} ref={ipv6Element} />
-        </Card>
+        <Center>
+          <Card withBorder padding="lg" radius="md" mt="md">
+            <Stack gap="sm">
+              <Group>
+                <Text size="xl">🚀</Text>
+                <div>
+                  <Text fw={700}>WebRTC 实时通信</Text>
+                  <Text size="sm" c="dimmed">
+                    无需服务器中转，浏览器直接对话
+                  </Text>
+                </div>
+              </Group>
+              <List spacing="xs" p={0} size="sm" center>
+                <List.Item icon={<Text mr={6}>🔒</Text>}>
+                  <Text span fw={500}>
+                    隐私安全：
+                  </Text>
+                  点对点加密直连，无中间服务器
+                </List.Item>
+                <List.Item icon={<Text mr={6}>⚡️</Text>}>
+                  <Text span fw={500}>
+                    极低延迟：
+                  </Text>
+                  数据不绕路，延迟低至毫秒级
+                </List.Item>
+                <List.Item icon={<Text mr={6}>🌐</Text>}>
+                  <Text span fw={500}>
+                    开源透明：
+                  </Text>
+                  基于 PeerJS，WebRTC 协议
+                </List.Item>
+              </List>
+            </Stack>
+          </Card>
+        </Center>
       </Stack>
     </Container>
   );
