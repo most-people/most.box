@@ -10,6 +10,9 @@ import {
   decodeBase64,
 } from "ethers";
 import nacl from "tweetnacl";
+import * as sr25519 from "@scure/sr25519";
+import { blake2b } from "@noble/hashes/blake2.js";
+import { base58 } from "@scure/base";
 
 export interface MostWallet {
   username: string;
@@ -75,15 +78,44 @@ export const most25519 = (danger: string) => {
 
 // Crust key pair
 export const mostCrust = async (danger: string) => {
-  // const { Keyring } = await import("@polkadot/keyring");
-  // Crust 的 SS58 前缀是 66
-  // const keyring = new Keyring({ type: "sr25519", ss58Format: 66 });
-  // const crust_mnemonic = Mnemonic.entropyToPhrase(getBytes(danger));
-  // const crustPair = keyring.addFromUri(crust_mnemonic);
-  // const crust_address = crustPair.address;
+  const entropy = getBytes(danger);
+  const mnemonic = Mnemonic.entropyToPhrase(entropy);
+
+  // Polkadot uses entropy as password for PBKDF2, not mnemonic phrase!
+  const salt = toUtf8Bytes("mnemonic");
+  const seed = pbkdf2(entropy, salt, 2048, 64, "sha512");
+  const miniSecret = getBytes(seed).slice(0, 32);
+
+  const secretKey = sr25519.secretFromSeed(miniSecret);
+  const publicKey = sr25519.getPublicKey(secretKey);
+
+  // Crust SS58 prefix is 66 (0x42) -> 5080 (0x50, 0x80)
+  const prefixBytes = new Uint8Array([0x50, 0x80]);
+
+  const content = new Uint8Array(prefixBytes.length + publicKey.length);
+  content.set(prefixBytes);
+  content.set(publicKey, prefixBytes.length);
+
+  const SS58PRE = new TextEncoder().encode("SS58PRE");
+  const checksumContent = new Uint8Array(SS58PRE.length + content.length);
+  checksumContent.set(SS58PRE);
+  checksumContent.set(content, SS58PRE.length);
+
+  const checksum = blake2b(checksumContent, { dkLen: 64 }).subarray(0, 2);
+
+  const addressBytes = new Uint8Array(content.length + checksum.length);
+  addressBytes.set(content);
+  addressBytes.set(checksum, content.length);
+
+  const crust_address = base58.encode(addressBytes);
+  console.log("🌊", {
+    crust_address,
+    crust_mnemonic: mnemonic,
+  });
+
   return {
-    crust_address: "",
-    crust_mnemonic: "",
+    crust_address,
+    crust_mnemonic: mnemonic,
   };
 };
 

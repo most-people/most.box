@@ -1,11 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import {
-  cryptoWaitReady,
-  signatureVerify,
-  mnemonicGenerate,
-} from "@polkadot/util-crypto";
-import { Keyring } from "@polkadot/keyring";
+import { cryptoWaitReady, signatureVerify } from "@polkadot/util-crypto";
 
 type Bindings = {
   DB: D1Database;
@@ -27,13 +22,6 @@ app.get("/", (c) => {
 const authMiddleware = async (c: any, next: any) => {
   try {
     const address = c.req.header("x-address");
-
-    // mock jump for dev
-    if (address) {
-      c.set("address", address);
-      await next();
-      return;
-    }
 
     const signature = c.req.header("x-signature");
     const timestampStr = c.req.header("x-timestamp");
