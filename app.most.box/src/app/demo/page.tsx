@@ -11,6 +11,7 @@ import {
   Code,
   Switch,
   Group,
+  Anchor,
 } from "@mantine/core";
 import { useState } from "react";
 import {
@@ -250,6 +251,13 @@ export default function PageDemo() {
           <Stack gap="xs">
             <Text size="sm">上传 CID:</Text>
             <Code block>{cid}</Code>
+            <Anchor
+              href={`https://ipfs-scan.io/?cid=${cid}`}
+              target="_blank"
+              size="sm"
+            >
+              IPFS Scan 预览
+            </Anchor>
             {txHash ? (
               <>
                 <Text size="sm">存储订单交易:</Text>
