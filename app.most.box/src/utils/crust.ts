@@ -1,15 +1,7 @@
-import {
-  formatUnits,
-  Wallet,
-  Mnemonic,
-  getBytes,
-  pbkdf2,
-  toUtf8Bytes,
-} from "ethers";
+import { formatUnits, Wallet } from "ethers";
 import { create } from "kubo-rpc-client";
 import axios from "axios";
-import * as sr25519 from "@scure/sr25519";
-import { base58 } from "@scure/base";
+import { mostCrust } from "./MostWallet";
 
 // Crust IPFS Web3 Auth 网关
 const CRUST_GW = "https://gw.crustfiles.app";
@@ -139,11 +131,12 @@ export const uploadToCrust = async (file: File, mnemonic: string) => {
 export const placeStorageOrder = async (
   cid: string,
   fileSize: number,
-  seed: string,
+  danger: string,
   tips = 0,
 ) => {
   const { ApiPromise, WsProvider } = await import("@polkadot/api");
   const { typesBundleForPolkadot } = await import("@crustio/type-definitions");
+  const { Keyring } = await import("@polkadot/keyring");
 
   // 1. 初始化 API
   const api = new ApiPromise({
@@ -154,55 +147,10 @@ export const placeStorageOrder = async (
   try {
     await api.isReady;
 
-    // 2. Generate Keypair from Seed (compatible with Polkadot-JS)
-    // Supports hex seed or mnemonic phrase
-    let secretKey: Uint8Array;
-    let publicKey: Uint8Array;
-
-    if (seed.startsWith("0x")) {
-      // Hex seed
-      secretKey = getBytes(seed);
-      if (secretKey.length !== 32) {
-        // Handle mini-secret vs full secret if needed, but standard is 32 bytes mini-secret or 64 bytes secret
-        // For simplicity assume 32 bytes mini-secret if length is 32
-        if (secretKey.length === 32) {
-          secretKey = sr25519.secretFromSeed(secretKey);
-        }
-      }
-      publicKey = sr25519.getPublicKey(secretKey);
-    } else {
-      // Mnemonic - Polkadot style derivation
-      const entropy = getBytes(Mnemonic.fromPhrase(seed).entropy);
-      const salt = toUtf8Bytes("mnemonic");
-      const seedBytes = pbkdf2(entropy, salt, 2048, 64, "sha512");
-      const miniSecret = getBytes(seedBytes).slice(0, 32);
-      secretKey = sr25519.secretFromSeed(miniSecret);
-      publicKey = sr25519.getPublicKey(secretKey);
-    }
-
-    // Construct a custom Signer/KeyringPair object for Polkadot API
-    // We only need the address and a sign function
-    const addressBytes = new Uint8Array(2 + publicKey.length + 2); // Prefix(2) + Pub(32) + Checksum(2)
-    addressBytes.set([0x50, 0x80], 0); // Crust Prefix 66 -> 0x5080
-    addressBytes.set(publicKey, 2);
-    // Note: We don't compute full checksum here for the 'address' string property if we can avoid it,
-    // but the API might need a valid SS58 string.
-    // Let's use the raw publicKey for the pair and let the API handle address encoding if possible,
-    // OR just construct the object.
-
-    // Actually, api.signAndSend expects a KeyringPair which has .address (string) and .sign(message)
-    // We need to implement the sign function.
-
-    const customPair = {
-      address: base58.encode(addressBytes), // Simplified address, might need proper checksum if API validates strictly
-      publicKey: publicKey,
-      sign: (message: Uint8Array) => {
-        return sr25519.sign(secretKey, message);
-      },
-      // Polkadot API checks for this to distinguish from address string
-      addressRaw: publicKey,
-      type: "sr25519",
-    };
+    // 2. 创建 Keyring
+    const keyring = new Keyring({ type: "sr25519" });
+    const { crust_mnemonic } = await mostCrust(danger);
+    const krp = keyring.addFromUri(crust_mnemonic);
 
     // 3. 创建交易
     // market.placeStorageOrder(cid, size, tips, memo)
@@ -211,26 +159,20 @@ export const placeStorageOrder = async (
 
     // 4. 发送并等待确认
     const result = await new Promise<string>((resolve, reject) => {
-      // @ts-ignore - Custom signer object duck-typing
-      tx.signAndSend(
-        customPair,
-        ({ status, events, dispatchError, txHash }) => {
-          if (status.isFinalized) {
-            console.log(`交易在区块 ${status.asFinalized} 确认`);
-            resolve(txHash.toHex());
-          } else if (dispatchError) {
-            if (dispatchError.isModule) {
-              const decoded = api.registry.findMetaError(
-                dispatchError.asModule,
-              );
-              const { docs, name, section } = decoded;
-              reject(new Error(`${section}.${name}: ${docs.join(" ")}`));
-            } else {
-              reject(new Error(dispatchError.toString()));
-            }
+      tx.signAndSend(krp, ({ status, events, dispatchError, txHash }) => {
+        if (status.isFinalized) {
+          console.log(`交易在区块 ${status.asFinalized} 确认`);
+          resolve(txHash.toHex());
+        } else if (dispatchError) {
+          if (dispatchError.isModule) {
+            const decoded = api.registry.findMetaError(dispatchError.asModule);
+            const { docs, name, section } = decoded;
+            reject(new Error(`${section}.${name}: ${docs.join(" ")}`));
+          } else {
+            reject(new Error(dispatchError.toString()));
           }
-        },
-      ).catch((error) => {
+        }
+      }).catch((error) => {
         reject(error);
       });
     });

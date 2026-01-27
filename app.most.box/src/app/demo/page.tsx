@@ -69,14 +69,13 @@ export default function PageDemo() {
         return;
       }
 
-      const { crust_mnemonic } = await mostCrust(wallet.danger);
       notifications.show({
         message: "正在下存储订单...",
         color: "blue",
       });
 
       // 2. 在 Crust 网络上下存储订单
-      const tx = await placeStorageOrder(cid, fileSize, crust_mnemonic);
+      const tx = await placeStorageOrder(cid, fileSize, wallet.danger);
       setTxHash(tx);
       notifications.show({
         message: "存储订单下单成功！",

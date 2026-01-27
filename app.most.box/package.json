@@ -23,6 +23,7 @@
     "@noble/curves": "^2.0.1",
     "@noble/hashes": "^2.0.1",
     "@polkadot/api": "^16.5.4",
+    "@polkadot/keyring": "^14.0.1",
     "@reown/appkit": "^1.8.17",
     "@reown/appkit-adapter-ethers": "^1.8.17",
     "@scure/base": "^2.0.0",
