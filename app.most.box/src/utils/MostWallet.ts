@@ -108,10 +108,6 @@ export const mostCrust = async (danger: string) => {
   addressBytes.set(checksum, content.length);
 
   const crust_address = base58.encode(addressBytes);
-  console.log("🌊", {
-    crust_address,
-    crust_mnemonic: mnemonic,
-  });
 
   return {
     crust_address,
