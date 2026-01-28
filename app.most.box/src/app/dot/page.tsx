@@ -30,7 +30,7 @@ import {
   IconRocket,
 } from "@tabler/icons-react";
 import Link from "next/link";
-import { useDotStore } from "@/stores/dotStore";
+import { useUserStore } from "@/stores/userStore";
 import { CID } from "multiformats";
 
 // ===== 类型定义 =====
@@ -86,10 +86,47 @@ const GATEWAY_CATEGORIES: GatewayCategory[] = [
   },
 ];
 
+// ===== 检测函数 =====
+const checkGateway = async (
+  gateway: string,
+  cid: string,
+): Promise<DetectionResult> => {
+  // 移除末尾斜杠
+  const baseUrl = gateway.replace(/\/$/, "");
+  const testUrl = `${baseUrl}/ipfs/${cid}`;
+
+  const startTime = Date.now();
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
+
+  try {
+    const response = await fetch(testUrl, {
+      method: "GET",
+      headers: { Range: "bytes=0-0" }, // 请求极小部分数据以测试连通性
+      signal: controller.signal,
+    });
+
+    const responseTime = Date.now() - startTime;
+    clearTimeout(timeoutId);
+
+    if (response.ok || response.status === 206) {
+      return { status: "success", responseTime };
+    } else {
+      return { status: "error", responseTime };
+    }
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    if (error.name === "AbortError") {
+      return { status: "timeout" };
+    }
+    return { status: "error" };
+  }
+};
+
 export default function GatewayManager() {
   // ===== Zustand Store =====
-  const setItem = useDotStore((state) => state.setItem);
-  const dotAPI = useDotStore((state) => state.dotAPI);
+  const setItem = useUserStore((state) => state.setItem);
+  const dotCID = useUserStore((state) => state.dotCID);
 
   // ===== 状态管理 =====
   const [customCid, setCustomCid] = useState(
@@ -105,46 +142,9 @@ export default function GatewayManager() {
   useEffect(() => {
     const savedGateway = localStorage.getItem("selectedGateway");
     if (savedGateway) {
-      setItem("dotAPI", savedGateway);
+      setItem("dotCID", savedGateway);
     }
   }, [setItem]);
-
-  // ===== 检测函数 =====
-  const checkGateway = async (
-    gateway: string,
-    cid: string,
-  ): Promise<DetectionResult> => {
-    // 移除末尾斜杠
-    const baseUrl = gateway.replace(/\/$/, "");
-    const testUrl = `${baseUrl}/ipfs/${cid}`;
-
-    const startTime = Date.now();
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
-
-    try {
-      const response = await fetch(testUrl, {
-        method: "GET",
-        headers: { Range: "bytes=0-0" }, // 请求极小部分数据以测试连通性
-        signal: controller.signal,
-      });
-
-      const responseTime = Date.now() - startTime;
-      clearTimeout(timeoutId);
-
-      if (response.ok || response.status === 206) {
-        return { status: "success", responseTime };
-      } else {
-        return { status: "error", responseTime };
-      }
-    } catch (error: any) {
-      clearTimeout(timeoutId);
-      if (error.name === "AbortError") {
-        return { status: "timeout" };
-      }
-      return { status: "error" };
-    }
-  };
 
   const handleDetectAll = async () => {
     if (!customCid) {
@@ -231,7 +231,7 @@ export default function GatewayManager() {
   };
 
   const selectGateway = (gateway: string) => {
-    setItem("dotAPI", gateway);
+    setItem("dotCID", gateway);
     localStorage.setItem("selectedGateway", gateway);
     notifications.show({
       title: "已选择网关",
@@ -348,7 +348,7 @@ export default function GatewayManager() {
               当前 IPFS 网关:
             </Text>
             <Badge size="lg" variant="dot" color="blue">
-              {dotAPI ? new URL(dotAPI).hostname : "未选择"}
+              {dotCID ? new URL(dotCID).hostname : "未选择"}
             </Badge>
           </Group>
         </Stack>
@@ -368,7 +368,7 @@ export default function GatewayManager() {
             <Grid gutter="md">
               {category.gateways.map((gateway) => {
                 const result = detectionResults[gateway];
-                const isSelected = dotAPI === gateway;
+                const isSelected = dotCID === gateway;
 
                 return (
                   <Grid.Col key={gateway} span={{ base: 12, md: 6, lg: 4 }}>
@@ -472,7 +472,7 @@ export default function GatewayManager() {
                   style={{
                     transition: "transform 0.2s ease, box-shadow 0.2s ease",
                     border:
-                      dotAPI === customGateway
+                      dotCID === customGateway
                         ? "2px solid #228be6"
                         : undefined,
                   }}
@@ -500,7 +500,7 @@ export default function GatewayManager() {
                         Custom
                       </Text>
                     </Group>
-                    {dotAPI === customGateway && (
+                    {dotCID === customGateway && (
                       <Badge size="xs" color="blue" variant="filled">
                         当前
                       </Badge>
@@ -529,12 +529,12 @@ export default function GatewayManager() {
                     </Badge>
 
                     <Button
-                      variant={dotAPI === customGateway ? "filled" : "light"}
-                      color={dotAPI === customGateway ? "green" : "blue"}
+                      variant={dotCID === customGateway ? "filled" : "light"}
+                      color={dotCID === customGateway ? "green" : "blue"}
                       onClick={() => selectGateway(customGateway)}
-                      disabled={dotAPI === customGateway}
+                      disabled={dotCID === customGateway}
                     >
-                      {dotAPI === customGateway ? "当前节点" : "选择节点"}
+                      {dotCID === customGateway ? "当前节点" : "选择节点"}
                     </Button>
                   </Group>
                 </Card>

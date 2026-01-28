@@ -19,7 +19,6 @@ import "@/app/note/page.scss";
 
 import { useSearchParams } from "next/navigation";
 import { useUserStore } from "@/stores/userStore";
-import { useDotStore } from "@/stores/dotStore";
 import { api } from "@/utils/api";
 import { notifications } from "@mantine/notifications";
 import { most25519, mostDecode, mostEncode } from "@/utils/MostWallet";
@@ -29,7 +28,7 @@ import { modals } from "@mantine/modals";
 const PageContent = () => {
   const params = useSearchParams();
   const wallet = useUserStore((state) => state.wallet);
-  const dotCID = useDotStore((state) => state.dotCID);
+  const dotCID = useUserStore((state) => state.dotCID);
 
   const [loading, setLoading] = useState(true);
   const [viewer, setViewer] = useState<any>(null);

@@ -20,7 +20,7 @@ import {
 } from "@mantine/core";
 import Link from "next/link";
 import { IconCopy, IconInfoCircle } from "@tabler/icons-react";
-import { useDotStore } from "@/stores/dotStore";
+import { useUserStore } from "@/stores/userStore";
 import "./ipfs.scss";
 
 type CidType = "dir" | "note" | "file";
@@ -32,11 +32,10 @@ const PageContent = () => {
   const cid = pathname.split("/")[2] || "";
   const initFilename = params.get("filename") || "";
   const [filename, setFilename] = useState<string>(initFilename);
-  const dotCID = useDotStore((state) => state.dotCID);
-  const dotAPI = useDotStore((state) => state.dotAPI);
+  const dotCID = useUserStore((state) => state.dotCID);
 
   const shareUrl = useMemo(() => {
-    if (dotAPI && cid) {
+    if (cid) {
       const url = new URL(location.origin);
       url.pathname = `/ipfs/${cid}`;
       if (filename) {
@@ -46,7 +45,7 @@ const PageContent = () => {
       return url.href;
     }
     return "";
-  }, [dotAPI, cid, filename, cidType]);
+  }, [cid, filename, cidType]);
 
   const previewUrl = useMemo(() => {
     if (dotCID && cid) {
@@ -205,12 +204,6 @@ const PageContent = () => {
             <Title order={4}>分享本页</Title>
           </Group>
         </Group>
-
-        {!dotAPI && (
-          <Alert color="gray" radius="md" mb="sm">
-            未设置 Dot API，分享链接将不可用。
-          </Alert>
-        )}
 
         <TextInput
           radius="md"

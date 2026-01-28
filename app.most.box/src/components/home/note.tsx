@@ -18,6 +18,7 @@ import {
 import { useEffect, useState } from "react";
 import { IconDotsVertical, IconPlus, IconRefresh } from "@tabler/icons-react";
 import { api } from "@/utils/api";
+import { mostApi } from "@/utils/mostApi";
 import { Note, useUserStore } from "@/stores/userStore";
 import Link from "next/link";
 import "./note.scss";
@@ -28,7 +29,6 @@ import { useDisclosure } from "@mantine/hooks";
 export default function HomeNote() {
   const wallet = useUserStore((state) => state.wallet);
   const notes = useUserStore((state) => state.notes);
-  const rootCID = useUserStore((state) => state.rootCID);
   const notesQuery = useUserStore((state) => state.notesQuery);
   const setItem = useUserStore((state) => state.setItem);
 
@@ -87,23 +87,20 @@ export default function HomeNote() {
   }, [notesQuery]);
 
   const fetchNotes = async () => {
+    if (!wallet) return;
     try {
       setFetchLoading(true);
-      const res = await api({
-        url: `/files.get`,
-        params: { path: ".note" },
-      });
-      const list = res.data as { name: string; cid: { "/": string } }[];
+      const res = await mostApi.listFiles(".note");
+      const list = res.data as { name: string; cid: string }[];
       if (list) {
         const notes = list.map((item) => ({
           name: item.name,
-          cid: item.cid["/"],
+          cid: item.cid,
         }));
         setItem("notes", notes);
       }
     } catch (error) {
       console.info(error);
-      // notifications.show({ message: (error as Error).message, color: "red" });
     } finally {
       setFetchLoading(false);
     }
@@ -245,11 +242,7 @@ export default function HomeNote() {
   const handleDelete = async (note: Note) => {
     if (confirm(`确定要删除笔记"${note.name}"吗？此操作不可撤销。`)) {
       try {
-        await api({
-          method: "delete",
-          url: "/files.delete",
-          params: { path: `.note/${note.name}` },
-        });
+        await mostApi.deleteFile(note.cid);
 
         notifications.show({
           color: "green",
@@ -287,12 +280,6 @@ export default function HomeNote() {
     setRenameError("");
     closeRenameModal();
   };
-
-  useEffect(() => {
-    if (rootCID && wallet && !notes) {
-      fetchNotes();
-    }
-  }, [rootCID, wallet, notes]);
 
   return (
     <>

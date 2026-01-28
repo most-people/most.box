@@ -2,7 +2,6 @@
 import { ProgressProvider } from "@bprogress/next/app";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { useUserStore } from "@/stores/userStore";
-import { useDotStore } from "@/stores/dotStore";
 import { useEffect } from "react";
 import { useComputedColorScheme, useMantineColorScheme } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
@@ -12,7 +11,6 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const exit = useUserStore((state) => state.exit);
   const setWallet = useUserStore((state) => state.setWallet);
   const setItem = useUserStore((state) => state.setItem);
-  const setNetwork = useDotStore((state) => state.setNetwork);
 
   const initWallet = (fingerprint: string) => {
     setItem("fingerprint", fingerprint);
@@ -48,10 +46,6 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     initFinger();
     sessionStorage.setItem("firstPath", window.location.pathname);
-
-    setNetwork(
-      localStorage.getItem("network") === "mainnet" ? "mainnet" : "testnet",
-    );
   }, []);
 
   const { colorScheme } = useMantineColorScheme();

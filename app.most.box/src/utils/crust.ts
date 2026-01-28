@@ -59,7 +59,7 @@ export const pinToCrustGateway = async (
   authHeader: string,
 ) => {
   try {
-    await axios.post(
+    return await axios.post(
       `${CRUST_PIN_URL}/pins`,
       {
         cid: cid,

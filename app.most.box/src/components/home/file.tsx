@@ -20,8 +20,10 @@ import {
   Anchor,
 } from "@mantine/core";
 import { api } from "@/utils/api";
+import { mostApi } from "@/utils/mostApi";
 import "./file.scss";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   IconFolderPlus,
   IconX,
@@ -33,7 +35,13 @@ import {
 import { notifications } from "@mantine/notifications";
 import mp from "@/utils/mp";
 import { FileItem, useUserStore } from "@/stores/userStore";
-import { useDotStore } from "@/stores/dotStore";
+import { mostMnemonic } from "@/utils/MostWallet";
+import { Wallet } from "ethers";
+import {
+  createCrustAuthHeader,
+  uploadToIpfsGateway,
+  pinToCrustGateway,
+} from "@/utils/crust";
 
 interface PreviewFile {
   file: File;
@@ -48,9 +56,8 @@ export default function HomeFile() {
   const files = useUserStore((state) => state.files);
   const filesPath = useUserStore((state) => state.filesPath);
   const setItem = useUserStore((state) => state.setItem);
-  const rootCID = useUserStore((state) => state.rootCID);
 
-  const dotCID = useDotStore((state) => state.dotCID);
+  const dotCID = useUserStore((state) => state.dotCID);
 
   const [fetchLoading, setFetchLoading] = useState(false);
   const [uploadLoading, setUploadLoading] = useState(false);
@@ -72,32 +79,23 @@ export default function HomeFile() {
   const [importCID, setImportCID] = useState("");
   const [importName, setImportName] = useState("");
   const [importLoading, setImportLoading] = useState(false);
+  const router = useRouter();
+  const [showLargeFileModal, setShowLargeFileModal] = useState(false);
+  const [largeFiles, setLargeFiles] = useState<File[]>([]);
 
   const fetchFiles = async (path: string) => {
+    if (!wallet) return;
+
     try {
       setFetchLoading(true);
-      const res = await api({
-        url: `/files.get`,
-        params: { path },
-      });
+      const res = await mostApi.listFiles(path || "/");
       setSearchQuery("");
       setItem("files", res.data);
     } catch (error) {
       console.info(error);
-      // notifications.show({ message: (error as Error).message, color: "red" });
     } finally {
       setFetchLoading(false);
     }
-
-    // // 获取 MFS 根目录 CID
-    // if (path === "") {
-    //   api.post("/files.root.cid").then((res) => {
-    //     const cid = res.data;
-    //     if (cid) {
-    //       setItem("rootCID", cid);
-    //     }
-    //   });
-    // }
   };
 
   const createFolder = async () => {
@@ -202,31 +200,61 @@ export default function HomeFile() {
 
   const uploadFiles = async (files: File[]) => {
     if (!files || files.length === 0) return;
+    if (!wallet) {
+      notifications.show({ message: "请先连接钱包", color: "red" });
+      return;
+    }
 
     setUploadLoading(true);
     const notificationId = notifications.show({
       title: "上传中",
-      message: "请稍后...",
+      message: "正在准备上传...",
       color: "blue",
       autoClose: false,
     });
 
     try {
+      // 1. 生成 Auth Header (一次生成，批量使用)
+      const mnemonic = mostMnemonic(wallet.danger);
+      const account = Wallet.fromPhrase(mnemonic);
+      const signature = await account.signMessage(account.address);
+      const authHeader = createCrustAuthHeader(account.address, signature);
+
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const formData = new FormData();
-        formData.append("file", file);
+
+        // 更新进度通知
+        notifications.update({
+          id: notificationId,
+          title: "上传中",
+          message: `正在上传 ${file.name} (${i + 1}/${files.length})...`,
+          autoClose: false,
+        });
+
+        // 2. 上传到 Crust/IPFS
+        const ipfs = await uploadToIpfsGateway(file, authHeader);
+        const crust = await pinToCrustGateway(ipfs.cid, file.name, authHeader);
+
+        // 3. 注册到后端
         const targetPath = formatFilePath(file);
-        formData.append("path", targetPath);
-        const res = await api.put("/files.upload", formData);
-        const cid = res.data?.cid;
-        if (cid) {
-          notifications.update({
-            id: notificationId,
-            title: "上传中",
-            message: `${file.name} 上传成功`,
-          });
-        }
+        const directoryPath =
+          targetPath.split("/").slice(0, -1).join("/") || "/";
+
+        await mostApi.addFile({
+          cid: ipfs.cid,
+          file_name: file.name,
+          file_size: file.size,
+          file_type: file.type,
+          tx_hash: crust?.data?.requestid || "",
+          path: directoryPath,
+        });
+
+        notifications.update({
+          id: notificationId,
+          title: "上传中",
+          message: `${file.name} 上传成功`,
+          autoClose: false,
+        });
       }
 
       notifications.update({
@@ -237,15 +265,15 @@ export default function HomeFile() {
         autoClose: true,
       });
 
-      // 上传完成后刷新文件列表
-      await fetchFiles(filesPath);
+      // TODO: 上传完成后刷新文件列表
+      // await fetchFiles(filesPath);
       setShowPreview(false);
       setPreviewFiles([]);
     } catch (error: any) {
-      let message = error?.response?.data || "文件上传失败，请重试";
-      if (message.includes("already has")) {
-        message = "文件已存在";
-      }
+      console.error("上传失败:", error);
+      let message =
+        error?.response?.data || error?.message || "文件上传失败，请重试";
+
       notifications.update({
         id: notificationId,
         title: "上传失败",
@@ -326,6 +354,19 @@ export default function HomeFile() {
     const files = event.target.files;
     if (files && files.length > 0) {
       const fileArray = Array.from(files);
+
+      // Check for files larger than 200MB
+      const MAX_SIZE = 200 * 1024 * 1024; // 200MB
+      const oversizedFiles = fileArray.filter((file) => file.size > MAX_SIZE);
+
+      if (oversizedFiles.length > 0) {
+        setLargeFiles(oversizedFiles);
+        setShowLargeFileModal(true);
+        // Clear input to allow re-selecting
+        event.target.value = "";
+        return;
+      }
+
       // 如果是单个文件且不是文件夹上传，直接上传
       if (fileArray.length === 1 && !fileArray[0].webkitRelativePath) {
         uploadFiles(fileArray);
@@ -371,19 +412,13 @@ export default function HomeFile() {
   };
 
   // 删除文件函数
-  const deleteFile = async (fileName: string) => {
+  const deleteFile = async (item: FileItem) => {
     try {
-      // 构建完整的文件路径
-      const filePath = filesPath ? `${filesPath}/${fileName}` : fileName;
-      await api({
-        method: "delete",
-        url: "/files.delete",
-        params: { path: filePath },
-      });
+      await mostApi.deleteFile(item.cid["/"]);
 
       notifications.show({
         title: "删除成功",
-        message: `文件 ${fileName} 已删除`,
+        message: `文件 ${item.name} 已删除`,
         color: "green",
       });
 
@@ -393,7 +428,7 @@ export default function HomeFile() {
       console.error("删除失败:", error);
       notifications.show({
         title: "删除失败",
-        message: `删除文件 ${fileName} 失败，请重试`,
+        message: `删除文件 ${item.name} 失败，请重试`,
         color: "red",
       });
     }
@@ -403,7 +438,7 @@ export default function HomeFile() {
   const handleDeleteFile = (item: FileItem) => {
     const confirmed = window.confirm(`确定要删除文件 "${item.name}" 吗？`);
     if (confirmed) {
-      deleteFile(item.name);
+      deleteFile(item);
     }
   };
 
@@ -526,12 +561,6 @@ export default function HomeFile() {
     }
     return `${dotCID}/ipfs/${item.cid["/"]}?${params.toString()}`;
   };
-
-  useEffect(() => {
-    if (rootCID && wallet && !files) {
-      fetchFiles(filesPath);
-    }
-  }, [rootCID, wallet, files]);
 
   const normalizePath = (s: string) => (s || "").replace(/^\/+|\/+$/g, "");
   const oldPathForCompare = renamingItem
@@ -674,20 +703,6 @@ export default function HomeFile() {
                       disabled={!wallet}
                     >
                       新建文件夹
-                    </Menu.Item>
-                    <Menu.Item
-                      onClick={() =>
-                        handleOpenFile({
-                          name: "root",
-                          type: "directory",
-                          cid: { "/": rootCID },
-                          size: 0,
-                        })
-                      }
-                      leftSection="🌐"
-                      disabled={!wallet}
-                    >
-                      根目录 CID
                     </Menu.Item>
                   </Menu.Dropdown>
                 </Menu>
@@ -1051,6 +1066,49 @@ export default function HomeFile() {
               loading={renameLoading}
             >
               确认
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      {/* 大文件提示模态框 */}
+      <Modal
+        opened={showLargeFileModal}
+        onClose={() => setShowLargeFileModal(false)}
+        title="大文件上传"
+        centered
+      >
+        <Stack gap="md">
+          <Text color="dimmed">
+            以下文件超过 200MB 请前往大文件专用通道进行上传。
+          </Text>
+          <ScrollArea.Autosize mah={200}>
+            <Stack gap="xs">
+              {largeFiles.map((file, index) => (
+                <Group key={index}>
+                  <Text size="sm">{file.name}</Text>
+                  <Text size="sm" c="dimmed">
+                    {formatFileSize(file.size)}
+                  </Text>
+                </Group>
+              ))}
+            </Stack>
+          </ScrollArea.Autosize>
+          <Group justify="flex-end" gap="sm">
+            <Button
+              variant="default"
+              onClick={() => setShowLargeFileModal(false)}
+            >
+              取消
+            </Button>
+            <Button
+              onClick={() => {
+                setShowLargeFileModal(false);
+                router.push("/upload");
+              }}
+              color="blue"
+            >
+              前往大文件上传
             </Button>
           </Group>
         </Stack>

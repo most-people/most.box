@@ -1,6 +1,8 @@
 {
   "cSpell.words": [
     "appkit",
+    "bprogress",
+    "crustio",
     "dicebear",
     "fingerprintjs",
     "hexlify",
@@ -10,6 +12,7 @@
     "kubo",
     "mantine",
     "nacl",
+    "peerjs",
     "polkadot",
     "Qrcode",
     "rdrand",
