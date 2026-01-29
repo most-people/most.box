@@ -17,8 +17,6 @@ import {
 } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { IconDotsVertical, IconPlus, IconRefresh } from "@tabler/icons-react";
-import { api } from "@/utils/api";
-import { mostApi } from "@/utils/mostApi";
 import { Note, useUserStore } from "@/stores/userStore";
 import Link from "next/link";
 import "./note.scss";
@@ -67,9 +65,14 @@ export default function HomeNote() {
     return shareUrl.href;
   };
 
+  const files = useUserStore((state) => state.files);
+
   // 过滤笔记列表
-  const filteredNotes = notes
-    ? notes.filter((note) => mp.pinyin(note.name, notesQuery, 0))
+  const filteredNotes = files
+    ? files
+        .filter((file) => mp.normalizePath(file.path) === ".note")
+        .filter((note) => mp.pinyin(note.name, notesQuery, 0))
+        .map((f) => ({ name: f.name, cid: f.cid["/"] }))
     : [];
 
   // 获取当前显示的笔记列表
@@ -87,23 +90,7 @@ export default function HomeNote() {
   }, [notesQuery]);
 
   const fetchNotes = async () => {
-    if (!wallet) return;
-    try {
-      setFetchLoading(true);
-      const res = await mostApi.listFiles(".note");
-      const list = res.data as { name: string; cid: string }[];
-      if (list) {
-        const notes = list.map((item) => ({
-          name: item.name,
-          cid: item.cid,
-        }));
-        setItem("notes", notes);
-      }
-    } catch (error) {
-      console.info(error);
-    } finally {
-      setFetchLoading(false);
-    }
+    // 纯本地应用，不需要刷新
   };
 
   // 创建笔记函数
@@ -125,7 +112,7 @@ export default function HomeNote() {
     const name = group ? `${group}-${base}` : base;
 
     // 检查是否已存在同名笔记
-    if (notes?.some((note) => note.name === name)) {
+    if (filteredNotes?.some((note) => note.name === name)) {
       setNoteNameError("笔记名称已存在");
       return;
     }
@@ -133,26 +120,23 @@ export default function HomeNote() {
     try {
       setCreateLoading(true);
 
-      const formData = new FormData();
-      const blob = new Blob([""], {
-        type: "text/markdown",
+      // 本地创建笔记
+      useUserStore.getState().addLocalFile({
+        cid: { "/": `local-note-${Date.now()}` },
+        name: name,
+        size: 0,
+        type: "file",
+        path: "/.note",
       });
-      formData.append("file", blob, "index.md");
-      formData.append("path", `/.note/${name}/index.md`);
-      const res = await api.put("/files.upload", formData);
-      const cid = res.data?.cid;
-      if (cid) {
-        notifications.show({
-          color: "green",
-          message: "笔记创建成功",
-        });
 
-        closeNoteModal();
-        // 重新获取笔记列表
-        await fetchNotes();
-        setNoteName("");
-        setNoteGroup("");
-      }
+      notifications.show({
+        color: "green",
+        message: "笔记创建成功",
+      });
+
+      closeNoteModal();
+      setNoteName("");
+      setNoteGroup("");
     } catch (error) {
       notifications.show({
         color: "red",
@@ -210,24 +194,24 @@ export default function HomeNote() {
       return;
     }
 
-    if (notes?.some((note) => note.name === name)) {
+    if (filteredNotes?.some((note) => note.name === name)) {
       setRenameError("笔记名称已存在");
       return;
     }
 
     try {
       setRenameLoading(true);
-      await api.put("/files.rename", {
-        oldName: `/.note/${currentNote.name}`,
-        newName: `/.note/${name}`,
-      });
+
+      const oldFullPath = `.note/${currentNote.name}`;
+
+      useUserStore.getState().renameLocalFile(oldFullPath, "/.note", name);
+
       notifications.show({
         color: "green",
         message: "重命名成功",
       });
 
       closeRenameModal();
-      await fetchNotes();
     } catch (error) {
       notifications.show({
         color: "red",
@@ -242,14 +226,12 @@ export default function HomeNote() {
   const handleDelete = async (note: Note) => {
     if (confirm(`确定要删除笔记"${note.name}"吗？此操作不可撤销。`)) {
       try {
-        await mostApi.deleteFile(note.cid);
+        useUserStore.getState().deleteLocalFile(note.cid);
 
         notifications.show({
           color: "green",
           message: "删除成功",
         });
-
-        await fetchNotes();
       } catch (error) {
         notifications.show({
           color: "red",

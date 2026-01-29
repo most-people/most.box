@@ -283,6 +283,13 @@ const getIPNS = (private_key: string, ed_public_key: string) => {
   return ipnsId;
 };
 
+/**
+ * 标准化路径格式：去掉开头和结尾的斜杠
+ * @param s 原始路径
+ * @returns 标准化后的路径，例如 "/foo/bar/" -> "foo/bar"
+ */
+const normalizePath = (s: string) => (s || "").replace(/^\/+|\/+$/g, "");
+
 const mp = {
   avatar,
   avatarCID,
@@ -300,6 +307,7 @@ const mp = {
   pinyin,
   getEdKeyPair,
   getIPNS,
+  normalizePath,
 };
 
 export default mp;

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import {
   Text,
   Group,
@@ -19,8 +19,6 @@ import {
   Breadcrumbs,
   Anchor,
 } from "@mantine/core";
-import { api } from "@/utils/api";
-import { mostApi } from "@/utils/mostApi";
 import "./file.scss";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -70,9 +68,6 @@ export default function HomeFile() {
   const [newName, setNewName] = useState("");
   const [newDirPath, setNewDirPath] = useState("");
   const [renameLoading, setRenameLoading] = useState(false);
-  const [newFolderModalOpen, setNewFolderModalOpen] = useState(false);
-  const [newFolderName, setNewFolderName] = useState("");
-  const [newFolderLoading, setNewFolderLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
   const [importModalOpen, setImportModalOpen] = useState(false);
@@ -84,72 +79,8 @@ export default function HomeFile() {
   const [largeFiles, setLargeFiles] = useState<File[]>([]);
 
   const fetchFiles = async (path: string) => {
-    if (!wallet) return;
-
-    try {
-      setFetchLoading(true);
-      const res = await mostApi.listFiles(path || "/");
-      setSearchQuery("");
-      setItem("files", res.data);
-    } catch (error) {
-      console.info(error);
-    } finally {
-      setFetchLoading(false);
-    }
-  };
-
-  const createFolder = async () => {
-    if (!newFolderName) {
-      notifications.show({
-        title: "提示",
-        message: "文件夹名称不能为空",
-        color: "red",
-      });
-      return;
-    }
-
-    const folderExists = files?.some(
-      (file) => file.type === "directory" && file.name === newFolderName,
-    );
-
-    if (folderExists) {
-      notifications.show({
-        title: "提示",
-        message: "文件夹已存在",
-        color: "red",
-      });
-      return;
-    }
-
-    try {
-      setNewFolderLoading(true);
-      const path = filesPath ? `${filesPath}/${newFolderName}` : newFolderName;
-      const emptyFile = new Blob(["Most.Box"], { type: "text/plain" });
-      const formData = new FormData();
-      formData.append("file", emptyFile, "hello.txt");
-      formData.append("path", `${path}/hello.txt`);
-      const res = await api.put("/files.upload", formData);
-      const cid = res.data?.cid;
-      if (cid) {
-        notifications.show({
-          message: "文件夹创建成功",
-          color: "green",
-        });
-        await fetchFiles(filesPath);
-        setNewFolderModalOpen(false);
-        setNewFolderName("");
-      } else {
-        throw new Error("文件夹创建失败");
-      }
-    } catch (error) {
-      console.info(error);
-      notifications.show({
-        message: (error as Error).message,
-        color: "red",
-      });
-    } finally {
-      setNewFolderLoading(false);
-    }
+    // 纯本地应用，不需要从后端获取
+    setSearchQuery("");
   };
 
   const formatFileSize = (bytes: number) => {
@@ -171,18 +102,72 @@ export default function HomeFile() {
   };
 
   // 过滤文件列表
-  const filteredFiles = files
-    ? files
+  const currentPath = mp.normalizePath(filesPath);
+  const filteredFiles = useMemo(() => {
+    if (!files) return [];
+
+    if (searchQuery) {
+      return files
         .filter((file) => mp.pinyin(file.name, searchQuery, 0))
-        // 文件夹在前，文件在后
         .sort((a, b) => {
           if (a.type === "directory" && b.type !== "directory") return -1;
           if (a.type !== "directory" && b.type === "directory") return 1;
-          // 同类型按名称排序
-          // return a.name.localeCompare(b.name);
           return 0;
-        })
-    : [];
+        });
+    }
+
+    // 1. 获取直接在该路径下的文件
+    const directFiles = files.filter(
+      (f) => f.path === currentPath && f.type === "file",
+    );
+
+    // 2. 获取该路径下的所有子目录（推导出的虚拟目录）
+    const inferredDirs = new Map<string, FileItem>();
+
+    files.forEach((f) => {
+      const fPath = f.path;
+
+      // 如果是文件且在更深层的目录中，推导出当前层级的目录
+      if (f.type === "file") {
+        if (currentPath === "") {
+          if (fPath !== "") {
+            const firstSegment = fPath.split("/")[0];
+            if (!inferredDirs.has(firstSegment)) {
+              inferredDirs.set(firstSegment, {
+                name: firstSegment,
+                type: "directory",
+                path: "",
+                cid: { "/": `virtual-dir-${firstSegment}` },
+                size: 0,
+                createdAt: f.createdAt,
+              });
+            }
+          }
+        } else if (fPath.startsWith(currentPath + "/")) {
+          const relativePath = fPath.slice(currentPath.length + 1);
+          const firstSegment = relativePath.split("/")[0];
+          if (!inferredDirs.has(firstSegment)) {
+            inferredDirs.set(firstSegment, {
+              name: firstSegment,
+              type: "directory",
+              path: currentPath,
+              cid: { "/": `virtual-dir-${firstSegment}` },
+              size: 0,
+              createdAt: f.createdAt,
+            });
+          }
+        }
+      }
+    });
+
+    return [...Array.from(inferredDirs.values()), ...directFiles].sort(
+      (a, b) => {
+        if (a.type === "directory" && b.type !== "directory") return -1;
+        if (a.type !== "directory" && b.type === "directory") return 1;
+        return b.createdAt - a.createdAt;
+      },
+    );
+  }, [files, currentPath, searchQuery]);
 
   // 获取当前显示的文件列表
   const displayedFiles = filteredFiles.slice(0, displayCount);
@@ -235,17 +220,17 @@ export default function HomeFile() {
         const ipfs = await uploadToIpfsGateway(file, authHeader);
         const crust = await pinToCrustGateway(ipfs.cid, file.name, authHeader);
 
-        // 3. 注册到后端
+        // 3. 注册到本地
         const targetPath = formatFilePath(file);
         const directoryPath =
           targetPath.split("/").slice(0, -1).join("/") || "/";
 
-        await mostApi.addFile({
-          cid: ipfs.cid,
-          file_name: file.name,
-          file_size: file.size,
-          file_type: file.type,
-          tx_hash: crust?.data?.requestid || "",
+        useUserStore.getState().addLocalFile({
+          cid: { "/": ipfs.cid },
+          name: file.name,
+          size: file.size,
+          type: "file",
+          txHash: crust?.data?.requestid || "",
           path: directoryPath,
         });
 
@@ -328,17 +313,20 @@ export default function HomeFile() {
     try {
       setImportLoading(true);
       const name = (importName || cid).trim();
-      const targetPath = filesPath ? `${filesPath}/${name}` : name;
-      await api({
-        method: "post",
-        url: "/files.import.cid",
-        params: { cid, path: targetPath },
+      const directoryPath = filesPath || "/";
+
+      useUserStore.getState().addLocalFile({
+        cid: { "/": cid },
+        name: name,
+        size: 0,
+        type: "file",
+        path: directoryPath,
       });
+
       notifications.show({
         message: `已导入 CID: ${cid}${importName ? `「${importName}」` : ""}`,
         color: "green",
       });
-      await fetchFiles(filesPath);
       setImportModalOpen(false);
       setImportCID("");
       setImportName("");
@@ -414,21 +402,35 @@ export default function HomeFile() {
   // 删除文件函数
   const deleteFile = async (item: FileItem) => {
     try {
-      await mostApi.deleteFile(item.cid["/"]);
+      if (item.type === "directory") {
+        // 如果是目录，删除该目录下所有文件
+        const fullPath =
+          currentPath === "" ? item.name : `${currentPath}/${item.name}`;
+
+        const filesToDelete = files.filter((f) => {
+          const fFullPath = f.path === "" ? f.name : `${f.path}/${f.name}`;
+          return fFullPath === fullPath || fFullPath.startsWith(fullPath + "/");
+        });
+
+        filesToDelete.forEach((f) => {
+          useUserStore.getState().deleteLocalFile(f.cid["/"]);
+        });
+      } else {
+        useUserStore.getState().deleteLocalFile(item.cid["/"]);
+      }
 
       notifications.show({
         title: "删除成功",
-        message: `文件 ${item.name} 已删除`,
+        message: `${item.type === "directory" ? "目录" : "文件"} ${item.name} 已删除`,
         color: "green",
       });
-
-      // 删除成功后刷新文件列表
-      await fetchFiles(filesPath);
     } catch (error) {
       console.error("删除失败:", error);
       notifications.show({
         title: "删除失败",
-        message: `删除文件 ${item.name} 失败，请重试`,
+        message: `删除${item.type === "directory" ? "目录" : "文件"} ${
+          item.name
+        } 失败，请重试`,
         color: "red",
       });
     }
@@ -446,28 +448,28 @@ export default function HomeFile() {
   const handleRename = (item: FileItem) => {
     setRenamingItem(item);
     setNewName(item.name);
-    setNewDirPath(filesPath || "");
+    setNewDirPath(item.path || "");
     setRenameModalOpen(true);
   };
 
   // 执行重命名
   const executeRename = async () => {
-    const normalize = (s: string) => (s || "").replace(/^\/+|\/+$/g, "");
     if (!renamingItem || !newName.trim()) {
       setRenameModalOpen(false);
       return;
     }
 
-    const oldPath = filesPath
-      ? `${filesPath}/${renamingItem.name}`
-      : renamingItem.name;
+    const oldFullPath =
+      currentPath === ""
+        ? renamingItem.name
+        : `${currentPath}/${renamingItem.name}`;
 
-    const targetDir = normalize(newDirPath || "");
-    const newPath = targetDir
+    const targetDir = mp.normalizePath(newDirPath || "");
+    const newFullPath = targetDir
       ? `${targetDir}/${newName.trim()}`
       : newName.trim();
 
-    const unchanged = normalize(oldPath) === normalize(newPath);
+    const unchanged = oldFullPath === newFullPath;
     if (unchanged) {
       setRenameModalOpen(false);
       return;
@@ -475,27 +477,25 @@ export default function HomeFile() {
 
     setRenameLoading(true);
     try {
-      await api.put("/files.rename", {
-        oldName: `/${normalize(oldPath)}`,
-        newName: `/${normalize(newPath)}`,
-      });
+      useUserStore
+        .getState()
+        .renameLocalFile(oldFullPath, targetDir, newName.trim());
+
       notifications.show({
-        title: "重命名成功",
-        message: `新路径名称 "${normalize(newPath)}"`,
+        title: "操作成功",
+        message: `新路径名称 "${mp.normalizePath(newFullPath)}"`,
         color: "green",
       });
 
-      // 重命名成功后刷新文件列表
-      await fetchFiles(filesPath);
       setRenameModalOpen(false);
       setRenamingItem(null);
       setNewName("");
       setNewDirPath("");
     } catch (error) {
-      console.error("重命名失败:", error);
+      console.error("操作失败:", error);
       notifications.show({
-        title: "重命名失败",
-        message: `重命名文件 "${renamingItem.name}" 失败，请重试`,
+        title: "操作失败",
+        message: `重命名/移动文件 "${renamingItem.name}" 失败，请重试`,
         color: "red",
       });
     } finally {
@@ -562,13 +562,12 @@ export default function HomeFile() {
     return `${dotCID}/ipfs/${item.cid["/"]}?${params.toString()}`;
   };
 
-  const normalizePath = (s: string) => (s || "").replace(/^\/+|\/+$/g, "");
   const oldPathForCompare = renamingItem
-    ? normalizePath(
-        filesPath ? `${filesPath}/${renamingItem.name}` : renamingItem.name,
-      )
+    ? currentPath
+      ? `${currentPath}/${renamingItem.name}`
+      : renamingItem.name
     : "";
-  const newPathForCompare = normalizePath(
+  const newPathForCompare = mp.normalizePath(
     ((newDirPath ? `${newDirPath}/` : "") + newName).trim(),
   );
   const isUnchangedRename = oldPathForCompare === newPathForCompare;
@@ -690,22 +689,6 @@ export default function HomeFile() {
                       ))}
                   </Breadcrumbs>
                 </Group>
-                <Menu shadow="md">
-                  <Menu.Target>
-                    <ActionIcon variant="subtle" color="gray">
-                      <IconDotsVertical size={14} />
-                    </ActionIcon>
-                  </Menu.Target>
-                  <Menu.Dropdown>
-                    <Menu.Item
-                      onClick={() => setNewFolderModalOpen(true)}
-                      leftSection="📁"
-                      disabled={!wallet}
-                    >
-                      新建文件夹
-                    </Menu.Item>
-                  </Menu.Dropdown>
-                </Menu>
               </Group>
             </Card>
 
@@ -911,39 +894,6 @@ export default function HomeFile() {
               disabled={previewFiles.length === 0}
             >
               确认上传
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
-
-      {/* 重命名模态框 */}
-      <Modal
-        opened={newFolderModalOpen}
-        onClose={() => setNewFolderModalOpen(false)}
-        title="新建文件夹"
-        centered
-      >
-        <Stack gap="md">
-          <TextInput
-            value={newFolderName}
-            onChange={(event) => setNewFolderName(event.currentTarget.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                createFolder();
-              }
-            }}
-            disabled={newFolderLoading}
-            autoFocus
-          />
-          <Group justify="flex-end" gap="sm">
-            <Button
-              onClick={() => setNewFolderModalOpen(false)}
-              variant="default"
-            >
-              取消
-            </Button>
-            <Button onClick={createFolder} loading={newFolderLoading}>
-              确认
             </Button>
           </Group>
         </Stack>

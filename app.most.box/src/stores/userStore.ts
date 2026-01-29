@@ -2,8 +2,8 @@ import { getCrustBalance } from "@/utils/crust";
 import { mostCrust, type MostWallet } from "@/utils/MostWallet";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-
-import { Contract, JsonRpcProvider } from "ethers";
+import { idbStorage } from "@/utils/idbStorage";
+import mp from "@/utils/mp";
 
 export interface FileItem {
   name: string;
@@ -12,6 +12,9 @@ export interface FileItem {
   cid: {
     "/": string;
   };
+  path: string; // 文件所在的目录路径，例如 "" 或 "notes"
+  createdAt: number;
+  txHash?: string;
 }
 
 export interface Note {
@@ -28,7 +31,7 @@ interface UserStore {
   nodeDark: "toastui-editor-dark" | "";
   notesQuery: string;
   // 文件
-  files?: FileItem[];
+  files: FileItem[]; // 改为非可选，初始化为空数组
   filesPath: string;
   fingerprint: string;
   // 退出登录
@@ -42,6 +45,10 @@ interface UserStore {
   jwt: string;
   // 首页 Tab
   homeTab: string;
+  // 本地文件操作
+  addLocalFile: (file: Omit<FileItem, "createdAt">) => void;
+  deleteLocalFile: (cid: string) => void;
+  renameLocalFile: (oldPath: string, newPath: string, newName: string) => void;
 }
 
 interface State extends UserStore {
@@ -65,7 +72,7 @@ export const useUserStore = create<State>()(
       nodeDark: "",
 
       // 文件系统
-      files: undefined,
+      files: [],
       filesPath: "",
       // 设备指纹
       fingerprint: "",
@@ -73,8 +80,88 @@ export const useUserStore = create<State>()(
         set({
           wallet: undefined,
           notes: undefined,
-          files: undefined,
+          files: [],
           jwt: "",
+        });
+      },
+
+      // 本地文件操作实现
+      addLocalFile(file) {
+        if (file.type === "directory") return; // 不再存储显式的目录条目
+
+        set((state) => {
+          // 统一路径格式
+          const normalizedPath = mp.normalizePath(file.path);
+          const newFile = {
+            ...file,
+            path: normalizedPath,
+          };
+
+          // 检查是否已存在 (基于路径和名称)
+          const exists = state.files.some(
+            (f) => f.path === normalizedPath && f.name === file.name,
+          );
+          if (exists) {
+            return {
+              files: state.files.map((f) =>
+                f.path === normalizedPath && f.name === file.name
+                  ? { ...newFile, createdAt: Date.now() }
+                  : f,
+              ),
+            };
+          }
+          return {
+            files: [...state.files, { ...newFile, createdAt: Date.now() }],
+          };
+        });
+      },
+
+      deleteLocalFile(cid) {
+        set((state) => ({
+          files: state.files.filter((f) => f.cid["/"] !== cid),
+        }));
+      },
+
+      renameLocalFile(oldPath, newPath, newName) {
+        set((state) => {
+          const oldPathNorm = mp.normalizePath(oldPath);
+
+          return {
+            files: state.files.map((file) => {
+              const fullPath = mp.normalizePath(
+                file.path === "" ? file.name : `${file.path}/${file.name}`,
+              );
+
+              // 如果是目标文件/文件夹本身
+              if (fullPath === oldPathNorm) {
+                const targetPath = mp.normalizePath(newPath);
+                return {
+                  ...file,
+                  path: targetPath,
+                  name: newName,
+                };
+              }
+
+              // 如果是在该文件夹下的子文件 (处理移动文件夹的情况)
+              if (fullPath.startsWith(oldPathNorm + "/")) {
+                const relativePath = fullPath.slice(oldPathNorm.length);
+                const newFullPath = mp.normalizePath(
+                  (newPath ? `${newPath}/${newName}` : newName) + relativePath,
+                );
+                const lastSlashIndex = newFullPath.lastIndexOf("/");
+                return {
+                  ...file,
+                  path:
+                    lastSlashIndex === -1
+                      ? ""
+                      : newFullPath.slice(0, lastSlashIndex),
+                  name: newFullPath.slice(lastSlashIndex + 1),
+                };
+              }
+
+              return file;
+            }),
+          };
         });
       },
       // 余额
@@ -96,13 +183,13 @@ export const useUserStore = create<State>()(
       // JWT
       jwt: "",
       // 首页 Tab
-      homeTab: "explore",
+      homeTab: "file",
       // 通用设置器
       setItem: (key, value) => set((state) => ({ ...state, [key]: value })),
     }),
     {
       name: "most-box-storage",
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => idbStorage),
     },
   ),
 );

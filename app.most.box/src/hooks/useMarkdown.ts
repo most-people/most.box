@@ -2,6 +2,10 @@ import { api } from "@/utils/api";
 import { parse, HtmlGenerator } from "latex.js";
 import { useUserStore } from "@/stores/userStore";
 
+import { createCrustAuthHeader, uploadToIpfsGateway } from "@/utils/crust";
+import { mostMnemonic } from "@/utils/MostWallet";
+import { Wallet } from "ethers";
+
 interface CodeBlockMdNode {
   info: string;
   literal: string;
@@ -30,19 +34,38 @@ const uploadImage = async (
   file: File | Blob,
   callback: (url: string, altText: string) => void,
 ) => {
-  const formData = new FormData();
-  const params = new URLSearchParams(location.search);
-  const name = params.get("name");
-  const fileName = `${file.size}-${(file as File).name}`;
-  formData.append("file", file);
-  formData.append("path", `/.note/${name}/${fileName}`);
+  const wallet = useUserStore.getState().wallet;
+  if (!wallet) return;
 
-  const res = await api.put("/files.upload", formData);
-  const cid = res.data.cid;
-  if (cid) {
-    callback(`/ipfs/${cid}?filename=${fileName}`, fileName);
-  } else {
-    callback("", fileName);
+  try {
+    const mnemonic = mostMnemonic(wallet.danger);
+    const account = Wallet.fromPhrase(mnemonic);
+    const signature = await account.signMessage(account.address);
+    const authHeader = createCrustAuthHeader(account.address, signature);
+
+    const ipfs = await uploadToIpfsGateway(file as File, authHeader);
+    const fileName = (file as File).name || `${file.size}`;
+
+    // 注册到本地
+    const params = new URLSearchParams(location.search);
+    const noteName = params.get("name") || "default";
+
+    useUserStore.getState().addLocalFile({
+      cid: { "/": ipfs.cid },
+      name: fileName,
+      size: file.size,
+      type: "file",
+      path: `/.note/${noteName}`,
+    });
+
+    if (ipfs.cid) {
+      callback(`/ipfs/${ipfs.cid}?filename=${fileName}`, fileName);
+    } else {
+      callback("", fileName);
+    }
+  } catch (error) {
+    console.error("上传图片失败", error);
+    callback("", (file as File).name || "image");
   }
 };
 

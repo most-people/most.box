@@ -25,10 +25,16 @@ import { most25519, mostDecode, mostEncode } from "@/utils/MostWallet";
 import Link from "next/link";
 import { modals } from "@mantine/modals";
 
+import { createCrustAuthHeader, uploadToIpfsGateway } from "@/utils/crust";
+import { mostMnemonic } from "@/utils/MostWallet";
+import { Wallet } from "ethers";
+import mp from "@/utils/mp";
+
 const PageContent = () => {
   const params = useSearchParams();
   const wallet = useUserStore((state) => state.wallet);
   const dotCID = useUserStore((state) => state.dotCID);
+  const files = useUserStore((state) => state.files);
 
   const [loading, setLoading] = useState(true);
   const [viewer, setViewer] = useState<any>(null);
@@ -81,21 +87,35 @@ const PageContent = () => {
   }, [inited, wallet, content]);
 
   const updateNote = async (name: string, newContent: string) => {
+    if (!wallet) return;
+
     // 加密
     if (wallet && isSecret) {
       const { public_key, private_key } = most25519(wallet.danger);
       newContent = mostEncode(newContent, public_key, private_key);
     }
 
-    const formData = new FormData();
-    const blob = new Blob([newContent], { type: "text/markdown" });
-    formData.append("file", blob, "index.md");
-    formData.append("path", `/.note/${name}/index.md`);
-
     try {
-      const res = await api.put("/files.upload", formData);
-      const cid = res.data?.cid;
+      const mnemonic = mostMnemonic(wallet.danger);
+      const account = Wallet.fromPhrase(mnemonic);
+      const signature = await account.signMessage(account.address);
+      const authHeader = createCrustAuthHeader(account.address, signature);
+
+      const blob = new Blob([newContent], { type: "text/markdown" });
+      const file = new File([blob], "index.md", { type: "text/markdown" });
+      const ipfs = await uploadToIpfsGateway(file, authHeader);
+
+      const cid = ipfs.cid;
       if (cid) {
+        // 注册到本地
+        useUserStore.getState().addLocalFile({
+          cid: { "/": cid },
+          name: name,
+          size: blob.size,
+          type: "file",
+          path: "/.note",
+        });
+
         updateUrl(cid, wallet?.address);
         notifications.show({
           message: `${name} 保存成功`,
@@ -103,10 +123,7 @@ const PageContent = () => {
         });
       }
     } catch (error: any) {
-      let message = error?.response?.data || "文件上传失败，请重试";
-      if (message.includes("already has")) {
-        message = "文件已存在";
-      }
+      let message = error?.message || "文件上传失败，请重试";
       notifications.show({
         title: "保存失败",
         message,
@@ -136,7 +153,7 @@ const PageContent = () => {
           ),
           labels: { confirm: "保存", cancel: "取消" },
           onConfirm: () => {
-            console.log(noteName);
+            updateNote(noteName, newContent);
           },
         });
       }
@@ -168,16 +185,14 @@ const PageContent = () => {
     const name = params?.get("name");
     // 获取最新 CID
     if (uid && name) {
-      try {
-        const res = await api.get(`/files.cid/${uid}/.note/${name}`);
-        const cid = res.data;
-        if (cid) {
-          updateUrl(cid);
-          fetchNote(cid);
-          return;
-        }
-      } catch (error) {
-        console.info(error);
+      const note = files?.find(
+        (f) => mp.normalizePath(f.path) === ".note" && f.name === name,
+      );
+      if (note) {
+        const cid = note.cid["/"];
+        updateUrl(cid);
+        fetchNote(cid);
+        return;
       }
     }
     const cid = params?.get("cid");
