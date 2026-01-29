@@ -34,8 +34,6 @@ interface UserStore {
   files: FileItem[]; // 改为非可选，初始化为空数组
   filesPath: string;
   fingerprint: string;
-  // 退出登录
-  exit: () => void;
   // 余额
   balance: string;
   initBalance: () => Promise<void>;
@@ -49,6 +47,8 @@ interface UserStore {
   addLocalFile: (file: Omit<FileItem, "createdAt">) => void;
   deleteLocalFile: (cid: string) => void;
   renameLocalFile: (oldPath: string, newPath: string, newName: string) => void;
+  // 退出登录
+  exit: () => void;
 }
 
 interface State extends UserStore {
@@ -76,14 +76,6 @@ export const useUserStore = create<State>()(
       filesPath: "",
       // 设备指纹
       fingerprint: "",
-      exit() {
-        set({
-          wallet: undefined,
-          notes: undefined,
-          files: [],
-          jwt: "",
-        });
-      },
 
       // 本地文件操作实现
       addLocalFile(file) {
@@ -99,14 +91,14 @@ export const useUserStore = create<State>()(
 
           // 检查是否已存在 (基于路径和名称)
           const exists = state.files.some(
-            (f) => f.path === normalizedPath && f.name === file.name,
+            (file) => file.path === normalizedPath && file.name === file.name,
           );
           if (exists) {
             return {
-              files: state.files.map((f) =>
-                f.path === normalizedPath && f.name === file.name
+              files: state.files.map((file) =>
+                file.path === normalizedPath && file.name === file.name
                   ? { ...newFile, createdAt: Date.now() }
-                  : f,
+                  : file,
               ),
             };
           }
@@ -118,7 +110,7 @@ export const useUserStore = create<State>()(
 
       deleteLocalFile(cid) {
         set((state) => ({
-          files: state.files.filter((f) => f.cid["/"] !== cid),
+          files: state.files.filter((file) => file.cid["/"] !== cid),
         }));
       },
 
@@ -186,6 +178,21 @@ export const useUserStore = create<State>()(
       homeTab: "file",
       // 通用设置器
       setItem: (key, value) => set((state) => ({ ...state, [key]: value })),
+      // 退出登录
+      exit() {
+        set({
+          wallet: undefined,
+          notes: undefined,
+          files: [],
+          jwt: "",
+          firstPath: "",
+          notesQuery: "",
+          filesPath: "",
+          balance: "",
+          dotCID: "",
+          homeTab: "file",
+        });
+      },
     }),
     {
       name: "most-box-storage",

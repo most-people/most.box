@@ -118,17 +118,17 @@ export default function HomeFile() {
 
     // 1. 获取直接在该路径下的文件
     const directFiles = files.filter(
-      (f) => f.path === currentPath && f.type === "file",
+      (file) => file.path === currentPath && file.type === "file",
     );
 
     // 2. 获取该路径下的所有子目录（推导出的虚拟目录）
     const inferredDirs = new Map<string, FileItem>();
 
-    files.forEach((f) => {
-      const fPath = f.path;
+    files.forEach((file) => {
+      const fPath = file.path;
 
       // 如果是文件且在更深层的目录中，推导出当前层级的目录
-      if (f.type === "file") {
+      if (file.type === "file") {
         if (currentPath === "") {
           if (fPath !== "") {
             const firstSegment = fPath.split("/")[0];
@@ -139,7 +139,7 @@ export default function HomeFile() {
                 path: "",
                 cid: { "/": `virtual-dir-${firstSegment}` },
                 size: 0,
-                createdAt: f.createdAt,
+                createdAt: file.createdAt,
               });
             }
           }
@@ -153,7 +153,7 @@ export default function HomeFile() {
               path: currentPath,
               cid: { "/": `virtual-dir-${firstSegment}` },
               size: 0,
-              createdAt: f.createdAt,
+              createdAt: file.createdAt,
             });
           }
         }
@@ -407,13 +407,14 @@ export default function HomeFile() {
         const fullPath =
           currentPath === "" ? item.name : `${currentPath}/${item.name}`;
 
-        const filesToDelete = files.filter((f) => {
-          const fFullPath = f.path === "" ? f.name : `${f.path}/${f.name}`;
+        const filesToDelete = files.filter((file) => {
+          const fFullPath =
+            file.path === "" ? file.name : `${file.path}/${file.name}`;
           return fFullPath === fullPath || fFullPath.startsWith(fullPath + "/");
         });
 
-        filesToDelete.forEach((f) => {
-          useUserStore.getState().deleteLocalFile(f.cid["/"]);
+        filesToDelete.forEach((file) => {
+          useUserStore.getState().deleteLocalFile(file.cid["/"]);
         });
       } else {
         useUserStore.getState().deleteLocalFile(item.cid["/"]);

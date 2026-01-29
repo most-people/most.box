@@ -186,7 +186,7 @@ const PageContent = () => {
     // 获取最新 CID
     if (uid && name) {
       const note = files?.find(
-        (f) => mp.normalizePath(f.path) === ".note" && f.name === name,
+        (file) => mp.normalizePath(file.path) === ".note" && file.name === name,
       );
       if (note) {
         const cid = note.cid["/"];
