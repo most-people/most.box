@@ -12,13 +12,9 @@ export const getAuthHeaders = async (wallet: MostWallet) => {
   const mnemonic = mostMnemonic(wallet.danger);
   const account = Wallet.fromPhrase(mnemonic);
   const timestamp = Date.now().toString();
-  // 签名消息为当前时间戳字符串
   const signature = await account.signMessage(timestamp);
-
   return {
-    "x-address": account.address,
-    "x-signature": signature,
-    "x-timestamp": timestamp,
+    Authorization: `${account.address},${timestamp},${signature}`,
   };
 };
 

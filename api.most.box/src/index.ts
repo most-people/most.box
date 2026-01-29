@@ -21,13 +21,16 @@ app.get("/", (c) => {
 // 认证中间件
 const authMiddleware = async (c: any, next: any) => {
   try {
-    const address = c.req.header("x-address");
+    const authHeader = c.req.header("Authorization");
 
-    const signature = c.req.header("x-signature");
-    const timestampStr = c.req.header("x-timestamp");
+    if (!authHeader) {
+      return c.json({ error: "Missing Authorization header" }, 401);
+    }
+
+    const [address, timestampStr, signature] = authHeader.split(",");
 
     if (!address || !signature || !timestampStr) {
-      return c.json({ error: "Missing authentication headers" }, 401);
+      return c.json({ error: "Invalid Authorization header format" }, 401);
     }
 
     const timestamp = parseInt(timestampStr);
