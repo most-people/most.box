@@ -14,7 +14,7 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   const initWallet = (fingerprint: string) => {
     setItem("fingerprint", fingerprint);
-    const jwt = localStorage.getItem("jwt");
+    const jwt = useUserStore.getState().jwt;
     if (jwt) {
       try {
         const wallet = mp.verifyJWT(jwt);
@@ -35,7 +35,6 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
       const result = await fp.get();
       // 返回唯一的访客标识符
       const fingerprint = result.visitorId;
-      sessionStorage.setItem("fingerprint", fingerprint);
       initWallet(fingerprint);
     } catch (error) {
       console.warn("登录失败:", error);
@@ -45,7 +44,7 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     initFinger();
-    sessionStorage.setItem("firstPath", window.location.pathname);
+    setItem("firstPath", window.location.pathname);
   }, []);
 
   const { colorScheme } = useMantineColorScheme();

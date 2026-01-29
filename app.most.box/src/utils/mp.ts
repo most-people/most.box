@@ -16,6 +16,7 @@ import {
   type MostWallet,
   mostWallet,
 } from "@/utils/MostWallet";
+import { useUserStore } from "@/stores/userStore";
 import { match } from "pinyin-pro";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -121,7 +122,7 @@ const createJWT = (wallet: MostWallet, template = "YYYYMM") => {
   // 本周有效
   const week = dayjs().isoWeek();
   const time = dayjs().format(template) + week;
-  const fingerprint = sessionStorage.getItem("fingerprint");
+  const fingerprint = useUserStore.getState().fingerprint;
   if (!fingerprint) {
     throw new Error("请先获取设备指纹");
   }
@@ -137,7 +138,7 @@ const verifyJWT = (jwt: string, template = "YYYYMM") => {
   // 本周有效
   const week = dayjs().isoWeek();
   const time = dayjs().format(template) + week;
-  const fingerprint = sessionStorage.getItem("fingerprint");
+  const fingerprint = useUserStore.getState().fingerprint;
   if (!fingerprint) {
     throw new Error("请先获取设备指纹");
   }
@@ -156,14 +157,6 @@ const verifyJWT = (jwt: string, template = "YYYYMM") => {
   return wallet;
 };
 
-// 创建 token
-// const createToken = async (wallet: MostWallet) => {
-//   const message = Date.now().toString();
-//   const ethWallet = HDNodeWallet.fromPhrase(wallet.mnemonic);
-//   const signature = await ethWallet.signMessage(message);
-//   localStorage.token = [wallet.address, message, signature].join(".");
-// };
-
 // 登录
 const login = (username: string, password: string): MostWallet | null => {
   const wallet = mostWallet(username, password);
@@ -177,7 +170,7 @@ const loginSave = (wallet: MostWallet) => {
 
     // 验证并存储
     if (verifyJWT(jwt)?.address === wallet.address) {
-      localStorage.setItem("jwt", jwt);
+      useUserStore.getState().setItem("jwt", jwt);
       return wallet;
     }
   } catch (error) {

@@ -138,14 +138,6 @@ export default function GatewayManager() {
   >({});
   const [customGateway, setCustomGateway] = useState("");
 
-  // ===== 初始化 =====
-  useEffect(() => {
-    const savedGateway = localStorage.getItem("selectedGateway");
-    if (savedGateway) {
-      setItem("dotCID", savedGateway);
-    }
-  }, [setItem]);
-
   const handleDetectAll = async () => {
     if (!customCid) {
       notifications.show({
@@ -232,7 +224,6 @@ export default function GatewayManager() {
 
   const selectGateway = (gateway: string) => {
     setItem("dotCID", gateway);
-    localStorage.setItem("selectedGateway", gateway);
     notifications.show({
       title: "已选择网关",
       message: `当前网关已设置为: ${new URL(gateway).hostname}`,

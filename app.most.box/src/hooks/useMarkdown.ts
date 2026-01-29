@@ -1,5 +1,6 @@
 import { api } from "@/utils/api";
 import { parse, HtmlGenerator } from "latex.js";
+import { useUserStore } from "@/stores/userStore";
 
 interface CodeBlockMdNode {
   info: string;
@@ -93,7 +94,7 @@ const getEditorCore = (codeSyntaxHighlight: any) => {
         context.skipChildren();
         const src = node.destination;
         const alt = node.firstChild?.literal || "";
-        const dotCID = localStorage.getItem("dotCID");
+        const dotCID = useUserStore.getState().dotCID;
         return {
           type: "openTag",
           tagName: "img",
@@ -173,7 +174,7 @@ const initEditor = async (el: HTMLDivElement) => {
   editor.addCommand("markdown", "math", $math);
 
   const $file = () => {
-    localStorage.setItem("homeTab", "file");
+    useUserStore.getState().setItem("homeTab", "file");
     window.open("/");
     return true;
   };

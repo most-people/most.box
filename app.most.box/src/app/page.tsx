@@ -8,18 +8,15 @@ import "@/app/page.scss";
 import HomeNote from "@/components/home/note";
 import HomeExplore from "@/components/home/explore";
 import { AppHeader } from "@/components/AppHeader";
-import { useLocalStorage } from "@mantine/hooks";
+import { useUserStore } from "@/stores/userStore";
 import Link from "next/link";
 
 export default function PageHome() {
-  const [homeTab, setHomeTab] = useLocalStorage({
-    key: "homeTab",
-    defaultValue: "explore",
-    getInitialValueInEffect: true,
-  });
+  const homeTab = useUserStore((state) => state.homeTab);
+  const setItem = useUserStore((state) => state.setItem);
 
   const tabChange = (value: string | null) => {
-    setHomeTab(value || "explore");
+    setItem("homeTab", value || "explore");
   };
 
   return (
