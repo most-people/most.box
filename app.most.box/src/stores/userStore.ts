@@ -53,6 +53,11 @@ interface UserStore {
   renameNote: (oldPath: string, newPath: string, newName: string) => void;
   // 退出登录
   exit: () => void;
+  // 内部辅助
+  _updateItems: (
+    key: "files" | "notes",
+    updater: (items: any[]) => any[],
+  ) => void;
 }
 
 interface State extends UserStore {
@@ -81,102 +86,90 @@ export const useUserStore = create<State>()(
       // 设备指纹
       fingerprint: "",
 
+      // 通用列表更新辅助函数
+      _updateItems(
+        key: "files" | "notes",
+        updater: (items: (FileItem | NoteItem)[]) => (FileItem | NoteItem)[],
+      ) {
+        set((state) => ({
+          [key]: updater(Array.isArray(state[key]) ? state[key] : []),
+        }));
+      },
+
       // 本地文件操作实现
       addFile(file) {
         if (file.type === "directory") return;
 
-        set((state) => {
-          const files = Array.isArray(state.files) ? state.files : [];
-          const normalizedPath = mp.normalizePath(file.path);
-          const newFile = {
-            ...file,
-            path: normalizedPath,
-            createdAt: Date.now(),
-          };
+        const normalizedPath = mp.normalizePath(file.path);
+        const newFile: FileItem = {
+          ...file,
+          path: normalizedPath,
+          createdAt: Date.now(),
+        };
 
+        get()._updateItems("files", (files: FileItem[]) => {
           const exists = files.some(
-            (f) => f.path === normalizedPath && f.name === file.name,
+            (f: FileItem) => f.path === normalizedPath && f.name === file.name,
           );
-
           if (exists) {
-            return {
-              files: files.map((f) =>
-                f.path === normalizedPath && f.name === file.name ? newFile : f,
-              ),
-            };
+            return files.map((f: FileItem) =>
+              f.path === normalizedPath && f.name === file.name ? newFile : f,
+            );
           }
-
-          return {
-            files: [...files, newFile],
-          };
+          return [...files, newFile];
         });
       },
 
       deleteFile(cid, path, name) {
-        set((state) => {
-          const files = Array.isArray(state.files) ? state.files : [];
-          const normalizedPath =
-            path !== undefined ? mp.normalizePath(path) : "";
-
-          return {
-            files: files.filter((file) => {
-              if (cid && file.cid === cid) return false;
-              if (
-                path !== undefined &&
-                name !== undefined &&
-                file.path === normalizedPath &&
-                file.name === name
-              )
-                return false;
-              return true;
-            }),
-          };
-        });
+        const normalizedPath = path !== undefined ? mp.normalizePath(path) : "";
+        get()._updateItems("files", (files: FileItem[]) =>
+          files.filter((file: FileItem) => {
+            if (cid && file.cid === cid) return false;
+            if (
+              path !== undefined &&
+              name !== undefined &&
+              file.path === normalizedPath &&
+              file.name === name
+            )
+              return false;
+            return true;
+          }),
+        );
       },
 
       renameFile(oldPath, newPath, newName) {
-        set((state) => {
-          const files = Array.isArray(state.files) ? state.files : [];
-          const oldPathNorm = mp.normalizePath(oldPath);
-          const newPathNorm = mp.normalizePath(newPath);
+        const oldPathNorm = mp.normalizePath(oldPath);
+        const newPathNorm = mp.normalizePath(newPath);
 
-          return {
-            files: files.map((file) => {
-              const fullPath = mp.normalizePath(
-                file.path === "" ? file.name : `${file.path}/${file.name}`,
+        get()._updateItems("files", (files: FileItem[]) =>
+          files.map((file: FileItem) => {
+            const fullPath = mp.normalizePath(
+              file.path === "" ? file.name : `${file.path}/${file.name}`,
+            );
+
+            if (fullPath === oldPathNorm) {
+              return { ...file, path: newPathNorm, name: newName };
+            }
+
+            if (fullPath.startsWith(oldPathNorm + "/")) {
+              const relativePath = fullPath.slice(oldPathNorm.length);
+              const newFullPath = mp.normalizePath(
+                (newPathNorm ? `${newPathNorm}/${newName}` : newName) +
+                  relativePath,
               );
-
-              // 如果是目标文件/文件夹本身
-              if (fullPath === oldPathNorm) {
-                return {
-                  ...file,
-                  path: newPathNorm,
-                  name: newName,
-                };
-              }
-
-              // 如果是在该文件夹下的子文件 (处理移动文件夹的情况)
-              if (fullPath.startsWith(oldPathNorm + "/")) {
-                const relativePath = fullPath.slice(oldPathNorm.length);
-                const newFullPath = mp.normalizePath(
-                  (newPathNorm ? `${newPathNorm}/${newName}` : newName) +
-                    relativePath,
-                );
-                const lastSlashIndex = newFullPath.lastIndexOf("/");
-                return {
-                  ...file,
-                  path:
-                    lastSlashIndex === -1
-                      ? ""
-                      : newFullPath.slice(0, lastSlashIndex),
-                  name: newFullPath.slice(lastSlashIndex + 1),
-                };
-              }
-
-              return file;
-            }),
-          };
-        });
+              const lastSlashIndex = newFullPath.lastIndexOf("/");
+              return {
+                ...file,
+                path:
+                  lastSlashIndex === -1
+                    ? ""
+                    : newFullPath.slice(0, lastSlashIndex),
+                name: newFullPath.slice(lastSlashIndex + 1),
+              };
+            }
+            return file;
+          }),
+        );
       },
 
       // 笔记操作实现
@@ -195,93 +188,71 @@ export const useUserStore = create<State>()(
           createdAt: Date.now(),
         };
 
-        set((state) => {
-          const notes = Array.isArray(state.notes) ? state.notes : [];
+        get()._updateItems("notes", (notes: NoteItem[]) => {
           const exists = notes.some(
-            (f) => f.path === normalizedPath && f.name === file.name,
+            (f: NoteItem) => f.path === normalizedPath && f.name === file.name,
           );
-
           if (exists) {
-            return {
-              notes: notes.map((f) =>
-                f.path === normalizedPath && f.name === file.name ? newNote : f,
-              ),
-            };
+            return notes.map((f: NoteItem) =>
+              f.path === normalizedPath && f.name === file.name ? newNote : f,
+            );
           }
-
-          return {
-            notes: [...notes, newNote],
-          };
+          return [...notes, newNote];
         });
 
         return cid;
       },
 
       deleteNote(cid, path, name) {
-        set((state) => {
-          const notes = Array.isArray(state.notes) ? state.notes : [];
-          const normalizedPath =
-            path !== undefined ? mp.normalizePath(path) : "";
-
-          return {
-            notes: notes.filter((file) => {
-              if (cid && file.cid === cid) return false;
-              if (
-                path !== undefined &&
-                name !== undefined &&
-                file.path === normalizedPath &&
-                file.name === name
-              )
-                return false;
-              return true;
-            }),
-          };
-        });
+        const normalizedPath = path !== undefined ? mp.normalizePath(path) : "";
+        get()._updateItems("notes", (notes: NoteItem[]) =>
+          notes.filter((file: NoteItem) => {
+            if (cid && file.cid === cid) return false;
+            if (
+              path !== undefined &&
+              name !== undefined &&
+              file.path === normalizedPath &&
+              file.name === name
+            )
+              return false;
+            return true;
+          }),
+        );
       },
 
       renameNote(oldPath, newPath, newName) {
-        set((state) => {
-          const notes = Array.isArray(state.notes) ? state.notes : [];
-          const oldPathNorm = mp.normalizePath(oldPath);
-          const newPathNorm = mp.normalizePath(newPath);
+        const oldPathNorm = mp.normalizePath(oldPath);
+        const newPathNorm = mp.normalizePath(newPath);
 
-          return {
-            notes: notes.map((file) => {
-              const fullPath = mp.normalizePath(
-                file.path === "" ? file.name : `${file.path}/${file.name}`,
+        get()._updateItems("notes", (notes: NoteItem[]) =>
+          notes.map((file: NoteItem) => {
+            const fullPath = mp.normalizePath(
+              file.path === "" ? file.name : `${file.path}/${file.name}`,
+            );
+
+            if (fullPath === oldPathNorm) {
+              return { ...file, path: newPathNorm, name: newName };
+            }
+
+            if (fullPath.startsWith(oldPathNorm + "/")) {
+              const relativePath = fullPath.slice(oldPathNorm.length);
+              const newFullPath = mp.normalizePath(
+                (newPathNorm ? `${newPathNorm}/${newName}` : newName) +
+                  relativePath,
               );
-
-              // 如果是目标文件/文件夹本身
-              if (fullPath === oldPathNorm) {
-                return {
-                  ...file,
-                  path: newPathNorm,
-                  name: newName,
-                };
-              }
-
-              // 如果是在该文件夹下的子文件 (处理移动文件夹的情况)
-              if (fullPath.startsWith(oldPathNorm + "/")) {
-                const relativePath = fullPath.slice(oldPathNorm.length);
-                const newFullPath = mp.normalizePath(
-                  (newPathNorm ? `${newPathNorm}/${newName}` : newName) +
-                    relativePath,
-                );
-                const lastSlashIndex = newFullPath.lastIndexOf("/");
-                return {
-                  ...file,
-                  path:
-                    lastSlashIndex === -1
-                      ? ""
-                      : newFullPath.slice(0, lastSlashIndex),
-                  name: newFullPath.slice(lastSlashIndex + 1),
-                };
-              }
-
-              return file;
-            }),
-          };
-        });
+              const lastSlashIndex = newFullPath.lastIndexOf("/");
+              return {
+                ...file,
+                path:
+                  lastSlashIndex === -1
+                    ? ""
+                    : newFullPath.slice(0, lastSlashIndex),
+                name: newFullPath.slice(lastSlashIndex + 1),
+              };
+            }
+            return file;
+          }),
+        );
       },
       // 余额
       balance: "",

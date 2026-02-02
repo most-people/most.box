@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useState, useRef } from "react";
 import {
   Text,
   Group,
@@ -15,7 +15,6 @@ import {
   Card,
   Menu,
   Badge,
-  LoadingOverlay,
   Breadcrumbs,
   Anchor,
 } from "@mantine/core";
@@ -49,21 +48,30 @@ interface PreviewFile {
   size: string;
 }
 
+import { useFileExplorer } from "@/hooks/useFileExplorer";
+
 export default function HomeFile() {
   const wallet = useUserStore((state) => state.wallet);
-  const filesFromStore = useUserStore((state) => state.files);
-  const files = Array.isArray(filesFromStore) ? filesFromStore : [];
-  const filesPath = useUserStore((state) => state.filesPath);
   const setItem = useUserStore((state) => state.setItem);
-
   const dotCID = useUserStore((state) => state.dotCID);
 
-  const [fetchLoading, setFetchLoading] = useState(false);
+  const {
+    currentPath,
+    searchQuery,
+    setSearchQuery,
+    filteredItems,
+    displayedItems,
+    hasMore,
+    loadMore,
+    handleFolderClick,
+    handleBreadcrumbClick,
+  } = useFileExplorer("files");
+
+  const filesFromStore = useUserStore((state) => state.files);
+  const files = Array.isArray(filesFromStore) ? filesFromStore : [];
   const [uploadLoading, setUploadLoading] = useState(false);
   const [previewFiles, setPreviewFiles] = useState<PreviewFile[]>([]);
   const [showPreview, setShowPreview] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [displayCount, setDisplayCount] = useState(100);
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [renamingItem, setRenamingItem] = useState<FileItem | null>(null);
   const [newName, setNewName] = useState("");
@@ -81,101 +89,6 @@ export default function HomeFile() {
   const router = useRouter();
   const [showLargeFileModal, setShowLargeFileModal] = useState(false);
   const [largeFiles, setLargeFiles] = useState<File[]>([]);
-
-  const fetchFiles = async (path: string) => {
-    // 纯本地应用，不需要从后端获取
-    setSearchQuery("");
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 B";
-    const k = 1024;
-    const sizes = ["B", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-  };
-
-  const formatFilePath = (file: File) => {
-    const rel = (file.webkitRelativePath || "").replace(/\\/g, "/");
-    const dir = rel ? rel.split("/").slice(0, -1).join("/") : "";
-    const parts: string[] = [];
-    if (filesPath) parts.push(filesPath);
-    if (dir) parts.push(dir);
-    parts.push(file.name);
-    return parts.join("/");
-  };
-
-  // 过滤文件列表
-  const currentPath = mp.normalizePath(filesPath);
-  const filteredFiles = useMemo(() => {
-    if (files.length === 0) return [];
-
-    if (searchQuery) {
-      return files
-        .filter((file) => mp.pinyin(file.name, searchQuery, 0))
-        .sort((a, b) => {
-          if (a.type === "directory" && b.type !== "directory") return -1;
-          if (a.type !== "directory" && b.type === "directory") return 1;
-          return 0;
-        });
-    }
-
-    // 1. 获取直接在该路径下的文件与子目录
-    const directFiles: FileItem[] = [];
-    const inferredDirs = new Map<string, FileItem>();
-
-    files.forEach((file) => {
-      const fPath = file.path;
-
-      // 如果是在当前目录下的文件
-      if (fPath === currentPath) {
-        if (file.type === "file") {
-          directFiles.push(file);
-        }
-        return;
-      }
-
-      // 如果是在子目录下的文件，推导该层级的目录
-      if (currentPath === "" || fPath.startsWith(currentPath + "/")) {
-        const relativePath =
-          currentPath === "" ? fPath : fPath.slice(currentPath.length + 1);
-        if (relativePath) {
-          const firstSegment = relativePath.split("/")[0];
-          if (!inferredDirs.has(firstSegment)) {
-            inferredDirs.set(firstSegment, {
-              name: firstSegment,
-              type: "directory",
-              path: currentPath,
-              size: 0,
-              createdAt: file.createdAt,
-            });
-          }
-        }
-      }
-    });
-
-    return [...Array.from(inferredDirs.values()), ...directFiles].sort(
-      (a, b) => {
-        if (a.type === "directory" && b.type !== "directory") return -1;
-        if (a.type !== "directory" && b.type === "directory") return 1;
-        return b.createdAt - a.createdAt;
-      },
-    );
-  }, [files, currentPath, searchQuery]);
-
-  // 获取当前显示的文件列表
-  const displayedFiles = filteredFiles.slice(0, displayCount);
-  const hasMore = filteredFiles.length > displayCount;
-
-  // 加载更多函数
-  const loadMore = () => {
-    setDisplayCount((prev) => prev + 100);
-  };
-
-  // 重置显示数量（搜索时使用）
-  useEffect(() => {
-    setDisplayCount(100);
-  }, [searchQuery]);
 
   const uploadFiles = async (files: File[]) => {
     if (!files || files.length === 0) return;
@@ -215,7 +128,7 @@ export default function HomeFile() {
         const crust = await pinToCrustGateway(ipfs.cid, file.name, authHeader);
 
         // 3. 注册到本地
-        const targetPath = formatFilePath(file);
+        const targetPath = mp.formatFilePath(file, currentPath);
         const directoryPath =
           targetPath.split("/").slice(0, -1).join("/") || "/";
 
@@ -274,7 +187,7 @@ export default function HomeFile() {
       });
       return;
     }
-    const folderExists = filteredFiles.some(
+    const folderExists = filteredItems.some(
       (file) => file.type === "directory" && file.name === newFolderName,
     );
     if (folderExists) {
@@ -294,8 +207,8 @@ export default function HomeFile() {
     try {
       setNewFolderLoading(true);
 
-      const targetPath = filesPath
-        ? `${filesPath}/${newFolderName}`
+      const targetPath = currentPath
+        ? `${currentPath}/${newFolderName}`
         : newFolderName;
 
       useUserStore.getState().addFile({
@@ -311,7 +224,6 @@ export default function HomeFile() {
       });
       setNewFolderModalOpen(false);
       setNewFolderName("");
-      await fetchFiles(filesPath);
     } catch (error: any) {
       console.error("创建文件夹失败:", error);
       notifications.show({
@@ -365,7 +277,7 @@ export default function HomeFile() {
     try {
       setImportLoading(true);
       const name = (importName || cid).trim();
-      const directoryPath = filesPath || "/";
+      const directoryPath = currentPath || "/";
 
       useUserStore.getState().addFile({
         cid: cid,
@@ -415,7 +327,7 @@ export default function HomeFile() {
         const previewData: PreviewFile[] = fileArray.map((file) => ({
           file,
           path: file.webkitRelativePath || file.name,
-          size: formatFileSize(file.size),
+          size: mp.formatFileSize(file.size),
         }));
         setPreviewFiles(previewData);
         setShowPreview(true);
@@ -448,7 +360,7 @@ export default function HomeFile() {
       (sum, item) => sum + item.file.size,
       0,
     );
-    return formatFileSize(totalBytes);
+    return mp.formatFileSize(totalBytes);
   };
 
   // 删除文件函数
@@ -565,26 +477,6 @@ export default function HomeFile() {
     }
   };
 
-  // 处理文件夹点击
-  const handleFolderClick = (folderName: string) => {
-    const newPath = filesPath ? `${filesPath}/${folderName}` : folderName;
-    setItem("filesPath", newPath);
-    fetchFiles(newPath);
-  };
-
-  // 面包屑点击跳转
-  const handleBreadcrumbClick = (index: number) => {
-    const parts = (filesPath || "").split("/").filter(Boolean);
-    if (index < 0) {
-      setItem("filesPath", "");
-      fetchFiles("");
-      return;
-    }
-    const newPath = parts.slice(0, index + 1).join("/");
-    setItem("filesPath", newPath);
-    fetchFiles(newPath);
-  };
-
   // 分享文件
   const handleShareFile = (item: FileItem) => {
     const cid = item.cid;
@@ -643,24 +535,19 @@ export default function HomeFile() {
         </Center>
 
         <Group justify="space-between" align="center" pos="relative">
-          <LoadingOverlay
-            visible={fetchLoading}
-            overlayProps={{ backgroundOpacity: 0 }}
-            loaderProps={{ type: "dots" }}
-          />
           <Badge variant="light" size="lg">
             {searchQuery
-              ? `显示 ${displayedFiles.length} / ${
-                  filteredFiles.length
+              ? `显示 ${displayedItems.length} / ${
+                  filteredItems.length
                 } (总共 ${files?.length || 0})`
-              : `显示 ${displayedFiles.length} / ${files?.length || 0}`}{" "}
+              : `显示 ${displayedItems.length} / ${files?.length || 0}`}{" "}
             个文件
           </Badge>
           <Group>
             <Tooltip label="刷新">
               <ActionIcon
                 size="lg"
-                onClick={() => fetchFiles(filesPath)}
+                onClick={() => setItem("filesPath", currentPath)}
                 color="blue"
                 disabled={!wallet}
               >
@@ -711,7 +598,7 @@ export default function HomeFile() {
         </Group>
 
         {/* 搜索结果为空时的提示 */}
-        {searchQuery && filteredFiles.length === 0 ? (
+        {searchQuery && filteredItems.length === 0 ? (
           <Stack align="center" justify="center" h={200}>
             <Text size="lg" c="dimmed">
               未找到文件
@@ -734,7 +621,7 @@ export default function HomeFile() {
                     >
                       文件
                     </Anchor>
-                    {(filesPath || "")
+                    {(currentPath || "")
                       .split("/")
                       .filter(Boolean)
                       .map((seg, idx) => (
@@ -753,12 +640,7 @@ export default function HomeFile() {
             </Card>
 
             <Grid gutter="md" pos="relative">
-              <LoadingOverlay
-                visible={fetchLoading}
-                overlayProps={{ backgroundOpacity: 0 }}
-                loaderProps={{ opacity: 0 }}
-              />
-              {displayedFiles.map((item, index) => (
+              {displayedItems.map((item) => (
                 <Grid.Col
                   key={(item.cid || "") + item.path + item.name}
                   span={{ base: 12, xs: 6, sm: 4, md: 3, lg: 3, xl: 2 }}
@@ -830,7 +712,7 @@ export default function HomeFile() {
                             <Menu.Label>
                               <Center>
                                 <Text size="xs" c="dimmed">
-                                  {formatFileSize(item.size)}
+                                  {mp.formatFileSize(item.size)}
                                 </Text>
                               </Center>
                             </Menu.Label>
@@ -846,7 +728,8 @@ export default function HomeFile() {
             {hasMore && (
               <Center>
                 <Button variant="light" onClick={loadMore} size="md">
-                  继续加载 ({filteredFiles.length - displayCount} 个剩余)
+                  继续加载 ({filteredItems.length - displayedItems.length}{" "}
+                  个剩余)
                 </Button>
               </Center>
             )}
@@ -1130,7 +1013,7 @@ export default function HomeFile() {
                 <Group key={index}>
                   <Text size="sm">{file.name}</Text>
                   <Text size="sm" c="dimmed">
-                    {formatFileSize(file.size)}
+                    {mp.formatFileSize(file.size)}
                   </Text>
                 </Group>
               ))}

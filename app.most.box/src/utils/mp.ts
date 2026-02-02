@@ -306,6 +306,104 @@ const calculateCID = async (content: string) => {
   return cid.toString();
 };
 
+/**
+ * 根据路径过滤文件并推导目录结构
+ * @param items 文件/笔记列表
+ * @param currentPath 当前路径
+ * @param query 搜索关键词
+ * @returns 过滤后的列表（包含推导出的目录）
+ */
+const filterFilesByPath = <T extends { name: string; path: string; type: string; createdAt: number }>(
+  items: T[],
+  currentPath: string,
+  query?: string,
+): T[] => {
+  const normalizedCurrentPath = normalizePath(currentPath);
+
+  if (query) {
+    return items
+      .filter((item) => pinyin(item.name, query, 0))
+      .sort((a, b) => {
+        if (a.type === "directory" && b.type !== "directory") return -1;
+        if (a.type !== "directory" && b.type === "directory") return 1;
+        return 0;
+      });
+  }
+
+  const directItems: T[] = [];
+  const inferredDirs = new Map<string, T>();
+
+  items.forEach((item) => {
+    const fPath = normalizePath(item.path);
+
+    // 如果是在当前目录下的项
+    if (fPath === normalizedCurrentPath) {
+      if (item.type === "file") {
+        directItems.push(item);
+      }
+      return;
+    }
+
+    // 如果是在子目录下的项，推导该层级的目录
+    if (
+      normalizedCurrentPath === "" ||
+      fPath.startsWith(normalizedCurrentPath + "/")
+    ) {
+      const relativePath =
+        normalizedCurrentPath === ""
+          ? fPath
+          : fPath.slice(normalizedCurrentPath.length + 1);
+      if (relativePath) {
+        const firstSegment = relativePath.split("/")[0];
+        if (!inferredDirs.has(firstSegment)) {
+          inferredDirs.set(firstSegment, {
+            name: firstSegment,
+            type: "directory",
+            path: normalizedCurrentPath,
+            size: 0,
+            createdAt: item.createdAt,
+          } as unknown as T);
+        }
+      }
+    }
+  });
+
+  return [...Array.from(inferredDirs.values()), ...directItems].sort((a, b) => {
+    if (a.type === "directory" && b.type !== "directory") return -1;
+    if (a.type !== "directory" && b.type === "directory") return 1;
+    return b.createdAt - a.createdAt;
+  });
+};
+
+/**
+ * 格式化文件大小
+ * @param bytes 字节数
+ * @returns 格式化后的字符串，如 "1.2 MB"
+ */
+const formatFileSize = (bytes: number) => {
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+};
+
+/**
+ * 格式化上传文件路径
+ * @param file 文件对象
+ * @param currentPath 当前所在路径
+ * @returns 相对路径
+ */
+const formatFilePath = (file: File, currentPath: string) => {
+  const rel = (file.webkitRelativePath || "").replace(/\\/g, "/");
+  const dir = rel ? rel.split("/").slice(0, -1).join("/") : "";
+  const parts: string[] = [];
+  if (currentPath) parts.push(currentPath);
+  if (dir) parts.push(dir);
+  parts.push(file.name);
+  return parts.join("/");
+};
+
 const mp = {
   avatar,
   avatarCID,
@@ -325,6 +423,9 @@ const mp = {
   getIPNS,
   normalizePath,
   calculateCID,
+  filterFilesByPath,
+  formatFileSize,
+  formatFilePath,
 };
 
 export default mp;

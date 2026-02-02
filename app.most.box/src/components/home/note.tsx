@@ -13,11 +13,10 @@ import {
   Menu,
   Tooltip,
   LoadingOverlay,
-  Box,
   Breadcrumbs,
   Anchor,
 } from "@mantine/core";
-import { useEffect, useState, useMemo } from "react";
+import { useState } from "react";
 import {
   IconDotsVertical,
   IconPlus,
@@ -32,14 +31,26 @@ import { notifications } from "@mantine/notifications";
 import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
 
+import { useFileExplorer } from "@/hooks/useFileExplorer";
+
 export default function HomeNote() {
   const wallet = useUserStore((state) => state.wallet);
-  const notesQuery = useUserStore((state) => state.notesQuery);
-  const notesPath = useUserStore((state) => state.notesPath);
   const setItem = useUserStore((state) => state.setItem);
 
-  const [fetchLoading, setFetchLoading] = useState(false);
-  const [displayCount, setDisplayCount] = useState(100);
+  const {
+    currentPath,
+    searchQuery,
+    setSearchQuery,
+    filteredItems,
+    displayedItems,
+    hasMore,
+    loadMore,
+    handleFolderClick,
+    handleBreadcrumbClick,
+  } = useFileExplorer("notes");
+
+  const notesFromStore = useUserStore((state) => state.notes);
+  const notes = Array.isArray(notesFromStore) ? notesFromStore : [];
 
   // 添加弹窗相关状态
   const [noteModalOpened, { open: openNoteModal, close: closeNoteModal }] =
@@ -76,86 +87,6 @@ export default function HomeNote() {
     return shareUrl.href;
   };
 
-  const notesFromStore = useUserStore((state) => state.notes);
-  const notes = Array.isArray(notesFromStore) ? notesFromStore : [];
-
-  // 过滤笔记列表
-  const currentPath = mp.normalizePath(notesPath || "");
-
-  const filteredNotes = useMemo(() => {
-    if (notes.length === 0) return [];
-
-    if (notesQuery) {
-      return notes
-        .filter((note) => mp.pinyin(note.name, notesQuery, 0))
-        .sort((a, b) => {
-          if (a.type === "directory" && b.type !== "directory") return -1;
-          if (a.type !== "directory" && b.type === "directory") return 1;
-          return 0;
-        });
-    }
-
-    // 1. 获取直接在该路径下的文件与子目录
-    const directFiles: FileItem[] = [];
-    const inferredDirs = new Map<string, FileItem>();
-
-    notes.forEach((file) => {
-      const fPath = file.path;
-
-      // 如果是在当前目录下的文件
-      if (fPath === currentPath) {
-        if (file.type === "file") {
-          directFiles.push(file);
-        }
-        return;
-      }
-
-      // 如果是在子目录下的文件，推导该层级的目录
-      if (currentPath === "" || fPath.startsWith(currentPath + "/")) {
-        const relativePath =
-          currentPath === "" ? fPath : fPath.slice(currentPath.length + 1);
-        if (relativePath) {
-          const firstSegment = relativePath.split("/")[0];
-          if (!inferredDirs.has(firstSegment)) {
-            inferredDirs.set(firstSegment, {
-              name: firstSegment,
-              type: "directory",
-              path: currentPath,
-              size: 0,
-              createdAt: file.createdAt,
-            });
-          }
-        }
-      }
-    });
-
-    return [...Array.from(inferredDirs.values()), ...directFiles].sort(
-      (a, b) => {
-        if (a.type === "directory" && b.type !== "directory") return -1;
-        if (a.type !== "directory" && b.type === "directory") return 1;
-        return b.createdAt - a.createdAt;
-      },
-    );
-  }, [notes, currentPath, notesQuery]);
-
-  // 获取当前显示的笔记列表
-  const displayedNotes = filteredNotes.slice(0, displayCount);
-  const hasMore = filteredNotes.length > displayCount;
-
-  // 加载更多函数
-  const loadMore = () => {
-    setDisplayCount((prev) => prev + 100);
-  };
-
-  // 重置显示数量（搜索时使用）
-  useEffect(() => {
-    setDisplayCount(100);
-  }, [notesQuery]);
-
-  const fetchNotes = async () => {
-    // 纯本地应用，不需要刷新
-  };
-
   // 创建笔记函数
   const createNote = async () => {
     const base = noteName.trim();
@@ -173,7 +104,7 @@ export default function HomeNote() {
 
     // 检查是否已存在同名笔记
     if (
-      filteredNotes?.some((note) => note.name === base && note.type === "file")
+      filteredItems?.some((note) => note.name === base && note.type === "file")
     ) {
       setNoteNameError("笔记名称已存在");
       return;
@@ -213,7 +144,7 @@ export default function HomeNote() {
     if (!name) return;
 
     if (
-      filteredNotes.some(
+      filteredItems.some(
         (item) => item.type === "directory" && item.name === name,
       )
     ) {
@@ -383,23 +314,6 @@ export default function HomeNote() {
     window.open(`/ipfs/${note.cid}/?filename=${note.name}&type=note`);
   };
 
-  // 处理文件夹点击
-  const handleFolderClick = (folderName: string) => {
-    const newPath = notesPath ? `${notesPath}/${folderName}` : folderName;
-    setItem("notesPath", newPath);
-  };
-
-  // 面包屑点击跳转
-  const handleBreadcrumbClick = (index: number) => {
-    const parts = (notesPath || "").split("/").filter(Boolean);
-    if (index < 0) {
-      setItem("notesPath", "");
-      return;
-    }
-    const newPath = parts.slice(0, index + 1).join("/");
-    setItem("notesPath", newPath);
-  };
-
   // 重置弹窗状态
   const closeModal = () => {
     setNoteName("");
@@ -423,10 +337,8 @@ export default function HomeNote() {
         <Center>
           <TextInput
             placeholder="搜索笔记名称"
-            value={notesQuery}
-            onChange={(event) =>
-              setItem("notesQuery", event.currentTarget.value)
-            }
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.currentTarget.value)}
             size="md"
             radius="md"
             w={400}
@@ -439,22 +351,19 @@ export default function HomeNote() {
         </Center>
 
         <Group justify="space-between" align="center" pos="relative">
-          <LoadingOverlay
-            visible={fetchLoading}
-            overlayProps={{ backgroundOpacity: 0 }}
-            loaderProps={{ type: "dots" }}
-          />
           <Badge variant="light" size="lg">
-            {notesQuery
-              ? `显示 ${displayedNotes.length} / ${filteredNotes.length} (总共 ${notes.length})`
-              : `显示 ${displayedNotes.length} / ${notes.length}`}{" "}
+            {searchQuery
+              ? `显示 ${displayedItems.length} / ${
+                  filteredItems.length
+                } (总共 ${notes?.length || 0})`
+              : `显示 ${displayedItems.length} / ${notes?.length || 0}`}{" "}
             个笔记
           </Badge>
           <Group>
             <Tooltip label="刷新">
               <ActionIcon
                 size="lg"
-                onClick={fetchNotes}
+                onClick={() => setItem("notesPath", currentPath)}
                 color="blue"
                 disabled={!wallet}
               >
@@ -485,7 +394,7 @@ export default function HomeNote() {
         </Group>
 
         {/* 搜索结果为空时的提示 */}
-        {notesQuery && filteredNotes.length === 0 ? (
+        {searchQuery && filteredItems.length === 0 ? (
           <Stack align="center" justify="center" h={200}>
             <Text size="lg" c="dimmed">
               未找到笔记
@@ -496,7 +405,7 @@ export default function HomeNote() {
           </Stack>
         ) : (
           <>
-            {!notesQuery && (
+            {!searchQuery && (
               <Card radius="md" withBorder>
                 <Group justify="space-between" wrap="nowrap" gap={4}>
                   <Group gap={8} wrap="nowrap">
@@ -509,7 +418,7 @@ export default function HomeNote() {
                       >
                         笔记
                       </Anchor>
-                      {(notesPath || "")
+                      {(currentPath || "")
                         .split("/")
                         .filter(Boolean)
                         .map((seg, idx) => (
@@ -529,7 +438,7 @@ export default function HomeNote() {
             )}
 
             <Grid gutter="md">
-              {displayedNotes.map((note) => (
+              {displayedItems.map((note) => (
                 <Grid.Col
                   key={(note.cid || "") + note.path + note.name}
                   span={{ base: 12, xs: 6, sm: 4, md: 3, lg: 3, xl: 2 }}
@@ -608,7 +517,8 @@ export default function HomeNote() {
             {hasMore && (
               <Center>
                 <Button variant="light" onClick={loadMore} size="md">
-                  继续加载 ({filteredNotes.length - displayCount} 个剩余)
+                  继续加载 ({filteredItems.length - displayedItems.length}{" "}
+                  个剩余)
                 </Button>
               </Center>
             )}
