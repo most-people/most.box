@@ -22,6 +22,10 @@ import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import "dayjs/locale/zh-cn";
 
+import { CID } from "multiformats";
+import { sha256 } from "multiformats/hashes/sha2";
+import * as raw from "multiformats/codecs/raw";
+
 import isoWeek from "dayjs/plugin/isoWeek";
 import nacl from "tweetnacl";
 dayjs.extend(isoWeek);
@@ -290,6 +294,18 @@ const getIPNS = (private_key: string, ed_public_key: string) => {
  */
 const normalizePath = (s: string) => (s || "").replace(/^\/+|\/+$/g, "");
 
+/**
+ * 计算字符串的 CIDv1 (Raw 编码)
+ * @param content 字符串内容
+ * @returns CID 字符串
+ */
+const calculateCID = async (content: string) => {
+  const bytes = new TextEncoder().encode(content);
+  const hash = await sha256.digest(bytes);
+  const cid = CID.create(1, raw.code, hash);
+  return cid.toString();
+};
+
 const mp = {
   avatar,
   avatarCID,
@@ -308,6 +324,7 @@ const mp = {
   getEdKeyPair,
   getIPNS,
   normalizePath,
+  calculateCID,
 };
 
 export default mp;
