@@ -15,15 +15,19 @@ export interface FileItem {
   txHash?: string;
 }
 
+export interface NoteItem extends FileItem {
+  content: string;
+}
+
 interface UserStore {
   wallet?: MostWallet;
   setWallet: (wallet: MostWallet) => void;
   firstPath: string;
-  nodeDark: "toastui-editor-dark" | "";
   // 笔记
-  notes: FileItem[];
+  notes: NoteItem[];
   notesQuery: string;
   notesPath: string;
+  notesDark: "toastui-editor-dark" | "";
   // 文件
   files: FileItem[];
   filesPath: string;
@@ -42,7 +46,9 @@ interface UserStore {
   deleteFile: (cid?: string, path?: string, name?: string) => void;
   renameFile: (oldPath: string, newPath: string, newName: string) => void;
   // 笔记操作
-  addNote: (file: Omit<FileItem, "createdAt">) => void;
+  addNote: (
+    file: Omit<NoteItem, "createdAt" | "cid"> & { cid?: string },
+  ) => Promise<string>;
   deleteNote: (cid?: string, path?: string, name?: string) => void;
   renameNote: (oldPath: string, newPath: string, newName: string) => void;
   // 退出登录
@@ -66,7 +72,7 @@ export const useUserStore = create<State>()(
       firstPath: "",
       notesQuery: "",
       notesPath: "",
-      nodeDark: "",
+      notesDark: "",
 
       // 文件系统
       files: [],
@@ -80,6 +86,7 @@ export const useUserStore = create<State>()(
         if (file.type === "directory") return;
 
         set((state) => {
+          const files = Array.isArray(state.files) ? state.files : [];
           const normalizedPath = mp.normalizePath(file.path);
           const newFile = {
             ...file,
@@ -87,31 +94,32 @@ export const useUserStore = create<State>()(
             createdAt: Date.now(),
           };
 
-          const exists = state.files.some(
+          const exists = files.some(
             (f) => f.path === normalizedPath && f.name === file.name,
           );
 
           if (exists) {
             return {
-              files: state.files.map((f) =>
+              files: files.map((f) =>
                 f.path === normalizedPath && f.name === file.name ? newFile : f,
               ),
             };
           }
 
           return {
-            files: [...state.files, newFile],
+            files: [...files, newFile],
           };
         });
       },
 
       deleteFile(cid, path, name) {
         set((state) => {
+          const files = Array.isArray(state.files) ? state.files : [];
           const normalizedPath =
             path !== undefined ? mp.normalizePath(path) : "";
 
           return {
-            files: state.files.filter((file) => {
+            files: files.filter((file) => {
               if (cid && file.cid === cid) return false;
               if (
                 path !== undefined &&
@@ -128,11 +136,12 @@ export const useUserStore = create<State>()(
 
       renameFile(oldPath, newPath, newName) {
         set((state) => {
+          const files = Array.isArray(state.files) ? state.files : [];
           const oldPathNorm = mp.normalizePath(oldPath);
           const newPathNorm = mp.normalizePath(newPath);
 
           return {
-            files: state.files.map((file) => {
+            files: files.map((file) => {
               const fullPath = mp.normalizePath(
                 file.path === "" ? file.name : `${file.path}/${file.name}`,
               );
@@ -171,42 +180,51 @@ export const useUserStore = create<State>()(
       },
 
       // 笔记操作实现
-      addNote(file) {
-        if (file.type === "directory") return;
+      async addNote(file) {
+        if (file.type === "directory") return "";
+
+        const normalizedPath = mp.normalizePath(file.path);
+        const content = file.content || "";
+        const cid = file.cid || (await mp.calculateCID(content));
+
+        const newNote: NoteItem = {
+          ...file,
+          cid,
+          content,
+          path: normalizedPath,
+          createdAt: Date.now(),
+        };
 
         set((state) => {
-          const normalizedPath = mp.normalizePath(file.path);
-          const newFile = {
-            ...file,
-            path: normalizedPath,
-            createdAt: Date.now(),
-          };
-
-          const exists = state.notes.some(
+          const notes = Array.isArray(state.notes) ? state.notes : [];
+          const exists = notes.some(
             (f) => f.path === normalizedPath && f.name === file.name,
           );
 
           if (exists) {
             return {
-              notes: state.notes.map((f) =>
-                f.path === normalizedPath && f.name === file.name ? newFile : f,
+              notes: notes.map((f) =>
+                f.path === normalizedPath && f.name === file.name ? newNote : f,
               ),
             };
           }
 
           return {
-            notes: [...state.notes, newFile],
+            notes: [...notes, newNote],
           };
         });
+
+        return cid;
       },
 
       deleteNote(cid, path, name) {
         set((state) => {
+          const notes = Array.isArray(state.notes) ? state.notes : [];
           const normalizedPath =
             path !== undefined ? mp.normalizePath(path) : "";
 
           return {
-            notes: state.notes.filter((file) => {
+            notes: notes.filter((file) => {
               if (cid && file.cid === cid) return false;
               if (
                 path !== undefined &&
@@ -223,11 +241,12 @@ export const useUserStore = create<State>()(
 
       renameNote(oldPath, newPath, newName) {
         set((state) => {
+          const notes = Array.isArray(state.notes) ? state.notes : [];
           const oldPathNorm = mp.normalizePath(oldPath);
           const newPathNorm = mp.normalizePath(newPath);
 
           return {
-            notes: state.notes.map((file) => {
+            notes: notes.map((file) => {
               const fullPath = mp.normalizePath(
                 file.path === "" ? file.name : `${file.path}/${file.name}`,
               );

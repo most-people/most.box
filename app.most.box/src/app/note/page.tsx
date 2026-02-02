@@ -32,7 +32,8 @@ const PageContent = () => {
   const params = useSearchParams();
   const wallet = useUserStore((state) => state.wallet);
   const dotCID = useUserStore((state) => state.dotCID);
-  const notes = useUserStore((state) => state.notes);
+  const notesFromStore = useUserStore((state) => state.notes);
+  const notes = Array.isArray(notesFromStore) ? notesFromStore : [];
 
   const [loading, setLoading] = useState(true);
   const [viewer, setViewer] = useState<any>(null);
@@ -67,19 +68,22 @@ const PageContent = () => {
       setLoading(false);
       return;
     }
-    fetch(`${dotCID}/ipfs/${cid}/index.md`)
-      .then((response) => response.text())
-      .then((content) => {
-        setInited(true);
-        setIsSecret(false);
-        setContent(content);
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+
+    // 优先从本地 Store 获取
+    const localNote = notes.find((n) => n.cid === cid);
+    if (localNote && localNote.content !== undefined) {
+      setInited(true);
+      setIsSecret(false);
+      setContent(localNote.content);
+      setLoading(false);
+      return;
+    }
+
+    // 如果本地没有，也不再请求远程网关，直接结束加载
+    setInited(true);
+    setIsSecret(false);
+    setContent("");
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -111,26 +115,41 @@ const PageContent = () => {
       const authHeader = createCrustAuthHeader(account.address, signature);
 
       const blob = new Blob([newContent], { type: "text/markdown" });
-      const file = new File([blob], "index.md", { type: "text/markdown" });
-      const ipfs = await uploadToIpfsGateway(file, authHeader);
+      const file = new File([blob], "index", { type: "text/markdown" });
 
-      const cid = ipfs.cid;
-      if (cid) {
-        // 注册到本地
-        useUserStore.getState().addNote({
-          cid: cid,
-          name: name,
-          size: blob.size,
-          type: "file",
-          path: "",
+      // 先保存到本地 Store 实现离线可用
+      const localCid = await useUserStore.getState().addNote({
+        name: name,
+        size: blob.size,
+        type: "file",
+        path: "",
+        content: newContent,
+      });
+
+      // 异步上传到 IPFS
+      uploadToIpfsGateway(file, authHeader)
+        .then((ipfs) => {
+          if (ipfs.cid) {
+            useUserStore.getState().addNote({
+              cid: ipfs.cid,
+              name: name,
+              size: blob.size,
+              type: "file",
+              path: "",
+              content: newContent,
+            });
+            updateUrl(ipfs.cid, wallet?.address);
+          }
+        })
+        .catch((err) => {
+          console.error("IPFS 上传失败，但已保存至本地:", err);
         });
 
-        updateUrl(cid, wallet?.address);
-        notifications.show({
-          message: `${name} 保存成功`,
-          color: "green",
-        });
-      }
+      updateUrl(localCid, wallet?.address);
+      notifications.show({
+        message: `${name} 已保存`,
+        color: "green",
+      });
     } catch (error: any) {
       let message = error?.message || "文件上传失败，请重试";
       notifications.show({
@@ -190,11 +209,17 @@ const PageContent = () => {
   };
 
   const init = async () => {
+    const mode = params?.get("mode");
+    if (mode === "edit") {
+      setIsEditing(true);
+    }
+
     const uid = params?.get("uid");
     const name = params?.get("name");
     // 获取最新 CID
     if (uid && name) {
-      const note = notes?.find((file) => file.name === name);
+      const notesList = notes;
+      const note = notesList.find((file) => file.name === name);
       if (note) {
         const cid = note.cid;
         updateUrl(cid);
@@ -205,6 +230,8 @@ const PageContent = () => {
     const cid = params?.get("cid");
     if (cid) {
       fetchNote(cid);
+    } else {
+      fetchNote();
     }
   };
 
@@ -248,6 +275,14 @@ const PageContent = () => {
   };
 
   useEffect(() => {
+    if (isEditing && editor) {
+      setTimeout(() => {
+        editor.focus();
+      }, 100);
+    }
+  }, [isEditing, editor]);
+
+  useEffect(() => {
     if (!inited) return;
     viewer?.setMarkdown(content);
     editor?.setMarkdown(content);
@@ -256,16 +291,14 @@ const PageContent = () => {
   const viewerElement = useRef<HTMLDivElement>(null);
   const editorElement = useRef<HTMLDivElement>(null);
 
-  const nodeDark = useUserStore((state) => state.nodeDark);
+  const notesDark = useUserStore((state) => state.notesDark);
 
   useEffect(() => {
     initToastUI();
   }, []);
 
   useEffect(() => {
-    if (dotCID) {
-      init();
-    }
+    init();
   }, [dotCID]);
 
   return (
@@ -274,13 +307,13 @@ const PageContent = () => {
 
       <Box
         id="viewer-box"
-        className={nodeDark}
+        className={notesDark}
         ref={viewerElement}
         style={{ display: isEditing ? "none" : "block" }}
       />
       <Box
         id="editor-box"
-        className={nodeDark}
+        className={notesDark}
         ref={editorElement}
         style={{ display: isEditing ? "block" : "none" }}
       />

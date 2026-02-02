@@ -1,10 +1,7 @@
 import { api } from "@/utils/api";
 import { parse, HtmlGenerator } from "latex.js";
 import { useUserStore } from "@/stores/userStore";
-
-import { createCrustAuthHeader, uploadToIpfsGateway } from "@/utils/crust";
-import { mostMnemonic } from "@/utils/MostWallet";
-import { Wallet } from "ethers";
+import { notifications } from "@mantine/notifications";
 
 interface CodeBlockMdNode {
   info: string;
@@ -34,39 +31,12 @@ const uploadImage = async (
   file: File | Blob,
   callback: (url: string, altText: string) => void,
 ) => {
-  const wallet = useUserStore.getState().wallet;
-  if (!wallet) return;
-
-  try {
-    const mnemonic = mostMnemonic(wallet.danger);
-    const account = Wallet.fromPhrase(mnemonic);
-    const signature = await account.signMessage(account.address);
-    const authHeader = createCrustAuthHeader(account.address, signature);
-
-    const ipfs = await uploadToIpfsGateway(file as File, authHeader);
-    const fileName = (file as File).name || `${file.size}`;
-
-    // 注册到本地
-    const params = new URLSearchParams(location.search);
-    const noteName = params.get("name") || "default";
-
-    useUserStore.getState().addNote({
-      cid: ipfs.cid,
-      name: fileName,
-      size: file.size,
-      type: "file",
-      path: noteName,
-    });
-
-    if (ipfs.cid) {
-      callback(`/ipfs/${ipfs.cid}?filename=${fileName}`, fileName);
-    } else {
-      callback("", fileName);
-    }
-  } catch (error) {
-    console.error("上传图片失败", error);
-    callback("", (file as File).name || "image");
-  }
+  notifications.show({
+    title: "提示",
+    message: "暂不支持上传媒体文件",
+    color: "blue",
+  });
+  callback("", (file as File).name || "image");
 };
 
 // https://www.latexlive.com
@@ -117,7 +87,8 @@ const getEditorCore = (codeSyntaxHighlight: any) => {
         context.skipChildren();
         const src = node.destination;
         const alt = node.firstChild?.literal || "";
-        const dotCID = useUserStore.getState().dotCID;
+        const dotCID =
+          useUserStore.getState().dotCID || "https://gw.crustfiles.app";
         return {
           type: "openTag",
           tagName: "img",
@@ -158,7 +129,7 @@ const initEditor = async (el: HTMLDivElement) => {
       ["heading", "bold", "italic", "strike"],
       ["hr", "quote"],
       ["ul", "ol", "task", "indent", "outdent"],
-      ["table", "image", "link"],
+      ["table", "link"],
       [
         "codeblock",
         {

@@ -26,7 +26,7 @@ export default function HomeExplore() {
   const ipfsElement = useRef<HTMLDivElement>(null);
   const ipv6Element = useRef<HTMLDivElement>(null);
   const runDotElement = useRef<HTMLDivElement>(null);
-  const nodeDark = useUserStore((state) => state.nodeDark);
+  const notesDark = useUserStore((state) => state.notesDark);
 
   const markdown = useMarkdown();
   const init = async () => {
@@ -62,21 +62,21 @@ export default function HomeExplore() {
         <Accordion.Item value="IPFS">
           <Accordion.Control icon="🍎">1. IPFS</Accordion.Control>
           <Accordion.Panel>
-            <Box className={nodeDark} ref={ipfsElement} />
+            <Box className={notesDark} ref={ipfsElement} />
           </Accordion.Panel>
         </Accordion.Item>
 
         <Accordion.Item value="IPv6">
           <Accordion.Control icon="🍌">2. 公网 IPV6</Accordion.Control>
           <Accordion.Panel>
-            <Box className={nodeDark} ref={ipv6Element} />
+            <Box className={notesDark} ref={ipv6Element} />
           </Accordion.Panel>
         </Accordion.Item>
 
         <Accordion.Item value="DOT">
           <Accordion.Control icon="🥦">3. 运行节点</Accordion.Control>
           <Accordion.Panel>
-            <Box className={nodeDark} ref={runDotElement} />
+            <Box className={notesDark} ref={runDotElement} />
           </Accordion.Panel>
         </Accordion.Item>
       </Accordion>

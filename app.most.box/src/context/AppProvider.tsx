@@ -51,7 +51,7 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const computedColorScheme = useComputedColorScheme();
   useEffect(() => {
     const theme = colorScheme === "auto" ? computedColorScheme : colorScheme;
-    setItem("nodeDark", theme === "dark" ? "toastui-editor-dark" : "");
+    setItem("notesDark", theme === "dark" ? "toastui-editor-dark" : "");
   }, [colorScheme, computedColorScheme]);
 
   return (

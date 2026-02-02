@@ -11,7 +11,7 @@ import { AppHeader } from "@/components/AppHeader";
 export default function PageBuild() {
   const linuxElement = useRef<HTMLDivElement>(null);
   const windowsElement = useRef<HTMLDivElement>(null);
-  const nodeDark = useUserStore((state) => state.nodeDark);
+  const notesDark = useUserStore((state) => state.notesDark);
   const markdown = useMarkdown();
   const [system, setSystem] = useState("windows"); // 'linux' or 'windows'
 
@@ -54,12 +54,12 @@ export default function PageBuild() {
       <Divider my="md" />
       <Box
         hidden={system !== "linux"}
-        className={nodeDark}
+        className={notesDark}
         ref={linuxElement}
       />
       <Box
         hidden={system !== "windows"}
-        className={nodeDark}
+        className={notesDark}
         ref={windowsElement}
       />
     </Container>

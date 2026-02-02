@@ -30,6 +30,7 @@ import "./note.scss";
 import mp from "@/utils/mp";
 import { notifications } from "@mantine/notifications";
 import { useDisclosure } from "@mantine/hooks";
+import { modals } from "@mantine/modals";
 
 export default function HomeNote() {
   const wallet = useUserStore((state) => state.wallet);
@@ -75,13 +76,14 @@ export default function HomeNote() {
     return shareUrl.href;
   };
 
-  const notes = useUserStore((state) => state.notes);
+  const notesFromStore = useUserStore((state) => state.notes);
+  const notes = Array.isArray(notesFromStore) ? notesFromStore : [];
 
   // 过滤笔记列表
   const currentPath = mp.normalizePath(notesPath || "");
 
   const filteredNotes = useMemo(() => {
-    if (!notes) return [];
+    if (notes.length === 0) return [];
 
     if (notesQuery) {
       return notes
@@ -93,19 +95,22 @@ export default function HomeNote() {
         });
     }
 
-    // 1. 获取直接在该路径下的文件
-    const directFiles = notes.filter(
-      (file) => file.path === currentPath && file.type === "file",
-    );
-
-    // 2. 获取该路径下的所有子目录（推导出的虚拟目录）
+    // 1. 获取直接在该路径下的文件与子目录
+    const directFiles: FileItem[] = [];
     const inferredDirs = new Map<string, FileItem>();
 
     notes.forEach((file) => {
       const fPath = file.path;
 
-      if (fPath === currentPath) return; // 跳过当前目录
+      // 如果是在当前目录下的文件
+      if (fPath === currentPath) {
+        if (file.type === "file") {
+          directFiles.push(file);
+        }
+        return;
+      }
 
+      // 如果是在子目录下的文件，推导该层级的目录
       if (currentPath === "" || fPath.startsWith(currentPath + "/")) {
         const relativePath =
           currentPath === "" ? fPath : fPath.slice(currentPath.length + 1);
@@ -178,11 +183,12 @@ export default function HomeNote() {
       setCreateLoading(true);
 
       // 本地创建笔记
-      useUserStore.getState().addNote({
+      await useUserStore.getState().addNote({
         name: base,
         size: 0,
         type: "file",
         path: currentPath,
+        content: "",
       });
 
       notifications.show({
@@ -219,11 +225,12 @@ export default function HomeNote() {
       setNewFolderLoading(true);
       const targetPath = `${currentPath}/${name}`;
 
-      useUserStore.getState().addNote({
-        name: "index.md",
+      await useUserStore.getState().addNote({
+        name: "index",
         size: 0,
         type: "file",
         path: targetPath,
+        content: "",
       });
 
       notifications.show({ message: "文件夹创建成功", color: "green" });
@@ -257,6 +264,12 @@ export default function HomeNote() {
     }
   };
 
+  const handleEdit = (note: FileItem) => {
+    const url = new URL(shareUrl(note));
+    url.searchParams.set("mode", "edit");
+    window.open(url.href);
+  };
+
   // 执行重命名
   const executeRename = async () => {
     if (!currentNote) return;
@@ -275,19 +288,9 @@ export default function HomeNote() {
     }
 
     const targetDir = mp.normalizePath(dir || "");
-    const oldFullPath = mp.normalizePath(
-      currentNote.path === ""
-        ? currentNote.name
-        : `${currentNote.path}/${currentNote.name}`,
-    );
     const newFullPath = mp.normalizePath(
       targetDir === "" ? base : `${targetDir}/${base}`,
     );
-
-    if (oldFullPath === newFullPath) {
-      closeRenameModal();
-      return;
-    }
 
     if (
       notes.some(
@@ -302,7 +305,12 @@ export default function HomeNote() {
 
     try {
       setRenameLoading(true);
-      useUserStore.getState().renameNote(oldFullPath, targetDir, base);
+      const oldPath = mp.normalizePath(
+        currentNote.path === ""
+          ? currentNote.name
+          : `${currentNote.path}/${currentNote.name}`,
+      );
+      useUserStore.getState().renameNote(oldPath, targetDir, base);
 
       notifications.show({
         color: "green",
@@ -321,44 +329,53 @@ export default function HomeNote() {
   };
 
   // 删除笔记函数
-  const handleDelete = async (item: FileItem) => {
+  const handleDelete = (item: FileItem) => {
     const isDir = item.type === "directory";
-    if (
-      confirm(
-        `确定要删除${isDir ? "文件夹" : "笔记"}"${item.name}"吗？此操作不可撤销。`,
-      )
-    ) {
-      try {
-        if (isDir) {
-          const fullPath = mp.normalizePath(
-            currentPath === "" ? item.name : `${currentPath}/${item.name}`,
-          );
-          const notesToDelete = notes.filter((file) => {
-            const fFullPath = mp.normalizePath(
-              file.path === "" ? file.name : `${file.path}/${file.name}`,
+    modals.openConfirmModal({
+      title: "提示",
+      children: (
+        <Text size="sm">
+          确定要删除{isDir ? "文件夹" : "笔记"} &quot;{item.name}
+          &quot; 吗？此操作不可撤销。
+        </Text>
+      ),
+      labels: { confirm: "确定", cancel: "取消" },
+      confirmProps: { color: "red" },
+      onConfirm: async () => {
+        try {
+          if (isDir) {
+            const fullPath = mp.normalizePath(
+              currentPath === "" ? item.name : `${currentPath}/${item.name}`,
             );
-            return (
-              fFullPath === fullPath || fFullPath.startsWith(fullPath + "/")
-            );
-          });
-          notesToDelete.forEach((file) => {
-            useUserStore.getState().deleteNote(file.cid, file.path, file.name);
-          });
-        } else {
-          useUserStore.getState().deleteNote(item.cid, item.path, item.name);
-        }
+            const notesToDelete = notes.filter((file) => {
+              const fFullPath = mp.normalizePath(
+                file.path === "" ? file.name : `${file.path}/${file.name}`,
+              );
+              return (
+                fFullPath === fullPath || fFullPath.startsWith(fullPath + "/")
+              );
+            });
+            notesToDelete.forEach((file) => {
+              useUserStore
+                .getState()
+                .deleteNote(undefined, file.path, file.name);
+            });
+          } else {
+            useUserStore.getState().deleteNote(undefined, item.path, item.name);
+          }
 
-        notifications.show({
-          color: "green",
-          message: "删除成功",
-        });
-      } catch (error) {
-        notifications.show({
-          color: "red",
-          message: error instanceof Error ? error.message : "删除失败",
-        });
-      }
-    }
+          notifications.show({
+            color: "green",
+            message: "删除成功",
+          });
+        } catch (error) {
+          notifications.show({
+            color: "red",
+            message: error instanceof Error ? error.message : "删除失败",
+          });
+        }
+      },
+    });
   };
 
   // 分享笔记函数
@@ -552,6 +569,14 @@ export default function HomeNote() {
                           >
                             打开
                           </Menu.Item>
+                          {note.type === "file" && (
+                            <Menu.Item
+                              leftSection="✍️"
+                              onClick={() => handleEdit(note)}
+                            >
+                              编辑
+                            </Menu.Item>
+                          )}
                           {note.type === "file" && note.cid && (
                             <Menu.Item
                               leftSection="📤"

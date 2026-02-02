@@ -51,7 +51,8 @@ interface PreviewFile {
 
 export default function HomeFile() {
   const wallet = useUserStore((state) => state.wallet);
-  const files = useUserStore((state) => state.files);
+  const filesFromStore = useUserStore((state) => state.files);
+  const files = Array.isArray(filesFromStore) ? filesFromStore : [];
   const filesPath = useUserStore((state) => state.filesPath);
   const setItem = useUserStore((state) => state.setItem);
 
@@ -107,7 +108,7 @@ export default function HomeFile() {
   // 过滤文件列表
   const currentPath = mp.normalizePath(filesPath);
   const filteredFiles = useMemo(() => {
-    if (!files) return [];
+    if (files.length === 0) return [];
 
     if (searchQuery) {
       return files
@@ -119,34 +120,26 @@ export default function HomeFile() {
         });
     }
 
-    // 1. 获取直接在该路径下的文件
-    const directFiles = files.filter(
-      (file) => file.path === currentPath && file.type === "file",
-    );
-
-    // 2. 获取该路径下的所有子目录（推导出的虚拟目录）
+    // 1. 获取直接在该路径下的文件与子目录
+    const directFiles: FileItem[] = [];
     const inferredDirs = new Map<string, FileItem>();
 
     files.forEach((file) => {
       const fPath = file.path;
 
-      // 如果是文件且在更深层的目录中，推导出当前层级的目录
-      if (file.type === "file") {
-        if (currentPath === "") {
-          if (fPath !== "") {
-            const firstSegment = fPath.split("/")[0];
-            if (!inferredDirs.has(firstSegment)) {
-              inferredDirs.set(firstSegment, {
-                name: firstSegment,
-                type: "directory",
-                path: "",
-                size: 0,
-                createdAt: file.createdAt,
-              });
-            }
-          }
-        } else if (fPath.startsWith(currentPath + "/")) {
-          const relativePath = fPath.slice(currentPath.length + 1);
+      // 如果是在当前目录下的文件
+      if (fPath === currentPath) {
+        if (file.type === "file") {
+          directFiles.push(file);
+        }
+        return;
+      }
+
+      // 如果是在子目录下的文件，推导该层级的目录
+      if (currentPath === "" || fPath.startsWith(currentPath + "/")) {
+        const relativePath =
+          currentPath === "" ? fPath : fPath.slice(currentPath.length + 1);
+        if (relativePath) {
           const firstSegment = relativePath.split("/")[0];
           if (!inferredDirs.has(firstSegment)) {
             inferredDirs.set(firstSegment, {
@@ -480,15 +473,15 @@ export default function HomeFile() {
       }
 
       notifications.show({
-        title: "删除成功",
-        message: `${item.type === "directory" ? "目录" : "文件"} ${item.name} 已删除`,
+        title: "提示",
+        message: `${item.type === "directory" ? "文件夹" : "文件"} ${item.name} 已删除`,
         color: "green",
       });
     } catch (error) {
       console.error("删除失败:", error);
       notifications.show({
-        title: "删除失败",
-        message: `删除${item.type === "directory" ? "目录" : "文件"} ${
+        title: "提示",
+        message: `删除${item.type === "directory" ? "文件夹" : "文件"} ${
           item.name
         } 失败，请重试`,
         color: "red",
@@ -498,10 +491,14 @@ export default function HomeFile() {
 
   // 确认删除的函数
   const handleDeleteFile = (item: FileItem) => {
+    const isDir = item.type === "directory";
     modals.openConfirmModal({
       title: "提示",
       children: (
-        <Text size="sm">确定要删除文件 &quot;{item.name}&quot; 吗？</Text>
+        <Text size="sm">
+          确定要删除{isDir ? "文件夹" : "文件"} &quot;{item.name}
+          &quot; 吗？此操作不可撤销。
+        </Text>
       ),
       labels: { confirm: "确定", cancel: "取消" },
       confirmProps: { color: "red" },
@@ -588,20 +585,6 @@ export default function HomeFile() {
     fetchFiles(newPath);
   };
 
-  // 打开文件
-  const handleOpenFile = (item: FileItem) => {
-    try {
-      const url = new URL(dotCID);
-      url.pathname = `/ipfs/${item.cid}`;
-      if (item.name) {
-        url.searchParams.set("filename", item.name);
-      }
-      window.open(url.toString(), "_blank");
-    } catch (error) {
-      console.error("打开失败", error);
-    }
-  };
-
   // 分享文件
   const handleShareFile = (item: FileItem) => {
     const cid = item.cid;
@@ -626,7 +609,7 @@ export default function HomeFile() {
       params.set("format", "tar");
       params.set("filename", `${item.name}.tar`);
     }
-    return `${dotCID}/ipfs/${item.cid}?${params.toString()}`;
+    return `${dotCID || "https://gw.crustfiles.app"}/ipfs/${item.cid}?${params.toString()}`;
   };
 
   const oldPathForCompare = renamingItem
@@ -749,7 +732,7 @@ export default function HomeFile() {
                       onClick={() => handleBreadcrumbClick(-1)}
                       underline="never"
                     >
-                      根目录
+                      文件
                     </Anchor>
                     {(filesPath || "")
                       .split("/")
@@ -805,19 +788,6 @@ export default function HomeFile() {
                         </Menu.Target>
 
                         <Menu.Dropdown>
-                          {/* <Menu.Item
-                            leftSection="📖"
-                            onClick={() => {
-                              if (item.type === "directory") {
-                                handleFolderClick(item.name);
-                              } else {
-                                handleOpenFile(item);
-                              }
-                            }}
-                          >
-                            {item.type === "directory" ? "打开" : "查看"}
-                          </Menu.Item> */}
-
                           <Menu.Item
                             leftSection="📖"
                             onClick={() => {

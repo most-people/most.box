@@ -8,7 +8,7 @@ import { useUserStore } from "@/stores/userStore";
 
 const PageAboutThesis = () => {
   const markdown = useMarkdown();
-  const nodeDark = useUserStore((state) => state.nodeDark);
+  const notesDark = useUserStore((state) => state.notesDark);
 
   const init = async () => {
     if (viewerElement.current) {
@@ -26,7 +26,7 @@ const PageAboutThesis = () => {
   return (
     <Container py="md">
       <AppHeader title="论文" />
-      <Box className={nodeDark} ref={viewerElement} />
+      <Box className={notesDark} ref={viewerElement} />
     </Container>
   );
 };

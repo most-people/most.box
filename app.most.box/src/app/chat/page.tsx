@@ -300,7 +300,7 @@ export default function PageChat() {
     setIsCameraOn(false);
   };
 
-  const nodeDark = useUserStore((state) => state.nodeDark);
+  const notesDark = useUserStore((state) => state.notesDark);
 
   useEffect(() => {
     const uuid = Math.random().toString(36).slice(2, 10).toUpperCase();

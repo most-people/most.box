@@ -48,8 +48,9 @@ const PageContent = () => {
   }, [cid, filename, cidType]);
 
   const previewUrl = useMemo(() => {
-    if (dotCID && cid) {
-      const url = new URL(dotCID);
+    if (cid) {
+      const gateway = dotCID || "https://gw.crustfiles.app";
+      const url = new URL(gateway);
       url.pathname = `/ipfs/${cid}`;
       if (filename) {
         url.searchParams.set("filename", filename);
@@ -60,8 +61,9 @@ const PageContent = () => {
   }, [dotCID, cid, filename]);
 
   const downloadUrl = useMemo(() => {
-    if (dotCID && cid) {
-      const url = new URL(dotCID);
+    if (cid) {
+      const gateway = dotCID || "https://gw.crustfiles.app";
+      const url = new URL(gateway);
       url.pathname = `/ipfs/${cid}`;
       url.searchParams.set("download", "true");
       if (filename) {

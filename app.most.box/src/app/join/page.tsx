@@ -7,7 +7,7 @@ import content from "./join.md";
 import { useUserStore } from "@/stores/userStore";
 
 const PageJoin = () => {
-  const nodeDark = useUserStore((state) => state.nodeDark);
+  const notesDark = useUserStore((state) => state.notesDark);
   const markdown = useMarkdown();
 
   const init = async () => {
@@ -26,7 +26,7 @@ const PageJoin = () => {
   return (
     <Container py="md">
       <AppHeader title="Internationale" />
-      <Box className={nodeDark} ref={viewerElement} />
+      <Box className={notesDark} ref={viewerElement} />
     </Container>
   );
 };
