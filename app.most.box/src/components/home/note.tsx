@@ -14,10 +14,17 @@ import {
   Tooltip,
   LoadingOverlay,
   Box,
+  Breadcrumbs,
+  Anchor,
 } from "@mantine/core";
-import { useEffect, useState } from "react";
-import { IconDotsVertical, IconPlus, IconRefresh } from "@tabler/icons-react";
-import { Note, useUserStore } from "@/stores/userStore";
+import { useEffect, useState, useMemo } from "react";
+import {
+  IconDotsVertical,
+  IconPlus,
+  IconRefresh,
+  IconFolderPlus,
+} from "@tabler/icons-react";
+import { FileItem, useUserStore } from "@/stores/userStore";
 import Link from "next/link";
 import "./note.scss";
 import mp from "@/utils/mp";
@@ -26,8 +33,8 @@ import { useDisclosure } from "@mantine/hooks";
 
 export default function HomeNote() {
   const wallet = useUserStore((state) => state.wallet);
-  const notes = useUserStore((state) => state.notes);
   const notesQuery = useUserStore((state) => state.notesQuery);
+  const notesPath = useUserStore((state) => state.notesPath);
   const setItem = useUserStore((state) => state.setItem);
 
   const [fetchLoading, setFetchLoading] = useState(false);
@@ -38,25 +45,26 @@ export default function HomeNote() {
     useDisclosure(false);
 
   const [noteName, setNoteName] = useState("");
-  const [noteGroup, setNoteGroup] = useState("");
   const [noteNameError, setNoteNameError] = useState("");
   const [createLoading, setCreateLoading] = useState(false);
+
+  // 新建文件夹相关状态
+  const [newFolderModalOpen, setNewFolderModalOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [newFolderLoading, setNewFolderLoading] = useState(false);
 
   // 添加重命名相关状态
   const [
     renameModalOpened,
     { open: openRenameModal, close: closeRenameModal },
   ] = useDisclosure(false);
-  const [currentNote, setCurrentNote] = useState<{
-    name: string;
-    cid: string;
-  } | null>(null);
+  const [currentNote, setCurrentNote] = useState<FileItem | null>(null);
   const [renameError, setRenameError] = useState("");
   const [renameLoading, setRenameLoading] = useState(false);
-  const [renameGroup, setRenameGroup] = useState("");
+  const [renameDirPath, setRenameDirPath] = useState("");
   const [renameBaseName, setRenameBaseName] = useState("");
 
-  const shareUrl = (note: Note) => {
+  const shareUrl = (note: FileItem) => {
     const shareUrl = new URL(window.location.href);
     shareUrl.pathname = "/note/";
     shareUrl.searchParams.set("uid", wallet?.address || "");
@@ -68,12 +76,58 @@ export default function HomeNote() {
   const files = useUserStore((state) => state.files);
 
   // 过滤笔记列表
-  const filteredNotes = files
-    ? files
-        .filter((file) => mp.normalizePath(file.path) === ".note")
+  const currentPath = mp.normalizePath(
+    notesPath ? `.note/${notesPath}` : ".note",
+  );
+  const filteredNotes = useMemo(() => {
+    if (!files) return [];
+
+    if (notesQuery) {
+      return files
+        .filter((file) => file.path.startsWith(".note"))
         .filter((note) => mp.pinyin(note.name, notesQuery, 0))
-        .map((file) => ({ name: file.name, cid: file.cid }))
-    : [];
+        .sort((a, b) => {
+          if (a.type === "directory" && b.type !== "directory") return -1;
+          if (a.type !== "directory" && b.type === "directory") return 1;
+          return 0;
+        });
+    }
+
+    // 1. 获取直接在该路径下的文件
+    const directFiles = files.filter(
+      (file) => file.path === currentPath && file.type === "file",
+    );
+
+    // 2. 获取该路径下的所有子目录（推导出的虚拟目录）
+    const inferredDirs = new Map<string, FileItem>();
+
+    files.forEach((file) => {
+      const fPath = file.path;
+
+      if (fPath.startsWith(currentPath + "/")) {
+        const relativePath = fPath.slice(currentPath.length + 1);
+        const firstSegment = relativePath.split("/")[0];
+        if (!inferredDirs.has(firstSegment)) {
+          inferredDirs.set(firstSegment, {
+            name: firstSegment,
+            type: "directory",
+            path: currentPath,
+            cid: `virtual-dir-${firstSegment}`,
+            size: 0,
+            createdAt: file.createdAt,
+          });
+        }
+      }
+    });
+
+    return [...Array.from(inferredDirs.values()), ...directFiles].sort(
+      (a, b) => {
+        if (a.type === "directory" && b.type !== "directory") return -1;
+        if (a.type !== "directory" && b.type === "directory") return 1;
+        return b.createdAt - a.createdAt;
+      },
+    );
+  }, [files, currentPath, notesQuery]);
 
   // 获取当前显示的笔记列表
   const displayedNotes = filteredNotes.slice(0, displayCount);
@@ -95,7 +149,6 @@ export default function HomeNote() {
 
   // 创建笔记函数
   const createNote = async () => {
-    const group = noteGroup.trim();
     const base = noteName.trim();
 
     // 验证笔记名称
@@ -104,15 +157,15 @@ export default function HomeNote() {
       return;
     }
 
-    if (group.includes("/") || base.includes("/")) {
+    if (base.includes("/")) {
       setNoteNameError("不能包含字符 /");
       return;
     }
 
-    const name = group ? `${group}-${base}` : base;
-
     // 检查是否已存在同名笔记
-    if (filteredNotes?.some((note) => note.name === name)) {
+    if (
+      filteredNotes?.some((note) => note.name === base && note.type === "file")
+    ) {
       setNoteNameError("笔记名称已存在");
       return;
     }
@@ -123,10 +176,10 @@ export default function HomeNote() {
       // 本地创建笔记
       useUserStore.getState().addLocalFile({
         cid: `local-note-${Date.now()}`,
-        name: name,
+        name: base,
         size: 0,
         type: "file",
-        path: "/.note",
+        path: currentPath,
       });
 
       notifications.show({
@@ -136,7 +189,6 @@ export default function HomeNote() {
 
       closeNoteModal();
       setNoteName("");
-      setNoteGroup("");
     } catch (error) {
       notifications.show({
         color: "red",
@@ -147,75 +199,117 @@ export default function HomeNote() {
     }
   };
 
+  const createFolder = async () => {
+    const name = newFolderName.trim();
+    if (!name) return;
+
+    if (
+      filteredNotes.some(
+        (item) => item.type === "directory" && item.name === name,
+      )
+    ) {
+      notifications.show({ message: "文件夹已存在", color: "red" });
+      return;
+    }
+
+    try {
+      setNewFolderLoading(true);
+      const targetPath = `${currentPath}/${name}`;
+
+      useUserStore.getState().addLocalFile({
+        cid: `virtual-dir-note-${Date.now()}`,
+        name: "index.md",
+        size: 0,
+        type: "file",
+        path: targetPath,
+      });
+
+      notifications.show({ message: "文件夹创建成功", color: "green" });
+      setNewFolderModalOpen(false);
+      setNewFolderName("");
+    } catch (error: any) {
+      notifications.show({
+        message: error.message || "创建文件夹失败",
+        color: "red",
+      });
+    } finally {
+      setNewFolderLoading(false);
+    }
+  };
+
   // 重命名笔记函数
-  const handleRename = (note: Note) => {
+  const handleRename = (note: FileItem) => {
     setCurrentNote(note);
     setRenameError("");
-    // 解析当前名称为 分组-名称 的结构
-    const idx = note.name.indexOf("-");
-    if (idx > 0) {
-      const g = note.name.slice(0, idx);
-      const n = note.name.slice(idx + 1);
-      setRenameGroup(g);
-      setRenameBaseName(n);
-    } else {
-      setRenameGroup("");
-      setRenameBaseName(note.name);
-    }
+    setRenameBaseName(note.name);
+    setRenameDirPath(note.path.replace(/^\.note\/?/, ""));
     openRenameModal();
   };
 
-  const handleOpen = (note: Note) => {
-    const url = shareUrl(note);
-    window.open(url);
+  const handleOpen = (note: FileItem) => {
+    if (note.type === "directory") {
+      handleFolderClick(note.name);
+    } else {
+      const url = shareUrl(note);
+      window.open(url);
+    }
   };
 
   // 执行重命名
   const executeRename = async () => {
     if (!currentNote) return;
 
-    const group = renameGroup.trim();
     const base = renameBaseName.trim();
+    const dir = renameDirPath.trim();
 
     if (!base) {
       setRenameError("请输入名称");
       return;
     }
 
-    if (group.includes("/") || base.includes("/")) {
+    if (base.includes("/")) {
       setRenameError("不能包含字符 /");
       return;
     }
 
-    const name = group ? `${group}-${base}` : base;
+    const targetDir = mp.normalizePath(dir ? `.note/${dir}` : ".note");
+    const oldFullPath = mp.normalizePath(
+      currentNote.path === ""
+        ? currentNote.name
+        : `${currentNote.path}/${currentNote.name}`,
+    );
+    const newFullPath = mp.normalizePath(`${targetDir}/${base}`);
 
-    if (name === currentNote.name) {
+    if (oldFullPath === newFullPath) {
       closeRenameModal();
       return;
     }
 
-    if (filteredNotes?.some((note) => note.name === name)) {
-      setRenameError("笔记名称已存在");
+    if (
+      files.some(
+        (f) =>
+          mp.normalizePath(f.path === "" ? f.name : `${f.path}/${f.name}`) ===
+          newFullPath,
+      )
+    ) {
+      setRenameError("名称已存在");
       return;
     }
 
     try {
       setRenameLoading(true);
-
-      const oldFullPath = `.note/${currentNote.name}`;
-
-      useUserStore.getState().renameLocalFile(oldFullPath, "/.note", name);
+      useUserStore.getState().renameLocalFile(oldFullPath, targetDir, base);
 
       notifications.show({
         color: "green",
-        message: "重命名成功",
+        message: "操作成功",
       });
 
       closeRenameModal();
     } catch (error) {
       notifications.show({
         color: "red",
-        message: error instanceof Error ? error.message : "重命名失败",
+        message: error instanceof Error ? error.message : "操作失败",
       });
     } finally {
       setRenameLoading(false);
@@ -223,10 +317,28 @@ export default function HomeNote() {
   };
 
   // 删除笔记函数
-  const handleDelete = async (note: Note) => {
-    if (confirm(`确定要删除笔记"${note.name}"吗？此操作不可撤销。`)) {
+  const handleDelete = async (item: FileItem) => {
+    const isDir = item.type === "directory";
+    if (
+      confirm(
+        `确定要删除${isDir ? "文件夹" : "笔记"}"${item.name}"吗？此操作不可撤销。`,
+      )
+    ) {
       try {
-        useUserStore.getState().deleteLocalFile(note.cid);
+        if (isDir) {
+          const fullPath = mp.normalizePath(`${currentPath}/${item.name}`);
+          const filesToDelete = files.filter((file) => {
+            const fFullPath = mp.normalizePath(`${file.path}/${file.name}`);
+            return (
+              fFullPath === fullPath || fFullPath.startsWith(fullPath + "/")
+            );
+          });
+          filesToDelete.forEach((file) => {
+            useUserStore.getState().deleteLocalFile(file.cid);
+          });
+        } else {
+          useUserStore.getState().deleteLocalFile(item.cid);
+        }
 
         notifications.show({
           color: "green",
@@ -242,14 +354,30 @@ export default function HomeNote() {
   };
 
   // 分享笔记函数
-  const handleShare = (note: Note) => {
+  const handleShare = (note: FileItem) => {
     window.open(`/ipfs/${note.cid}/?filename=${note.name}&type=note`);
+  };
+
+  // 处理文件夹点击
+  const handleFolderClick = (folderName: string) => {
+    const newPath = notesPath ? `${notesPath}/${folderName}` : folderName;
+    setItem("notesPath", newPath);
+  };
+
+  // 面包屑点击跳转
+  const handleBreadcrumbClick = (index: number) => {
+    const parts = (notesPath || "").split("/").filter(Boolean);
+    if (index < 0) {
+      setItem("notesPath", "");
+      return;
+    }
+    const newPath = parts.slice(0, index + 1).join("/");
+    setItem("notesPath", newPath);
   };
 
   // 重置弹窗状态
   const closeModal = () => {
     setNoteName("");
-    setNoteGroup("");
     setNoteNameError("");
     closeNoteModal();
   };
@@ -257,7 +385,7 @@ export default function HomeNote() {
   // 重置重命名弹窗状态
   const closeRenameModalAndReset = () => {
     setCurrentNote(null);
-    setRenameGroup("");
+    setRenameDirPath("");
     setRenameBaseName("");
     setRenameError("");
     closeRenameModal();
@@ -295,8 +423,12 @@ export default function HomeNote() {
             {notesQuery
               ? `显示 ${displayedNotes.length} / ${
                   filteredNotes.length
-                } (总共 ${notes?.length || 0})`
-              : `显示 ${displayedNotes.length} / ${notes?.length || 0}`}{" "}
+                } (总共 ${
+                  files.filter((file) => file.path.startsWith(".note")).length
+                })`
+              : `显示 ${displayedNotes.length} / ${
+                  files.filter((file) => file.path.startsWith(".note")).length
+                }`}{" "}
             {""}
             个笔记
           </Badge>
@@ -321,6 +453,16 @@ export default function HomeNote() {
                 <IconPlus size={18} />
               </ActionIcon>
             </Tooltip>
+            <Tooltip label="新建文件夹">
+              <ActionIcon
+                size="lg"
+                onClick={() => setNewFolderModalOpen(true)}
+                color="yellow"
+                disabled={!wallet}
+              >
+                <IconFolderPlus size={18} />
+              </ActionIcon>
+            </Tooltip>
           </Group>
         </Group>
 
@@ -336,166 +478,107 @@ export default function HomeNote() {
           </Stack>
         ) : (
           <>
-            {(() => {
-              // 构建分组：以第一个 "-" 之前的部分作为前缀
-              const grouped = new Map<string, Note[]>();
-              const ungrouped: Note[] = [];
-
-              displayedNotes.forEach((note) => {
-                const idx = note.name.indexOf("-");
-                if (idx > 0) {
-                  const prefix = note.name.slice(0, idx);
-                  const arr = grouped.get(prefix) || [];
-                  arr.push(note);
-                  grouped.set(prefix, arr);
-                } else {
-                  ungrouped.push(note);
-                }
-              });
-
-              return (
-                <Grid gutter="md">
-                  {[...grouped.entries()].map(([prefix, items]) => (
-                    <Grid.Col
-                      key={`group-${prefix}`}
-                      span={{ base: 12, xs: 6, sm: 4, md: 3, lg: 3, xl: 2 }}
-                    >
-                      <Card radius="md" withBorder>
-                        <Group
-                          justify="space-between"
-                          wrap="nowrap"
-                          gap={4}
-                          mb="xs"
-                        >
-                          <Text fw={700}>{prefix}</Text>
-                          <Badge variant="light">{items.length}</Badge>
-                        </Group>
-                        <Stack gap={0}>
-                          {items.map((note) => {
-                            const subName = note.name.slice(prefix.length + 1);
-                            return (
-                              <Group
-                                key={note.name}
-                                justify="space-between"
-                                wrap="nowrap"
-                                gap={0}
-                              >
-                                <Box
-                                  py={6}
-                                  className="mp-hover"
-                                  flex={1}
-                                  component={Link}
-                                  href={shareUrl(note)}
-                                >
-                                  <Text
-                                    fw={500}
-                                    lineClamp={1}
-                                    c="var(--mantine-color-text)"
-                                  >
-                                    {subName || note.name}
-                                  </Text>
-                                </Box>
-                                <Menu shadow="md" width={120}>
-                                  <Menu.Target>
-                                    <ActionIcon variant="subtle" color="gary">
-                                      <IconDotsVertical size={14} />
-                                    </ActionIcon>
-                                  </Menu.Target>
-
-                                  <Menu.Dropdown>
-                                    <Menu.Item
-                                      leftSection="📖"
-                                      onClick={() => handleOpen(note)}
-                                    >
-                                      打开
-                                    </Menu.Item>
-                                    <Menu.Item
-                                      leftSection="📤"
-                                      onClick={() => handleShare(note)}
-                                    >
-                                      分享
-                                    </Menu.Item>
-                                    <Menu.Item
-                                      leftSection="✏️"
-                                      onClick={() => handleRename(note)}
-                                    >
-                                      重命名
-                                    </Menu.Item>
-                                    <Menu.Divider />
-                                    <Menu.Item
-                                      leftSection="🗑️"
-                                      onClick={() => handleDelete(note)}
-                                    >
-                                      删除
-                                    </Menu.Item>
-                                  </Menu.Dropdown>
-                                </Menu>
-                              </Group>
-                            );
-                          })}
-                        </Stack>
-                      </Card>
-                    </Grid.Col>
-                  ))}
-
-                  {ungrouped.map((note) => (
-                    <Grid.Col
-                      key={note.name}
-                      span={{ base: 12, xs: 6, sm: 4, md: 3, lg: 3, xl: 2 }}
-                    >
-                      <Card radius="md" withBorder>
-                        <Group justify="space-between" wrap="nowrap" gap={0}>
-                          <Text
-                            flex={1}
+            {!notesQuery && (
+              <Card radius="md" withBorder>
+                <Group justify="space-between" wrap="nowrap" gap={4}>
+                  <Group gap={8} wrap="nowrap">
+                    <Text fw={500}>📁</Text>
+                    <Breadcrumbs separator="›">
+                      <Anchor
+                        fw={500}
+                        onClick={() => handleBreadcrumbClick(-1)}
+                        underline="never"
+                      >
+                        笔记
+                      </Anchor>
+                      {(notesPath || "")
+                        .split("/")
+                        .filter(Boolean)
+                        .map((seg, idx) => (
+                          <Anchor
+                            key={idx}
                             fw={500}
-                            lineClamp={1}
-                            component={Link}
-                            href={shareUrl(note)}
+                            onClick={() => handleBreadcrumbClick(idx)}
+                            underline="never"
                           >
-                            {note.name}
-                          </Text>
-                          <Menu shadow="md" width={120}>
-                            <Menu.Target>
-                              <ActionIcon variant="subtle" color="gary">
-                                <IconDotsVertical size={14} />
-                              </ActionIcon>
-                            </Menu.Target>
+                            {seg}
+                          </Anchor>
+                        ))}
+                    </Breadcrumbs>
+                  </Group>
+                </Group>
+              </Card>
+            )}
 
-                            <Menu.Dropdown>
-                              <Menu.Item
-                                leftSection="📖"
-                                onClick={() => handleOpen(note)}
-                              >
-                                打开
-                              </Menu.Item>
-                              <Menu.Item
-                                leftSection="📤"
-                                onClick={() => handleShare(note)}
-                              >
-                                分享
-                              </Menu.Item>
-                              <Menu.Item
-                                leftSection="✏️"
-                                onClick={() => handleRename(note)}
-                              >
-                                重命名
-                              </Menu.Item>
-                              <Menu.Divider />
-                              <Menu.Item
-                                leftSection="🗑️"
-                                onClick={() => handleDelete(note)}
-                              >
-                                删除
-                              </Menu.Item>
-                            </Menu.Dropdown>
-                          </Menu>
-                        </Group>
-                      </Card>
-                    </Grid.Col>
-                  ))}
-                </Grid>
-              );
-            })()}
+            <Grid gutter="md">
+              {displayedNotes.map((note) => (
+                <Grid.Col
+                  key={note.cid + note.name}
+                  span={{ base: 12, xs: 6, sm: 4, md: 3, lg: 3, xl: 2 }}
+                >
+                  <Card radius="md" withBorder>
+                    <Group justify="space-between" wrap="nowrap" gap={0}>
+                      <Text
+                        flex={1}
+                        fw={500}
+                        lineClamp={1}
+                        component={
+                          (note.type === "directory" ? "div" : Link) as any
+                        }
+                        href={
+                          note.type === "directory" ? undefined : shareUrl(note)
+                        }
+                        onClick={() => {
+                          if (note.type === "directory") {
+                            handleFolderClick(note.name);
+                          }
+                        }}
+                        style={{ cursor: "pointer" }}
+                      >
+                        {note.type === "directory" ? "📁" : "📝"} {note.name}
+                      </Text>
+                      <Menu shadow="md" width={120}>
+                        <Menu.Target>
+                          <ActionIcon variant="subtle" color="gray">
+                            <IconDotsVertical size={14} />
+                          </ActionIcon>
+                        </Menu.Target>
+
+                        <Menu.Dropdown>
+                          <Menu.Item
+                            leftSection="📖"
+                            onClick={() => handleOpen(note)}
+                          >
+                            打开
+                          </Menu.Item>
+                          {note.type === "file" && (
+                            <Menu.Item
+                              leftSection="📤"
+                              onClick={() => handleShare(note)}
+                            >
+                              分享
+                            </Menu.Item>
+                          )}
+                          <Menu.Item
+                            leftSection="✏️"
+                            onClick={() => handleRename(note)}
+                          >
+                            重命名
+                          </Menu.Item>
+                          <Menu.Divider />
+                          <Menu.Item
+                            leftSection="🗑️"
+                            onClick={() => handleDelete(note)}
+                          >
+                            删除
+                          </Menu.Item>
+                        </Menu.Dropdown>
+                      </Menu>
+                    </Group>
+                  </Card>
+                </Grid.Col>
+              ))}
+            </Grid>
             {hasMore && (
               <Center>
                 <Button variant="light" onClick={loadMore} size="md">
@@ -524,15 +607,6 @@ export default function HomeNote() {
       >
         <Stack gap="md">
           <TextInput
-            label="分组（可选）"
-            value={noteGroup}
-            onChange={(e) => {
-              const g = e.currentTarget.value;
-              setNoteGroup(g);
-              setNoteNameError("");
-            }}
-          />
-          <TextInput
             placeholder="请输入笔记名称"
             value={noteName}
             onChange={(event) => {
@@ -554,19 +628,67 @@ export default function HomeNote() {
         </Stack>
       </Modal>
 
+      {/* 新建文件夹模态框 */}
       <Modal
-        opened={renameModalOpened}
-        onClose={closeRenameModalAndReset}
-        title="笔记重命名"
+        opened={newFolderModalOpen}
+        onClose={() => {
+          setNewFolderModalOpen(false);
+          setNewFolderName("");
+        }}
+        title="新建文件夹"
         centered
       >
         <Stack gap="md">
           <TextInput
-            label="分组（可选）"
-            value={renameGroup}
+            label="文件夹名称"
+            required
+            placeholder="请输入文件夹名称"
+            value={newFolderName}
+            onChange={(event) => setNewFolderName(event.currentTarget.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                createFolder();
+              }
+            }}
+            disabled={newFolderLoading}
+            autoFocus
+          />
+
+          <Group justify="flex-end" gap="sm">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setNewFolderModalOpen(false);
+                setNewFolderName("");
+              }}
+              disabled={newFolderLoading}
+            >
+              取消
+            </Button>
+            <Button
+              onClick={createFolder}
+              loading={newFolderLoading}
+              disabled={!newFolderName.trim()}
+            >
+              创建
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+
+      <Modal
+        opened={renameModalOpened}
+        onClose={closeRenameModalAndReset}
+        title="重命名 / 移动"
+        centered
+      >
+        <Stack gap="md">
+          <TextInput
+            label="目录路径"
+            placeholder="根目录留空，例如: study/math"
+            value={renameDirPath}
             onChange={(e) => {
-              const g = e.currentTarget.value;
-              setRenameGroup(g);
+              setRenameDirPath(e.currentTarget.value);
               setRenameError("");
             }}
           />
@@ -575,8 +697,7 @@ export default function HomeNote() {
             placeholder="请输入名称"
             value={renameBaseName}
             onChange={(e) => {
-              const n = e.currentTarget.value;
-              setRenameBaseName(n);
+              setRenameBaseName(e.currentTarget.value);
               setRenameError("");
             }}
             error={renameError}

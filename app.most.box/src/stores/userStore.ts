@@ -15,19 +15,13 @@ export interface FileItem {
   txHash?: string;
 }
 
-export interface Note {
-  name: string;
-  cid: string;
-}
-
 interface UserStore {
   wallet?: MostWallet;
   setWallet: (wallet: MostWallet) => void;
   firstPath: string;
-  // 笔记
-  notes?: Note[];
   nodeDark: "toastui-editor-dark" | "";
   notesQuery: string;
+  notesPath: string;
   // 文件
   files: FileItem[]; // 改为非可选，初始化为空数组
   filesPath: string;
@@ -64,9 +58,8 @@ export const useUserStore = create<State>()(
       },
       // 返回
       firstPath: "",
-      // 笔记
-      notes: undefined,
       notesQuery: "",
+      notesPath: "",
       nodeDark: "",
 
       // 文件系统
@@ -180,12 +173,12 @@ export const useUserStore = create<State>()(
       exit() {
         set({
           wallet: undefined,
-          notes: undefined,
           files: [],
           jwt: "",
           firstPath: "",
           notesQuery: "",
           filesPath: "",
+          notesPath: "",
           balance: "",
           dotCID: "",
           homeTab: "file",
