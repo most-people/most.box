@@ -69,22 +69,22 @@ export default function HomeNote() {
     shareUrl.pathname = "/note/";
     shareUrl.searchParams.set("uid", wallet?.address || "");
     shareUrl.searchParams.set("name", note.name);
-    shareUrl.searchParams.set("cid", note.cid);
+    if (note.cid) {
+      shareUrl.searchParams.set("cid", note.cid);
+    }
     return shareUrl.href;
   };
 
-  const files = useUserStore((state) => state.files);
+  const notes = useUserStore((state) => state.notes);
 
   // 过滤笔记列表
-  const currentPath = mp.normalizePath(
-    notesPath ? `.note/${notesPath}` : ".note",
-  );
+  const currentPath = mp.normalizePath(notesPath || "");
+
   const filteredNotes = useMemo(() => {
-    if (!files) return [];
+    if (!notes) return [];
 
     if (notesQuery) {
-      return files
-        .filter((file) => file.path.startsWith(".note"))
+      return notes
         .filter((note) => mp.pinyin(note.name, notesQuery, 0))
         .sort((a, b) => {
           if (a.type === "directory" && b.type !== "directory") return -1;
@@ -94,28 +94,32 @@ export default function HomeNote() {
     }
 
     // 1. 获取直接在该路径下的文件
-    const directFiles = files.filter(
+    const directFiles = notes.filter(
       (file) => file.path === currentPath && file.type === "file",
     );
 
     // 2. 获取该路径下的所有子目录（推导出的虚拟目录）
     const inferredDirs = new Map<string, FileItem>();
 
-    files.forEach((file) => {
+    notes.forEach((file) => {
       const fPath = file.path;
 
-      if (fPath.startsWith(currentPath + "/")) {
-        const relativePath = fPath.slice(currentPath.length + 1);
-        const firstSegment = relativePath.split("/")[0];
-        if (!inferredDirs.has(firstSegment)) {
-          inferredDirs.set(firstSegment, {
-            name: firstSegment,
-            type: "directory",
-            path: currentPath,
-            cid: `virtual-dir-${firstSegment}`,
-            size: 0,
-            createdAt: file.createdAt,
-          });
+      if (fPath === currentPath) return; // 跳过当前目录
+
+      if (currentPath === "" || fPath.startsWith(currentPath + "/")) {
+        const relativePath =
+          currentPath === "" ? fPath : fPath.slice(currentPath.length + 1);
+        if (relativePath) {
+          const firstSegment = relativePath.split("/")[0];
+          if (!inferredDirs.has(firstSegment)) {
+            inferredDirs.set(firstSegment, {
+              name: firstSegment,
+              type: "directory",
+              path: currentPath,
+              size: 0,
+              createdAt: file.createdAt,
+            });
+          }
         }
       }
     });
@@ -127,7 +131,7 @@ export default function HomeNote() {
         return b.createdAt - a.createdAt;
       },
     );
-  }, [files, currentPath, notesQuery]);
+  }, [notes, currentPath, notesQuery]);
 
   // 获取当前显示的笔记列表
   const displayedNotes = filteredNotes.slice(0, displayCount);
@@ -174,8 +178,7 @@ export default function HomeNote() {
       setCreateLoading(true);
 
       // 本地创建笔记
-      useUserStore.getState().addLocalFile({
-        cid: `local-note-${Date.now()}`,
+      useUserStore.getState().addNote({
         name: base,
         size: 0,
         type: "file",
@@ -216,8 +219,7 @@ export default function HomeNote() {
       setNewFolderLoading(true);
       const targetPath = `${currentPath}/${name}`;
 
-      useUserStore.getState().addLocalFile({
-        cid: `virtual-dir-note-${Date.now()}`,
+      useUserStore.getState().addNote({
         name: "index.md",
         size: 0,
         type: "file",
@@ -242,7 +244,7 @@ export default function HomeNote() {
     setCurrentNote(note);
     setRenameError("");
     setRenameBaseName(note.name);
-    setRenameDirPath(note.path.replace(/^\.note\/?/, ""));
+    setRenameDirPath(note.path.replace(/^notes\/?/, ""));
     openRenameModal();
   };
 
@@ -272,13 +274,15 @@ export default function HomeNote() {
       return;
     }
 
-    const targetDir = mp.normalizePath(dir ? `.note/${dir}` : ".note");
+    const targetDir = mp.normalizePath(dir || "");
     const oldFullPath = mp.normalizePath(
       currentNote.path === ""
         ? currentNote.name
         : `${currentNote.path}/${currentNote.name}`,
     );
-    const newFullPath = mp.normalizePath(`${targetDir}/${base}`);
+    const newFullPath = mp.normalizePath(
+      targetDir === "" ? base : `${targetDir}/${base}`,
+    );
 
     if (oldFullPath === newFullPath) {
       closeRenameModal();
@@ -286,7 +290,7 @@ export default function HomeNote() {
     }
 
     if (
-      files.some(
+      notes.some(
         (f) =>
           mp.normalizePath(f.path === "" ? f.name : `${f.path}/${f.name}`) ===
           newFullPath,
@@ -298,7 +302,7 @@ export default function HomeNote() {
 
     try {
       setRenameLoading(true);
-      useUserStore.getState().renameLocalFile(oldFullPath, targetDir, base);
+      useUserStore.getState().renameNote(oldFullPath, targetDir, base);
 
       notifications.show({
         color: "green",
@@ -326,18 +330,22 @@ export default function HomeNote() {
     ) {
       try {
         if (isDir) {
-          const fullPath = mp.normalizePath(`${currentPath}/${item.name}`);
-          const filesToDelete = files.filter((file) => {
-            const fFullPath = mp.normalizePath(`${file.path}/${file.name}`);
+          const fullPath = mp.normalizePath(
+            currentPath === "" ? item.name : `${currentPath}/${item.name}`,
+          );
+          const notesToDelete = notes.filter((file) => {
+            const fFullPath = mp.normalizePath(
+              file.path === "" ? file.name : `${file.path}/${file.name}`,
+            );
             return (
               fFullPath === fullPath || fFullPath.startsWith(fullPath + "/")
             );
           });
-          filesToDelete.forEach((file) => {
-            useUserStore.getState().deleteLocalFile(file.cid);
+          notesToDelete.forEach((file) => {
+            useUserStore.getState().deleteNote(file.cid, file.path, file.name);
           });
         } else {
-          useUserStore.getState().deleteLocalFile(item.cid);
+          useUserStore.getState().deleteNote(item.cid, item.path, item.name);
         }
 
         notifications.show({
@@ -421,15 +429,8 @@ export default function HomeNote() {
           />
           <Badge variant="light" size="lg">
             {notesQuery
-              ? `显示 ${displayedNotes.length} / ${
-                  filteredNotes.length
-                } (总共 ${
-                  files.filter((file) => file.path.startsWith(".note")).length
-                })`
-              : `显示 ${displayedNotes.length} / ${
-                  files.filter((file) => file.path.startsWith(".note")).length
-                }`}{" "}
-            {""}
+              ? `显示 ${displayedNotes.length} / ${filteredNotes.length} (总共 ${notes.length})`
+              : `显示 ${displayedNotes.length} / ${notes.length}`}{" "}
             个笔记
           </Badge>
           <Group>
@@ -513,7 +514,7 @@ export default function HomeNote() {
             <Grid gutter="md">
               {displayedNotes.map((note) => (
                 <Grid.Col
-                  key={note.cid + note.name}
+                  key={(note.cid || "") + note.path + note.name}
                   span={{ base: 12, xs: 6, sm: 4, md: 3, lg: 3, xl: 2 }}
                 >
                   <Card radius="md" withBorder>
@@ -551,7 +552,7 @@ export default function HomeNote() {
                           >
                             打开
                           </Menu.Item>
-                          {note.type === "file" && (
+                          {note.type === "file" && note.cid && (
                             <Menu.Item
                               leftSection="📤"
                               onClick={() => handleShare(note)}

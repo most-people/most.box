@@ -50,12 +50,12 @@ const uploadImage = async (
     const params = new URLSearchParams(location.search);
     const noteName = params.get("name") || "default";
 
-    useUserStore.getState().addLocalFile({
+    useUserStore.getState().addNote({
       cid: ipfs.cid,
       name: fileName,
       size: file.size,
       type: "file",
-      path: `/.note/${noteName}`,
+      path: noteName,
     });
 
     if (ipfs.cid) {

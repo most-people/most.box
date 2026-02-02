@@ -9,8 +9,8 @@ export interface FileItem {
   name: string;
   type: "file" | "directory";
   size: number;
-  cid: string;
-  path: string; // 文件所在的目录路径，例如 "" 或 "notes"
+  cid?: string;
+  path: string;
   createdAt: number;
   txHash?: string;
 }
@@ -20,10 +20,12 @@ interface UserStore {
   setWallet: (wallet: MostWallet) => void;
   firstPath: string;
   nodeDark: "toastui-editor-dark" | "";
+  // 笔记
+  notes: FileItem[];
   notesQuery: string;
   notesPath: string;
   // 文件
-  files: FileItem[]; // 改为非可选，初始化为空数组
+  files: FileItem[];
   filesPath: string;
   fingerprint: string;
   // 余额
@@ -36,9 +38,13 @@ interface UserStore {
   // 首页 Tab
   homeTab: string;
   // 本地文件操作
-  addLocalFile: (file: Omit<FileItem, "createdAt">) => void;
-  deleteLocalFile: (cid: string) => void;
-  renameLocalFile: (oldPath: string, newPath: string, newName: string) => void;
+  addFile: (file: Omit<FileItem, "createdAt">) => void;
+  deleteFile: (cid?: string, path?: string, name?: string) => void;
+  renameFile: (oldPath: string, newPath: string, newName: string) => void;
+  // 笔记操作
+  addNote: (file: Omit<FileItem, "createdAt">) => void;
+  deleteNote: (cid?: string, path?: string, name?: string) => void;
+  renameNote: (oldPath: string, newPath: string, newName: string) => void;
   // 退出登录
   exit: () => void;
 }
@@ -64,50 +70,66 @@ export const useUserStore = create<State>()(
 
       // 文件系统
       files: [],
+      notes: [],
       filesPath: "",
       // 设备指纹
       fingerprint: "",
 
       // 本地文件操作实现
-      addLocalFile(file) {
-        if (file.type === "directory") return; // 不再存储显式的目录条目
+      addFile(file) {
+        if (file.type === "directory") return;
 
         set((state) => {
-          // 统一路径格式
           const normalizedPath = mp.normalizePath(file.path);
           const newFile = {
             ...file,
             path: normalizedPath,
+            createdAt: Date.now(),
           };
 
-          // 检查是否已存在 (基于路径和名称)
           const exists = state.files.some(
-            (file) => file.path === normalizedPath && file.name === file.name,
+            (f) => f.path === normalizedPath && f.name === file.name,
           );
+
           if (exists) {
             return {
-              files: state.files.map((file) =>
-                file.path === normalizedPath && file.name === file.name
-                  ? { ...newFile, createdAt: Date.now() }
-                  : file,
+              files: state.files.map((f) =>
+                f.path === normalizedPath && f.name === file.name ? newFile : f,
               ),
             };
           }
+
           return {
-            files: [...state.files, { ...newFile, createdAt: Date.now() }],
+            files: [...state.files, newFile],
           };
         });
       },
 
-      deleteLocalFile(cid) {
-        set((state) => ({
-          files: state.files.filter((file) => file.cid !== cid),
-        }));
+      deleteFile(cid, path, name) {
+        set((state) => {
+          const normalizedPath =
+            path !== undefined ? mp.normalizePath(path) : "";
+
+          return {
+            files: state.files.filter((file) => {
+              if (cid && file.cid === cid) return false;
+              if (
+                path !== undefined &&
+                name !== undefined &&
+                file.path === normalizedPath &&
+                file.name === name
+              )
+                return false;
+              return true;
+            }),
+          };
+        });
       },
 
-      renameLocalFile(oldPath, newPath, newName) {
+      renameFile(oldPath, newPath, newName) {
         set((state) => {
           const oldPathNorm = mp.normalizePath(oldPath);
+          const newPathNorm = mp.normalizePath(newPath);
 
           return {
             files: state.files.map((file) => {
@@ -117,10 +139,9 @@ export const useUserStore = create<State>()(
 
               // 如果是目标文件/文件夹本身
               if (fullPath === oldPathNorm) {
-                const targetPath = mp.normalizePath(newPath);
                 return {
                   ...file,
-                  path: targetPath,
+                  path: newPathNorm,
                   name: newName,
                 };
               }
@@ -129,7 +150,103 @@ export const useUserStore = create<State>()(
               if (fullPath.startsWith(oldPathNorm + "/")) {
                 const relativePath = fullPath.slice(oldPathNorm.length);
                 const newFullPath = mp.normalizePath(
-                  (newPath ? `${newPath}/${newName}` : newName) + relativePath,
+                  (newPathNorm ? `${newPathNorm}/${newName}` : newName) +
+                    relativePath,
+                );
+                const lastSlashIndex = newFullPath.lastIndexOf("/");
+                return {
+                  ...file,
+                  path:
+                    lastSlashIndex === -1
+                      ? ""
+                      : newFullPath.slice(0, lastSlashIndex),
+                  name: newFullPath.slice(lastSlashIndex + 1),
+                };
+              }
+
+              return file;
+            }),
+          };
+        });
+      },
+
+      // 笔记操作实现
+      addNote(file) {
+        if (file.type === "directory") return;
+
+        set((state) => {
+          const normalizedPath = mp.normalizePath(file.path);
+          const newFile = {
+            ...file,
+            path: normalizedPath,
+            createdAt: Date.now(),
+          };
+
+          const exists = state.notes.some(
+            (f) => f.path === normalizedPath && f.name === file.name,
+          );
+
+          if (exists) {
+            return {
+              notes: state.notes.map((f) =>
+                f.path === normalizedPath && f.name === file.name ? newFile : f,
+              ),
+            };
+          }
+
+          return {
+            notes: [...state.notes, newFile],
+          };
+        });
+      },
+
+      deleteNote(cid, path, name) {
+        set((state) => {
+          const normalizedPath =
+            path !== undefined ? mp.normalizePath(path) : "";
+
+          return {
+            notes: state.notes.filter((file) => {
+              if (cid && file.cid === cid) return false;
+              if (
+                path !== undefined &&
+                name !== undefined &&
+                file.path === normalizedPath &&
+                file.name === name
+              )
+                return false;
+              return true;
+            }),
+          };
+        });
+      },
+
+      renameNote(oldPath, newPath, newName) {
+        set((state) => {
+          const oldPathNorm = mp.normalizePath(oldPath);
+          const newPathNorm = mp.normalizePath(newPath);
+
+          return {
+            notes: state.notes.map((file) => {
+              const fullPath = mp.normalizePath(
+                file.path === "" ? file.name : `${file.path}/${file.name}`,
+              );
+
+              // 如果是目标文件/文件夹本身
+              if (fullPath === oldPathNorm) {
+                return {
+                  ...file,
+                  path: newPathNorm,
+                  name: newName,
+                };
+              }
+
+              // 如果是在该文件夹下的子文件 (处理移动文件夹的情况)
+              if (fullPath.startsWith(oldPathNorm + "/")) {
+                const relativePath = fullPath.slice(oldPathNorm.length);
+                const newFullPath = mp.normalizePath(
+                  (newPathNorm ? `${newPathNorm}/${newName}` : newName) +
+                    relativePath,
                 );
                 const lastSlashIndex = newFullPath.lastIndexOf("/");
                 return {
@@ -174,6 +291,7 @@ export const useUserStore = create<State>()(
         set({
           wallet: undefined,
           files: [],
+          notes: [],
           jwt: "",
           firstPath: "",
           notesQuery: "",

@@ -19,7 +19,6 @@ import "@/app/note/page.scss";
 
 import { useSearchParams } from "next/navigation";
 import { useUserStore } from "@/stores/userStore";
-import { api } from "@/utils/api";
 import { notifications } from "@mantine/notifications";
 import { most25519, mostDecode, mostEncode } from "@/utils/MostWallet";
 import Link from "next/link";
@@ -28,13 +27,12 @@ import { modals } from "@mantine/modals";
 import { createCrustAuthHeader, uploadToIpfsGateway } from "@/utils/crust";
 import { mostMnemonic } from "@/utils/MostWallet";
 import { Wallet } from "ethers";
-import mp from "@/utils/mp";
 
 const PageContent = () => {
   const params = useSearchParams();
   const wallet = useUserStore((state) => state.wallet);
   const dotCID = useUserStore((state) => state.dotCID);
-  const files = useUserStore((state) => state.files);
+  const notes = useUserStore((state) => state.notes);
 
   const [loading, setLoading] = useState(true);
   const [viewer, setViewer] = useState<any>(null);
@@ -48,16 +46,27 @@ const PageContent = () => {
 
   const [noteName, setNoteName] = useState("");
 
-  const updateUrl = (cid: string, uid?: string) => {
+  const updateUrl = (cid?: string, uid?: string) => {
     const url = new URL(window.location.href);
-    url.searchParams.set("cid", cid);
+    if (cid) {
+      url.searchParams.set("cid", cid);
+    } else {
+      url.searchParams.delete("cid");
+    }
     if (uid) {
       url.searchParams.set("uid", uid);
     }
     window.history.replaceState(null, "", url.href);
   };
 
-  const fetchNote = (cid: string) => {
+  const fetchNote = (cid?: string) => {
+    if (!cid) {
+      setInited(true);
+      setIsSecret(false);
+      setContent("");
+      setLoading(false);
+      return;
+    }
     fetch(`${dotCID}/ipfs/${cid}/index.md`)
       .then((response) => response.text())
       .then((content) => {
@@ -108,12 +117,12 @@ const PageContent = () => {
       const cid = ipfs.cid;
       if (cid) {
         // 注册到本地
-        useUserStore.getState().addLocalFile({
+        useUserStore.getState().addNote({
           cid: cid,
           name: name,
           size: blob.size,
           type: "file",
-          path: "/.note",
+          path: "",
         });
 
         updateUrl(cid, wallet?.address);
@@ -185,9 +194,7 @@ const PageContent = () => {
     const name = params?.get("name");
     // 获取最新 CID
     if (uid && name) {
-      const note = files?.find(
-        (file) => file.path.startsWith(".note") && file.name === name,
-      );
+      const note = notes?.find((file) => file.name === name);
       if (note) {
         const cid = note.cid;
         updateUrl(cid);

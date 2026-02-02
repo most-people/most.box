@@ -140,7 +140,6 @@ export default function HomeFile() {
                 name: firstSegment,
                 type: "directory",
                 path: "",
-                cid: `virtual-dir-${firstSegment}`,
                 size: 0,
                 createdAt: file.createdAt,
               });
@@ -154,7 +153,6 @@ export default function HomeFile() {
               name: firstSegment,
               type: "directory",
               path: currentPath,
-              cid: `virtual-dir-${firstSegment}`,
               size: 0,
               createdAt: file.createdAt,
             });
@@ -228,7 +226,7 @@ export default function HomeFile() {
         const directoryPath =
           targetPath.split("/").slice(0, -1).join("/") || "/";
 
-        useUserStore.getState().addLocalFile({
+        useUserStore.getState().addFile({
           cid: ipfs.cid,
           name: file.name,
           size: file.size,
@@ -303,13 +301,11 @@ export default function HomeFile() {
     try {
       setNewFolderLoading(true);
 
-      const cid = "bafkreiarmjgodono6hhuvwfbeqavvnm76doh2krjbbr74xzokntjx2jqju";
       const targetPath = filesPath
         ? `${filesPath}/${newFolderName}`
         : newFolderName;
 
-      useUserStore.getState().addLocalFile({
-        cid: cid,
+      useUserStore.getState().addFile({
         name: "index.txt",
         size: 8, // "Most.Box" 的大小
         type: "file",
@@ -378,7 +374,7 @@ export default function HomeFile() {
       const name = (importName || cid).trim();
       const directoryPath = filesPath || "/";
 
-      useUserStore.getState().addLocalFile({
+      useUserStore.getState().addFile({
         cid: cid,
         name: name,
         size: 0,
@@ -477,10 +473,10 @@ export default function HomeFile() {
         });
 
         filesToDelete.forEach((file) => {
-          useUserStore.getState().deleteLocalFile(file.cid);
+          useUserStore.getState().deleteFile(file.cid, file.path, file.name);
         });
       } else {
-        useUserStore.getState().deleteLocalFile(item.cid);
+        useUserStore.getState().deleteFile(item.cid, item.path, item.name);
       }
 
       notifications.show({
@@ -544,11 +540,11 @@ export default function HomeFile() {
       return;
     }
 
-    setRenameLoading(true);
     try {
+      setRenameLoading(true);
       useUserStore
         .getState()
-        .renameLocalFile(oldFullPath, targetDir, newName.trim());
+        .renameFile(oldFullPath, targetDir, newName.trim());
 
       notifications.show({
         title: "操作成功",
@@ -609,6 +605,7 @@ export default function HomeFile() {
   // 分享文件
   const handleShareFile = (item: FileItem) => {
     const cid = item.cid;
+    if (!cid) return;
     const params = new URLSearchParams({ filename: item.name });
     if (item.type === "directory") {
       params.set("type", "dir");
@@ -619,6 +616,7 @@ export default function HomeFile() {
 
   // 下载文件
   const formatDownload = (item: FileItem) => {
+    if (!item.cid) return "#";
     const params = new URLSearchParams({
       download: "true",
       filename: item.name,
@@ -779,7 +777,7 @@ export default function HomeFile() {
               />
               {displayedFiles.map((item, index) => (
                 <Grid.Col
-                  key={index}
+                  key={(item.cid || "") + item.path + item.name}
                   span={{ base: 12, xs: 6, sm: 4, md: 3, lg: 3, xl: 2 }}
                 >
                   <Card radius="md" withBorder>
@@ -825,6 +823,7 @@ export default function HomeFile() {
                             onClick={() => {
                               handleShareFile(item);
                             }}
+                            disabled={!item.cid}
                           >
                             查看
                           </Menu.Item>
@@ -843,6 +842,7 @@ export default function HomeFile() {
                             component={Link}
                             target="_blank"
                             href={formatDownload(item)}
+                            disabled={!item.cid || formatDownload(item) === "#"}
                           >
                             下载
                           </Menu.Item>
