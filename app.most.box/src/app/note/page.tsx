@@ -109,7 +109,7 @@ const PageContent = () => {
       if (cid) {
         // 注册到本地
         useUserStore.getState().addLocalFile({
-          cid: { "/": cid },
+          cid: cid,
           name: name,
           size: blob.size,
           type: "file",
@@ -189,7 +189,7 @@ const PageContent = () => {
         (file) => mp.normalizePath(file.path) === ".note" && file.name === name,
       );
       if (note) {
-        const cid = note.cid["/"];
+        const cid = note.cid;
         updateUrl(cid);
         fetchNote(cid);
         return;

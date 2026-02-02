@@ -139,13 +139,13 @@ export const placeStorageOrder = async (
   const { Keyring } = await import("@polkadot/keyring");
 
   // 1. 初始化 API
-  const api = new ApiPromise({
+  const crust = new ApiPromise({
     provider: new WsProvider(CRUST_RPC_URL),
     typesBundle: typesBundleForPolkadot,
   });
 
   try {
-    await api.isReady;
+    await crust.isReady;
 
     // 2. 创建 Keyring
     const keyring = new Keyring({ type: "sr25519" });
@@ -155,7 +155,7 @@ export const placeStorageOrder = async (
     // 3. 创建交易
     // market.placeStorageOrder(cid, size, tips, memo)
     // memo 是可选的，默认为空
-    const tx = api.tx.market.placeStorageOrder(cid, fileSize, tips, "");
+    const tx = crust.tx.market.placeStorageOrder(cid, fileSize, tips, "");
 
     // 4. 发送并等待确认
     const result = await new Promise<string>((resolve, reject) => {
@@ -165,7 +165,9 @@ export const placeStorageOrder = async (
           resolve(txHash.toHex());
         } else if (dispatchError) {
           if (dispatchError.isModule) {
-            const decoded = api.registry.findMetaError(dispatchError.asModule);
+            const decoded = crust.registry.findMetaError(
+              dispatchError.asModule,
+            );
             const { docs, name, section } = decoded;
             reject(new Error(`${section}.${name}: ${docs.join(" ")}`));
           } else {
@@ -182,7 +184,7 @@ export const placeStorageOrder = async (
     console.error("下存储订单失败:", error);
     throw error;
   } finally {
-    await api.disconnect();
+    await crust.disconnect();
   }
 };
 

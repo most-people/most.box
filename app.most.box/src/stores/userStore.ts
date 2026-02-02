@@ -9,9 +9,7 @@ export interface FileItem {
   name: string;
   type: "file" | "directory";
   size: number;
-  cid: {
-    "/": string;
-  };
+  cid: string;
   path: string; // 文件所在的目录路径，例如 "" 或 "notes"
   createdAt: number;
   txHash?: string;
@@ -110,7 +108,7 @@ export const useUserStore = create<State>()(
 
       deleteLocalFile(cid) {
         set((state) => ({
-          files: state.files.filter((file) => file.cid["/"] !== cid),
+          files: state.files.filter((file) => file.cid !== cid),
         }));
       },
 

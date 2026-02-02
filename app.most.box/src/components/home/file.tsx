@@ -29,8 +29,10 @@ import {
   IconDotsVertical,
   IconPlus,
   IconFileImport,
+  IconUpload,
 } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
+import { modals } from "@mantine/modals";
 import mp from "@/utils/mp";
 import { FileItem, useUserStore } from "@/stores/userStore";
 import { mostMnemonic } from "@/utils/MostWallet";
@@ -46,8 +48,6 @@ interface PreviewFile {
   path: string;
   size: string;
 }
-
-const SystemDir = [".note"];
 
 export default function HomeFile() {
   const wallet = useUserStore((state) => state.wallet);
@@ -74,6 +74,9 @@ export default function HomeFile() {
   const [importCID, setImportCID] = useState("");
   const [importName, setImportName] = useState("");
   const [importLoading, setImportLoading] = useState(false);
+  const [newFolderModalOpen, setNewFolderModalOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [newFolderLoading, setNewFolderLoading] = useState(false);
   const router = useRouter();
   const [showLargeFileModal, setShowLargeFileModal] = useState(false);
   const [largeFiles, setLargeFiles] = useState<File[]>([]);
@@ -137,7 +140,7 @@ export default function HomeFile() {
                 name: firstSegment,
                 type: "directory",
                 path: "",
-                cid: { "/": `virtual-dir-${firstSegment}` },
+                cid: `virtual-dir-${firstSegment}`,
                 size: 0,
                 createdAt: file.createdAt,
               });
@@ -151,7 +154,7 @@ export default function HomeFile() {
               name: firstSegment,
               type: "directory",
               path: currentPath,
-              cid: { "/": `virtual-dir-${firstSegment}` },
+              cid: `virtual-dir-${firstSegment}`,
               size: 0,
               createdAt: file.createdAt,
             });
@@ -226,7 +229,7 @@ export default function HomeFile() {
           targetPath.split("/").slice(0, -1).join("/") || "/";
 
         useUserStore.getState().addLocalFile({
-          cid: { "/": ipfs.cid },
+          cid: ipfs.cid,
           name: file.name,
           size: file.size,
           type: "file",
@@ -268,6 +271,66 @@ export default function HomeFile() {
       });
     } finally {
       setUploadLoading(false);
+    }
+  };
+
+  const createFolder = async () => {
+    if (!newFolderName) {
+      notifications.show({
+        title: "提示",
+        message: "文件夹名称不能为空",
+        color: "red",
+      });
+      return;
+    }
+    const folderExists = filteredFiles.some(
+      (file) => file.type === "directory" && file.name === newFolderName,
+    );
+    if (folderExists) {
+      notifications.show({
+        title: "提示",
+        message: "文件夹已存在",
+        color: "red",
+      });
+      return;
+    }
+
+    if (!wallet) {
+      notifications.show({ message: "请先连接钱包", color: "red" });
+      return;
+    }
+
+    try {
+      setNewFolderLoading(true);
+
+      const cid = "bafkreiarmjgodono6hhuvwfbeqavvnm76doh2krjbbr74xzokntjx2jqju";
+      const targetPath = filesPath
+        ? `${filesPath}/${newFolderName}`
+        : newFolderName;
+
+      useUserStore.getState().addLocalFile({
+        cid: cid,
+        name: "index.txt",
+        size: 8, // "Most.Box" 的大小
+        type: "file",
+        path: targetPath,
+      });
+
+      notifications.show({
+        message: "文件夹创建成功",
+        color: "green",
+      });
+      setNewFolderModalOpen(false);
+      setNewFolderName("");
+      await fetchFiles(filesPath);
+    } catch (error: any) {
+      console.error("创建文件夹失败:", error);
+      notifications.show({
+        message: error.message || "创建文件夹失败",
+        color: "red",
+      });
+    } finally {
+      setNewFolderLoading(false);
     }
   };
 
@@ -316,7 +379,7 @@ export default function HomeFile() {
       const directoryPath = filesPath || "/";
 
       useUserStore.getState().addLocalFile({
-        cid: { "/": cid },
+        cid: cid,
         name: name,
         size: 0,
         type: "file",
@@ -414,10 +477,10 @@ export default function HomeFile() {
         });
 
         filesToDelete.forEach((file) => {
-          useUserStore.getState().deleteLocalFile(file.cid["/"]);
+          useUserStore.getState().deleteLocalFile(file.cid);
         });
       } else {
-        useUserStore.getState().deleteLocalFile(item.cid["/"]);
+        useUserStore.getState().deleteLocalFile(item.cid);
       }
 
       notifications.show({
@@ -439,10 +502,15 @@ export default function HomeFile() {
 
   // 确认删除的函数
   const handleDeleteFile = (item: FileItem) => {
-    const confirmed = window.confirm(`确定要删除文件 "${item.name}" 吗？`);
-    if (confirmed) {
-      deleteFile(item);
-    }
+    modals.openConfirmModal({
+      title: "提示",
+      children: (
+        <Text size="sm">确定要删除文件 &quot;{item.name}&quot; 吗？</Text>
+      ),
+      labels: { confirm: "确定", cancel: "取消" },
+      confirmProps: { color: "red" },
+      onConfirm: () => deleteFile(item),
+    });
   };
 
   // 重命名文件函数
@@ -528,7 +596,7 @@ export default function HomeFile() {
   const handleOpenFile = (item: FileItem) => {
     try {
       const url = new URL(dotCID);
-      url.pathname = `/ipfs/${item.cid["/"]}`;
+      url.pathname = `/ipfs/${item.cid}`;
       if (item.name) {
         url.searchParams.set("filename", item.name);
       }
@@ -540,7 +608,7 @@ export default function HomeFile() {
 
   // 分享文件
   const handleShareFile = (item: FileItem) => {
-    const cid = item.cid["/"];
+    const cid = item.cid;
     const params = new URLSearchParams({ filename: item.name });
     if (item.type === "directory") {
       params.set("type", "dir");
@@ -560,7 +628,7 @@ export default function HomeFile() {
       params.set("format", "tar");
       params.set("filename", `${item.name}.tar`);
     }
-    return `${dotCID}/ipfs/${item.cid["/"]}?${params.toString()}`;
+    return `${dotCID}/ipfs/${item.cid}?${params.toString()}`;
   };
 
   const oldPathForCompare = renamingItem
@@ -628,14 +696,24 @@ export default function HomeFile() {
                 <IconPlus size={18} />
               </ActionIcon>
             </Tooltip>
-            <Tooltip label="上传文件夹">
+            <Tooltip label="新建文件夹">
               <ActionIcon
                 size="lg"
-                onClick={handleFolderUpload}
+                onClick={() => setNewFolderModalOpen(true)}
                 color="yellow"
                 disabled={!wallet || uploadLoading}
               >
                 <IconFolderPlus size={18} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label="上传文件夹">
+              <ActionIcon
+                size="lg"
+                onClick={handleFolderUpload}
+                color="orange"
+                disabled={!wallet || uploadLoading}
+              >
+                <IconUpload size={18} />
               </ActionIcon>
             </Tooltip>
             <Tooltip label="从 CID 导入">
@@ -770,11 +848,6 @@ export default function HomeFile() {
                           </Menu.Item>
 
                           <Menu.Item
-                            disabled={
-                              filesPath === "" &&
-                              item.type === "directory" &&
-                              SystemDir.includes(item.name)
-                            }
                             leftSection="🗑️"
                             onClick={() => {
                               handleDeleteFile(item);
@@ -836,6 +909,54 @@ export default function HomeFile() {
         style={{ display: "none" }}
         onChange={handleFileChange}
       />
+
+      {/* 新建文件夹模态框 */}
+      <Modal
+        opened={newFolderModalOpen}
+        onClose={() => {
+          setNewFolderModalOpen(false);
+          setNewFolderName("");
+        }}
+        title="新建文件夹"
+        centered
+      >
+        <Stack gap="md">
+          <TextInput
+            label="文件夹名称"
+            required
+            placeholder="请输入文件夹名称"
+            value={newFolderName}
+            onChange={(event) => setNewFolderName(event.currentTarget.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                createFolder();
+              }
+            }}
+            disabled={newFolderLoading}
+            autoFocus
+          />
+
+          <Group justify="flex-end" gap="sm">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setNewFolderModalOpen(false);
+                setNewFolderName("");
+              }}
+              disabled={newFolderLoading}
+            >
+              取消
+            </Button>
+            <Button
+              onClick={createFolder}
+              loading={newFolderLoading}
+              disabled={!newFolderName.trim()}
+            >
+              创建
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
 
       {/* 文件预览模态框 */}
       <Modal

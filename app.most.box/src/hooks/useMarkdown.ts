@@ -51,7 +51,7 @@ const uploadImage = async (
     const noteName = params.get("name") || "default";
 
     useUserStore.getState().addLocalFile({
-      cid: { "/": ipfs.cid },
+      cid: ipfs.cid,
       name: fileName,
       size: file.size,
       type: "file",

@@ -72,7 +72,7 @@ export default function HomeNote() {
     ? files
         .filter((file) => mp.normalizePath(file.path) === ".note")
         .filter((note) => mp.pinyin(note.name, notesQuery, 0))
-        .map((file) => ({ name: file.name, cid: file.cid["/"] }))
+        .map((file) => ({ name: file.name, cid: file.cid }))
     : [];
 
   // 获取当前显示的笔记列表
@@ -122,7 +122,7 @@ export default function HomeNote() {
 
       // 本地创建笔记
       useUserStore.getState().addLocalFile({
-        cid: { "/": `local-note-${Date.now()}` },
+        cid: `local-note-${Date.now()}`,
         name: name,
         size: 0,
         type: "file",
