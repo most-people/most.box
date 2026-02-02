@@ -38,6 +38,7 @@ const PageContent = () => {
   const [loading, setLoading] = useState(true);
   const [viewer, setViewer] = useState<any>(null);
   const [editor, setEditor] = useState<any>(null);
+  const focusTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const markdown = useMarkdown();
 
   const [content, setContent] = useState("");
@@ -126,30 +127,38 @@ const PageContent = () => {
         content: newContent,
       });
 
-      // 异步上传到 IPFS
-      uploadToIpfsGateway(file, authHeader)
-        .then((ipfs) => {
-          if (ipfs.cid) {
-            useUserStore.getState().addNote({
-              cid: ipfs.cid,
-              name: name,
-              size: blob.size,
-              type: "file",
-              path: "",
-              content: newContent,
-            });
-            updateUrl(ipfs.cid, wallet?.address);
-          }
-        })
-        .catch((err) => {
-          console.error("IPFS 上传失败，但已保存至本地:", err);
-        });
-
       updateUrl(localCid, wallet?.address);
       notifications.show({
-        message: `${name} 已保存`,
-        color: "green",
+        message: `${name} 已保存至本地`,
+        color: "blue",
       });
+
+      // 异步上传到 IPFS
+      try {
+        const ipfs = await uploadToIpfsGateway(file, authHeader);
+        if (ipfs.cid) {
+          useUserStore.getState().addNote({
+            cid: ipfs.cid,
+            name: name,
+            size: blob.size,
+            type: "file",
+            path: "",
+            content: newContent,
+          });
+          updateUrl(ipfs.cid, wallet?.address);
+          notifications.show({
+            message: `${name} 已同步至 IPFS`,
+            color: "green",
+          });
+        }
+      } catch (err) {
+        console.error("IPFS 上传失败:", err);
+        notifications.show({
+          title: "同步失败",
+          message: "笔记已保存在本地，但未能同步到 IPFS",
+          color: "orange",
+        });
+      }
     } catch (error: any) {
       let message = error?.message || "文件上传失败，请重试";
       notifications.show({
@@ -195,17 +204,6 @@ const PageContent = () => {
       editor.setMarkdown(content);
     }
     setIsEditing(false);
-  };
-
-  const initToastUI = async () => {
-    if (viewerElement.current) {
-      const viewer = await markdown.initViewer(viewerElement.current);
-      setViewer(viewer);
-    }
-    if (editorElement.current) {
-      const editor = await markdown.initEditor(editorElement.current);
-      setEditor(editor);
-    }
   };
 
   const init = async () => {
@@ -276,10 +274,15 @@ const PageContent = () => {
 
   useEffect(() => {
     if (isEditing && editor) {
-      setTimeout(() => {
+      focusTimeoutRef.current = setTimeout(() => {
         editor.focus();
       }, 100);
     }
+    return () => {
+      if (focusTimeoutRef.current) {
+        clearTimeout(focusTimeoutRef.current);
+      }
+    };
   }, [isEditing, editor]);
 
   useEffect(() => {
@@ -294,7 +297,26 @@ const PageContent = () => {
   const notesDark = useUserStore((state) => state.notesDark);
 
   useEffect(() => {
-    initToastUI();
+    let viewerInstance: any;
+    let editorInstance: any;
+
+    const initUI = async () => {
+      if (viewerElement.current) {
+        viewerInstance = await markdown.initViewer(viewerElement.current);
+        setViewer(viewerInstance);
+      }
+      if (editorElement.current) {
+        editorInstance = await markdown.initEditor(editorElement.current);
+        setEditor(editorInstance);
+      }
+    };
+
+    initUI();
+
+    return () => {
+      if (viewerInstance) viewerInstance.destroy();
+      if (editorInstance) editorInstance.destroy();
+    };
   }, []);
 
   useEffect(() => {

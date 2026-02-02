@@ -178,21 +178,10 @@ const loginSave = (wallet: MostWallet) => {
       return wallet;
     }
   } catch (error) {
-    console.log("登录失败:", error);
+    console.error("登录失败:", error);
   }
   return null;
 };
-
-// 播放提示音
-// const playSound = async () => {
-//   try {
-//     const audio = new Audio("/sounds/notification.mp3"); // 替换为你的提示音文件路径
-//     await audio.play();
-//     navigator.vibrate(200); // 振动 200 毫秒
-//   } catch (error) {
-//     console.log("播放提示音时出错:", error);
-//   }
-// };
 
 // 拼音搜索
 const pinyin = (t: string, v: string, jump = 2) => {

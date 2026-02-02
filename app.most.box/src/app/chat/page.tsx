@@ -50,10 +50,10 @@ export default function PageChat() {
   // const [hasMic, setHasMic] = useState<boolean>(false);
   const [hasCamera, setHasCamera] = useState<boolean>(false);
   // PeerJS refs
-  const peerRef = useRef<any>(null);
+  const peerRef = useRef<import("peerjs").Peer | null>(null);
   // Keep track of active connections
-  const mediaConnRef = useRef<any>(null);
-  const dataConnRef = useRef<any>(null);
+  const mediaConnRef = useRef<MediaConnection | null>(null);
+  const dataConnRef = useRef<DataConnection | null>(null);
 
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -91,7 +91,7 @@ export default function PageChat() {
         video: { width: 640, height: 360 },
       });
     } catch (err) {
-      console.info("获取视频失败", err);
+      console.warn("获取视频失败", err);
       notifications.show({
         message: "请检查摄像头权限",
         color: "orange",
@@ -102,7 +102,7 @@ export default function PageChat() {
           video: false,
         });
       } catch (err) {
-        console.info("获取音频失败", err);
+        console.error("获取音频失败", err);
         notifications.show({
           message: "请检查麦克风权限",
           color: "orange",
@@ -234,9 +234,10 @@ export default function PageChat() {
       }
     });
 
-    peer.on("error", (err: any) => {
-      console.error("Peer error:", err);
-      if (err.type === "unavailable-id") {
+    peer.on("error", (err) => {
+      const error = err as any; // PeerJS error types are not always well-defined in types
+      console.error("Peer error:", error);
+      if (error.type === "unavailable-id") {
         // ID taken, means Room Creator exists. I am Joiner.
         // Recursively call with null to get random ID
         initPeer(null);
@@ -299,8 +300,6 @@ export default function PageChat() {
     setIsMicOn(false);
     setIsCameraOn(false);
   };
-
-  const notesDark = useUserStore((state) => state.notesDark);
 
   useEffect(() => {
     const uuid = Math.random().toString(36).slice(2, 10).toUpperCase();

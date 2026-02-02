@@ -54,9 +54,11 @@ interface UserStore {
   // 退出登录
   exit: () => void;
   // 内部辅助
-  _updateItems: (
-    key: "files" | "notes",
-    updater: (items: any[]) => any[],
+  _updateItems: <K extends "files" | "notes">(
+    key: K,
+    updater: (
+      items: K extends "files" ? FileItem[] : NoteItem[],
+    ) => K extends "files" ? FileItem[] : NoteItem[],
   ) => void;
 }
 
@@ -87,11 +89,8 @@ export const useUserStore = create<State>()(
       fingerprint: "",
 
       // 通用列表更新辅助函数
-      _updateItems(
-        key: "files" | "notes",
-        updater: (items: (FileItem | NoteItem)[]) => (FileItem | NoteItem)[],
-      ) {
-        set((state) => ({
+      _updateItems(key: any, updater: any) {
+        set((state: any) => ({
           [key]: updater(Array.isArray(state[key]) ? state[key] : []),
         }));
       },

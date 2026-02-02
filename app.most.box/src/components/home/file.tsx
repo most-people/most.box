@@ -157,14 +157,13 @@ export default function HomeFile() {
         autoClose: true,
       });
 
-      // TODO: 上传完成后刷新文件列表
-      // await fetchFiles(filesPath);
       setShowPreview(false);
       setPreviewFiles([]);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("上传失败:", error);
-      let message =
-        error?.response?.data || error?.message || "文件上传失败，请重试";
+      const errorMessage =
+        error instanceof Error ? error.message : "文件上传失败，请重试";
+      let message = errorMessage;
 
       notifications.update({
         id: notificationId,
@@ -224,10 +223,11 @@ export default function HomeFile() {
       });
       setNewFolderModalOpen(false);
       setNewFolderName("");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("创建文件夹失败:", error);
+      const message = error instanceof Error ? error.message : "创建文件夹失败";
       notifications.show({
-        message: error.message || "创建文件夹失败",
+        message,
         color: "red",
       });
     } finally {
@@ -294,8 +294,8 @@ export default function HomeFile() {
       setImportModalOpen(false);
       setImportCID("");
       setImportName("");
-    } catch (error: any) {
-      const msg = error?.response?.data || "导入失败，请重试";
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "导入失败，请重试";
       notifications.show({ title: "错误", message: msg, color: "red" });
     } finally {
       setImportLoading(false);
@@ -465,11 +465,13 @@ export default function HomeFile() {
       setRenamingItem(null);
       setNewName("");
       setNewDirPath("");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("操作失败:", error);
+      const message =
+        error instanceof Error ? error.message : "重命名/移动文件失败";
       notifications.show({
         title: "操作失败",
-        message: `重命名/移动文件 "${renamingItem.name}" 失败，请重试`,
+        message: `${message}，请重试`,
         color: "red",
       });
     } finally {
@@ -1004,7 +1006,7 @@ export default function HomeFile() {
         centered
       >
         <Stack gap="md">
-          <Text color="dimmed">
+          <Text c="dimmed">
             以下文件超过 200MB 请前往大文件专用通道进行上传。
           </Text>
           <ScrollArea.Autosize mah={200}>

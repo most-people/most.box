@@ -73,8 +73,7 @@ export const pinToCrustGateway = async (
     );
   } catch (pinError) {
     console.warn("Pin 失败，可能是因为余额不足:", pinError);
-    // 这里不抛出异常，允许返回 CID（如果是从 uploadWithAuthHeader 调用的），
-    // 但通常这应该由调用者处理。
+    throw pinError;
   }
 };
 

@@ -1,4 +1,3 @@
-import { api } from "@/utils/api";
 import { parse, HtmlGenerator } from "latex.js";
 import { useUserStore } from "@/stores/userStore";
 import { notifications } from "@mantine/notifications";

@@ -114,9 +114,9 @@ const checkGateway = async (
     } else {
       return { status: "error", responseTime };
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     clearTimeout(timeoutId);
-    if (error.name === "AbortError") {
+    if (error instanceof Error && error.name === "AbortError") {
       return { status: "timeout" };
     }
     return { status: "error" };
