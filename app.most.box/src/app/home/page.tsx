@@ -27,7 +27,7 @@ import {
   IconRocket,
   IconCheck,
 } from "@tabler/icons-react";
-import "@/components/home/page.scss";
+import "./page.scss";
 
 export default function LandingPage() {
   return (

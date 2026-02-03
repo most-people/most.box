@@ -15,7 +15,7 @@ import {
 import { AppHeader } from "@/components/AppHeader";
 import { useMarkdown } from "@/hooks/useMarkdown";
 
-import "@/app/note/page.scss";
+import "./page.scss";
 
 import { useSearchParams } from "next/navigation";
 import { useUserStore } from "@/stores/userStore";

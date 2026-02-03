@@ -4,9 +4,9 @@ import { useMarkdown } from "@/hooks/useMarkdown";
 import { useUserStore } from "@/stores/userStore";
 import { Box, Container, Divider, SegmentedControl } from "@mantine/core";
 import { useEffect, useRef, useState } from "react";
-import Linux from "@/assets/docs/build/linux.md";
-import Windows from "@/assets/docs/build/windows.md";
 import { AppHeader } from "@/components/AppHeader";
+import Linux from "./linux.md";
+import Windows from "./windows.md";
 
 export default function PageBuild() {
   const linuxElement = useRef<HTMLDivElement>(null);

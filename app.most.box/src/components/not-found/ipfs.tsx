@@ -1,5 +1,5 @@
 "use client";
-
+import "./ipfs.scss";
 import { AppHeader } from "@/components/AppHeader";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
@@ -21,7 +21,6 @@ import {
 import Link from "next/link";
 import { IconCopy, IconInfoCircle } from "@tabler/icons-react";
 import { useUserStore } from "@/stores/userStore";
-import "@/components/home/ipfs.scss";
 
 type CidType = "dir" | "note" | "file";
 

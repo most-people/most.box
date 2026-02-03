@@ -4,7 +4,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { Stack, Text, Box, Button, Group } from "@mantine/core";
 
 import { useState } from "react";
-import "@/app/game/5/page.scss";
+import "./page.scss";
 
 export default function PageGame5() {
   // 五子棋逻辑

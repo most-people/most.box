@@ -13,7 +13,7 @@ import {
   Text,
   Tooltip,
 } from "@mantine/core";
-import "@/app/game/black/page.scss";
+import "./page.scss";
 
 // ======= Types & Constants =======
 const BOARD_SIZE = 8;

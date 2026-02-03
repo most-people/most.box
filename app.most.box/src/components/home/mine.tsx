@@ -1,6 +1,6 @@
 "use client";
 
-import "@/components/home/mine.scss";
+import "./mine.scss";
 import Link from "next/link";
 import { Avatar, Text, Stack, Group, Box, ActionIcon } from "@mantine/core";
 import { Icon, type IconName } from "@/components/Icon";

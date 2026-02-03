@@ -77,13 +77,13 @@ export const useUserStore = create<State>()(
       },
       // 返回
       firstPath: "",
+      // 笔记
+      notes: [],
       notesQuery: "",
       notesPath: "",
       notesDark: "",
-
       // 文件系统
       files: [],
-      notes: [],
       filesPath: "",
       // 设备指纹
       fingerprint: "",

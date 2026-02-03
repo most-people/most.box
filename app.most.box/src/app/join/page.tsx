@@ -3,7 +3,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { useMarkdown } from "@/hooks/useMarkdown";
 import { Container, Box } from "@mantine/core";
 import { useEffect, useRef } from "react";
-import content from "@/assets/docs/join.md";
+import content from "./join.md";
 import { useUserStore } from "@/stores/userStore";
 
 const PageJoin = () => {
