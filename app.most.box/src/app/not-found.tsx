@@ -1,16 +1,24 @@
 "use client";
 
 import { useBack } from "@/hooks/useBack";
-import { Button, Container, Image, Loader, Stack, Text } from "@mantine/core";
+import {
+  Button,
+  Container,
+  Image,
+  Loader,
+  Stack,
+  Text,
+  Box,
+} from "@mantine/core";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import PageIPFS from "@/components/not-found/ipfs";
 import PageUser from "@/components/not-found/user";
 
 const Page404 = () => {
   const back = useBack();
   return (
-    <Stack gap="md" align="center">
+    <Stack gap="md" align="center" py={50}>
       <Image src="/imgs/404.svg" alt="404" w={300} h={225} />
       <Text c="dimmed">抱歉，你要找的页面不见了</Text>
       <Button onClick={back} variant="gradient">
@@ -20,7 +28,7 @@ const Page404 = () => {
   );
 };
 
-export default function PageNotFound() {
+const NotFoundContent = () => {
   const pathname = usePathname();
   const [type, setType] = useState<"ipfs" | "ipns" | "user" | "404" | "">("");
 
@@ -31,9 +39,12 @@ export default function PageNotFound() {
       } else if (pathname.startsWith("/ipns/")) {
         setType("ipns");
       } else if (pathname.startsWith("/@")) {
-        const name = pathname.slice(2, -1);
+        // 修复解析逻辑：支持带或不带末尾斜杠的情况，不再使用固定长度切片
+        const name = pathname.slice(2).replace(/\/$/, "");
         if (name) {
           setType("user");
+        } else {
+          setType("404");
         }
       } else {
         setType("404");
@@ -42,10 +53,10 @@ export default function PageNotFound() {
   }, [pathname]);
 
   return (
-    <Container w="100%" p="md">
+    <Box>
       {type === "" ? (
-        <Stack align="center">
-          <Loader color="black" size="lg" type="dots" />
+        <Stack align="center" py={50}>
+          <Loader size="lg" type="dots" />
         </Stack>
       ) : type === "user" ? (
         <PageUser />
@@ -56,6 +67,22 @@ export default function PageNotFound() {
       ) : (
         <Page404 />
       )}
+    </Box>
+  );
+};
+
+export default function PageNotFound() {
+  return (
+    <Container w="100%" p="md">
+      <Suspense
+        fallback={
+          <Stack align="center" py={50}>
+            <Loader size="lg" type="dots" />
+          </Stack>
+        }
+      >
+        <NotFoundContent />
+      </Suspense>
     </Container>
   );
 }
