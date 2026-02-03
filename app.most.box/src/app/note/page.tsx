@@ -222,7 +222,7 @@ const PageContent = () => {
             </Button>
           </>
         ) : wallet ? (
-          <Button size="xs" onClick={() => setIsEditing(true)}>
+          <Button variant="light" size="xs" onClick={() => setIsEditing(true)}>
             编辑
           </Button>
         ) : (

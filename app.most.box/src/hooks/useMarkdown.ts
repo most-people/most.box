@@ -116,7 +116,7 @@ const initEditor = async (el: HTMLDivElement) => {
     initialValue: "",
     initialEditType: "wysiwyg",
     previewStyle: "vertical",
-    placeholder: "在这里开始编写你的笔记...",
+    placeholder: "\n在这里开始编写你的笔记...",
     // 隐藏切换到 markdown
     // hideModeSwitch: false,
     ...getEditorCore(codeSyntaxHighlight),
@@ -186,7 +186,6 @@ const initViewer = async (el: HTMLDivElement) => {
   return Editor.factory({
     el,
     viewer: true,
-    placeholder: "在这里开始编写你的笔记...",
     ...getEditorCore(codeSyntaxHighlight),
   });
 };

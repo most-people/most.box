@@ -29,7 +29,7 @@ export const AppHeader = ({ title, variant, right, left }: AppHeaderProps) => {
       {right ? (
         right
       ) : (
-        <Menu shadow="md" width={200} position="bottom-end">
+        <Menu shadow="md" position="bottom-end">
           <Menu.Target>
             <ActionIcon variant="transparent" color="--text-color">
               <Icon name="More" size={24} />
