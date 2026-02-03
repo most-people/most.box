@@ -47,8 +47,7 @@ export default function HomeNote() {
     handleBreadcrumbClick,
   } = useFileExplorer("notes");
 
-  const notesFromStore = useUserStore((state) => state.notes);
-  const notes = Array.isArray(notesFromStore) ? notesFromStore : [];
+  const notes = useUserStore((state) => state.notes);
 
   // 添加弹窗相关状态
   const [noteModalOpened, { open: openNoteModal, close: closeNoteModal }] =

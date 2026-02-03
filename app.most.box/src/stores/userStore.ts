@@ -53,6 +53,9 @@ interface UserStore {
   renameNote: (oldPath: string, newPath: string, newName: string) => void;
   // 退出登录
   exit: () => void;
+  // Hydration 状态
+  isHydrated: boolean;
+  setHydrated: (state: boolean) => void;
   // 内部辅助
   _updateItems: <K extends "files" | "notes">(
     key: K,
@@ -89,9 +92,9 @@ export const useUserStore = create<State>()(
       fingerprint: "",
 
       // 通用列表更新辅助函数
-      _updateItems(key: any, updater: any) {
+      _updateItems(key: string, updater: (items: any[]) => any[]) {
         set((state: any) => ({
-          [key]: updater(Array.isArray(state[key]) ? state[key] : []),
+          [key]: updater(state[key]),
         }));
       },
 
@@ -291,10 +294,27 @@ export const useUserStore = create<State>()(
           homeTab: "file",
         });
       },
+      // Hydration
+      isHydrated: false,
+      setHydrated(state) {
+        set({ isHydrated: state });
+      },
     }),
     {
       name: "most-box-storage",
       storage: createJSONStorage(() => idbStorage),
+      // 不持久化 isHydrated
+      partialize: (state) => {
+        const { isHydrated, ...rest } = state;
+        return rest;
+      },
+      onRehydrateStorage: (state) => {
+        return (hydratedState, error) => {
+          if (!error && hydratedState) {
+            hydratedState.setHydrated(true);
+          }
+        };
+      },
     },
   ),
 );

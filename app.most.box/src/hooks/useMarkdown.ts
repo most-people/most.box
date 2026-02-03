@@ -116,7 +116,7 @@ const initEditor = async (el: HTMLDivElement) => {
     initialValue: "",
     initialEditType: "wysiwyg",
     previewStyle: "vertical",
-    placeholder: "\n✍️ 开始记录你的灵感",
+    placeholder: "在这里开始编写你的笔记...",
     // 隐藏切换到 markdown
     // hideModeSwitch: false,
     ...getEditorCore(codeSyntaxHighlight),
@@ -143,7 +143,7 @@ const initEditor = async (el: HTMLDivElement) => {
           name: "file",
           tooltip: "插入文件",
           command: "file",
-          text: "📂",
+          text: "📄",
           className: "toastui-editor-toolbar-icons",
           style: { backgroundImage: "none", fontSize: "18px" },
         },
@@ -155,7 +155,10 @@ const initEditor = async (el: HTMLDivElement) => {
   const $math = () => {
     const latex = "a^{2}+b^{2}=c^{2}";
     editor.replaceSelection(
-      "\n$$math\n" + latex + "\n$$\n\n" + "LaTeX公式编辑 latexlive.com\n",
+      "\n$$math\n" +
+        latex +
+        "\n$$\n\n" +
+        "LaTeX公式编辑 https://latexlive.com\n",
     );
     // if (editor.isWysiwygMode()) {
     //   editor.setMarkdown(editor.getMarkdown());
@@ -183,6 +186,7 @@ const initViewer = async (el: HTMLDivElement) => {
   return Editor.factory({
     el,
     viewer: true,
+    placeholder: "在这里开始编写你的笔记...",
     ...getEditorCore(codeSyntaxHighlight),
   });
 };

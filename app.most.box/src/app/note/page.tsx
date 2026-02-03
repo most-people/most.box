@@ -15,7 +15,7 @@ import {
 import { AppHeader } from "@/components/AppHeader";
 import { useMarkdown } from "@/hooks/useMarkdown";
 
-import "./page.scss";
+import "@/app/note/page.scss";
 
 import { useSearchParams } from "next/navigation";
 import { useUserStore } from "@/stores/userStore";
@@ -24,16 +24,11 @@ import { most25519, mostDecode, mostEncode } from "@/utils/MostWallet";
 import Link from "next/link";
 import { modals } from "@mantine/modals";
 
-import { createCrustAuthHeader, uploadToIpfsGateway } from "@/utils/crust";
-import { mostMnemonic } from "@/utils/MostWallet";
-import { Wallet } from "ethers";
-
 const PageContent = () => {
   const params = useSearchParams();
   const wallet = useUserStore((state) => state.wallet);
   const dotCID = useUserStore((state) => state.dotCID);
-  const notesFromStore = useUserStore((state) => state.notes);
-  const notes = Array.isArray(notesFromStore) ? notesFromStore : [];
+  const notes = useUserStore((state) => state.notes);
 
   const [loading, setLoading] = useState(true);
   const [viewer, setViewer] = useState<any>(null);
@@ -80,7 +75,7 @@ const PageContent = () => {
       return;
     }
 
-    // 如果本地没有，也不再请求远程网关，直接结束加载
+    // 如果本地没有，直接结束加载
     setInited(true);
     setIsSecret(false);
     setContent("");
@@ -110,15 +105,9 @@ const PageContent = () => {
     }
 
     try {
-      const mnemonic = mostMnemonic(wallet.danger);
-      const account = Wallet.fromPhrase(mnemonic);
-      const signature = await account.signMessage(account.address);
-      const authHeader = createCrustAuthHeader(account.address, signature);
-
       const blob = new Blob([newContent], { type: "text/markdown" });
-      const file = new File([blob], "index", { type: "text/markdown" });
 
-      // 先保存到本地 Store 实现离线可用
+      // 保存到本地 Store 实现离线可用
       const localCid = await useUserStore.getState().addNote({
         name: name,
         size: blob.size,
@@ -132,35 +121,8 @@ const PageContent = () => {
         message: `${name} 已保存至本地`,
         color: "blue",
       });
-
-      // 异步上传到 IPFS
-      try {
-        const ipfs = await uploadToIpfsGateway(file, authHeader);
-        if (ipfs.cid) {
-          useUserStore.getState().addNote({
-            cid: ipfs.cid,
-            name: name,
-            size: blob.size,
-            type: "file",
-            path: "",
-            content: newContent,
-          });
-          updateUrl(ipfs.cid, wallet?.address);
-          notifications.show({
-            message: `${name} 已同步至 IPFS`,
-            color: "green",
-          });
-        }
-      } catch (err) {
-        console.error("IPFS 上传失败:", err);
-        notifications.show({
-          title: "同步失败",
-          message: "笔记已保存在本地，但未能同步到 IPFS",
-          color: "orange",
-        });
-      }
     } catch (error: any) {
-      let message = error?.message || "文件上传失败，请重试";
+      let message = error?.message || "文件保存失败，请重试";
       notifications.show({
         title: "保存失败",
         message,

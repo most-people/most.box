@@ -67,8 +67,7 @@ export default function HomeFile() {
     handleBreadcrumbClick,
   } = useFileExplorer("files");
 
-  const filesFromStore = useUserStore((state) => state.files);
-  const files = Array.isArray(filesFromStore) ? filesFromStore : [];
+  const files = useUserStore((state) => state.files);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [previewFiles, setPreviewFiles] = useState<PreviewFile[]>([]);
   const [showPreview, setShowPreview] = useState(false);

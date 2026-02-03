@@ -3,11 +3,19 @@ import { ProgressProvider } from "@bprogress/next/app";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { useUserStore } from "@/stores/userStore";
 import { useEffect } from "react";
-import { useComputedColorScheme, useMantineColorScheme } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import mp from "@/utils/mp";
+import { useHydrated } from "@/hooks/useHydrated";
+import {
+  Stack,
+  Loader,
+  useComputedColorScheme,
+  useMantineColorScheme,
+} from "@mantine/core";
+import { AppHeader } from "@/components/AppHeader";
 
 const AppProvider = ({ children }: { children: React.ReactNode }) => {
+  const hydrated = useHydrated();
   const exit = useUserStore((state) => state.exit);
   const setWallet = useUserStore((state) => state.setWallet);
   const setItem = useUserStore((state) => state.setItem);
@@ -43,16 +51,29 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    initFinger();
-    setItem("firstPath", window.location.pathname);
-  }, []);
+    if (hydrated) {
+      initFinger();
+      setItem("firstPath", window.location.pathname);
+    }
+  }, [hydrated]);
 
   const { colorScheme } = useMantineColorScheme();
   const computedColorScheme = useComputedColorScheme();
   useEffect(() => {
-    const theme = colorScheme === "auto" ? computedColorScheme : colorScheme;
-    setItem("notesDark", theme === "dark" ? "toastui-editor-dark" : "");
-  }, [colorScheme, computedColorScheme]);
+    if (hydrated) {
+      const theme = colorScheme === "auto" ? computedColorScheme : colorScheme;
+      setItem("notesDark", theme === "dark" ? "toastui-editor-dark" : "");
+    }
+  }, [hydrated, colorScheme, computedColorScheme]);
+
+  if (!hydrated) {
+    return (
+      <Stack>
+        <AppHeader title="Most People" />
+        <Loader size="xl" type="dots" />
+      </Stack>
+    );
+  }
 
   return (
     <ProgressProvider
