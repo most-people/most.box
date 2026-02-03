@@ -19,7 +19,6 @@ import {
   Box,
   Card,
   Textarea,
-  List,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import {
@@ -33,6 +32,8 @@ import {
 import { useRef, useState, useEffect } from "react";
 import type { DataConnection, MediaConnection } from "peerjs";
 import { useUserStore } from "@/stores/userStore";
+import { useMarkdown } from "@/hooks/useMarkdown";
+import IPv6 from "@/assets/docs/IPv6.md";
 import mp from "@/utils/mp";
 
 type Role = "joiner" | "creator";
@@ -42,6 +43,10 @@ export default function PageChat() {
   const [roomId, setRoomId] = useState<string>("001");
   const [role, setRole] = useState<Role | null>(null);
   const [connected, setConnected] = useState(false);
+
+  const markdown = useMarkdown();
+  const ipv6Element = useRef<HTMLDivElement>(null);
+  const notesDark = useUserStore((state) => state.notesDark);
 
   const [p2pConnected, setP2pConnected] = useState(false);
   // 本地音视频开关状态
@@ -301,7 +306,16 @@ export default function PageChat() {
     setIsCameraOn(false);
   };
 
+  const initIPv6 = async () => {
+    if (ipv6Element.current) {
+      const viewer = await markdown.initViewer(ipv6Element.current);
+      viewer.setMarkdown(IPv6);
+    }
+  };
+
   useEffect(() => {
+    initIPv6();
+
     const uuid = Math.random().toString(36).slice(2, 10).toUpperCase();
     setClientId(uuid);
 
@@ -382,7 +396,7 @@ export default function PageChat() {
   };
 
   return (
-    <Container py="md">
+    <Container py="md" w="100%">
       <AppHeader title="加密聊天" />
       <Stack gap="md">
         <Center>
@@ -686,41 +700,10 @@ export default function PageChat() {
           </Group>
         </Paper>
 
-        <Center>
-          <Card withBorder padding="lg" radius="md" mt="md">
-            <Stack gap="sm">
-              <Group>
-                <Text size="xl">🚀</Text>
-                <div>
-                  <Text fw={700}>WebRTC 实时通信</Text>
-                  <Text size="sm" c="dimmed">
-                    无需服务器中转，浏览器直接对话
-                  </Text>
-                </div>
-              </Group>
-              <List spacing="xs" p={0} size="sm" center>
-                <List.Item icon={<Text mr={6}>🔒</Text>}>
-                  <Text span fw={500}>
-                    隐私安全：
-                  </Text>
-                  点对点加密直连，无中间服务器
-                </List.Item>
-                <List.Item icon={<Text mr={6}>⚡️</Text>}>
-                  <Text span fw={500}>
-                    极低延迟：
-                  </Text>
-                  数据不绕路，延迟低至毫秒级
-                </List.Item>
-                <List.Item icon={<Text mr={6}>🌐</Text>}>
-                  <Text span fw={500}>
-                    开源透明：
-                  </Text>
-                  基于 PeerJS，WebRTC 协议
-                </List.Item>
-              </List>
-            </Stack>
-          </Card>
-        </Center>
+        <Card withBorder>
+          <Box className={notesDark} ref={ipv6Element} />
+        </Card>
+        <Center>基于 PeerJS，WebRTC 协议</Center>
       </Stack>
     </Container>
   );
