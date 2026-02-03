@@ -19,6 +19,11 @@ export interface NoteItem extends FileItem {
   content: string;
 }
 
+export interface UserData {
+  notes: NoteItem[];
+  files: FileItem[];
+}
+
 interface UserStore {
   wallet?: MostWallet;
   setWallet: (wallet: MostWallet) => void;
@@ -51,6 +56,9 @@ interface UserStore {
   ) => Promise<string>;
   deleteNote: (cid?: string, path?: string, name?: string) => void;
   renameNote: (oldPath: string, newPath: string, newName: string) => void;
+  // 导入导出
+  exportData: () => UserData;
+  importData: (data: UserData) => void;
   // 退出登录
   exit: () => void;
   // Hydration 状态
@@ -256,6 +264,20 @@ export const useUserStore = create<State>()(
           }),
         );
       },
+
+      // 导出用户数据
+      exportData() {
+        const { notes, files } = get();
+        return { notes, files };
+      },
+
+      // 导入用户数据
+      importData({ notes, files }) {
+        if (notes && files) {
+          set({ notes, files });
+        }
+      },
+
       // 余额
       balance: "",
       async initBalance() {

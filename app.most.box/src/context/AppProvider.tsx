@@ -16,7 +16,7 @@ import { AppHeader } from "@/components/AppHeader";
 
 const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const hydrated = useHydrated();
-  const exit = useUserStore((state) => state.exit);
+  // const exit = useUserStore((state) => state.exit);
   const setWallet = useUserStore((state) => state.setWallet);
   const setItem = useUserStore((state) => state.setItem);
 
@@ -32,7 +32,7 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
       } catch (error) {
         notifications.show({ message: "登录过期", color: "red" });
         console.warn("登录过期", error);
-        exit();
+        // exit();
       }
     }
   };
