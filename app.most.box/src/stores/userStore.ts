@@ -1,9 +1,15 @@
-import { getCrustBalance } from "@/utils/crust";
-import { mostCrust, type MostWallet } from "@/utils/MostWallet";
+import {
+  getCrustBalance,
+  saveCIDToRemark,
+  getLatestCIDFromRemark,
+  uploadToCrust,
+} from "@/utils/crust";
+import { mostCrust, mostMnemonic, type MostWallet } from "@/utils/MostWallet";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { idbStorage } from "@/utils/idbStorage";
 import mp from "@/utils/mp";
+import { api } from "@/utils/api";
 
 export interface FileItem {
   name: string;
@@ -59,6 +65,11 @@ interface UserStore {
   // 导入导出
   exportData: () => UserData;
   importData: (data: UserData) => void;
+  // 同步
+  syncToCloud: () => Promise<void>;
+  syncFromCloud: () => Promise<void>;
+  syncToChain: () => Promise<void>;
+  syncFromChain: () => Promise<void>;
   // 退出登录
   exit: () => void;
   // Hydration 状态
@@ -275,6 +286,88 @@ export const useUserStore = create<State>()(
       importData({ notes, files }) {
         if (notes && files) {
           set({ notes, files });
+        }
+      },
+
+      // 同步到云端 (D1)
+      async syncToCloud() {
+        const { notes, files } = get();
+        try {
+          await api.post("/user.data.sync", { notes, files });
+          console.info("同步到云端成功");
+        } catch (error) {
+          console.error("同步到云端失败", error);
+          throw error;
+        }
+      },
+
+      // 从云端拉取 (D1)
+      async syncFromCloud() {
+        try {
+          const { data } = await api.post("/user.data.get");
+          if (data && data.notes && data.files) {
+            set({ notes: data.notes, files: data.files });
+            console.info("从云端拉取成功");
+          }
+        } catch (error) {
+          console.error("从云端拉取失败", error);
+          throw error;
+        }
+      },
+
+      // 同步到链上 (Crust Remark)
+      async syncToChain() {
+        const { wallet, exportData } = get();
+        if (!wallet) return;
+
+        try {
+          const data = exportData();
+          const blob = new Blob([JSON.stringify(data)], {
+            type: "application/json",
+          });
+          const file = new File([blob], "most-box-backup.json", {
+            type: "application/json",
+          });
+
+          const mnemonic = mostMnemonic(wallet.danger);
+          // 1. 上传到 IPFS
+          const { cid } = await uploadToCrust(file, mnemonic);
+
+          // 2. 写入链上 Remark
+          await saveCIDToRemark(cid, wallet.danger);
+
+          console.info("同步到链上成功");
+        } catch (error) {
+          console.error("同步到链上失败", error);
+          throw error;
+        }
+      },
+
+      // 从链上拉取 (Crust Remark)
+      async syncFromChain() {
+        const { wallet } = get();
+        if (!wallet) return;
+
+        try {
+          const { crust_address } = await mostCrust(wallet.danger);
+          // 1. 从链上获取最新 CID
+          const cid = await getLatestCIDFromRemark(crust_address);
+          if (!cid) {
+            console.warn("未在链上找到备份记录");
+            return;
+          }
+
+          // 2. 从网关拉取 JSON 数据
+          const res = await fetch(`https://gw.crustfiles.app/ipfs/${cid}`);
+          const data = await res.json();
+
+          if (data && data.notes && data.files) {
+            set({ notes: data.notes, files: data.files });
+            console.info("从链上恢复成功");
+          }
+        } catch (error) {
+          console.error("从链上恢复失败", error);
+          throw error;
         }
       },
 

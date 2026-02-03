@@ -205,3 +205,108 @@ export const getCrustBalance = async (address: string): Promise<string> => {
     throw error;
   }
 };
+
+/**
+ * 将 CID 作为 Remark (Memo) 写入 Crust 链上
+ * @param cid IPFS 内容 ID
+ * @param danger 钱包私钥/种子
+ * @returns 交易哈希
+ */
+export const saveCIDToRemark = async (cid: string, danger: string) => {
+  const { ApiPromise, WsProvider } = await import("@polkadot/api");
+  const { typesBundleForPolkadot } = await import("@crustio/type-definitions");
+  const { Keyring } = await import("@polkadot/keyring");
+
+  const crust = new ApiPromise({
+    provider: new WsProvider(CRUST_RPC_URL),
+    typesBundle: typesBundleForPolkadot,
+  });
+
+  try {
+    await crust.isReady;
+
+    const keyring = new Keyring({ type: "sr25519" });
+    const { crust_mnemonic } = await mostCrust(danger);
+    const krp = keyring.addFromUri(crust_mnemonic);
+
+    // 构造备注内容：most-box:v1:CID
+    const memo = `most-box:v1:${cid}`;
+    const tx = crust.tx.system.remark(memo);
+
+    const result = await new Promise<string>((resolve, reject) => {
+      tx.signAndSend(krp, ({ status, dispatchError, txHash }) => {
+        if (status.isFinalized) {
+          resolve(txHash.toHex());
+        } else if (dispatchError) {
+          if (dispatchError.isModule) {
+            const decoded = crust.registry.findMetaError(
+              dispatchError.asModule,
+            );
+            reject(new Error(`${decoded.section}.${decoded.name}`));
+          } else {
+            reject(new Error(dispatchError.toString()));
+          }
+        }
+      }).catch(reject);
+    });
+
+    return result;
+  } catch (error) {
+    console.error("写入链上 Remark 失败:", error);
+    throw error;
+  } finally {
+    await crust.disconnect();
+  }
+};
+
+/**
+ * 从 Crust 链上获取最近一次备份的 CID
+ * @param address Crust 地址 (SS58 格式)
+ * @returns 最近一次备份的 CID，如果未找到则返回 null
+ */
+export const getLatestCIDFromRemark = async (address: string) => {
+  try {
+    const res = await axios.post(
+      "https://crust.api.subscan.io/api/scan/extrinsic/list",
+      {
+        address,
+        row: 20,
+        page: 0,
+        module: "system",
+        call: "remark",
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+
+    const extrinsics = res.data?.data?.extrinsics || [];
+    for (const ext of extrinsics) {
+      if (ext.success) {
+        // 解析参数
+        try {
+          const params = JSON.parse(ext.params);
+          const remarkValue = params[0]?.value;
+          if (remarkValue && typeof remarkValue === "string" && remarkValue.startsWith("most-box:v1:")) {
+            return remarkValue.replace("most-box:v1:", "");
+          }
+        } catch (e) {
+          // 有些 remark 可能是 hex 格式或者直接在 params 里
+          const params = ext.params;
+          if (Array.isArray(params)) {
+             const remarkValue = params[0]?.value;
+             if (remarkValue && typeof remarkValue === "string" && remarkValue.startsWith("most-box:v1:")) {
+               return remarkValue.replace("most-box:v1:", "");
+             }
+          }
+        }
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error("从 Subscan 获取 Remark 失败:", error);
+    return null;
+  }
+};
