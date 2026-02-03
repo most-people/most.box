@@ -54,12 +54,12 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       <head>
-        <ColorSchemeScript defaultColorScheme="dark" />
+        <ColorSchemeScript defaultColorScheme="auto" />
       </head>
       <body>
         <div id="app">
           <AppKitProvider>
-            <MantineProvider defaultColorScheme="dark" theme={theme}>
+            <MantineProvider defaultColorScheme="auto" theme={theme}>
               <Notifications limit={3} position="top-center" />
               <ModalsProvider>
                 <AppProvider>{children}</AppProvider>
