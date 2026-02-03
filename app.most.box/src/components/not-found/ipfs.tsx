@@ -21,7 +21,7 @@ import {
 import Link from "next/link";
 import { IconCopy, IconInfoCircle } from "@tabler/icons-react";
 import { useUserStore } from "@/stores/userStore";
-import "./ipfs.scss";
+import "@/components/home/ipfs.scss";
 
 type CidType = "dir" | "note" | "file";
 

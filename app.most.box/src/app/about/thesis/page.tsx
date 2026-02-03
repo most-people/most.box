@@ -3,7 +3,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { useMarkdown } from "@/hooks/useMarkdown";
 import { Container, Box } from "@mantine/core";
 import { useEffect, useRef } from "react";
-import content from "./thesis.md";
+import content from "@/assets/docs/thesis.md";
 import { useUserStore } from "@/stores/userStore";
 
 const PageAboutThesis = () => {

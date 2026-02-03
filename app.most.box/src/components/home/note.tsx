@@ -25,7 +25,7 @@ import {
 } from "@tabler/icons-react";
 import { FileItem, useUserStore } from "@/stores/userStore";
 import Link from "next/link";
-import "./note.scss";
+import "@/components/home/note.scss";
 import mp from "@/utils/mp";
 import { notifications } from "@mantine/notifications";
 import { useDisclosure } from "@mantine/hooks";

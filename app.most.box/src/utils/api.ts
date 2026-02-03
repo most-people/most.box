@@ -1,6 +1,6 @@
 import axios from "axios";
 import { Wallet } from "ethers";
-import { mostMnemonic, type MostWallet } from "./MostWallet";
+import { mostMnemonic, type MostWallet } from "@/utils/MostWallet";
 import { useUserStore } from "@/stores/userStore";
 
 export const isDev = process.env.NODE_ENV !== "production";

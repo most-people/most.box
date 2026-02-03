@@ -18,7 +18,7 @@ import {
   Breadcrumbs,
   Anchor,
 } from "@mantine/core";
-import "./file.scss";
+import "@/components/home/file.scss";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {

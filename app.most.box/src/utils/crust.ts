@@ -1,7 +1,7 @@
 import { formatUnits, Wallet } from "ethers";
 import { create } from "kubo-rpc-client";
 import axios from "axios";
-import { mostCrust } from "./MostWallet";
+import { mostCrust } from "@/utils/MostWallet";
 
 // Crust IPFS Web3 Auth 网关
 const CRUST_GW = "https://gw.crustfiles.app";

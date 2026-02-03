@@ -1,7 +1,7 @@
 "use client";
 
 import { useBack } from "@/hooks/useBack";
-import { Button, Container, Loader, Stack, Text } from "@mantine/core";
+import { Button, Container, Image, Loader, Stack, Text } from "@mantine/core";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import PageIPFS from "@/components/not-found/ipfs";
@@ -11,7 +11,7 @@ const Page404 = () => {
   const back = useBack();
   return (
     <Stack gap="md" align="center">
-      <img src="/imgs/404.svg" alt="404" width={300} height={225} />
+      <Image src="/imgs/404.svg" alt="404" w={300} h={225} />
       <Text c="dimmed">抱歉，你要找的页面不见了</Text>
       <Button onClick={back} variant="gradient">
         返回首页
@@ -45,7 +45,7 @@ export default function PageNotFound() {
     <Container w="100%" p="md">
       {type === "" ? (
         <Stack align="center">
-          <Loader color="black" size="lg" type="bars" />
+          <Loader color="black" size="lg" type="dots" />
         </Stack>
       ) : type === "user" ? (
         <PageUser />

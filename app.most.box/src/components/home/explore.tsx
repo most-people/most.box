@@ -15,7 +15,7 @@ import { useMarkdown } from "@/hooks/useMarkdown";
 import IPFS from "@/assets/docs/IPFS.md";
 import IPv6 from "@/assets/docs/IPv6.md";
 import RunDot from "@/assets/docs/run-dot.md";
-import "./explore.scss";
+import "@/components/home/explore.scss";
 import { useUserStore } from "@/stores/userStore";
 import { Icon } from "@/components/Icon";
 import Link from "next/link";
