@@ -236,17 +236,19 @@ const PageContent = () => {
               <QRCodeSVG
                 className="qrcode"
                 value={`${host}/${cid}`}
-                size={138}
-                bgColor="transparent"
-                fgColor="#ffffff"
+                size={158}
+                bgColor="#FFF"
+                fgColor="#000"
               />
             </div>
             <div className="line"></div>
 
             <div className="info">
-              <div className="name">{filename}</div>
-              <div className="host">{host}</div>
-              <div className="ipns">{cid}</div>
+              <Text className="name" lineClamp={3}>
+                {filename}
+              </Text>
+              <Text className="host">{host}</Text>
+              <Text className="ipns">{cid}</Text>
             </div>
           </div>
         </Center>
