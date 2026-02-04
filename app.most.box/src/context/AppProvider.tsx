@@ -30,9 +30,9 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
           setWallet(wallet);
         }
       } catch (error) {
+        // exit();
         notifications.show({ message: "登录过期", color: "red" });
         console.warn("登录过期", error);
-        // exit();
       }
     }
   };

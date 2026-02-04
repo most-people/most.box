@@ -41,7 +41,7 @@
   a {
     // color: var(--mantine-color-anchor);
     text-decoration: none;
-    word-break: break-word;
+    word-break: break-all;
   }
 
   a:hover {
@@ -59,8 +59,8 @@
   pre,
   code {
     text-shadow: none;
-    font-family: "SFMono-Regular", ui-monospace, "SF Mono", "Menlo", "Consolas",
-      "Liberation Mono", "Courier New", monospace;
+    font-family:
+      "SFMono-Regular", ui-monospace, "SF Mono", "Menlo", "Consolas", "Liberation Mono", "Courier New", monospace;
   }
 
   pre {

@@ -13,11 +13,6 @@ export default function HomeMine() {
 
   const exit = useUserStore((state) => state.exit);
 
-  const quit = () => {
-    if (wallet) {
-      exit();
-    }
-  };
   return (
     <>
       <Box className="header">
@@ -64,7 +59,7 @@ export default function HomeMine() {
           icon="Exit"
           label={wallet ? "退出账户" : "去登录"}
           link="/login"
-          onClick={quit}
+          onClick={wallet ? exit : undefined}
         />
       </Stack>
     </>

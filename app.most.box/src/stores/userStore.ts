@@ -285,7 +285,7 @@ export const useUserStore = create<State>()(
 
       // 从链上拉取 (Crust Remark)
       async syncFromChain() {
-        const { wallet } = get();
+        const { wallet, dotCID } = get();
         if (!wallet) return;
 
         try {
@@ -298,7 +298,7 @@ export const useUserStore = create<State>()(
           }
 
           // 2. 从网关拉取 JSON 数据
-          const res = await fetch(`https://gw.crustfiles.app/ipfs/${cid}`);
+          const res = await fetch(`${dotCID}/ipfs/${cid}`);
           const data = await res.json();
 
           if (data && data.notes && data.files) {
@@ -326,7 +326,7 @@ export const useUserStore = create<State>()(
         }
       },
       // IPFS 网关
-      dotCID: "",
+      dotCID: "https://gw.crust-gateway.xyz",
       // JWT
       jwt: "",
       // 首页 Tab

@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, Suspense, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
 import {
   Box,
@@ -25,7 +26,7 @@ import {
   IconX,
   IconRefresh,
   IconServer,
-  IconSearch,
+  IconActivity,
   IconWorldWww,
   IconRocket,
 } from "@tabler/icons-react";
@@ -34,7 +35,7 @@ import { useUserStore } from "@/stores/userStore";
 import { CID } from "multiformats";
 
 // ===== 类型定义 =====
-type GatewayCategory = {
+type GatewayInfo = {
   title: string;
   description: string;
   gateways: string[];
@@ -47,7 +48,7 @@ type DetectionResult = {
 };
 
 // ===== 网关列表配置 =====
-const GATEWAY_CATEGORIES: GatewayCategory[] = [
+const gatewayList: GatewayInfo[] = [
   {
     title: "官方及基金会维护",
     description: "最权威，由 IPFS 官方团队或相关基金会直接运营",
@@ -123,15 +124,25 @@ const checkGateway = async (
   }
 };
 
-export default function GatewayManager() {
+function GatewayManagerContent() {
+  const searchParams = useSearchParams();
+  const queryCid = searchParams.get("cid");
+  const queryFilename = searchParams.get("filename");
+
   // ===== Zustand Store =====
   const setItem = useUserStore((state) => state.setItem);
   const dotCID = useUserStore((state) => state.dotCID);
 
   // ===== 状态管理 =====
   const [customCid, setCustomCid] = useState(
-    "bafkreihp5o7tdipf6ajkgkdxknnffkuxpeecwqydi4q5iqt4gko6r2agk4",
+    queryCid || "bafkreihp5o7tdipf6ajkgkdxknnffkuxpeecwqydi4q5iqt4gko6r2agk4",
   );
+  const [filename, setFilename] = useState(queryFilename || "长征.jpg");
+
+  useEffect(() => {
+    if (queryCid) setCustomCid(queryCid);
+    if (queryFilename) setFilename(queryFilename);
+  }, [queryCid, queryFilename]);
   const [isDetecting, setIsDetecting] = useState(false);
   const [detectionResults, setDetectionResults] = useState<
     Record<string, DetectionResult>
@@ -165,7 +176,7 @@ export default function GatewayManager() {
 
     // 收集所有网关
     const allGateways: string[] = [];
-    GATEWAY_CATEGORIES.forEach((cat) => allGateways.push(...cat.gateways));
+    gatewayList.forEach((cat) => allGateways.push(...cat.gateways));
     if (customGateway) allGateways.push(customGateway);
 
     // 初始化状态
@@ -271,7 +282,7 @@ export default function GatewayManager() {
       <AppHeader title="IPFS 网关选择" />
 
       {/* 顶部控制区 */}
-      <Card shadow="sm" p="lg" radius="md" withBorder mb="lg">
+      <Card shadow="sm" p="lg" radius="md" withBorder my="lg">
         <Stack>
           <Group justify="space-between" align="center">
             <Box>
@@ -304,12 +315,13 @@ export default function GatewayManager() {
 
           <Divider />
 
-          <Group align="flex-end">
+          <Group wrap="wrap">
             <TextInput
               label="测试 CID"
               description="用于测试网关响应速度的资源 CID"
-              style={{ flex: 1 }}
               value={customCid}
+              w="100%"
+              maw={580}
               onChange={(e) => setCustomCid(e.currentTarget.value)}
               rightSection={
                 <ActionIcon
@@ -325,9 +337,15 @@ export default function GatewayManager() {
               }
             />
             <TextInput
+              label="文件名"
+              description="URL 后的文件名"
+              value={filename}
+              onChange={(e) => setFilename(e.currentTarget.value)}
+              placeholder="长征.jpg"
+            />
+            <TextInput
               label="自定义网关"
               description="添加自定义网关地址"
-              style={{ flex: 1 }}
               value={customGateway}
               onChange={(e) => setCustomGateway(e.currentTarget.value)}
               placeholder="https://..."
@@ -347,7 +365,7 @@ export default function GatewayManager() {
 
       {/* 网关列表 */}
       <Stack gap="xl">
-        {GATEWAY_CATEGORIES.map((category, idx) => (
+        {gatewayList.map((category, idx) => (
           <Box key={idx}>
             <Title order={4} mb="xs" c="blue.7">
               {category.title}
@@ -404,13 +422,20 @@ export default function GatewayManager() {
                           loading={result?.status === "pending"}
                           title="测试连接"
                         >
-                          <IconSearch size={16} />
+                          <IconActivity size={16} />
                         </ActionIcon>
                       </Group>
 
                       <Anchor
                         component={Link}
-                        href={gateway + "/ipfs/" + customCid}
+                        href={
+                          gateway +
+                          "/ipfs/" +
+                          customCid +
+                          (filename
+                            ? `?filename=${encodeURIComponent(filename)}`
+                            : "")
+                        }
                         target="_blank"
                         rel="noopener noreferrer"
                         c="dimmed"
@@ -430,7 +455,7 @@ export default function GatewayManager() {
                         </Badge>
 
                         <Button
-                          size="md"
+                          size="sm"
                           variant={isSelected ? "filled" : "light"}
                           color={isSelected ? "green" : "blue"}
                           onClick={() => selectGateway(gateway)}
@@ -550,5 +575,13 @@ export default function GatewayManager() {
         </Anchor>
       </Group>
     </Container>
+  );
+}
+
+export default function GatewayManager() {
+  return (
+    <Suspense fallback={<LoadingOverlay visible />}>
+      <GatewayManagerContent />
+    </Suspense>
   );
 }

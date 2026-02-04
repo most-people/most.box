@@ -33,23 +33,9 @@ const PageContent = () => {
   const [filename, setFilename] = useState<string>(initFilename);
   const dotCID = useUserStore((state) => state.dotCID);
 
-  const shareUrl = useMemo(() => {
-    if (cid) {
-      const url = new URL(location.origin);
-      url.pathname = `/ipfs/${cid}`;
-      if (filename) {
-        url.searchParams.set("filename", filename);
-        url.searchParams.set("type", cidType);
-      }
-      return url.href;
-    }
-    return "";
-  }, [cid, filename, cidType]);
-
   const previewUrl = useMemo(() => {
     if (cid) {
-      const gateway = dotCID || "https://gw.crustfiles.app";
-      const url = new URL(gateway);
+      const url = new URL(dotCID);
       url.pathname = `/ipfs/${cid}`;
       if (filename) {
         url.searchParams.set("filename", filename);
@@ -61,8 +47,7 @@ const PageContent = () => {
 
   const downloadUrl = useMemo(() => {
     if (cid) {
-      const gateway = dotCID || "https://gw.crustfiles.app";
-      const url = new URL(gateway);
+      const url = new URL(dotCID);
       url.pathname = `/ipfs/${cid}`;
       url.searchParams.set("download", "true");
       if (filename) {
@@ -102,30 +87,16 @@ const PageContent = () => {
           )}
         </Group>
 
-        <Stack>
-          <TextInput
-            radius="md"
-            label="CID"
-            placeholder="请输入 CID"
-            value={cid}
-            readOnly
-            variant="filled"
-          />
-          <TextInput
-            radius="md"
-            label={cidType === "dir" ? "文件夹" : "文件名"}
-            placeholder={cidType === "dir" ? "文件夹" : "文件名"}
-            value={filename}
-            onChange={(e) => setFilename(e.currentTarget.value)}
-          />
-        </Stack>
+        <TextInput
+          radius="md"
+          placeholder={cidType === "dir" ? "文件夹" : "文件名"}
+          value={filename}
+          onChange={(e) => setFilename(e.currentTarget.value)}
+        />
 
-        <Group justify="space-between">
-          <Group gap={8}>
-            📖
-            <Title order={4}>预览 / 下载</Title>
-          </Group>
-        </Group>
+        <Center>
+          <Title>IPFS</Title>
+        </Center>
 
         {!dotCID && (
           <Alert color="gray" radius="md" mb="sm">
@@ -199,37 +170,6 @@ const PageContent = () => {
           </Button>
         )}
 
-        <Group justify="space-between">
-          <Group gap={8}>
-            📤
-            <Title order={4}>分享本页</Title>
-          </Group>
-        </Group>
-
-        <TextInput
-          radius="md"
-          value={shareUrl || ""}
-          readOnly
-          variant="filled"
-          disabled={!shareUrl}
-          placeholder="无可用链接"
-          rightSection={
-            <CopyButton value={shareUrl || ""}>
-              {({ copied, copy }) => (
-                <Tooltip label={copied ? "已复制" : "复制链接"} position="top">
-                  <ActionIcon
-                    variant="subtle"
-                    color={copied ? "teal" : "gray"}
-                    onClick={copy}
-                    disabled={!shareUrl}
-                  >
-                    <IconCopy size={16} />
-                  </ActionIcon>
-                </Tooltip>
-              )}
-            </CopyButton>
-          }
-        />
         <Center>
           <div className="ipfs-qrcode">
             <div className="qrcode-frame">

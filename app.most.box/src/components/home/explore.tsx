@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import wordsData from "@/assets/json/in-a-word.json";
+import inAWord from "@/assets/json/in-a-word.json";
 import {
   Text,
   Container,
@@ -47,8 +47,8 @@ export default function HomeExplore() {
   useEffect(() => {
     init();
     // 随机选择一句话
-    const randomIndex = Math.floor(Math.random() * wordsData.length);
-    setRandomWord(wordsData[randomIndex]);
+    const randomIndex = Math.floor(Math.random() * inAWord.length);
+    setRandomWord(inAWord[randomIndex]);
   }, []);
 
   return (

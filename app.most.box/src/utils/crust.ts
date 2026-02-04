@@ -4,9 +4,9 @@ import axios from "axios";
 import { mostCrust } from "@/utils/MostWallet";
 
 // Crust IPFS Web3 Auth 网关
-const CRUST_GW = "https://gw.crustfiles.app";
-const CRUST_PIN_URL = "https://pin.crustcode.com/psa";
-const CRUST_RPC_URL = "wss://rpc.crust.network";
+const CRUST_API = "https://gw.crustfiles.app";
+const CRUST_PIN = "https://pin.crustcode.com/psa";
+const CRUST_RPC = "wss://rpc.crust.network";
 
 /**
  * 创建 Crust Web3 认证头
@@ -28,7 +28,7 @@ const auth = (address: string, signature: string) => {
 const ipfs = async (file: File, authHeader: string) => {
   // 创建连接到 Crust 网关的 IPFS 客户端
   const ipfsClient = create({
-    url: `${CRUST_GW}/api/v0`,
+    url: `${CRUST_API}/api/v0`,
     headers: {
       authorization: `Basic ${authHeader}`,
     },
@@ -39,7 +39,7 @@ const ipfs = async (file: File, authHeader: string) => {
     return {
       cid: result.cid.toString(),
       size: result.size,
-      url: `${CRUST_GW}/ipfs/${result.cid.toString()}`,
+      url: `${CRUST_API}/ipfs/${result.cid.toString()}`,
     };
   } catch (error) {
     console.error("IPFS 上传失败:", error);
@@ -56,7 +56,7 @@ const ipfs = async (file: File, authHeader: string) => {
 const pin = async (cid: string, name: string, authHeader: string) => {
   try {
     return await axios.post(
-      `${CRUST_PIN_URL}/pins`,
+      `${CRUST_PIN}/pins`,
       {
         cid: cid,
         name: name,
@@ -135,7 +135,7 @@ const order = async (
 
   // 1. 初始化 API
   const crust = new ApiPromise({
-    provider: new WsProvider(CRUST_RPC_URL),
+    provider: new WsProvider(CRUST_RPC),
     typesBundle: typesBundleForPolkadot,
   });
 
@@ -214,7 +214,7 @@ const saveRemark = async (cid: string, danger: string) => {
   const { Keyring } = await import("@polkadot/keyring");
 
   const crust = new ApiPromise({
-    provider: new WsProvider(CRUST_RPC_URL),
+    provider: new WsProvider(CRUST_RPC),
     typesBundle: typesBundleForPolkadot,
   });
 

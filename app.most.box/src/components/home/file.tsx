@@ -497,7 +497,7 @@ export default function HomeFile() {
       params.set("format", "tar");
       params.set("filename", `${item.name}.tar`);
     }
-    return `${dotCID || "https://gw.crustfiles.app"}/ipfs/${item.cid}?${params.toString()}`;
+    return `${dotCID}/ipfs/${item.cid}?${params.toString()}`;
   };
 
   const oldPathForCompare = renamingItem

@@ -86,8 +86,7 @@ const getEditorCore = (codeSyntaxHighlight: any) => {
         context.skipChildren();
         const src = node.destination;
         const alt = node.firstChild?.literal || "";
-        const dotCID =
-          useUserStore.getState().dotCID || "https://gw.crustfiles.app";
+        const dotCID = useUserStore.getState().dotCID;
         return {
           type: "openTag",
           tagName: "img",
