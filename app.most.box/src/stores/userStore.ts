@@ -9,7 +9,6 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { idbStorage } from "@/utils/idbStorage";
 import mp from "@/utils/mp";
-import { api } from "@/utils/api";
 
 export interface FileItem {
   name: string;
@@ -19,14 +18,11 @@ export interface FileItem {
   path: string;
   createdAt: number;
   txHash?: string;
-}
-
-export interface NoteItem extends FileItem {
-  content: string;
+  content?: string;
 }
 
 export interface UserData {
-  notes: NoteItem[];
+  notes: FileItem[];
   files: FileItem[];
 }
 
@@ -35,7 +31,7 @@ interface UserStore {
   setWallet: (wallet: MostWallet) => void;
   firstPath: string;
   // 笔记
-  notes: NoteItem[];
+  notes: FileItem[];
   notesQuery: string;
   notesPath: string;
   notesDark: "toastui-editor-dark" | "";
@@ -58,16 +54,14 @@ interface UserStore {
   renameFile: (oldPath: string, newPath: string, newName: string) => void;
   // 笔记操作
   addNote: (
-    file: Omit<NoteItem, "createdAt" | "cid"> & { cid?: string },
+    file: Omit<FileItem, "createdAt" | "cid"> & { cid?: string },
   ) => Promise<string>;
   deleteNote: (cid?: string, path?: string, name?: string) => void;
   renameNote: (oldPath: string, newPath: string, newName: string) => void;
   // 导入导出
   exportData: () => UserData;
   importData: (data: UserData) => void;
-  // 同步
-  syncToCloud: () => Promise<void>;
-  syncFromCloud: () => Promise<void>;
+  // 同步 (完全去中心化方案：Crust Remark)
   syncToChain: () => Promise<void>;
   syncFromChain: () => Promise<void>;
   // 退出登录
@@ -78,9 +72,20 @@ interface UserStore {
   // 内部辅助
   _updateItems: <K extends "files" | "notes">(
     key: K,
-    updater: (
-      items: K extends "files" ? FileItem[] : NoteItem[],
-    ) => K extends "files" ? FileItem[] : NoteItem[],
+    updater: (items: FileItem[]) => FileItem[],
+  ) => void;
+  _addItem: (key: "files" | "notes", item: FileItem) => void;
+  _deleteItem: (
+    key: "files" | "notes",
+    cid?: string,
+    path?: string,
+    name?: string,
+  ) => void;
+  _renameItem: (
+    key: "files" | "notes",
+    oldPath: string,
+    newPath: string,
+    newName: string,
   ) => void;
 }
 
@@ -111,46 +116,57 @@ export const useUserStore = create<State>()(
       fingerprint: "",
 
       // 通用列表更新辅助函数
-      _updateItems(key: string, updater: (items: any[]) => any[]) {
-        set((state: any) => ({
+      _updateItems(
+        key: "files" | "notes",
+        updater: (items: FileItem[]) => FileItem[],
+      ) {
+        set((state: State) => ({
           [key]: updater(state[key]),
         }));
       },
 
-      // 本地文件操作实现
-      addFile(file) {
-        if (file.type === "directory") return;
-
-        const normalizedPath = mp.normalizePath(file.path);
-        const newFile: FileItem = {
-          ...file,
+      // --- 通用项操作逻辑 ---
+      _addItem(key: "files" | "notes", item: FileItem) {
+        const normalizedPath = mp.normalizePath(item.path);
+        const newItem = {
+          ...item,
           path: normalizedPath,
           createdAt: Date.now(),
         };
 
-        get()._updateItems("files", (files: FileItem[]) => {
-          const exists = files.some(
-            (f: FileItem) => f.path === normalizedPath && f.name === file.name,
+        get()._updateItems(key, (items: FileItem[]) => {
+          const exists = items.some(
+            (f) =>
+              mp.normalizePath(f.path) === normalizedPath &&
+              f.name === item.name,
           );
           if (exists) {
-            return files.map((f: FileItem) =>
-              f.path === normalizedPath && f.name === file.name ? newFile : f,
+            return items.map((f) =>
+              mp.normalizePath(f.path) === normalizedPath &&
+              f.name === item.name
+                ? newItem
+                : f,
             );
           }
-          return [...files, newFile];
+          return [...items, newItem];
         });
       },
 
-      deleteFile(cid, path, name) {
+      _deleteItem(
+        key: "files" | "notes",
+        cid?: string,
+        path?: string,
+        name?: string,
+      ) {
         const normalizedPath = path !== undefined ? mp.normalizePath(path) : "";
-        get()._updateItems("files", (files: FileItem[]) =>
-          files.filter((file: FileItem) => {
-            if (cid && file.cid === cid) return false;
+        get()._updateItems(key, (items: FileItem[]) =>
+          items.filter((item) => {
+            if (cid && item.cid === cid) return false;
             if (
               path !== undefined &&
               name !== undefined &&
-              file.path === normalizedPath &&
-              file.name === name
+              mp.normalizePath(item.path) === normalizedPath &&
+              item.name === name
             )
               return false;
             return true;
@@ -158,18 +174,23 @@ export const useUserStore = create<State>()(
         );
       },
 
-      renameFile(oldPath, newPath, newName) {
+      _renameItem(
+        key: "files" | "notes",
+        oldPath: string,
+        newPath: string,
+        newName: string,
+      ) {
         const oldPathNorm = mp.normalizePath(oldPath);
         const newPathNorm = mp.normalizePath(newPath);
 
-        get()._updateItems("files", (files: FileItem[]) =>
-          files.map((file: FileItem) => {
-            const fullPath = mp.normalizePath(
-              file.path === "" ? file.name : `${file.path}/${file.name}`,
-            );
+        get()._updateItems(key, (items: FileItem[]) =>
+          items.map((item) => {
+            const itemPath = mp.normalizePath(item.path);
+            const fullPath =
+              itemPath === "" ? item.name : `${itemPath}/${item.name}`;
 
             if (fullPath === oldPathNorm) {
-              return { ...file, path: newPathNorm, name: newName };
+              return { ...item, path: newPathNorm, name: newName };
             }
 
             if (fullPath.startsWith(oldPathNorm + "/")) {
@@ -180,7 +201,7 @@ export const useUserStore = create<State>()(
               );
               const lastSlashIndex = newFullPath.lastIndexOf("/");
               return {
-                ...file,
+                ...item,
                 path:
                   lastSlashIndex === -1
                     ? ""
@@ -188,92 +209,42 @@ export const useUserStore = create<State>()(
                 name: newFullPath.slice(lastSlashIndex + 1),
               };
             }
-            return file;
+            return item;
           }),
         );
+      },
+
+      // 本地文件操作实现
+      addFile(file) {
+        if (file.type === "directory") return;
+        get()._addItem("files", file as FileItem);
+      },
+
+      deleteFile(cid, path, name) {
+        get()._deleteItem("files", cid, path, name);
+      },
+
+      renameFile(oldPath, newPath, newName) {
+        get()._renameItem("files", oldPath, newPath, newName);
       },
 
       // 笔记操作实现
       async addNote(file) {
         if (file.type === "directory") return "";
 
-        const normalizedPath = mp.normalizePath(file.path);
         const content = file.content || "";
         const cid = file.cid || (await mp.calculateCID(content));
 
-        const newNote: NoteItem = {
-          ...file,
-          cid,
-          content,
-          path: normalizedPath,
-          createdAt: Date.now(),
-        };
-
-        get()._updateItems("notes", (notes: NoteItem[]) => {
-          const exists = notes.some(
-            (f: NoteItem) => f.path === normalizedPath && f.name === file.name,
-          );
-          if (exists) {
-            return notes.map((f: NoteItem) =>
-              f.path === normalizedPath && f.name === file.name ? newNote : f,
-            );
-          }
-          return [...notes, newNote];
-        });
-
+        get()._addItem("notes", { ...file, content, cid } as FileItem);
         return cid;
       },
 
       deleteNote(cid, path, name) {
-        const normalizedPath = path !== undefined ? mp.normalizePath(path) : "";
-        get()._updateItems("notes", (notes: NoteItem[]) =>
-          notes.filter((file: NoteItem) => {
-            if (cid && file.cid === cid) return false;
-            if (
-              path !== undefined &&
-              name !== undefined &&
-              file.path === normalizedPath &&
-              file.name === name
-            )
-              return false;
-            return true;
-          }),
-        );
+        get()._deleteItem("notes", cid, path, name);
       },
 
       renameNote(oldPath, newPath, newName) {
-        const oldPathNorm = mp.normalizePath(oldPath);
-        const newPathNorm = mp.normalizePath(newPath);
-
-        get()._updateItems("notes", (notes: NoteItem[]) =>
-          notes.map((file: NoteItem) => {
-            const fullPath = mp.normalizePath(
-              file.path === "" ? file.name : `${file.path}/${file.name}`,
-            );
-
-            if (fullPath === oldPathNorm) {
-              return { ...file, path: newPathNorm, name: newName };
-            }
-
-            if (fullPath.startsWith(oldPathNorm + "/")) {
-              const relativePath = fullPath.slice(oldPathNorm.length);
-              const newFullPath = mp.normalizePath(
-                (newPathNorm ? `${newPathNorm}/${newName}` : newName) +
-                  relativePath,
-              );
-              const lastSlashIndex = newFullPath.lastIndexOf("/");
-              return {
-                ...file,
-                path:
-                  lastSlashIndex === -1
-                    ? ""
-                    : newFullPath.slice(0, lastSlashIndex),
-                name: newFullPath.slice(lastSlashIndex + 1),
-              };
-            }
-            return file;
-          }),
-        );
+        get()._renameItem("notes", oldPath, newPath, newName);
       },
 
       // 导出用户数据
@@ -286,32 +257,6 @@ export const useUserStore = create<State>()(
       importData({ notes, files }) {
         if (notes && files) {
           set({ notes, files });
-        }
-      },
-
-      // 同步到云端 (D1)
-      async syncToCloud() {
-        const { notes, files } = get();
-        try {
-          await api.post("/user.data.sync", { notes, files });
-          console.info("同步到云端成功");
-        } catch (error) {
-          console.error("同步到云端失败", error);
-          throw error;
-        }
-      },
-
-      // 从云端拉取 (D1)
-      async syncFromCloud() {
-        try {
-          const { data } = await api.post("/user.data.get");
-          if (data && data.notes && data.files) {
-            set({ notes: data.notes, files: data.files });
-            console.info("从云端拉取成功");
-          }
-        } catch (error) {
-          console.error("从云端拉取失败", error);
-          throw error;
         }
       },
 

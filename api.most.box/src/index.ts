@@ -12,13 +12,10 @@ type Variables = {
 
 const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
+// 1. CORS 中间件（必须在最前面以处理 OPTIONS 请求）
 app.use("/*", cors());
 
-app.get("/", (c) => {
-  return c.text("Welcome to api.most.box");
-});
-
-// 认证中间件
+// 2. 认证中间件
 const authMiddleware = async (c: any, next: any) => {
   try {
     const authHeader = c.req.header("Authorization");
@@ -41,11 +38,11 @@ const authMiddleware = async (c: any, next: any) => {
       return c.json({ error: "Timestamp expired or invalid" }, 401);
     }
 
-    // 初始化加密库 (Polkadot JS 需要)
+    // 初始化加密库
     await cryptoWaitReady();
 
     // 验证签名
-    // 被签名的消息是时间戳字符串
+    // signatureVerify 能够识别并验证 Polkadot (Sr25519/Ed25519) 和 Ethereum (ECDSA) 签名
     const { isValid } = signatureVerify(timestampStr, signature, address);
 
     if (!isValid) {
@@ -60,210 +57,11 @@ const authMiddleware = async (c: any, next: any) => {
   }
 };
 
-// 受保护的路由
+app.get("/", (c) => {
+  return c.text("Most.Box 如影随形 - 数字资产，从此永生");
+});
+
+// --- 受保护的 API 路由 ---
 app.use("/*", authMiddleware);
-
-// 开发接口
-
-app.get("/admin.users", async (c) => {
-  try {
-    const { results } = await c.env.DB.prepare("SELECT * FROM users").all();
-    return c.json(results);
-  } catch (e: any) {
-    return c.json({ error: e.message }, 500);
-  }
-});
-
-app.post("/admin.clear.tables", async (c) => {
-  try {
-    // 硬编码需要清空的表名列表，避免访问 sqlite_master 导致的权限错误
-    const tables = ["users", "files"];
-    const clearedTables = [];
-
-    for (const table of tables) {
-      // 清空表数据
-      await c.env.DB.prepare(`DELETE FROM "${table}"`).run();
-
-      // 尝试重置自增计数器 (如果失败则忽略，不影响数据清空)
-      try {
-        await c.env.DB.prepare("DELETE FROM sqlite_sequence WHERE name = ?")
-          .bind(table)
-          .run();
-      } catch (e) {
-        console.warn(`Failed to reset sequence for ${table}:`, e);
-      }
-
-      clearedTables.push(table);
-    }
-
-    return c.json({
-      message: "Database cleared successfully",
-      cleared_tables: clearedTables,
-    });
-  } catch (e: any) {
-    return c.json({ error: e.message }, 500);
-  }
-});
-
-// 文件接口
-
-app.post("/file.add", async (c) => {
-  try {
-    const address = c.get("address");
-    const { cid, file_name, file_size, file_type, tx_hash, path, expired_at } =
-      await c.req.json();
-
-    if (!cid || !file_name) {
-      return c.json({ error: "CID and file_name are required" }, 400);
-    }
-
-    const now = Date.now();
-    // 默认为根目录 "/"
-    const filePath = path || "/";
-
-    // 默认过期时间：如果未提供，则默认为 6 个月后 (Crust 默认订单时长)
-    // 6 months = 180 days * 24 hours * 60 minutes * 60 seconds * 1000 ms
-    const defaultExpiredAt = now + 180 * 24 * 60 * 60 * 1000;
-    const finalExpiredAt = expired_at || defaultExpiredAt;
-
-    await c.env.DB.prepare(
-      `
-      INSERT INTO files (cid, file_name, file_size, file_type, tx_hash, created_at, expired_at, address, path)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(address, cid) DO UPDATE SET
-        file_name = excluded.file_name,
-        path = excluded.path,
-        tx_hash = excluded.tx_hash,
-        expired_at = excluded.expired_at
-    `,
-    )
-      .bind(
-        cid,
-        file_name,
-        file_size,
-        file_type,
-        tx_hash,
-        now,
-        finalExpiredAt,
-        address,
-        filePath,
-      )
-      .run();
-
-    return c.json({ message: "File saved successfully" });
-  } catch (e: any) {
-    return c.json({ error: e.message }, 500);
-  }
-});
-
-app.post("/file.list", async (c) => {
-  try {
-    const address = c.get("address");
-    const { path } = await c.req.json();
-    const searchPath = path || "/";
-
-    const { results } = await c.env.DB.prepare(
-      "SELECT * FROM files WHERE address = ? AND path = ? ORDER BY created_at DESC",
-    )
-      .bind(address, searchPath)
-      .all();
-
-    return c.json(results);
-  } catch (e: any) {
-    return c.json({ error: e.message }, 500);
-  }
-});
-
-app.post("/file.delete", async (c) => {
-  try {
-    const address = c.get("address");
-    const { cid } = await c.req.json();
-
-    if (!cid) {
-      return c.json({ error: "CID is required" }, 400);
-    }
-
-    const result = await c.env.DB.prepare(
-      "DELETE FROM files WHERE address = ? AND cid = ?",
-    )
-      .bind(address, cid)
-      .run();
-
-    if (result.success) {
-      return c.json({ message: "File deleted successfully" });
-    } else {
-      return c.json({ error: "Failed to delete file" }, 500);
-    }
-  } catch (e: any) {
-    return c.json({ error: e.message }, 500);
-  }
-});
-
-// 用户接口
-
-app.post("/user.set", async (c) => {
-  try {
-    const address = c.get("address");
-
-    const { username } = await c.req.json();
-
-    if (!username) {
-      return c.json({ error: "Username is required" }, 400);
-    }
-
-    const now = Date.now();
-
-    // 插入或更新用户
-    // created_at 仅在插入时记录
-    await c.env.DB.prepare(
-      `
-      INSERT INTO users (address, username, created_at)
-      VALUES (?, ?, ?)
-      ON CONFLICT(address) DO UPDATE SET username = excluded.username
-    `,
-    )
-      .bind(address, username, now)
-      .run();
-
-    return c.json({ message: "User saved successfully" });
-  } catch (e: any) {
-    return c.json({ error: e.message }, 500);
-  }
-});
-
-app.post("/user.get", async (c) => {
-  try {
-    const address = c.get("address");
-
-    const user = await c.env.DB.prepare("SELECT * FROM users WHERE address = ?")
-      .bind(address)
-      .first();
-
-    if (!user) {
-      return c.json({ message: "User not found" }, 404);
-    }
-    return c.json(user);
-  } catch (e: any) {
-    return c.json({ error: e.message }, 500);
-  }
-});
-
-app.post("/user.delete", async (c) => {
-  try {
-    const address = c.get("address");
-
-    const result = await c.env.DB.prepare("DELETE FROM users WHERE address = ?")
-      .bind(address)
-      .run();
-
-    if (result.success) {
-      return c.json({ message: "User deleted successfully" });
-    } else {
-      return c.json({ error: "Failed to delete user" }, 500);
-    }
-  } catch (e: any) {
-    return c.json({ error: e.message }, 500);
-  }
-});
 
 export default app;

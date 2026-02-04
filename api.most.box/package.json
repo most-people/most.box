@@ -5,15 +5,15 @@
     "start": "wrangler dev",
     "deploy": "wrangler deploy --minify",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
-    "npm": "npm install"
+    "npm": "npm i"
   },
   "dependencies": {
     "@polkadot/keyring": "^14.0.1",
     "@polkadot/util": "^14.0.1",
     "@polkadot/util-crypto": "^14.0.1",
-    "hono": "^4.11.5"
+    "hono": "^4.11.7"
   },
   "devDependencies": {
-    "wrangler": "^4.60.0"
+    "wrangler": "^4.62.0"
   }
 }
