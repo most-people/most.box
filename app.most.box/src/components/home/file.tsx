@@ -36,11 +36,7 @@ import mp from "@/utils/mp";
 import { FileItem, useUserStore } from "@/stores/userStore";
 import { mostMnemonic } from "@/utils/MostWallet";
 import { Wallet } from "ethers";
-import {
-  createCrustAuthHeader,
-  uploadToIpfsGateway,
-  pinToCrustGateway,
-} from "@/utils/crust";
+import crust from "@/utils/crust";
 
 interface PreviewFile {
   file: File;
@@ -109,7 +105,7 @@ export default function HomeFile() {
       const mnemonic = mostMnemonic(wallet.danger);
       const account = Wallet.fromPhrase(mnemonic);
       const signature = await account.signMessage(account.address);
-      const authHeader = createCrustAuthHeader(account.address, signature);
+      const authHeader = crust.auth(account.address, signature);
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
@@ -123,8 +119,8 @@ export default function HomeFile() {
         });
 
         // 2. 上传到 Crust/IPFS
-        const ipfs = await uploadToIpfsGateway(file, authHeader);
-        const crust = await pinToCrustGateway(ipfs.cid, file.name, authHeader);
+        const ipfs = await crust.ipfs(file, authHeader);
+        const pinResult = await crust.pin(ipfs.cid, file.name, authHeader);
 
         // 3. 注册到本地
         const targetPath = mp.formatFilePath(file, currentPath);
@@ -136,7 +132,7 @@ export default function HomeFile() {
           name: file.name,
           size: file.size,
           type: "file",
-          txHash: crust?.data?.requestid || "",
+          txHash: pinResult?.data?.requestid || "",
           path: directoryPath,
         });
 
@@ -211,7 +207,8 @@ export default function HomeFile() {
 
       useUserStore.getState().addFile({
         name: "index.txt",
-        size: 8, // "Most.Box" 的大小
+        cid: "bafybeidzwbgdh55qpw6zbrxbyk3hywy2fobqrjukeimb5axvfdpzvcfysq",
+        size: 8,
         type: "file",
         path: targetPath,
       });
@@ -481,7 +478,6 @@ export default function HomeFile() {
   // 分享文件
   const handleShareFile = (item: FileItem) => {
     const cid = item.cid;
-    if (!cid) return;
     const params = new URLSearchParams({ filename: item.name });
     if (item.type === "directory") {
       params.set("type", "dir");
@@ -492,7 +488,6 @@ export default function HomeFile() {
 
   // 下载文件
   const formatDownload = (item: FileItem) => {
-    if (!item.cid) return "#";
     const params = new URLSearchParams({
       download: "true",
       filename: item.name,
@@ -643,7 +638,7 @@ export default function HomeFile() {
             <Grid gutter="md" pos="relative">
               {displayedItems.map((item) => (
                 <Grid.Col
-                  key={(item.cid || "") + item.path + item.name}
+                  key={item.cid + item.path + item.name}
                   span={{ base: 12, xs: 6, sm: 4, md: 3, lg: 3, xl: 2 }}
                 >
                   <Card radius="md" withBorder>
@@ -676,7 +671,6 @@ export default function HomeFile() {
                             onClick={() => {
                               handleShareFile(item);
                             }}
-                            disabled={!item.cid}
                           >
                             查看
                           </Menu.Item>
@@ -695,7 +689,7 @@ export default function HomeFile() {
                             component={Link}
                             target="_blank"
                             href={formatDownload(item)}
-                            disabled={!item.cid || formatDownload(item) === "#"}
+                            disabled={formatDownload(item) === "#"}
                           >
                             下载
                           </Menu.Item>

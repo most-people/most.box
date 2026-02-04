@@ -78,9 +78,7 @@ export default function HomeNote() {
     shareUrl.pathname = "/note/";
     shareUrl.searchParams.set("uid", wallet?.address || "");
     shareUrl.searchParams.set("name", note.name);
-    if (note.cid) {
-      shareUrl.searchParams.set("cid", note.cid);
-    }
+    shareUrl.searchParams.set("cid", note.cid);
     return shareUrl.href;
   };
 
@@ -181,15 +179,6 @@ export default function HomeNote() {
     setRenameBaseName(note.name);
     setRenameDirPath(note.path.replace(/^notes\/?/, ""));
     openRenameModal();
-  };
-
-  const handleOpen = (note: FileItem) => {
-    if (note.type === "directory") {
-      handleFolderClick(note.name);
-    } else {
-      const url = shareUrl(note);
-      window.open(url);
-    }
   };
 
   const handleEdit = (note: FileItem) => {
@@ -304,11 +293,6 @@ export default function HomeNote() {
         }
       },
     });
-  };
-
-  // 分享笔记函数
-  const handleShare = (note: FileItem) => {
-    window.open(`/ipfs/${note.cid}/?filename=${note.name}&type=note`);
   };
 
   // 重置弹窗状态
@@ -437,7 +421,7 @@ export default function HomeNote() {
             <Grid gutter="md">
               {displayedItems.map((note) => (
                 <Grid.Col
-                  key={(note.cid || "") + note.path + note.name}
+                  key={note.cid + note.path + note.name}
                   span={{ base: 12, xs: 6, sm: 4, md: 3, lg: 3, xl: 2 }}
                 >
                   <Card radius="md" withBorder>
@@ -469,26 +453,12 @@ export default function HomeNote() {
                         </Menu.Target>
 
                         <Menu.Dropdown>
-                          <Menu.Item
-                            leftSection="📖"
-                            onClick={() => handleOpen(note)}
-                          >
-                            打开
-                          </Menu.Item>
                           {note.type === "file" && (
                             <Menu.Item
                               leftSection="✍️"
                               onClick={() => handleEdit(note)}
                             >
                               编辑
-                            </Menu.Item>
-                          )}
-                          {note.type === "file" && note.cid && (
-                            <Menu.Item
-                              leftSection="📤"
-                              onClick={() => handleShare(note)}
-                            >
-                              分享
                             </Menu.Item>
                           )}
                           <Menu.Item

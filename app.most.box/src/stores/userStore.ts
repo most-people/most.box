@@ -1,9 +1,4 @@
-import {
-  getCrustBalance,
-  saveCIDToRemark,
-  getLatestCIDFromRemark,
-  uploadToCrust,
-} from "@/utils/crust";
+import crust from "@/utils/crust";
 import { mostCrust, mostMnemonic, type MostWallet } from "@/utils/MostWallet";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
@@ -14,7 +9,7 @@ export interface FileItem {
   name: string;
   type: "file" | "directory";
   size: number;
-  cid?: string;
+  cid: string;
   path: string;
   createdAt: number;
   txHash?: string;
@@ -276,10 +271,10 @@ export const useUserStore = create<State>()(
 
           const mnemonic = mostMnemonic(wallet.danger);
           // 1. 上传到 IPFS
-          const { cid } = await uploadToCrust(file, mnemonic);
+          const { cid } = await crust.upload(file, mnemonic);
 
           // 2. 写入链上 Remark
-          await saveCIDToRemark(cid, wallet.danger);
+          await crust.saveRemark(cid, wallet.danger);
 
           console.info("同步到链上成功");
         } catch (error) {
@@ -296,7 +291,7 @@ export const useUserStore = create<State>()(
         try {
           const { crust_address } = await mostCrust(wallet.danger);
           // 1. 从链上获取最新 CID
-          const cid = await getLatestCIDFromRemark(crust_address);
+          const cid = await crust.getRemark(crust_address);
           if (!cid) {
             console.warn("未在链上找到备份记录");
             return;
@@ -323,7 +318,7 @@ export const useUserStore = create<State>()(
         if (wallet) {
           try {
             const { crust_address } = await mostCrust(wallet.danger);
-            const balance = await getCrustBalance(crust_address);
+            const balance = await crust.balance(crust_address);
             set({ balance });
           } catch (error) {
             console.error("获取 Crust 余额失败", error);

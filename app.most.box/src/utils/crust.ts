@@ -14,7 +14,7 @@ const CRUST_RPC_URL = "wss://rpc.crust.network";
  * @param signature 地址签名
  * @returns Base64 编码的认证头
  */
-export const createCrustAuthHeader = (address: string, signature: string) => {
+const auth = (address: string, signature: string) => {
   const authHeaderRaw = `eth-${address}:${signature}`;
   return Buffer.from(authHeaderRaw).toString("base64");
 };
@@ -25,9 +25,9 @@ export const createCrustAuthHeader = (address: string, signature: string) => {
  * @param authHeader Base64 编码的认证头
  * @returns 包含 CID 和大小的上传结果
  */
-export const uploadToIpfsGateway = async (file: File, authHeader: string) => {
+const ipfs = async (file: File, authHeader: string) => {
   // 创建连接到 Crust 网关的 IPFS 客户端
-  const ipfs = create({
+  const ipfsClient = create({
     url: `${CRUST_GW}/api/v0`,
     headers: {
       authorization: `Basic ${authHeader}`,
@@ -35,7 +35,7 @@ export const uploadToIpfsGateway = async (file: File, authHeader: string) => {
   });
 
   try {
-    const result = await ipfs.add(file, { cidVersion: 1 });
+    const result = await ipfsClient.add(file, { cidVersion: 1 });
     return {
       cid: result.cid.toString(),
       size: result.size,
@@ -53,11 +53,7 @@ export const uploadToIpfsGateway = async (file: File, authHeader: string) => {
  * @param name 文件名
  * @param authHeader Base64 编码的认证头
  */
-export const pinToCrustGateway = async (
-  cid: string,
-  name: string,
-  authHeader: string,
-) => {
+const pin = async (cid: string, name: string, authHeader: string) => {
   try {
     return await axios.post(
       `${CRUST_PIN_URL}/pins`,
@@ -83,13 +79,13 @@ export const pinToCrustGateway = async (
  * @param authHeader Base64 编码的认证头
  * @returns 带 CID 的上传结果
  */
-export const uploadWithAuthHeader = async (file: File, authHeader: string) => {
+const uploadWithAuth = async (file: File, authHeader: string) => {
   try {
     // 1. 上传到 IPFS 网关
-    const result = await uploadToIpfsGateway(file, authHeader);
+    const result = await ipfs(file, authHeader);
 
     // 2. 将文件 Pin 到 Crust 网络
-    await pinToCrustGateway(result.cid, file.name, authHeader);
+    await pin(result.cid, file.name, authHeader);
 
     return result;
   } catch (error) {
@@ -104,7 +100,7 @@ export const uploadWithAuthHeader = async (file: File, authHeader: string) => {
  * @param mnemonic 签名请求的钱包助记词
  * @returns 带 CID 的上传结果
  */
-export const uploadToCrust = async (file: File, mnemonic: string) => {
+const upload = async (file: File, mnemonic: string) => {
   if (!mnemonic) throw new Error("需要钱包助记词");
 
   // 从助记词创建签名者
@@ -114,9 +110,9 @@ export const uploadToCrust = async (file: File, mnemonic: string) => {
   const signature = await account.signMessage(address);
 
   // 构造认证头
-  const authHeader = createCrustAuthHeader(address, signature);
+  const authHeader = auth(address, signature);
 
-  return uploadWithAuthHeader(file, authHeader);
+  return uploadWithAuth(file, authHeader);
 };
 
 /**
@@ -127,7 +123,7 @@ export const uploadToCrust = async (file: File, mnemonic: string) => {
  * @param tips 订单小费（可选）
  * @returns 交易哈希
  */
-export const placeStorageOrder = async (
+const order = async (
   cid: string,
   fileSize: number,
   danger: string,
@@ -192,7 +188,7 @@ export const placeStorageOrder = async (
  * @param address Crust 地址
  * @returns 余额（单位：CRU，类型：string）
  */
-export const getCrustBalance = async (address: string): Promise<string> => {
+const balance = async (address: string): Promise<string> => {
   try {
     const res = await axios.post(
       "https://crust.api.subscan.io/api/scan/account/tokens",
@@ -212,7 +208,7 @@ export const getCrustBalance = async (address: string): Promise<string> => {
  * @param danger 钱包私钥/种子
  * @returns 交易哈希
  */
-export const saveCIDToRemark = async (cid: string, danger: string) => {
+const saveRemark = async (cid: string, danger: string) => {
   const { ApiPromise, WsProvider } = await import("@polkadot/api");
   const { typesBundleForPolkadot } = await import("@crustio/type-definitions");
   const { Keyring } = await import("@polkadot/keyring");
@@ -264,7 +260,7 @@ export const saveCIDToRemark = async (cid: string, danger: string) => {
  * @param address Crust 地址 (SS58 格式)
  * @returns 最近一次备份的 CID，如果未找到则返回 null
  */
-export const getLatestCIDFromRemark = async (address: string) => {
+const getRemark = async (address: string) => {
   try {
     const res = await axios.post(
       "https://crust.api.subscan.io/api/scan/extrinsic/list",
@@ -289,17 +285,25 @@ export const getLatestCIDFromRemark = async (address: string) => {
         try {
           const params = JSON.parse(ext.params);
           const remarkValue = params[0]?.value;
-          if (remarkValue && typeof remarkValue === "string" && remarkValue.startsWith("most-box:v1:")) {
+          if (
+            remarkValue &&
+            typeof remarkValue === "string" &&
+            remarkValue.startsWith("most-box:v1:")
+          ) {
             return remarkValue.replace("most-box:v1:", "");
           }
         } catch (e) {
           // 有些 remark 可能是 hex 格式或者直接在 params 里
           const params = ext.params;
           if (Array.isArray(params)) {
-             const remarkValue = params[0]?.value;
-             if (remarkValue && typeof remarkValue === "string" && remarkValue.startsWith("most-box:v1:")) {
-               return remarkValue.replace("most-box:v1:", "");
-             }
+            const remarkValue = params[0]?.value;
+            if (
+              remarkValue &&
+              typeof remarkValue === "string" &&
+              remarkValue.startsWith("most-box:v1:")
+            ) {
+              return remarkValue.replace("most-box:v1:", "");
+            }
           }
         }
       }
@@ -310,3 +314,17 @@ export const getLatestCIDFromRemark = async (address: string) => {
     return null;
   }
 };
+
+const crust = {
+  auth,
+  ipfs,
+  pin,
+  uploadWithAuth,
+  upload,
+  order,
+  balance,
+  saveRemark,
+  getRemark,
+};
+
+export default crust;

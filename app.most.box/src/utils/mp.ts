@@ -302,7 +302,9 @@ const calculateCID = async (content: string) => {
  * @param query 搜索关键词
  * @returns 过滤后的列表（包含推导出的目录）
  */
-const filterFilesByPath = <T extends { name: string; path: string; type: string; createdAt: number }>(
+const filterFilesByPath = <
+  T extends { name: string; path: string; type: string; createdAt: number },
+>(
   items: T[],
   currentPath: string,
   query?: string,
@@ -350,6 +352,7 @@ const filterFilesByPath = <T extends { name: string; path: string; type: string;
             type: "directory",
             path: normalizedCurrentPath,
             size: 0,
+            cid: "",
             createdAt: item.createdAt,
           } as unknown as T);
         }
