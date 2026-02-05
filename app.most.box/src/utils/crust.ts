@@ -1,4 +1,4 @@
-import { formatUnits, Wallet } from "ethers";
+import { formatUnits, parseUnits } from "ethers";
 import { create } from "kubo-rpc-client";
 import axios from "axios";
 import { mostCrust } from "@/utils/MostWallet";
@@ -177,7 +177,7 @@ const upload = async (
   crustWallet: { crust_address: string; sign: (msg: string) => string },
 ) => {
   const { crust_address, sign } = crustWallet;
-  
+
   // 签名地址本身作为消息
   const signature = sign(crust_address);
 
@@ -197,6 +197,7 @@ const upload = async (
  * @param fileSize 文件大小（字节）
  * @param seed Substrate 账户种子/助记词（注意：通常与 ETH 助记词不同）
  * @param tips 订单小费（可选）
+ * @param currentBalance 当前余额（可选，如果提供则不再查询链上余额）
  * @returns 交易哈希
  */
 const order = async (
@@ -204,6 +205,7 @@ const order = async (
   fileSize: number,
   danger: string,
   tips = 0,
+  currentBalance: string,
 ) => {
   const { ApiPromise, WsProvider } = await import("@polkadot/api");
   const { typesBundleForPolkadot } = await import("@crustio/type-definitions");
@@ -227,6 +229,30 @@ const order = async (
     // market.placeStorageOrder(cid, size, tips, memo)
     // memo 是可选的，默认为空
     const tx = crust.tx.market.placeStorageOrder(cid, fileSize, tips, "");
+
+    // 检查余额
+    const balance = parseUnits(currentBalance, 12);
+
+    // 计算存储费
+    const unitPrice = await crust.query.market.unitPrice();
+    const unitPriceBigInt = BigInt(unitPrice.toString());
+    const sizeBigInt = BigInt(fileSize);
+    const MB = BigInt(1024 * 1024);
+    // 向上取整计算存储费
+    const storageFee = (unitPriceBigInt * sizeBigInt + MB - 1n) / MB;
+
+    // 估算交易费
+    const paymentInfo = await tx.paymentInfo(krp);
+    const txFee = BigInt(paymentInfo.partialFee.toString());
+
+    const tipsBigInt = BigInt(tips);
+    const totalCost = storageFee + txFee + tipsBigInt;
+
+    if (balance < totalCost) {
+      throw new Error(
+        `余额不足。需要 ${formatUnits(totalCost, 12)} CRU，但只有 ${formatUnits(balance, 12)} CRU。`,
+      );
+    }
 
     // 4. 发送并等待确认
     const result = await new Promise<string>((resolve, reject) => {
@@ -284,9 +310,14 @@ const balance = async (address: string): Promise<string> => {
  * 将 CID 作为 Remark (Memo) 写入 Crust 链上
  * @param cid IPFS 内容 ID
  * @param danger 钱包私钥/种子
+ * @param currentBalance 当前余额（可选，如果提供则不再查询链上余额）
  * @returns 交易哈希
  */
-const saveRemark = async (cid: string, danger: string) => {
+const saveRemark = async (
+  cid: string,
+  danger: string,
+  currentBalance: string,
+) => {
   const { ApiPromise, WsProvider } = await import("@polkadot/api");
   const { typesBundleForPolkadot } = await import("@crustio/type-definitions");
   const { Keyring } = await import("@polkadot/keyring");
@@ -306,6 +337,19 @@ const saveRemark = async (cid: string, danger: string) => {
     // 构造备注内容：most-box:v1:CID
     const memo = `most-box:v1:${cid}`;
     const tx = crust.tx.system.remark(memo);
+
+    // 检查余额
+    const balance = parseUnits(currentBalance, 12);
+
+    // 估算交易费
+    const paymentInfo = await tx.paymentInfo(krp);
+    const txFee = BigInt(paymentInfo.partialFee.toString());
+
+    if (balance < txFee) {
+      throw new Error(
+        `余额不足。需要 ${formatUnits(txFee, 12)} CRU，但只有 ${formatUnits(balance, 12)} CRU。`,
+      );
+    }
 
     const result = await new Promise<string>((resolve, reject) => {
       tx.signAndSend(krp, ({ status, dispatchError, txHash }) => {

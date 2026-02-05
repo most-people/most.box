@@ -274,27 +274,12 @@ export const useUserStore = create<State>()(
             { path: "most-box-backup.json", content: backupContent },
           ];
 
-          // 2. 笔记文件 (为了 Pin 住文章内容的 CID)
-          data.notes.forEach((note) => {
-            if (note.content) {
-              // 构造路径: notes/文件夹/文件名
-              const relPath = note.path ? note.path.replace(/^\//, "") : "";
-              const fullPath = relPath
-                ? `notes/${relPath}/${note.name}`
-                : `notes/${note.name}`;
-              uploadFiles.push({
-                path: fullPath,
-                content: note.content,
-              });
-            }
-          });
-
+          // 2. 上传到 IPFS (作为文件夹上传)
           const crustWallet = await mostCrust(wallet.danger);
-          // 1. 上传到 IPFS (作为文件夹上传)
           const { cid } = await crust.upload(uploadFiles, crustWallet);
 
-          // 2. 写入链上 Remark
-          await crust.saveRemark(cid, wallet.danger);
+          // 3. 写入链上 Remark
+          await crust.saveRemark(cid, wallet.danger, get().balance);
 
           notifications.show({
             message: "同步到链上成功",
