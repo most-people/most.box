@@ -121,7 +121,7 @@ const pin = async (cid: string, name: string, authHeader: string) => {
       },
     );
   } catch (pinError) {
-    console.warn("Pin 失败，可能是因为余额不足:", pinError);
+    console.warn("Pin 失败。", pinError);
     throw pinError;
   }
 };
@@ -226,7 +226,7 @@ const order = async (
     // 检查余额
     const balance = parseUnits(currentBalance, 12);
     if (balance <= 0) {
-      const error = new Error(`余额不足。`, {
+      const error = new Error(`余额为 0 请先充值 CRU 代币。`, {
         cause: "INSUFFICIENT_BALANCE",
       });
       throw error;
@@ -261,7 +261,7 @@ const order = async (
 
     if (balance < totalCost) {
       const error = new Error(
-        `余额不足。需要 ${formatUnits(totalCost, 12)} CRU，但只有 ${formatUnits(balance, 12)} CRU。`,
+        `需要 ${formatUnits(totalCost, 12)} CRU，但只有 ${formatUnits(balance, 12)} CRU。`,
         { cause: "INSUFFICIENT_BALANCE" },
       );
       throw error;
@@ -334,7 +334,7 @@ const saveRemark = async (
   // 检查余额
   const balance = parseUnits(currentBalance, 12);
   if (balance <= 0) {
-    const error = new Error(`余额不足。`, {
+    const error = new Error(`余额为 0 请先充值 CRU 代币。`, {
       cause: "INSUFFICIENT_BALANCE",
     });
     throw error;
@@ -366,7 +366,7 @@ const saveRemark = async (
 
     if (balance < txFee) {
       const error = new Error(
-        `余额不足。需要 ${formatUnits(txFee, 12)} CRU，但只有 ${formatUnits(balance, 12)} CRU。`,
+        `需要 ${formatUnits(txFee, 12)} CRU，但只有 ${formatUnits(balance, 12)} CRU。`,
         { cause: "INSUFFICIENT_BALANCE" },
       );
       throw error;

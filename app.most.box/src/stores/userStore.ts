@@ -286,10 +286,6 @@ export const useUserStore = create<State>()(
             color: "green",
           });
         } catch (error) {
-          notifications.show({
-            message: "同步到链上失败",
-            color: "red",
-          });
           throw error;
         }
       },

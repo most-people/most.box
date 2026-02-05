@@ -9,6 +9,7 @@ import { IconFileImport, IconPackageExport } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { useUserStore } from "@/stores/userStore";
 import { useRouter } from "next/navigation";
+import { modals } from "@mantine/modals";
 
 interface AppHeaderProps {
   title: string | string[];
@@ -32,7 +33,18 @@ export const AppHeader = ({ title, variant, right, left }: AppHeaderProps) => {
       await syncToChain();
     } catch (error: any) {
       if (error.cause === "INSUFFICIENT_BALANCE") {
-        router.push("/pay");
+        modals.openConfirmModal({
+          title: "余额不足",
+          children: <Text size="sm">{error.message}</Text>,
+          labels: { confirm: "去充值", cancel: "取消" },
+          onConfirm: () => router.push("/pay"),
+        });
+      } else {
+        console.error("同步到链上失败", error);
+        notifications.show({
+          message: "同步到链上失败",
+          color: "red",
+        });
       }
     }
   };
