@@ -7,8 +7,13 @@ import { mostCrust } from "@/utils/MostWallet";
 const CRUST_IPFS_GW = "https://gw.crustfiles.app";
 // Crust Pinning 服务
 const CRUST_PIN = "https://pin.crustcode.com/psa";
-// Crust 链 RPC 节点
-const CRUST_RPC = "wss://rpc.crust.network";
+// Crust 链 RPC 节点列表
+const CRUST_RPC_NODES = [
+  "wss://crust.api.onfinality.io/public-ws",
+  "wss://rpc.crust.network",
+  "wss://rpc-crust-mainnet.decoo.io",
+  "wss://api.decloudf.com",
+];
 // Subscan 浏览器 API
 const CRUST_SUBSCAN_API = "https://crust.api.subscan.io";
 
@@ -213,11 +218,20 @@ const order = async (
 
   // 1. 初始化 API
   const crust = new ApiPromise({
-    provider: new WsProvider(CRUST_RPC),
+    provider: new WsProvider(CRUST_RPC_NODES),
     typesBundle: typesBundleForPolkadot,
   });
 
   try {
+    // 检查余额
+    const balance = parseUnits(currentBalance, 12);
+    if (balance <= 0) {
+      const error = new Error(`余额不足。`, {
+        cause: "INSUFFICIENT_BALANCE",
+      });
+      throw error;
+    }
+
     await crust.isReady;
 
     // 2. 创建 Keyring
@@ -229,9 +243,6 @@ const order = async (
     // market.placeStorageOrder(cid, size, tips, memo)
     // memo 是可选的，默认为空
     const tx = crust.tx.market.placeStorageOrder(cid, fileSize, tips, "");
-
-    // 检查余额
-    const balance = parseUnits(currentBalance, 12);
 
     // 计算存储费
     const unitPrice = await crust.query.market.unitPrice();
@@ -249,9 +260,11 @@ const order = async (
     const totalCost = storageFee + txFee + tipsBigInt;
 
     if (balance < totalCost) {
-      throw new Error(
+      const error = new Error(
         `余额不足。需要 ${formatUnits(totalCost, 12)} CRU，但只有 ${formatUnits(balance, 12)} CRU。`,
+        { cause: "INSUFFICIENT_BALANCE" },
       );
+      throw error;
     }
 
     // 4. 发送并等待确认
@@ -318,12 +331,21 @@ const saveRemark = async (
   danger: string,
   currentBalance: string,
 ) => {
+  // 检查余额
+  const balance = parseUnits(currentBalance, 12);
+  if (balance <= 0) {
+    const error = new Error(`余额不足。`, {
+      cause: "INSUFFICIENT_BALANCE",
+    });
+    throw error;
+  }
+
   const { ApiPromise, WsProvider } = await import("@polkadot/api");
   const { typesBundleForPolkadot } = await import("@crustio/type-definitions");
   const { Keyring } = await import("@polkadot/keyring");
 
   const crust = new ApiPromise({
-    provider: new WsProvider(CRUST_RPC),
+    provider: new WsProvider(CRUST_RPC_NODES),
     typesBundle: typesBundleForPolkadot,
   });
 
@@ -338,17 +360,16 @@ const saveRemark = async (
     const memo = `most-box:v1:${cid}`;
     const tx = crust.tx.system.remark(memo);
 
-    // 检查余额
-    const balance = parseUnits(currentBalance, 12);
-
     // 估算交易费
     const paymentInfo = await tx.paymentInfo(krp);
     const txFee = BigInt(paymentInfo.partialFee.toString());
 
     if (balance < txFee) {
-      throw new Error(
+      const error = new Error(
         `余额不足。需要 ${formatUnits(txFee, 12)} CRU，但只有 ${formatUnits(balance, 12)} CRU。`,
+        { cause: "INSUFFICIENT_BALANCE" },
       );
+      throw error;
     }
 
     const result = await new Promise<string>((resolve, reject) => {

@@ -27,6 +27,16 @@ export const AppHeader = ({ title, variant, right, left }: AppHeaderProps) => {
   const syncToChain = useUserStore((state) => state.syncToChain);
   const syncFromChain = useUserStore((state) => state.syncFromChain);
 
+  const handleSyncToChain = async () => {
+    try {
+      await syncToChain();
+    } catch (error: any) {
+      if (error.cause === "INSUFFICIENT_BALANCE") {
+        router.push("/pay");
+      }
+    }
+  };
+
   const handleExport = () => {
     if (!wallet) {
       notifications.show({ message: "请先登录", color: "red" });
@@ -114,7 +124,7 @@ export const AppHeader = ({ title, variant, right, left }: AppHeaderProps) => {
           <Menu.Dropdown>
             <Menu.Item
               leftSection={<IconPackageExport size={18} />}
-              onClick={syncToChain}
+              onClick={handleSyncToChain}
             >
               同步到链上
             </Menu.Item>

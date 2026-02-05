@@ -825,7 +825,7 @@ export default function HomeFile() {
               {previewFiles.map((item, index) => (
                 <Card key={index} p="sm" withBorder>
                   <Group justify="space-between" align="center" wrap="nowrap">
-                    <Group align="center">
+                    <Group align="center" wrap="nowrap">
                       <Text size="sm">📄</Text>
                       <Stack gap={2}>
                         <Text size="sm" fw={500}>
