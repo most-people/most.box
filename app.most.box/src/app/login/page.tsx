@@ -26,6 +26,7 @@ import {
   useAppKitAccount,
   useAppKitProvider,
 } from "@reown/appkit/react";
+import { AppKitProvider } from "@/context/AppKitProvider";
 import { BrowserProvider } from "ethers";
 
 export default function PageLogin() {
@@ -90,62 +91,64 @@ export default function PageLogin() {
   };
 
   return (
-    <Container maw={424} w="100%">
-      <AppHeader title="登录" />
-      <Stack gap="md" mt="md">
-        <Stack align="center">
-          <Text size="xl">Most People</Text>
-          <Avatar
-            size="xl"
-            radius="md"
-            src={mp.avatar(
-              username ? mostWallet(username, password).address : undefined,
-            )}
-            alt="it's me"
-          />
-        </Stack>
-        <Stack gap="md">
-          <Input
-            autoFocus
-            placeholder="昵称"
-            value={username}
-            onChange={(event) => setUsername(event.currentTarget.value)}
-            onKeyUp={(event) => {
-              if (event.key === "Enter" && isLogin) {
-                login();
-              }
-            }}
-          />
-          <PasswordInput
-            placeholder="密码"
-            visible={visible}
-            onVisibilityChange={toggle}
-            value={password}
-            onChange={(event) => setPassword(event.currentTarget.value)}
-            onKeyUp={(event) => {
-              if (event.key === "Enter" && isLogin) {
-                login();
-              }
-            }}
-          />
+    <AppKitProvider>
+      <Container maw={424} w="100%">
+        <AppHeader title="登录" />
+        <Stack gap="md" mt="md">
+          <Stack align="center">
+            <Text size="xl">Most People</Text>
+            <Avatar
+              size="xl"
+              radius="md"
+              src={mp.avatar(
+                username ? mostWallet(username, password).address : undefined,
+              )}
+              alt="it's me"
+            />
+          </Stack>
+          <Stack gap="md">
+            <Input
+              autoFocus
+              placeholder="昵称"
+              value={username}
+              onChange={(event) => setUsername(event.currentTarget.value)}
+              onKeyUp={(event) => {
+                if (event.key === "Enter" && isLogin) {
+                  login();
+                }
+              }}
+            />
+            <PasswordInput
+              placeholder="密码"
+              visible={visible}
+              onVisibilityChange={toggle}
+              value={password}
+              onChange={(event) => setPassword(event.currentTarget.value)}
+              onKeyUp={(event) => {
+                if (event.key === "Enter" && isLogin) {
+                  login();
+                }
+              }}
+            />
 
-          <Button onClick={isLogin ? login : back} variant="gradient">
-            {isLogin ? "登录" : "游客"}
+            <Button onClick={isLogin ? login : back} variant="gradient">
+              {isLogin ? "登录" : "游客"}
+            </Button>
+
+            <Anchor
+              component={Link}
+              href="/about"
+              style={{ textAlign: "center" }}
+            >
+              完全去中心化，无需注册
+            </Anchor>
+          </Stack>
+          <Divider label="Or" labelPosition="center" />
+          <Button onClick={walletLogin} variant={isConnected ? "red" : "light"}>
+            {isConnected ? "签名登录" : "连接钱包"}
           </Button>
-
-          <Anchor
-            component={Link}
-            href="/about"
-            style={{ textAlign: "center" }}
-          >
-            完全去中心化，无需注册
-          </Anchor>
         </Stack>
-        <Divider label="Or" labelPosition="center" />
-        <Button onClick={walletLogin} variant={isConnected ? "red" : "light"}>
-          {isConnected ? "签名登录" : "连接钱包"}
-        </Button>
-      </Stack>
-    </Container>
+      </Container>
+    </AppKitProvider>
   );
 }

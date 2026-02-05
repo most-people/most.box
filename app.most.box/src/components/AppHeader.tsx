@@ -24,6 +24,8 @@ export const AppHeader = ({ title, variant, right, left }: AppHeaderProps) => {
   const exportData = useUserStore((state) => state.exportData);
   const wallet = useUserStore((state) => state.wallet);
   const importData = useUserStore((state) => state.importData);
+  const syncToChain = useUserStore((state) => state.syncToChain);
+  const syncFromChain = useUserStore((state) => state.syncFromChain);
 
   const handleExport = () => {
     if (!wallet) {
@@ -116,6 +118,21 @@ export const AppHeader = ({ title, variant, right, left }: AppHeaderProps) => {
             </ActionIcon>
           </Menu.Target>
           <Menu.Dropdown>
+            <Menu.Item
+              leftSection={<IconPackageExport size={18} />}
+              onClick={syncToChain}
+            >
+              同步到链上
+            </Menu.Item>
+            <Menu.Item
+              leftSection={<IconFileImport size={18} />}
+              onClick={syncFromChain}
+            >
+              从链上拉取
+            </Menu.Item>
+
+            <Menu.Divider />
+
             <Menu.Item
               leftSection={<Icon name="Earth" size={16} />}
               component={Link}

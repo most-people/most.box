@@ -1,5 +1,4 @@
 import AppProvider from "@/context/AppProvider";
-import { AppKitProvider } from "@/context/Web3Modal";
 import type { Metadata, Viewport } from "next";
 import { theme } from "@/utils/theme";
 
@@ -58,14 +57,12 @@ export default function RootLayout({
       </head>
       <body>
         <div id="app">
-          <AppKitProvider>
-            <MantineProvider defaultColorScheme="auto" theme={theme}>
-              <Notifications limit={3} position="top-center" />
-              <ModalsProvider>
-                <AppProvider>{children}</AppProvider>
-              </ModalsProvider>
-            </MantineProvider>
-          </AppKitProvider>
+          <MantineProvider defaultColorScheme="auto" theme={theme}>
+            <Notifications limit={3} position="top-center" />
+            <ModalsProvider>
+              <AppProvider>{children}</AppProvider>
+            </ModalsProvider>
+          </MantineProvider>
         </div>
       </body>
     </html>
