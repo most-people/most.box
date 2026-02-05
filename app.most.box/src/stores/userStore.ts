@@ -1,3 +1,5 @@
+"use client";
+
 import crust from "@/utils/crust";
 import { mostCrust, mostMnemonic, type MostWallet } from "@/utils/MostWallet";
 import { create } from "zustand";
@@ -270,7 +272,7 @@ export const useUserStore = create<State>()(
           ];
 
           // 2. 上传到 IPFS (作为文件夹上传)
-          const crustWallet = await mostCrust(wallet.danger);
+          const crustWallet = mostCrust(wallet.danger);
           const { cid } = await crust.upload(uploadFiles, crustWallet);
 
           // 3. 写入链上 Remark
@@ -294,7 +296,7 @@ export const useUserStore = create<State>()(
         }
 
         try {
-          const { crust_address } = await mostCrust(wallet.danger);
+          const { crust_address } = mostCrust(wallet.danger);
           // 1. 从链上获取最新 CID
           const cid = await crust.getRemark(crust_address);
           if (!cid) {
@@ -336,7 +338,7 @@ export const useUserStore = create<State>()(
         const { wallet } = get();
         if (wallet) {
           try {
-            const { crust_address } = await mostCrust(wallet.danger);
+            const { crust_address } = mostCrust(wallet.danger);
             const balance = await crust.balance(crust_address);
             set({ balance });
           } catch (error) {

@@ -1,3 +1,5 @@
+"use client";
+
 // 导入 Next.js 的路由相关 hooks
 import { usePathname, useRouter } from "next/navigation";
 import { useUserStore } from "@/stores/userStore";

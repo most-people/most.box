@@ -102,7 +102,7 @@ export default function HomeFile() {
 
     try {
       // 1. 生成 Auth Header (一次生成，批量使用)
-      const { crust_address, sign } = await mostCrust(wallet.danger);
+      const { crust_address, sign } = mostCrust(wallet.danger);
       const signature = sign(crust_address);
       const authHeader = crust.auth(crust_address, signature);
 

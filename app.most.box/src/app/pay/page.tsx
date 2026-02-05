@@ -1,161 +1,49 @@
 "use client";
 
-import { Suspense } from "react";
 import { AppHeader } from "@/components/AppHeader";
+import { useUserStore } from "@/stores/userStore";
+import { mostCrust } from "@/utils/MostWallet";
 import mp from "@/utils/mp";
-import {
-  Avatar,
-  Container,
-  Paper,
-  Stack,
-  Text,
-  Group,
-  ActionIcon,
-  Tooltip,
-} from "@mantine/core";
-import { useSearchParams } from "next/navigation";
-import { QRCodeSVG } from "qrcode.react";
-import { notifications } from "@mantine/notifications";
-import { IconCopy, IconShare } from "@tabler/icons-react";
-
+import { Avatar, Container, Stack, Text } from "@mantine/core";
+import { useEffect, useState } from "react";
 const PageContent = () => {
-  const params = useSearchParams();
-  const address = params.get("address") || mp.ZeroAddress;
+  const wallet = useUserStore((state) => state.wallet);
+  const balance = useUserStore((state) => state.balance);
 
-  const handleCopyAddress = async () => {
-    try {
-      await navigator.clipboard.writeText(address);
-      notifications.show({
-        title: "复制成功",
-        message: address,
-        color: "green",
-      });
-    } catch {
-      notifications.show({
-        title: "复制失败",
-        message: "无法复制到剪贴板",
-        color: "red",
-      });
-    }
-  };
+  const [crust_address, setCrustAddress] = useState("-");
 
-  const handleShare = async () => {
-    const shareUrl = window.location.href;
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: "Most.Box 名片",
-          text: shareUrl,
-          url: shareUrl,
-        });
-      } catch {
-        // 用户取消分享或分享失败，回退到复制链接
-        handleCopyShareLink(shareUrl);
-      }
-    } else {
-      // 浏览器不支持 Web Share API，回退到复制链接
-      handleCopyShareLink(shareUrl);
+  useEffect(() => {
+    if (wallet) {
+      const { crust_address } = mostCrust(wallet.danger);
+      setCrustAddress(crust_address);
     }
-  };
-
-  const handleCopyShareLink = async (url: string) => {
-    try {
-      await navigator.clipboard.writeText(url);
-      notifications.show({
-        title: "链接已复制",
-        message: "分享链接已复制到剪贴板",
-        color: "blue",
-      });
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  }, [wallet]);
 
   return (
     <Container py="lg" size="sm">
-      <AppHeader title="我的地址" />
-
-      <Stack align="center" gap="xl">
+      <AppHeader title="支付" />
+      <Stack align="center">
         <Avatar
           size={100}
           radius="lg"
-          src={mp.avatar(address)}
+          src={mp.avatar(wallet?.address)}
           alt="头像"
           style={{
             boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)",
           }}
         />
 
-        <Stack align="center" gap="md">
-          <Paper
-            radius="md"
-            p={10}
-            withBorder
-            style={{ display: "flex", backgroundColor: "white" }}
-          >
-            <Stack align="center" gap={4}>
-              <Text size="sm" c="dimmed" fw={500}>
-                {mp.formatAddress(address)}
-              </Text>
-
-              <QRCodeSVG
-                value={address}
-                size={180}
-                bgColor="white"
-                fgColor="#333"
-                level="M"
-              />
-            </Stack>
-          </Paper>
-
-          <Text
-            c="dimmed"
-            ta="center"
-            variant="gradient"
-            gradient={{ from: "blue", to: "cyan", deg: 90 }}
-          >
-            {address}
-          </Text>
-        </Stack>
-
-        <Group gap="md" justify="center">
-          <Tooltip label="复制地址">
-            <ActionIcon
-              size="xl"
-              radius="xl"
-              variant="light"
-              color="blue"
-              onClick={handleCopyAddress}
-            >
-              <IconCopy size={20} />
-            </ActionIcon>
-          </Tooltip>
-
-          <Tooltip label="分享本页">
-            <ActionIcon
-              size="xl"
-              radius="xl"
-              variant="light"
-              color="green"
-              onClick={handleShare}
-            >
-              <IconShare size={20} />
-            </ActionIcon>
-          </Tooltip>
-        </Group>
-
-        <Text size="xs" c="dimmed" ta="center">
-          Powered by Most.Box
+        <Text size="sm" c="dimmed">
+          {crust_address}
+        </Text>
+        <Text size="sm" c="dimmed">
+          余额 {balance} CRU
         </Text>
       </Stack>
     </Container>
   );
 };
 
-export default function PageCard() {
-  return (
-    <Suspense>
-      <PageContent />
-    </Suspense>
-  );
+export default function PagePay() {
+  return <PageContent />;
 }

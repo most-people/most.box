@@ -236,7 +236,7 @@ const order = async (
 
     // 2. 创建 Keyring
     const keyring = new Keyring({ type: "sr25519" });
-    const { crust_mnemonic } = await mostCrust(danger);
+    const { crust_mnemonic } = mostCrust(danger);
     const krp = keyring.addFromUri(crust_mnemonic);
 
     // 3. 创建交易
@@ -353,7 +353,7 @@ const saveRemark = async (
     await crust.isReady;
 
     const keyring = new Keyring({ type: "sr25519" });
-    const { crust_mnemonic } = await mostCrust(danger);
+    const { crust_mnemonic } = mostCrust(danger);
     const krp = keyring.addFromUri(crust_mnemonic);
 
     // 构造备注内容：most-box:v1:CID

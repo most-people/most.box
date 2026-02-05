@@ -45,10 +45,9 @@ export default function PageWeb3() {
       setPublicKey(public_key);
       setPrivateKey(private_key);
 
-      mostCrust(wallet.danger).then(({ crust_address, crust_mnemonic }) => {
-        setCrustAddress(crust_address);
-        setCrustMnemonic(crust_mnemonic);
-      });
+      const { crust_address, crust_mnemonic } = mostCrust(wallet.danger);
+      setCrustAddress(crust_address);
+      setCrustMnemonic(crust_mnemonic);
     }
   }, [wallet]);
 
@@ -102,7 +101,7 @@ export default function PageWeb3() {
           </Text>
 
           <Group>
-            <Text>{balance || "-"}</Text>
+            <Text>{balance || "-"} CRU</Text>
             <Anchor
               href="https://www.gate.com/zh/trade/CRU_USDT"
               target="_blank"

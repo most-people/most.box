@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useMemo, useEffect } from "react";
 import { useUserStore, FileItem } from "@/stores/userStore";
 import mp from "@/utils/mp";

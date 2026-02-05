@@ -1,3 +1,5 @@
+"use client";
+
 import { useUserStore } from "@/stores/userStore";
 
 /**

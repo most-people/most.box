@@ -77,7 +77,7 @@ export const most25519 = (danger: string) => {
 };
 
 // Crust key pair
-export const mostCrust = async (danger: string) => {
+export const mostCrust = (danger: string) => {
   const entropy = getBytes(danger);
   const mnemonic = Mnemonic.entropyToPhrase(entropy);
 
