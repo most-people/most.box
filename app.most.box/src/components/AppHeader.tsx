@@ -5,7 +5,12 @@ import { Icon } from "@/components/Icon";
 import { useBack } from "@/hooks/useBack";
 import { useDocumentTitle } from "@mantine/hooks";
 import Link from "next/link";
-import { IconFileImport, IconPackageExport } from "@tabler/icons-react";
+import {
+  IconFileImport,
+  IconPackageExport,
+  IconCloudUpload,
+  IconCloudDownload,
+} from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { useUserStore } from "@/stores/userStore";
 import { useRouter } from "next/navigation";
@@ -135,13 +140,13 @@ export const AppHeader = ({ title, variant, right, left }: AppHeaderProps) => {
           </Menu.Target>
           <Menu.Dropdown>
             <Menu.Item
-              leftSection={<IconPackageExport size={18} />}
+              leftSection={<IconCloudUpload size={18} />}
               onClick={handleSyncToChain}
             >
               同步到链上
             </Menu.Item>
             <Menu.Item
-              leftSection={<IconFileImport size={18} />}
+              leftSection={<IconCloudDownload size={18} />}
               onClick={syncFromChain}
             >
               从链上拉取
