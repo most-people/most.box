@@ -21,13 +21,11 @@ import { useUserStore } from "@/stores/userStore";
 import { notifications } from "@mantine/notifications";
 import { useBack } from "@/hooks/useBack";
 import { AppHeader } from "@/components/AppHeader";
-import {
-  useAppKit,
-  useAppKitAccount,
-  useAppKitProvider,
-} from "@reown/appkit/react";
-import { AppKitProvider } from "@/context/AppKitProvider";
-import { BrowserProvider } from "ethers";
+import dynamic from "next/dynamic";
+
+const LoginWallet = dynamic(() => import("@/components/LoginWallet"), {
+  ssr: false,
+});
 
 export default function PageLogin() {
   const back = useBack();
@@ -38,39 +36,6 @@ export default function PageLogin() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const isLogin = Boolean(username || password);
-
-  // Reown hooks
-  const { open } = useAppKit();
-  const { address, isConnected } = useAppKitAccount();
-  const { walletProvider } = useAppKitProvider("eip155");
-
-  const walletLogin = async () => {
-    if (!isConnected || !address) {
-      open();
-      return;
-    }
-    try {
-      const message = "most.box";
-      if (!walletProvider) {
-        throw new Error("Wallet provider not found");
-      }
-      const ethersProvider = new BrowserProvider(walletProvider as any);
-      const signer = await ethersProvider.getSigner();
-      const signature = await signer.signMessage(message);
-      const wallet = mostWallet(address, signature, "From Signature");
-      const loggedIn = mp.loginSave(wallet);
-      if (loggedIn) {
-        setWallet(loggedIn);
-        back();
-      }
-    } catch (e) {
-      console.error("Login failed", e);
-      notifications.show({
-        message: "登录失败: " + (e as Error).message,
-        color: "red",
-      });
-    }
-  };
 
   const login = () => {
     if (!username) {
@@ -91,64 +56,60 @@ export default function PageLogin() {
   };
 
   return (
-    <AppKitProvider>
-      <Container maw={424} w="100%">
-        <AppHeader title="登录" />
-        <Stack gap="md" mt="md">
-          <Stack align="center">
-            <Text size="xl">Most People</Text>
-            <Avatar
-              size="xl"
-              radius="md"
-              src={mp.avatar(
-                username ? mostWallet(username, password).address : undefined,
-              )}
-              alt="it's me"
-            />
-          </Stack>
-          <Stack gap="md">
-            <Input
-              autoFocus
-              placeholder="昵称"
-              value={username}
-              onChange={(event) => setUsername(event.currentTarget.value)}
-              onKeyUp={(event) => {
-                if (event.key === "Enter" && isLogin) {
-                  login();
-                }
-              }}
-            />
-            <PasswordInput
-              placeholder="密码"
-              visible={visible}
-              onVisibilityChange={toggle}
-              value={password}
-              onChange={(event) => setPassword(event.currentTarget.value)}
-              onKeyUp={(event) => {
-                if (event.key === "Enter" && isLogin) {
-                  login();
-                }
-              }}
-            />
-
-            <Button onClick={isLogin ? login : back} variant="gradient">
-              {isLogin ? "登录" : "游客"}
-            </Button>
-
-            <Anchor
-              component={Link}
-              href="/about"
-              style={{ textAlign: "center" }}
-            >
-              完全去中心化，无需注册
-            </Anchor>
-          </Stack>
-          <Divider label="Or" labelPosition="center" />
-          <Button onClick={walletLogin} variant={isConnected ? "red" : "light"}>
-            {isConnected ? "签名登录" : "连接钱包"}
-          </Button>
+    <Container maw={424} w="100%">
+      <AppHeader title="登录" />
+      <Stack gap="md" mt="md">
+        <Stack align="center">
+          <Text size="xl">Most People</Text>
+          <Avatar
+            size="xl"
+            radius="md"
+            src={mp.avatar(
+              username ? mostWallet(username, password).address : undefined,
+            )}
+            alt="it's me"
+          />
         </Stack>
-      </Container>
-    </AppKitProvider>
+        <Stack gap="md">
+          <Input
+            autoFocus
+            placeholder="昵称"
+            value={username}
+            onChange={(event) => setUsername(event.currentTarget.value)}
+            onKeyUp={(event) => {
+              if (event.key === "Enter" && isLogin) {
+                login();
+              }
+            }}
+          />
+          <PasswordInput
+            placeholder="密码"
+            visible={visible}
+            onVisibilityChange={toggle}
+            value={password}
+            onChange={(event) => setPassword(event.currentTarget.value)}
+            onKeyUp={(event) => {
+              if (event.key === "Enter" && isLogin) {
+                login();
+              }
+            }}
+          />
+
+          <Button onClick={isLogin ? login : back} variant="gradient">
+            {isLogin ? "登录" : "游客"}
+          </Button>
+
+          <Anchor
+            component={Link}
+            href="/about"
+            style={{ textAlign: "center" }}
+          >
+            完全去中心化，无需注册
+          </Anchor>
+        </Stack>
+        <Divider label="Or" labelPosition="center" />
+        <LoginWallet />
+      </Stack>
+    </Container>
   );
 }
