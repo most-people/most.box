@@ -4,9 +4,13 @@ import axios from "axios";
 import { mostCrust } from "@/utils/MostWallet";
 
 // Crust IPFS Web3 Auth 网关
-const CRUST_API = "https://gw.crustfiles.app";
+const CRUST_IPFS_GW = "https://gw.crustfiles.app";
+// Crust Pinning 服务
 const CRUST_PIN = "https://pin.crustcode.com/psa";
+// Crust 链 RPC 节点
 const CRUST_RPC = "wss://rpc.crust.network";
+// Subscan 浏览器 API
+const CRUST_SUBSCAN_API = "https://crust.api.subscan.io";
 
 /**
  * 创建 Crust Web3 认证头
@@ -28,7 +32,7 @@ const auth = (address: string, signature: string) => {
 const ipfs = async (file: File, authHeader: string) => {
   // 创建连接到 Crust 网关的 IPFS 客户端
   const ipfsClient = create({
-    url: `${CRUST_API}/api/v0`,
+    url: `${CRUST_IPFS_GW}/api/v0`,
     headers: {
       authorization: `Basic ${authHeader}`,
     },
@@ -39,7 +43,7 @@ const ipfs = async (file: File, authHeader: string) => {
     return {
       cid: result.cid.toString(),
       size: result.size,
-      url: `${CRUST_API}/ipfs/${result.cid.toString()}`,
+      url: `${CRUST_IPFS_GW}/ipfs/${result.cid.toString()}`,
     };
   } catch (error) {
     console.error("IPFS 上传失败:", error);
@@ -58,7 +62,7 @@ const ipfsDir = async (
   authHeader: string,
 ) => {
   const ipfsClient = create({
-    url: `${CRUST_API}/api/v0`,
+    url: `${CRUST_IPFS_GW}/api/v0`,
     headers: {
       authorization: `Basic ${authHeader}`,
     },
@@ -83,7 +87,7 @@ const ipfsDir = async (
     return {
       cid: root.cid.toString(),
       size: root.size,
-      url: `${CRUST_API}/ipfs/${root.cid.toString()}`,
+      url: `${CRUST_IPFS_GW}/ipfs/${root.cid.toString()}`,
     };
   } catch (error) {
     console.error("IPFS 文件夹上传失败:", error);
@@ -266,8 +270,10 @@ const order = async (
 const balance = async (address: string): Promise<string> => {
   try {
     const res = await axios.post(
-      "https://crust.api.subscan.io/api/scan/account/tokens",
-      { address },
+      CRUST_SUBSCAN_API + "/api/scan/account/tokens",
+      {
+        address,
+      },
     );
     const balance = res.data?.data?.native?.[0]?.balance ?? "0";
     return formatUnits(balance, 12);
@@ -337,8 +343,9 @@ const saveRemark = async (cid: string, danger: string) => {
  */
 const getRemark = async (address: string) => {
   try {
+    // 1. 获取 Remark 交易列表
     const res = await axios.post(
-      "https://crust.api.subscan.io/api/scan/extrinsic/list",
+      CRUST_SUBSCAN_API + "/api/v2/scan/extrinsics",
       {
         address,
         row: 20,
@@ -356,10 +363,32 @@ const getRemark = async (address: string) => {
     const extrinsics = res.data?.data?.extrinsics || [];
     for (const ext of extrinsics) {
       if (ext.success) {
-        // 解析参数
+        // 2. 获取交易详情以读取 params
         try {
-          const params = JSON.parse(ext.params);
-          const remarkValue = params[0]?.value;
+          const detailRes = await axios.post(
+            CRUST_SUBSCAN_API + "/api/scan/extrinsic",
+            { extrinsic_index: ext.extrinsic_index },
+            {
+              headers: {
+                "Content-Type": "application/json",
+              },
+            },
+          );
+
+          const params = detailRes.data?.data?.params;
+          let remarkValue;
+
+          if (Array.isArray(params)) {
+            remarkValue = params[0]?.value;
+          } else if (typeof params === "string") {
+            try {
+              const parsed = JSON.parse(params);
+              remarkValue = parsed[0]?.value;
+            } catch (e) {
+              // ignore
+            }
+          }
+
           if (
             remarkValue &&
             typeof remarkValue === "string" &&
@@ -367,19 +396,8 @@ const getRemark = async (address: string) => {
           ) {
             return remarkValue.replace("most-box:v1:", "");
           }
-        } catch (e) {
-          // 有些 remark 可能是 hex 格式或者直接在 params 里
-          const params = ext.params;
-          if (Array.isArray(params)) {
-            const remarkValue = params[0]?.value;
-            if (
-              remarkValue &&
-              typeof remarkValue === "string" &&
-              remarkValue.startsWith("most-box:v1:")
-            ) {
-              return remarkValue.replace("most-box:v1:", "");
-            }
-          }
+        } catch (detailError) {
+          console.warn(`获取交易详情失败 ${ext.extrinsic_index}:`, detailError);
         }
       }
     }

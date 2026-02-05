@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { idbStorage } from "@/utils/idbStorage";
 import mp from "@/utils/mp";
+import { notifications } from "@mantine/notifications";
 
 export interface FileItem {
   name: string;
@@ -258,7 +259,10 @@ export const useUserStore = create<State>()(
       // 同步到链上 (Crust Remark)
       async syncToChain() {
         const { wallet, exportData } = get();
-        if (!wallet) return;
+        if (!wallet) {
+          notifications.show({ message: "请先登录", color: "red" });
+          return;
+        }
 
         try {
           const data = exportData();
@@ -292,9 +296,15 @@ export const useUserStore = create<State>()(
           // 2. 写入链上 Remark
           await crust.saveRemark(cid, wallet.danger);
 
-          console.info("同步到链上成功");
+          notifications.show({
+            message: "同步到链上成功",
+            color: "green",
+          });
         } catch (error) {
-          console.error("同步到链上失败", error);
+          notifications.show({
+            message: "同步到链上失败",
+            color: "red",
+          });
           throw error;
         }
       },
@@ -302,14 +312,20 @@ export const useUserStore = create<State>()(
       // 从链上拉取 (Crust Remark)
       async syncFromChain() {
         const { wallet, dotCID } = get();
-        if (!wallet) return;
+        if (!wallet) {
+          notifications.show({ message: "请先登录", color: "red" });
+          return;
+        }
 
         try {
           const { crust_address } = await mostCrust(wallet.danger);
           // 1. 从链上获取最新 CID
           const cid = await crust.getRemark(crust_address);
           if (!cid) {
-            console.warn("未在链上找到备份记录");
+            notifications.show({
+              message: "未在链上找到备份记录",
+              color: "red",
+            });
             return;
           }
 
@@ -324,11 +340,17 @@ export const useUserStore = create<State>()(
 
           if (data && data.notes && data.files) {
             set({ notes: data.notes, files: data.files });
-            console.info("从链上恢复成功");
+            notifications.show({
+              message: "从链上恢复成功",
+              color: "green",
+            });
           }
         } catch (error) {
+          notifications.show({
+            message: "从链上恢复失败",
+            color: "red",
+          });
           console.error("从链上恢复失败", error);
-          throw error;
         }
       },
 
@@ -347,7 +369,7 @@ export const useUserStore = create<State>()(
         }
       },
       // IPFS 网关
-      dotCID: "https://gw.crust-gateway.xyz",
+      dotCID: "https://gw.crust-gateway.com",
       // JWT
       jwt: "",
       // 首页 Tab

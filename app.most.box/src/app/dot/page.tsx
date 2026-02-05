@@ -53,6 +53,8 @@ const gatewayList: GatewayInfo[] = [
     title: "官方及基金会维护",
     description: "最权威，由 IPFS 官方团队或相关基金会直接运营",
     gateways: [
+      "https://gw.crust-gateway.com",
+      "https://gw.crust-gateway.xyz",
       "https://ipfs.io",
       "https://dweb.link",
       // "https://trustless-gateway.link",

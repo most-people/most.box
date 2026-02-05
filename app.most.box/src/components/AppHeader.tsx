@@ -29,10 +29,7 @@ export const AppHeader = ({ title, variant, right, left }: AppHeaderProps) => {
 
   const handleExport = () => {
     if (!wallet) {
-      notifications.show({
-        message: "请先登录",
-        color: "red",
-      });
+      notifications.show({ message: "请先登录", color: "red" });
       router.push("/login");
       return;
     }
@@ -55,10 +52,7 @@ export const AppHeader = ({ title, variant, right, left }: AppHeaderProps) => {
 
   const handleImport = () => {
     if (!wallet) {
-      notifications.show({
-        message: "请先登录",
-        color: "red",
-      });
+      notifications.show({ message: "请先登录", color: "red" });
       router.push("/login");
       return;
     }

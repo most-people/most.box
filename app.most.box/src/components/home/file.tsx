@@ -88,7 +88,7 @@ export default function HomeFile() {
   const uploadFiles = async (files: File[]) => {
     if (!files || files.length === 0) return;
     if (!wallet) {
-      notifications.show({ message: "请先连接钱包", color: "red" });
+      notifications.show({ message: "请先登录", color: "red" });
       return;
     }
 
@@ -194,7 +194,7 @@ export default function HomeFile() {
     }
 
     if (!wallet) {
-      notifications.show({ message: "请先连接钱包", color: "red" });
+      notifications.show({ message: "请先登录", color: "red" });
       return;
     }
 

@@ -96,7 +96,10 @@ const PageContent = () => {
   }, [inited, wallet, content]);
 
   const updateNote = async (name: string, newContent: string) => {
-    if (!wallet) return;
+    if (!wallet) {
+      notifications.show({ message: "请先登录", color: "red" });
+      return;
+    }
 
     // 加密
     if (wallet && isSecret) {
