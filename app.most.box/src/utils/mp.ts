@@ -4,19 +4,11 @@ import {
   decodeBase64,
   toUtf8String,
   ZeroAddress,
-  HDNodeWallet,
   getBytes,
 } from "ethers";
 import { createAvatar } from "@dicebear/core";
 import { botttsNeutral, icons } from "@dicebear/collection";
-import {
-  most25519,
-  mostDecode,
-  mostEncode,
-  type MostWallet,
-  mostWallet,
-} from "@/utils/MostWallet";
-import { useUserStore } from "@/stores/userStore";
+import { type MostWallet, mostWallet } from "@/utils/MostWallet";
 import { match } from "pinyin-pro";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
@@ -121,66 +113,9 @@ const enBase64 = (str: string) => encodeBase64(toUtf8Bytes(str));
 // Base64 解码
 const deBase64 = (str: string) => toUtf8String(decodeBase64(str));
 
-// 创建 JWT
-const createJWT = (wallet: MostWallet, template = "YYYYMM") => {
-  // 本周有效
-  const week = dayjs().isoWeek();
-  const time = dayjs().format(template) + week;
-  const fingerprint = useUserStore.getState().fingerprint;
-  if (!fingerprint) {
-    throw new Error("请先获取设备指纹");
-  }
-  const key = [location.origin, fingerprint].join("/");
-  const { danger } = mostWallet(time, key);
-  const { public_key, private_key } = most25519(danger);
-  const jwt = mostEncode(JSON.stringify(wallet), public_key, private_key);
-  return jwt;
-};
-
-// 解析 JWT
-const verifyJWT = (jwt: string, template = "YYYYMM") => {
-  // 本周有效
-  const week = dayjs().isoWeek();
-  const time = dayjs().format(template) + week;
-  const fingerprint = useUserStore.getState().fingerprint;
-  if (!fingerprint) {
-    throw new Error("请先获取设备指纹");
-  }
-  const key = [location.origin, fingerprint].join("/");
-  // 获取设备指纹ID
-  const { danger } = mostWallet(time, key);
-  const { public_key, private_key } = most25519(danger);
-  const json = mostDecode(jwt, public_key, private_key);
-  if (!json) {
-    throw new Error("jwt 解析失败");
-  }
-  const wallet = JSON.parse(json) as MostWallet;
-  if (!wallet.address) {
-    throw new Error("jwt json 解析失败");
-  }
-  return wallet;
-};
-
 // 登录
-const login = (username: string, password: string): MostWallet | null => {
-  const wallet = mostWallet(username, password);
-  return loginSave(wallet);
-};
-
-// 登录保存
-const loginSave = (wallet: MostWallet) => {
-  try {
-    const jwt = createJWT(wallet); // 24小时有效期
-
-    // 验证并存储
-    if (verifyJWT(jwt)?.address === wallet.address) {
-      useUserStore.getState().setItem("jwt", jwt);
-      return wallet;
-    }
-  } catch (error) {
-    console.error("登录失败:", error);
-  }
-  return null;
+const login = (username: string, password: string): MostWallet => {
+  return mostWallet(username, password);
 };
 
 // 拼音搜索
@@ -404,10 +339,7 @@ const mp = {
   formatAddress,
   enBase64,
   deBase64,
-  createJWT,
-  verifyJWT,
   login,
-  loginSave,
   ZeroAddress,
   // createToken,
   pinyin,

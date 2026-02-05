@@ -226,7 +226,7 @@ const order = async (
     // 检查余额
     const balance = parseUnits(currentBalance, 12);
     if (balance <= 0) {
-      const error = new Error(`余额为 0 请先充值 CRU 代币。`, {
+      const error = new Error(`新用户，请先领取 CRU 代币。`, {
         cause: "INSUFFICIENT_BALANCE",
       });
       throw error;
@@ -334,7 +334,7 @@ const saveRemark = async (
   // 检查余额
   const balance = parseUnits(currentBalance, 12);
   if (balance <= 0) {
-    const error = new Error(`余额为 0 请先充值 CRU 代币。`, {
+    const error = new Error(`新用户，请先领取 CRU 代币。`, {
       cause: "INSUFFICIENT_BALANCE",
     });
     throw error;

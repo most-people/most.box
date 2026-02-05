@@ -163,13 +163,13 @@ export const AppHeader = ({ title, variant, right, left }: AppHeaderProps) => {
               leftSection={<IconPackageExport size={18} />}
               onClick={handleExport}
             >
-              备份数据
+              备份到本地
             </Menu.Item>
             <Menu.Item
               leftSection={<IconFileImport size={18} />}
               onClick={handleImport}
             >
-              恢复数据
+              从本地恢复
             </Menu.Item>
           </Menu.Dropdown>
         </Menu>

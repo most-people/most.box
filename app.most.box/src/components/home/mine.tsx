@@ -37,7 +37,7 @@ export default function HomeMine() {
             variant="subtle"
             color="gray"
             component={Link}
-            href={{ pathname: "/card", query: { uid: address } }}
+            href={{ pathname: "/card", query: { address } }}
           >
             <Icon name="QRCode" size={18} />
           </ActionIcon>

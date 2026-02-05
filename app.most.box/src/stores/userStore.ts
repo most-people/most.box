@@ -34,14 +34,11 @@ interface UserStore {
   // 文件
   files: FileItem[];
   filesPath: string;
-  fingerprint: string;
   // 余额
   balance: string;
   initBalance: () => Promise<void>;
   // IPFS 网关
   dotCID: string;
-  // JWT
-  jwt: string;
   // 首页 Tab
   homeTab: string;
   // 本地文件操作
@@ -108,8 +105,6 @@ export const useUserStore = create<State>()(
       // 文件系统
       files: [],
       filesPath: "",
-      // 设备指纹
-      fingerprint: "",
 
       // 通用列表更新辅助函数
       _updateItems(
@@ -351,8 +346,6 @@ export const useUserStore = create<State>()(
       },
       // IPFS 网关
       dotCID: "https://gw.crust-gateway.com",
-      // JWT
-      jwt: "",
       // 首页 Tab
       homeTab: "file",
       // 通用设置器
@@ -363,7 +356,6 @@ export const useUserStore = create<State>()(
           wallet: undefined,
           files: [],
           notes: [],
-          jwt: "",
           firstPath: "",
           notesQuery: "",
           filesPath: "",
