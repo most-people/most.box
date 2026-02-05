@@ -112,6 +112,11 @@ export const mostCrust = async (danger: string) => {
   return {
     crust_address,
     crust_mnemonic: mnemonic,
+    sign: (message: string) => {
+      const messageBytes = toUtf8Bytes(message);
+      const signature = sr25519.sign(secretKey, messageBytes);
+      return hexlify(signature);
+    },
   };
 };
 

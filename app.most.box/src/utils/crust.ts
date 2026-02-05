@@ -14,12 +14,12 @@ const CRUST_SUBSCAN_API = "https://crust.api.subscan.io";
 
 /**
  * 创建 Crust Web3 认证头
- * @param address 以太坊地址
+ * @param address Crust 地址
  * @param signature 地址签名
  * @returns Base64 编码的认证头
  */
 const auth = (address: string, signature: string) => {
-  const authHeaderRaw = `eth-${address}:${signature}`;
+  const authHeaderRaw = `sub-${address}:${signature}`;
   return Buffer.from(authHeaderRaw).toString("base64");
 };
 
@@ -169,23 +169,20 @@ const uploadDirWithAuth = async (
 /**
  * 通过 Web3 Auth 网关上传文件到 Crust 网络
  * @param file 要上传的文件对象
- * @param mnemonic 签名请求的钱包助记词
+ * @param crustWallet mostCrust 返回的钱包对象 { crust_address, sign }
  * @returns 带 CID 的上传结果
  */
 const upload = async (
   file: File | { path: string; content: string | Blob | Buffer }[],
-  mnemonic: string,
+  crustWallet: { crust_address: string; sign: (msg: string) => string },
 ) => {
-  if (!mnemonic) throw new Error("需要钱包助记词");
-
-  // 从助记词创建签名者
-  const account = Wallet.fromPhrase(mnemonic);
-  const address = account.address;
+  const { crust_address, sign } = crustWallet;
+  
   // 签名地址本身作为消息
-  const signature = await account.signMessage(address);
+  const signature = sign(crust_address);
 
   // 构造认证头
-  const authHeader = auth(address, signature);
+  const authHeader = auth(crust_address, signature);
 
   if (Array.isArray(file)) {
     return uploadDirWithAuth(file, authHeader);

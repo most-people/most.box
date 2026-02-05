@@ -34,7 +34,7 @@ import { notifications } from "@mantine/notifications";
 import { modals } from "@mantine/modals";
 import mp from "@/utils/mp";
 import { FileItem, useUserStore } from "@/stores/userStore";
-import { mostMnemonic } from "@/utils/MostWallet";
+import { mostMnemonic, mostCrust } from "@/utils/MostWallet";
 import { Wallet } from "ethers";
 import crust from "@/utils/crust";
 
@@ -102,10 +102,9 @@ export default function HomeFile() {
 
     try {
       // 1. 生成 Auth Header (一次生成，批量使用)
-      const mnemonic = mostMnemonic(wallet.danger);
-      const account = Wallet.fromPhrase(mnemonic);
-      const signature = await account.signMessage(account.address);
-      const authHeader = crust.auth(account.address, signature);
+      const { crust_address, sign } = await mostCrust(wallet.danger);
+      const signature = sign(crust_address);
+      const authHeader = crust.auth(crust_address, signature);
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];

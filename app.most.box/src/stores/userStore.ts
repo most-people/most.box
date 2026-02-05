@@ -289,9 +289,9 @@ export const useUserStore = create<State>()(
             }
           });
 
-          const mnemonic = mostMnemonic(wallet.danger);
+          const crustWallet = await mostCrust(wallet.danger);
           // 1. 上传到 IPFS (作为文件夹上传)
-          const { cid } = await crust.upload(uploadFiles, mnemonic);
+          const { cid } = await crust.upload(uploadFiles, crustWallet);
 
           // 2. 写入链上 Remark
           await crust.saveRemark(cid, wallet.danger);
