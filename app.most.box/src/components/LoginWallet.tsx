@@ -10,7 +10,6 @@ import {
 import { AppKitProvider } from "@/context/AppKitProvider";
 import { BrowserProvider } from "ethers";
 import { mostWallet } from "@/utils/MostWallet";
-import mp from "@/utils/mp";
 import { useUserStore } from "@/stores/userStore";
 import { useBack } from "@/hooks/useBack";
 
@@ -35,11 +34,8 @@ function LoginWalletContent() {
       const signer = await ethersProvider.getSigner();
       const signature = await signer.signMessage(message);
       const wallet = mostWallet(address, signature, "From Signature");
-      const loggedIn = mp.loginSave(wallet);
-      if (loggedIn) {
-        setWallet(loggedIn);
-        back();
-      }
+      setWallet(wallet);
+      back();
     } catch (e) {
       console.error("Login failed", e);
       notifications.show({
