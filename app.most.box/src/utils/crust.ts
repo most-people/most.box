@@ -48,6 +48,50 @@ const ipfs = async (file: File, authHeader: string) => {
 };
 
 /**
+ * 上传文件夹到 IPFS 网关
+ * @param files 文件列表 { path: string, content: string | Blob | Buffer }
+ * @param authHeader Base64 编码的认证头
+ * @returns 包含 Root CID 的上传结果
+ */
+const ipfsDir = async (
+  files: { path: string; content: string | Blob | Buffer }[],
+  authHeader: string,
+) => {
+  const ipfsClient = create({
+    url: `${CRUST_API}/api/v0`,
+    headers: {
+      authorization: `Basic ${authHeader}`,
+    },
+  });
+
+  try {
+    const results = [];
+    // wrapWithDirectory: true 会把所有文件包裹在一个空路径的文件夹中
+    for await (const result of ipfsClient.addAll(files, {
+      cidVersion: 1,
+      wrapWithDirectory: true,
+    })) {
+      results.push(result);
+    }
+
+    // 找到根目录（path 为 "" 的项）
+    const root = results.find((r) => r.path === "");
+    if (!root) {
+      throw new Error("无法获取根目录 CID");
+    }
+
+    return {
+      cid: root.cid.toString(),
+      size: root.size,
+      url: `${CRUST_API}/ipfs/${root.cid.toString()}`,
+    };
+  } catch (error) {
+    console.error("IPFS 文件夹上传失败:", error);
+    throw error;
+  }
+};
+
+/**
  * 使用网关 Pinning 服务将文件 Pin 到 Crust 网络
  * @param cid IPFS 内容 ID
  * @param name 文件名
@@ -95,12 +139,39 @@ const uploadWithAuth = async (file: File, authHeader: string) => {
 };
 
 /**
+ * 使用预计算的认证头上传文件夹到 Crust 网络
+ * @param files 文件列表
+ * @param authHeader Base64 编码的认证头
+ * @returns 带 CID 的上传结果
+ */
+const uploadDirWithAuth = async (
+  files: { path: string; content: string | Blob | Buffer }[],
+  authHeader: string,
+) => {
+  try {
+    // 1. 上传到 IPFS 网关
+    const result = await ipfsDir(files, authHeader);
+
+    // 2. 将文件夹 Pin 到 Crust 网络 (使用根 CID)
+    await pin(result.cid, "most-box-backup", authHeader);
+
+    return result;
+  } catch (error) {
+    console.error("Crust 文件夹上传失败:", error);
+    throw error;
+  }
+};
+
+/**
  * 通过 Web3 Auth 网关上传文件到 Crust 网络
  * @param file 要上传的文件对象
  * @param mnemonic 签名请求的钱包助记词
  * @returns 带 CID 的上传结果
  */
-const upload = async (file: File, mnemonic: string) => {
+const upload = async (
+  file: File | { path: string; content: string | Blob | Buffer }[],
+  mnemonic: string,
+) => {
   if (!mnemonic) throw new Error("需要钱包助记词");
 
   // 从助记词创建签名者
@@ -112,7 +183,11 @@ const upload = async (file: File, mnemonic: string) => {
   // 构造认证头
   const authHeader = auth(address, signature);
 
-  return uploadWithAuth(file, authHeader);
+  if (Array.isArray(file)) {
+    return uploadDirWithAuth(file, authHeader);
+  } else {
+    return uploadWithAuth(file, authHeader);
+  }
 };
 
 /**

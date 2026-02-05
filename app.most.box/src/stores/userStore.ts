@@ -262,16 +262,32 @@ export const useUserStore = create<State>()(
 
         try {
           const data = exportData();
-          const blob = new Blob([JSON.stringify(data)], {
-            type: "application/json",
-          });
-          const file = new File([blob], "most-box-backup.json", {
-            type: "application/json",
+          const backupContent = JSON.stringify(data);
+
+          // 构造上传列表
+          // 1. 备份文件
+          const uploadFiles = [
+            { path: "most-box-backup.json", content: backupContent },
+          ];
+
+          // 2. 笔记文件 (为了 Pin 住文章内容的 CID)
+          data.notes.forEach((note) => {
+            if (note.content) {
+              // 构造路径: notes/文件夹/文件名
+              const relPath = note.path ? note.path.replace(/^\//, "") : "";
+              const fullPath = relPath
+                ? `notes/${relPath}/${note.name}`
+                : `notes/${note.name}`;
+              uploadFiles.push({
+                path: fullPath,
+                content: note.content,
+              });
+            }
           });
 
           const mnemonic = mostMnemonic(wallet.danger);
-          // 1. 上传到 IPFS
-          const { cid } = await crust.upload(file, mnemonic);
+          // 1. 上传到 IPFS (作为文件夹上传)
+          const { cid } = await crust.upload(uploadFiles, mnemonic);
 
           // 2. 写入链上 Remark
           await crust.saveRemark(cid, wallet.danger);
@@ -297,8 +313,13 @@ export const useUserStore = create<State>()(
             return;
           }
 
-          // 2. 从网关拉取 JSON 数据
-          const res = await fetch(`${dotCID}/ipfs/${cid}`);
+          // 2. 从网关拉取 JSON 数据 (直接作为文件夹获取)
+          const res = await fetch(`${dotCID}/ipfs/${cid}/most-box-backup.json`);
+          if (!res.ok) {
+            throw new Error(
+              `从网关获取备份失败: ${res.status} ${res.statusText}`,
+            );
+          }
           const data = await res.json();
 
           if (data && data.notes && data.files) {
