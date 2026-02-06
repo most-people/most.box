@@ -29,7 +29,7 @@ import mp from "@/utils/mp";
 import { notifications } from "@mantine/notifications";
 import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
-import { useNoteExplorer } from "@/hooks/useFileExplorer";
+import { useNoteExplorer } from "@/hooks/useExplorer";
 
 export default function HomeNote() {
   const wallet = useUserStore((state) => state.wallet);

@@ -27,7 +27,6 @@ import {
   IconRefresh,
   IconDotsVertical,
   IconPlus,
-  IconFileImport,
   IconUpload,
 } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
@@ -35,16 +34,14 @@ import { modals } from "@mantine/modals";
 import mp from "@/utils/mp";
 import { FileItem, useUserStore } from "@/stores/userStore";
 import { mostCrust } from "@/utils/MostWallet";
-import { Wallet } from "ethers";
 import crust from "@/utils/crust";
+import { useFileExplorer } from "@/hooks/useExplorer";
 
 interface PreviewFile {
   file: File;
   path: string;
   size: string;
 }
-
-import { useFileExplorer } from "@/hooks/useFileExplorer";
 
 export default function HomeFile() {
   const wallet = useUserStore((state) => state.wallet);
@@ -120,6 +117,19 @@ export default function HomeFile() {
         const ipfs = await crust.ipfs(file, authHeader);
         const pinResult = await crust.pin(ipfs.cid, file.name, authHeader);
 
+        // 默认为 6 个月 (180天)
+        const expiredAt = Date.now() + 180 * 24 * 60 * 60 * 1000;
+
+        // 尝试获取链上过期时间 (如果是秒传，可以获取到真实过期时间)
+        try {
+          const status = await crust.getFileStatus(ipfs.cid);
+          if (status && status.expiredAt) {
+            expiredAt = status.expiredAt;
+          }
+        } catch (error: unknown) {
+          console.warn("获取过期时间失败，使用默认值", error);
+        }
+
         // 3. 注册到本地
         const targetPath = mp.formatFilePath(file, currentPath);
         const directoryPath =
@@ -130,9 +140,9 @@ export default function HomeFile() {
           name: file.name,
           size: file.size,
           type: "file",
-          tx_hash: pinResult?.data?.requestid || "",
           path: directoryPath,
-          expired_at: 0,
+          expired_at: expiredAt,
+          tx_hash: pinResult?.data?.requestid || "",
         });
 
         notifications.update({

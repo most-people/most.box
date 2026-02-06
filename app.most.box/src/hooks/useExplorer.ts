@@ -77,10 +77,10 @@ function useExplorer<T extends FileItem | NoteItem>(
   };
 }
 
-export function useFileExplorer() {
+export const useFileExplorer = () => {
   return useExplorer<FileItem>("files");
-}
+};
 
-export function useNoteExplorer() {
+export const useNoteExplorer = () => {
   return useExplorer<NoteItem>("notes");
-}
+};

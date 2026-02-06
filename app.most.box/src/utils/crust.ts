@@ -470,6 +470,60 @@ const getRemark = async (address: string) => {
   }
 };
 
+/**
+ * 获取文件存储状态和过期时间
+ * @param cid IPFS CID
+ * @returns { expiredAt: number, fileSize: number } | null
+ */
+const getFileStatus = async (cid: string) => {
+  const { ApiPromise, WsProvider } = await import("@polkadot/api");
+  const { typesBundleForPolkadot } = await import("@crustio/type-definitions");
+
+  const crust = new ApiPromise({
+    provider: new WsProvider(CRUST_RPC_NODES),
+    typesBundle: typesBundleForPolkadot,
+  });
+
+  try {
+    await crust.isReady;
+
+    // 1. 获取当前区块高度
+    const header = await crust.rpc.chain.getHeader();
+    const currentBlock = header.number.toNumber();
+
+    // 2. 获取文件订单信息
+    // 优先尝试 filesV2
+    let res = await crust.query.market.filesV2(cid);
+    if (res.isEmpty) {
+      // 兼容旧版
+      res = await crust.query.market.files(cid);
+    }
+
+    if (res.isEmpty) {
+      return null;
+    }
+
+    const data = res.toJSON() as any;
+    // data.expired_at 是过期区块高度
+    const expiredBlock = data.expired_at;
+
+    // Crust 出块时间约 6 秒
+    const BLOCK_TIME = 6000;
+    const remainingBlocks = expiredBlock - currentBlock;
+    const expiredAt = Date.now() + remainingBlocks * BLOCK_TIME;
+
+    return {
+      expiredAt,
+      fileSize: data.file_size,
+    };
+  } catch (error) {
+    console.error("获取文件状态失败:", error);
+    return null;
+  } finally {
+    await crust.disconnect();
+  }
+};
+
 const crust = {
   auth,
   ipfs,
@@ -479,6 +533,7 @@ const crust = {
   balance,
   saveRemark,
   getRemark,
+  getFileStatus,
 };
 
 export default crust;
