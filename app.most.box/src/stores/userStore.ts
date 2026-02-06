@@ -1,26 +1,33 @@
 "use client";
 
 import crust from "@/utils/crust";
-import { mostCrust, mostMnemonic, type MostWallet } from "@/utils/MostWallet";
+import { mostCrust, type MostWallet } from "@/utils/MostWallet";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { idbStorage } from "@/utils/idbStorage";
 import mp from "@/utils/mp";
 import { notifications } from "@mantine/notifications";
 
-export interface FileItem {
+interface BaseItem {
   name: string;
   type: "file" | "directory";
   size: number;
   cid: string;
   path: string;
-  createdAt: number;
-  txHash?: string;
-  content?: string;
+  created_at: number;
+}
+
+export interface FileItem extends BaseItem {
+  expired_at: number;
+  tx_hash: string;
+}
+
+export interface NoteItem extends BaseItem {
+  content: string;
 }
 
 export interface UserData {
-  notes: FileItem[];
+  notes: NoteItem[];
   files: FileItem[];
 }
 
@@ -29,7 +36,7 @@ interface UserStore {
   setWallet: (wallet: MostWallet) => void;
   firstPath: string;
   // 笔记
-  notes: FileItem[];
+  notes: NoteItem[];
   notesQuery: string;
   notesPath: string;
   notesDark: "toastui-editor-dark" | "";
@@ -44,12 +51,12 @@ interface UserStore {
   // 首页 Tab
   homeTab: string;
   // 本地文件操作
-  addFile: (file: Omit<FileItem, "createdAt">) => void;
+  addFile: (file: Omit<FileItem, "created_at">) => void;
   deleteFile: (cid?: string, path?: string, name?: string) => void;
   renameFile: (oldPath: string, newPath: string, newName: string) => void;
   // 笔记操作
   addNote: (
-    file: Omit<FileItem, "createdAt" | "cid"> & { cid?: string },
+    file: Omit<NoteItem, "created_at" | "cid"> & { cid?: string },
   ) => Promise<string>;
   deleteNote: (cid?: string, path?: string, name?: string) => void;
   renameNote: (oldPath: string, newPath: string, newName: string) => void;
@@ -64,24 +71,6 @@ interface UserStore {
   // Hydration 状态
   isHydrated: boolean;
   setHydrated: (state: boolean) => void;
-  // 内部辅助
-  _updateItems: <K extends "files" | "notes">(
-    key: K,
-    updater: (items: FileItem[]) => FileItem[],
-  ) => void;
-  _addItem: (key: "files" | "notes", item: FileItem) => void;
-  _deleteItem: (
-    key: "files" | "notes",
-    cid?: string,
-    path?: string,
-    name?: string,
-  ) => void;
-  _renameItem: (
-    key: "files" | "notes",
-    oldPath: string,
-    newPath: string,
-    newName: string,
-  ) => void;
 }
 
 interface State extends UserStore {
@@ -108,52 +97,41 @@ export const useUserStore = create<State>()(
       files: [],
       filesPath: "",
 
-      // 通用列表更新辅助函数
-      _updateItems(
-        key: "files" | "notes",
-        updater: (items: FileItem[]) => FileItem[],
-      ) {
-        set((state: State) => ({
-          [key]: updater(state[key]),
-        }));
-      },
-
-      // --- 通用项操作逻辑 ---
-      _addItem(key: "files" | "notes", item: FileItem) {
-        const normalizedPath = mp.normalizePath(item.path);
+      // 本地文件操作实现
+      addFile(file) {
+        if (file.type === "directory") return;
+        const normalizedPath = mp.normalizePath(file.path);
         const newItem = {
-          ...item,
+          ...file,
           path: normalizedPath,
-          createdAt: Date.now(),
-        };
+          created_at: Date.now(),
+        } as FileItem;
 
-        get()._updateItems(key, (items: FileItem[]) => {
+        set((state) => {
+          const items = state.files;
           const exists = items.some(
             (f) =>
               mp.normalizePath(f.path) === normalizedPath &&
-              f.name === item.name,
+              f.name === file.name,
           );
           if (exists) {
-            return items.map((f) =>
-              mp.normalizePath(f.path) === normalizedPath &&
-              f.name === item.name
-                ? newItem
-                : f,
-            );
+            return {
+              files: items.map((f) =>
+                mp.normalizePath(f.path) === normalizedPath &&
+                f.name === file.name
+                  ? newItem
+                  : f,
+              ),
+            };
           }
-          return [...items, newItem];
+          return { files: [...items, newItem] };
         });
       },
 
-      _deleteItem(
-        key: "files" | "notes",
-        cid?: string,
-        path?: string,
-        name?: string,
-      ) {
+      deleteFile(cid, path, name) {
         const normalizedPath = path !== undefined ? mp.normalizePath(path) : "";
-        get()._updateItems(key, (items: FileItem[]) =>
-          items.filter((item) => {
+        set((state) => ({
+          files: state.files.filter((item) => {
             if (cid && item.cid === cid) return false;
             if (
               path !== undefined &&
@@ -164,20 +142,15 @@ export const useUserStore = create<State>()(
               return false;
             return true;
           }),
-        );
+        }));
       },
 
-      _renameItem(
-        key: "files" | "notes",
-        oldPath: string,
-        newPath: string,
-        newName: string,
-      ) {
+      renameFile(oldPath, newPath, newName) {
         const oldPathNorm = mp.normalizePath(oldPath);
         const newPathNorm = mp.normalizePath(newPath);
 
-        get()._updateItems(key, (items: FileItem[]) =>
-          items.map((item) => {
+        set((state) => ({
+          files: state.files.map((item) => {
             const itemPath = mp.normalizePath(item.path);
             const fullPath =
               itemPath === "" ? item.name : `${itemPath}/${item.name}`;
@@ -204,21 +177,7 @@ export const useUserStore = create<State>()(
             }
             return item;
           }),
-        );
-      },
-
-      // 本地文件操作实现
-      addFile(file) {
-        if (file.type === "directory") return;
-        get()._addItem("files", file as FileItem);
-      },
-
-      deleteFile(cid, path, name) {
-        get()._deleteItem("files", cid, path, name);
-      },
-
-      renameFile(oldPath, newPath, newName) {
-        get()._renameItem("files", oldPath, newPath, newName);
+        }));
       },
 
       // 笔记操作实现
@@ -228,16 +187,88 @@ export const useUserStore = create<State>()(
         const content = file.content || "";
         const cid = file.cid || (await mp.calculateCID(content));
 
-        get()._addItem("notes", { ...file, content, cid } as FileItem);
+        const normalizedPath = mp.normalizePath(file.path);
+        const newItem = {
+          ...file,
+          content,
+          cid,
+          path: normalizedPath,
+          created_at: Date.now(),
+        } as NoteItem;
+
+        set((state) => {
+          const items = state.notes;
+          const exists = items.some(
+            (f) =>
+              mp.normalizePath(f.path) === normalizedPath &&
+              f.name === file.name,
+          );
+          if (exists) {
+            return {
+              notes: items.map((f) =>
+                mp.normalizePath(f.path) === normalizedPath &&
+                f.name === file.name
+                  ? newItem
+                  : f,
+              ),
+            };
+          }
+          return { notes: [...items, newItem] };
+        });
+
         return cid;
       },
 
       deleteNote(cid, path, name) {
-        get()._deleteItem("notes", cid, path, name);
+        const normalizedPath = path !== undefined ? mp.normalizePath(path) : "";
+        set((state) => ({
+          notes: state.notes.filter((item) => {
+            if (cid && item.cid === cid) return false;
+            if (
+              path !== undefined &&
+              name !== undefined &&
+              mp.normalizePath(item.path) === normalizedPath &&
+              item.name === name
+            )
+              return false;
+            return true;
+          }),
+        }));
       },
 
       renameNote(oldPath, newPath, newName) {
-        get()._renameItem("notes", oldPath, newPath, newName);
+        const oldPathNorm = mp.normalizePath(oldPath);
+        const newPathNorm = mp.normalizePath(newPath);
+
+        set((state) => ({
+          notes: state.notes.map((item) => {
+            const itemPath = mp.normalizePath(item.path);
+            const fullPath =
+              itemPath === "" ? item.name : `${itemPath}/${item.name}`;
+
+            if (fullPath === oldPathNorm) {
+              return { ...item, path: newPathNorm, name: newName };
+            }
+
+            if (fullPath.startsWith(oldPathNorm + "/")) {
+              const relativePath = fullPath.slice(oldPathNorm.length);
+              const newFullPath = mp.normalizePath(
+                (newPathNorm ? `${newPathNorm}/${newName}` : newName) +
+                  relativePath,
+              );
+              const lastSlashIndex = newFullPath.lastIndexOf("/");
+              return {
+                ...item,
+                path:
+                  lastSlashIndex === -1
+                    ? ""
+                    : newFullPath.slice(0, lastSlashIndex),
+                name: newFullPath.slice(lastSlashIndex + 1),
+              };
+            }
+            return item;
+          }),
+        }));
       },
 
       // 导出用户数据

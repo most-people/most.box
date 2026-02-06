@@ -238,7 +238,7 @@ const calculateCID = async (content: string) => {
  * @returns 过滤后的列表（包含推导出的目录）
  */
 const filterFilesByPath = <
-  T extends { name: string; path: string; type: string; createdAt: number },
+  T extends { name: string; path: string; type: string; created_at: number },
 >(
   items: T[],
   currentPath: string,
@@ -288,7 +288,7 @@ const filterFilesByPath = <
             path: normalizedCurrentPath,
             size: 0,
             cid: "",
-            createdAt: item.createdAt,
+            created_at: item.created_at,
           } as unknown as T);
         }
       }
@@ -298,7 +298,7 @@ const filterFilesByPath = <
   return [...Array.from(inferredDirs.values()), ...directItems].sort((a, b) => {
     if (a.type === "directory" && b.type !== "directory") return -1;
     if (a.type !== "directory" && b.type === "directory") return 1;
-    return b.createdAt - a.createdAt;
+    return b.created_at - a.created_at;
   });
 };
 

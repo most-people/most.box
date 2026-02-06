@@ -474,7 +474,6 @@ const crust = {
   auth,
   ipfs,
   pin,
-  uploadWithAuth,
   upload,
   order,
   balance,

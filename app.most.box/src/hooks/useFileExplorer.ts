@@ -1,12 +1,31 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { useUserStore, FileItem } from "@/stores/userStore";
+import { useUserStore, FileItem, NoteItem } from "@/stores/userStore";
 import mp from "@/utils/mp";
 
-export const useFileExplorer = (type: "files" | "notes") => {
-  const items = useUserStore((state) => (type === "files" ? state.files : state.notes));
-  const currentPath = useUserStore((state) => (type === "files" ? state.filesPath : state.notesPath));
+interface ExplorerResult<T> {
+  items: T[];
+  currentPath: string;
+  searchQuery: string;
+  setSearchQuery: React.Dispatch<React.SetStateAction<string>>;
+  filteredItems: T[];
+  displayedItems: T[];
+  hasMore: boolean;
+  loadMore: () => void;
+  handleFolderClick: (folderName: string) => void;
+  handleBreadcrumbClick: (index: number) => void;
+}
+
+function useExplorer<T extends FileItem | NoteItem>(
+  type: "files" | "notes",
+): ExplorerResult<T> {
+  const items = useUserStore((state) =>
+    type === "files" ? state.files : state.notes,
+  ) as T[];
+  const currentPath = useUserStore((state) =>
+    type === "files" ? state.filesPath : state.notesPath,
+  );
   const setItem = useUserStore((state) => state.setItem);
   const pathKey = type === "files" ? "filesPath" : "notesPath";
 
@@ -56,4 +75,12 @@ export const useFileExplorer = (type: "files" | "notes") => {
     handleFolderClick,
     handleBreadcrumbClick,
   };
-};
+}
+
+export function useFileExplorer() {
+  return useExplorer<FileItem>("files");
+}
+
+export function useNoteExplorer() {
+  return useExplorer<NoteItem>("notes");
+}

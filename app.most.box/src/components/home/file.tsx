@@ -34,7 +34,7 @@ import { notifications } from "@mantine/notifications";
 import { modals } from "@mantine/modals";
 import mp from "@/utils/mp";
 import { FileItem, useUserStore } from "@/stores/userStore";
-import { mostMnemonic, mostCrust } from "@/utils/MostWallet";
+import { mostCrust } from "@/utils/MostWallet";
 import { Wallet } from "ethers";
 import crust from "@/utils/crust";
 
@@ -61,7 +61,7 @@ export default function HomeFile() {
     loadMore,
     handleFolderClick,
     handleBreadcrumbClick,
-  } = useFileExplorer("files");
+  } = useFileExplorer();
 
   const files = useUserStore((state) => state.files);
   const [uploadLoading, setUploadLoading] = useState(false);
@@ -74,7 +74,6 @@ export default function HomeFile() {
   const [renameLoading, setRenameLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
-  const [importModalOpen, setImportModalOpen] = useState(false);
   const [importCID, setImportCID] = useState("");
   const [importName, setImportName] = useState("");
   const [importLoading, setImportLoading] = useState(false);
@@ -131,8 +130,9 @@ export default function HomeFile() {
           name: file.name,
           size: file.size,
           type: "file",
-          txHash: pinResult?.data?.requestid || "",
+          tx_hash: pinResult?.data?.requestid || "",
           path: directoryPath,
+          expired_at: 0,
         });
 
         notifications.update({
@@ -210,6 +210,8 @@ export default function HomeFile() {
         size: 8,
         type: "file",
         path: targetPath,
+        expired_at: 0,
+        tx_hash: "",
       });
 
       notifications.show({
@@ -236,65 +238,6 @@ export default function HomeFile() {
 
   const handleFolderUpload = () => {
     folderInputRef.current?.click();
-  };
-
-  const normalizeCIDInput = (s: string) => {
-    const m = (s || "").match(
-      /(baf[a-z0-9]{30,}|Qm[1-9A-HJ-NP-Za-km-z]{44,})/i,
-    );
-    if (m) return m[1];
-    let input = (s || "").trim();
-    input = input.replace(/^ipfs:\/\//i, "");
-    input = input.replace(/^https?:\/\/[^/]+\/ipfs\//i, "");
-    input = input.replace(/^\/?ipfs\//i, "");
-    input = input.replace(/^\/+/, "");
-    input = input.replace(/\?.*$/, "");
-    input = input.replace(/#.*/, "");
-    input = input.replace(/\/.*/, "");
-    return input;
-  };
-
-  const extractFilename = (s: string) => {
-    const m = (s || "").match(/[?&]filename=([^&#]+)/i);
-    return m ? decodeURIComponent(m[1]) : "";
-  };
-
-  const executeImport = async () => {
-    const cid = normalizeCIDInput(importCID);
-    if (!cid) {
-      notifications.show({
-        title: "提示",
-        message: "请输入有效的 CID",
-        color: "red",
-      });
-      return;
-    }
-    try {
-      setImportLoading(true);
-      const name = (importName || cid).trim();
-      const directoryPath = currentPath || "/";
-
-      useUserStore.getState().addFile({
-        cid: cid,
-        name: name,
-        size: 0,
-        type: "file",
-        path: directoryPath,
-      });
-
-      notifications.show({
-        message: `已导入 CID: ${cid}${importName ? `「${importName}」` : ""}`,
-        color: "green",
-      });
-      setImportModalOpen(false);
-      setImportCID("");
-      setImportName("");
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : "导入失败，请重试";
-      notifications.show({ title: "错误", message: msg, color: "red" });
-    } finally {
-      setImportLoading(false);
-    }
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -579,16 +522,6 @@ export default function HomeFile() {
                 <IconUpload size={18} />
               </ActionIcon>
             </Tooltip>
-            <Tooltip label="从 CID 导入">
-              <ActionIcon
-                size="lg"
-                onClick={() => setImportModalOpen(true)}
-                color="violet"
-                disabled={!wallet || importLoading}
-              >
-                <IconFileImport size={18} />
-              </ActionIcon>
-            </Tooltip>
           </Group>
         </Group>
 
@@ -863,67 +796,6 @@ export default function HomeFile() {
               disabled={previewFiles.length === 0}
             >
               确认上传
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
-
-      {/* 从 IPFS 导入模态框 */}
-      <Modal
-        opened={importModalOpen}
-        onClose={() => {
-          setImportModalOpen(false);
-          setImportCID("");
-          setImportName("");
-        }}
-        title="从 IPFS 路径导入"
-        centered
-      >
-        <Stack gap="md">
-          <TextInput
-            label="CID"
-            required
-            placeholder="/ipfs/xxxx 或 CID"
-            value={importCID}
-            onChange={(event) => {
-              const v = event.currentTarget.value;
-              setImportCID(v);
-              const fn = extractFilename(v);
-              if (fn) setImportName(fn);
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter") {
-                executeImport();
-              }
-            }}
-            disabled={importLoading}
-            autoFocus
-          />
-          <TextInput
-            label="文件名"
-            value={importName}
-            onChange={(event) => setImportName(event.currentTarget.value)}
-            disabled={importLoading}
-          />
-
-          <Group justify="flex-end" gap="sm">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setImportModalOpen(false);
-                setImportCID("");
-                setImportName("");
-              }}
-              disabled={importLoading}
-            >
-              取消
-            </Button>
-            <Button
-              onClick={executeImport}
-              loading={importLoading}
-              disabled={!wallet || !importCID.trim()}
-            >
-              导入
             </Button>
           </Group>
         </Stack>

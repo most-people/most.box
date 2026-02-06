@@ -175,7 +175,7 @@ const PageContent = () => {
             <div className="qrcode-frame">
               <QRCodeSVG
                 className="qrcode"
-                value={`${host}/${cid}`}
+                value={`${host}${cid}`}
                 size={158}
                 bgColor="#FFF"
                 fgColor="#000"

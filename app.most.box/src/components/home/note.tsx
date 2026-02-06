@@ -23,13 +23,13 @@ import {
   IconRefresh,
   IconFolderPlus,
 } from "@tabler/icons-react";
-import { FileItem, useUserStore } from "@/stores/userStore";
+import { NoteItem, useUserStore } from "@/stores/userStore";
 import Link from "next/link";
 import mp from "@/utils/mp";
 import { notifications } from "@mantine/notifications";
 import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
-import { useFileExplorer } from "@/hooks/useFileExplorer";
+import { useNoteExplorer } from "@/hooks/useFileExplorer";
 
 export default function HomeNote() {
   const wallet = useUserStore((state) => state.wallet);
@@ -45,7 +45,7 @@ export default function HomeNote() {
     loadMore,
     handleFolderClick,
     handleBreadcrumbClick,
-  } = useFileExplorer("notes");
+  } = useNoteExplorer();
 
   const notes = useUserStore((state) => state.notes);
 
@@ -67,13 +67,13 @@ export default function HomeNote() {
     renameModalOpened,
     { open: openRenameModal, close: closeRenameModal },
   ] = useDisclosure(false);
-  const [currentNote, setCurrentNote] = useState<FileItem | null>(null);
+  const [currentNote, setCurrentNote] = useState<NoteItem | null>(null);
   const [renameError, setRenameError] = useState("");
   const [renameLoading, setRenameLoading] = useState(false);
   const [renameDirPath, setRenameDirPath] = useState("");
   const [renameBaseName, setRenameBaseName] = useState("");
 
-  const shareUrl = (note: FileItem) => {
+  const shareUrl = (note: NoteItem) => {
     const shareUrl = new URL(window.location.href);
     shareUrl.pathname = "/note/";
     shareUrl.searchParams.set("uid", wallet?.address || "");
@@ -173,7 +173,7 @@ export default function HomeNote() {
   };
 
   // 重命名笔记函数
-  const handleRename = (note: FileItem) => {
+  const handleRename = (note: NoteItem) => {
     setCurrentNote(note);
     setRenameError("");
     setRenameBaseName(note.name);
@@ -181,7 +181,7 @@ export default function HomeNote() {
     openRenameModal();
   };
 
-  const handleEdit = (note: FileItem) => {
+  const handleEdit = (note: NoteItem) => {
     const url = new URL(shareUrl(note));
     url.searchParams.set("mode", "edit");
     window.open(url.href);
@@ -246,7 +246,7 @@ export default function HomeNote() {
   };
 
   // 删除笔记函数
-  const handleDelete = (item: FileItem) => {
+  const handleDelete = (item: NoteItem) => {
     const isDir = item.type === "directory";
     modals.openConfirmModal({
       title: "提示",
