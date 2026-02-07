@@ -10,6 +10,7 @@ import {
   IconPackageExport,
   IconCloudUpload,
   IconCloudDownload,
+  IconWallet,
 } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { useUserStore } from "@/stores/userStore";
@@ -30,6 +31,7 @@ export const AppHeader = ({ title, variant, right, left }: AppHeaderProps) => {
   const exportData = useUserStore((state) => state.exportData);
   const wallet = useUserStore((state) => state.wallet);
   const importData = useUserStore((state) => state.importData);
+  const balance = useUserStore((state) => state.balance);
   const syncToChain = useUserStore((state) => state.syncToChain);
   const syncFromChain = useUserStore((state) => state.syncFromChain);
 
@@ -139,6 +141,16 @@ export const AppHeader = ({ title, variant, right, left }: AppHeaderProps) => {
             </ActionIcon>
           </Menu.Target>
           <Menu.Dropdown>
+            <Menu.Item
+              leftSection={<IconWallet size={18} />}
+              component={Link}
+              href="/pay"
+            >
+              {parseFloat(balance || "0")} CRU
+            </Menu.Item>
+
+            <Menu.Divider />
+
             <Menu.Item
               leftSection={<IconCloudUpload size={18} />}
               onClick={handleSyncToChain}
