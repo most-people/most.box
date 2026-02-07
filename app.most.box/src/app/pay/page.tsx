@@ -13,7 +13,6 @@ import {
   Anchor,
   Paper,
   Title,
-  Group,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { Turnstile } from "@marsidev/react-turnstile";
@@ -21,7 +20,10 @@ import { notifications } from "@mantine/notifications";
 import Link from "next/link";
 
 // Use Cloudflare Testing Site Key that always passes
-const CLOUDFLARE_SITE_KEY = "1x00000000000000000000AA";
+const CLOUDFLARE_SITE_KEY =
+  process.env.NODE_ENV === "development"
+    ? "1x00000000000000000000AA"
+    : "0x4AAAAAACYq51D8L46dgefZ";
 
 const PageContent = () => {
   const wallet = useUserStore((state) => state.wallet);
