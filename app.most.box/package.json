@@ -19,6 +19,7 @@
     "@mantine/modals": "^8.3.13",
     "@mantine/notifications": "^8.3.13",
     "@mantine/tiptap": "^8.3.13",
+    "@marsidev/react-turnstile": "^1.4.2",
     "@noble/curves": "^2.0.1",
     "@noble/hashes": "^2.0.1",
     "@polkadot/api": "^16.5.4",
