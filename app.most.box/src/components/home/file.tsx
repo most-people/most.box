@@ -27,7 +27,7 @@ import {
   IconRefresh,
   IconDotsVertical,
   IconPlus,
-  IconUpload,
+  IconFolderUp,
 } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { modals } from "@mantine/modals";
@@ -529,7 +529,7 @@ export default function HomeFile() {
                 color="orange"
                 disabled={!wallet || uploadLoading}
               >
-                <IconUpload size={18} />
+                <IconFolderUp size={18} />
               </ActionIcon>
             </Tooltip>
           </Group>
