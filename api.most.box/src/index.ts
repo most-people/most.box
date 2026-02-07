@@ -13,6 +13,7 @@ type Bindings = {
   DB: D1Database;
   TURNSTILE_SECRET_KEY: string;
   FAUCET_MNEMONIC: string;
+  ENVIRONMENT: string;
 };
 
 type Variables = {
@@ -30,12 +31,12 @@ const authMiddleware = async (c: any, next: any) => {
     const authHeader = c.req.header("Authorization");
 
     if (!authHeader) {
-      return c.json({ error: "Missing Authorization header" }, 401);
+      return c.json({ error: "缺少 Authorization 请求头" }, 401);
     }
 
     const parts = authHeader.split(",");
     if (parts.length !== 3) {
-      return c.json({ error: "Invalid Authorization header format" }, 401);
+      return c.json({ error: "无效的 Authorization 请求头格式" }, 401);
     }
 
     const [address, timestamp, signature] = parts;
@@ -44,7 +45,7 @@ const authMiddleware = async (c: any, next: any) => {
 
     // 验证时间戳是否在 5 分钟内
     if (isNaN(time) || Math.abs(now - time) > 5 * 60 * 1000) {
-      return c.json({ error: "Timestamp expired or invalid" }, 401);
+      return c.json({ error: "时间戳过期或无效" }, 401);
     }
 
     // 初始化加密库
@@ -55,14 +56,14 @@ const authMiddleware = async (c: any, next: any) => {
     const { isValid } = signatureVerify(timestamp, signature, address);
 
     if (!isValid) {
-      return c.json({ error: "Invalid signature" }, 401);
+      return c.json({ error: "签名无效" }, 401);
     }
 
     c.set("address", address);
     await next();
   } catch (e: any) {
     console.error("Auth error:", e);
-    return c.json({ error: "Authentication failed: " + e.message }, 500);
+    return c.json({ error: "认证失败: " + e.message }, 500);
   }
 };
 
@@ -79,28 +80,35 @@ app.post("/free.claim.cru", async (c) => {
     const address = c.get("address");
     const { turnstileToken } = await c.req.json();
 
+    // Check if running locally/dev to optionally skip Turnstile
+    const isDev = c.env.ENVIRONMENT === "development";
+
     if (!turnstileToken) {
-      return c.json({ error: "Missing Turnstile token" }, 400);
-    }
+      if (isDev) {
+        console.log("开发环境跳过 Turnstile 验证");
+      } else {
+        return c.json({ error: "缺少 Turnstile 令牌" }, 400);
+      }
+    } else {
+      // 1. Verify Turnstile if token is provided
+      const ip = c.req.header("CF-Connecting-IP");
+      const formData = new FormData();
+      formData.append("secret", c.env.TURNSTILE_SECRET_KEY);
+      formData.append("response", turnstileToken);
+      formData.append("remoteip", ip || "");
 
-    // 1. Verify Turnstile
-    const ip = c.req.header("CF-Connecting-IP");
-    const formData = new FormData();
-    formData.append("secret", c.env.TURNSTILE_SECRET_KEY);
-    formData.append("response", turnstileToken);
-    formData.append("remoteip", ip || "");
+      const turnstileRes = await fetch(
+        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
+      const turnstileResult = await turnstileRes.json<any>();
 
-    const turnstileRes = await fetch(
-      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-      {
-        method: "POST",
-        body: formData,
-      },
-    );
-    const turnstileResult = await turnstileRes.json<any>();
-
-    if (!turnstileResult.success) {
-      return c.json({ error: "Invalid Turnstile token" }, 400);
+      if (!turnstileResult.success) {
+        return c.json({ error: "无效的 Turnstile 令牌" }, 400);
+      }
     }
 
     // 2. Check on-chain balance (Must be 0 to claim)
@@ -127,12 +135,12 @@ app.post("/free.claim.cru", async (c) => {
 
       // If balance > 0, not a new user
       if (BigInt(freeBalance) > 0n) {
-        return c.json({ error: "Not a new user (Balance is not 0)" }, 400);
+        return c.json({ error: "非新用户（余额不为 0）" }, 400);
       }
 
       const keyring = new Keyring({ type: "sr25519" });
       if (!c.env.FAUCET_MNEMONIC) {
-        throw new Error("Server configuration error: FAUCET_MNEMONIC missing");
+        throw new Error(`服务器配置错误: 缺少 FAUCET_MNEMONIC 环境变量`);
       }
       const faucet = keyring.addFromUri(c.env.FAUCET_MNEMONIC);
 
@@ -163,8 +171,8 @@ app.post("/free.claim.cru", async (c) => {
       await api.disconnect();
     }
   } catch (e: any) {
-    console.error("Claim error:", e);
-    return c.json({ error: "Claim failed: " + e.message }, 500);
+    console.error("领取失败:", e);
+    return c.json({ error: "领取失败: " + e.message }, 500);
   }
 });
 
