@@ -18,12 +18,12 @@ import { useEffect, useState } from "react";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { notifications } from "@mantine/notifications";
 import Link from "next/link";
+import { api, isDev } from "@/utils/api";
 
 // Use Cloudflare Testing Site Key that always passes
-const CLOUDFLARE_SITE_KEY =
-  process.env.NODE_ENV === "development"
-    ? "1x00000000000000000000AA"
-    : "0x4AAAAAACYq51D8L46dgefZ";
+const CLOUDFLARE_SITE_KEY = isDev
+  ? "1x00000000000000000000AA"
+  : "0x4AAAAAACYq51D8L46dgefZ";
 
 const PageContent = () => {
   const wallet = useUserStore((state) => state.wallet);
@@ -49,14 +49,10 @@ const PageContent = () => {
 
     setClaiming(true);
     try {
-      // Mock API call - in production this would be a real fetch to your faucet API
-      // await fetch("/api/claim", {
-      //   method: "POST",
-      //   body: JSON.stringify({ address: crust_address, token: turnstileToken })
-      // });
-
-      // Simulate network delay
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const res = await api.post("/free.claim.cru", {
+        method: "POST",
+        body: { turnstileToken },
+      });
 
       notifications.show({
         message: "领取成功！请稍后检查余额。",

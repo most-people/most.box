@@ -3,7 +3,7 @@ import { Wallet } from "ethers";
 import { mostMnemonic, type MostWallet } from "@/utils/MostWallet";
 import { useUserStore } from "@/stores/userStore";
 
-export const isDev = process.env.NODE_ENV !== "production";
+export const isDev = process.env.NODE_ENV === "development";
 
 /**
  * 生成 Web3 鉴权 Headers
@@ -19,7 +19,7 @@ export const getAuthHeaders = async (wallet: MostWallet) => {
 };
 
 export const api = axios.create({
-  baseURL: "http://localhost:8787",
+  baseURL: isDev ? "http://localhost:8787" : "https://api.most.box",
 });
 
 // 添加请求拦截器，自动在 header 中加载 Authorization
