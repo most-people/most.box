@@ -8,6 +8,7 @@
     "npm": "npm i"
   },
   "dependencies": {
+    "@babel/runtime": "^7.28.6",
     "@crustio/type-definitions": "^1.3.0",
     "@polkadot/api": "^16.5.4",
     "@polkadot/keyring": "^14.0.1",

@@ -33,17 +33,17 @@ const authMiddleware = async (c: any, next: any) => {
       return c.json({ error: "Missing Authorization header" }, 401);
     }
 
-    const [address, timestampStr, signature] = authHeader.split(",");
-
-    if (!address || !signature || !timestampStr) {
+    const parts = authHeader.split(",");
+    if (parts.length !== 3) {
       return c.json({ error: "Invalid Authorization header format" }, 401);
     }
 
-    const timestamp = parseInt(timestampStr);
+    const [address, timestamp, signature] = parts;
     const now = Date.now();
+    const time = parseInt(timestamp);
 
     // 验证时间戳是否在 5 分钟内
-    if (isNaN(timestamp) || Math.abs(now - timestamp) > 5 * 60 * 1000) {
+    if (isNaN(time) || Math.abs(now - time) > 5 * 60 * 1000) {
       return c.json({ error: "Timestamp expired or invalid" }, 401);
     }
 
@@ -52,7 +52,7 @@ const authMiddleware = async (c: any, next: any) => {
 
     // 验证签名
     // signatureVerify 能够识别并验证 Polkadot (Sr25519/Ed25519) 和 Ethereum (ECDSA) 签名
-    const { isValid } = signatureVerify(timestampStr, signature, address);
+    const { isValid } = signatureVerify(timestamp, signature, address);
 
     if (!isValid) {
       return c.json({ error: "Invalid signature" }, 401);

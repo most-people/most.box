@@ -1,6 +1,5 @@
 import axios from "axios";
-import { Wallet } from "ethers";
-import { mostMnemonic, type MostWallet } from "@/utils/MostWallet";
+import { mostCrust, type MostWallet } from "@/utils/MostWallet";
 import { useUserStore } from "@/stores/userStore";
 
 export const isDev = process.env.NODE_ENV === "development";
@@ -9,12 +8,11 @@ export const isDev = process.env.NODE_ENV === "development";
  * 生成 Web3 鉴权 Headers
  */
 export const getAuthHeaders = async (wallet: MostWallet) => {
-  const mnemonic = mostMnemonic(wallet.danger);
-  const account = Wallet.fromPhrase(mnemonic);
+  const { crust_address, sign } = mostCrust(wallet.danger);
   const timestamp = Date.now().toString();
-  const signature = await account.signMessage(timestamp);
+  const signature = sign(timestamp);
   return {
-    Authorization: `${account.address},${timestamp},${signature}`,
+    Authorization: `${crust_address},${timestamp},${signature}`,
   };
 };
 
