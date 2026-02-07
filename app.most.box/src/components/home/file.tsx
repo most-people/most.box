@@ -118,7 +118,7 @@ export default function HomeFile() {
         const pinResult = await crust.pin(ipfs.cid, file.name, authHeader);
 
         // 默认为 6 个月 (180天)
-        const expiredAt = Date.now() + 180 * 24 * 60 * 60 * 1000;
+        let expiredAt = Date.now() + 180 * 24 * 60 * 60 * 1000;
 
         // 尝试获取链上过期时间 (如果是秒传，可以获取到真实过期时间)
         try {
