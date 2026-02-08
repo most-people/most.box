@@ -6,7 +6,7 @@ import { useUserStore } from "@/stores/userStore";
 import { useRouter } from "next/navigation";
 import { encryptBackup, decryptBackup } from "@/utils/backup";
 
-export const useDataBackup = () => {
+export const useBackup = () => {
   const router = useRouter();
   const exportData = useUserStore((state) => state.exportData);
   const wallet = useUserStore((state) => state.wallet);

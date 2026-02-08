@@ -11,7 +11,7 @@ import {
   IconWallet,
 } from "@tabler/icons-react";
 import { useUserStore } from "@/stores/userStore";
-import { useDataBackup } from "@/hooks/useDataBackup";
+import { useBackup } from "@/hooks/useBackup";
 
 interface AppHeaderProps {
   title: string | string[];
@@ -23,7 +23,7 @@ export const AppHeader = ({ title, variant, right, left }: AppHeaderProps) => {
   const back = useBack();
   useDocumentTitle(title as string);
   const balance = useUserStore((state) => state.balance);
-  const { handleExport, handleImport } = useDataBackup();
+  const { handleExport, handleImport } = useBackup();
 
   return (
     <Group className="app-header">

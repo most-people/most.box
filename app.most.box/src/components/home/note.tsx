@@ -20,7 +20,6 @@ import { useState } from "react";
 import {
   IconDotsVertical,
   IconPlus,
-  IconRefresh,
   IconFolderPlus,
 } from "@tabler/icons-react";
 import { NoteItem, useUserStore } from "@/stores/userStore";
@@ -76,7 +75,6 @@ export default function HomeNote() {
   const shareUrl = (note: NoteItem) => {
     const shareUrl = new URL(window.location.href);
     shareUrl.pathname = "/note/";
-    shareUrl.searchParams.set("uid", wallet?.address || "");
     shareUrl.searchParams.set("name", note.name);
     shareUrl.searchParams.set("cid", note.cid);
     return shareUrl.href;
@@ -342,16 +340,6 @@ export default function HomeNote() {
             个笔记
           </Badge>
           <Group>
-            <Tooltip label="刷新">
-              <ActionIcon
-                size="lg"
-                onClick={() => setItem("notesPath", currentPath)}
-                color="blue"
-                disabled={!wallet}
-              >
-                <IconRefresh size={18} />
-              </ActionIcon>
-            </Tooltip>
             <Tooltip label="新笔记">
               <ActionIcon
                 size="lg"

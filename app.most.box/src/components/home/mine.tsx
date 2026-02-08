@@ -16,14 +16,14 @@ import { modals } from "@mantine/modals";
 import { Icon, type IconName } from "@/components/Icon";
 import { useUserStore } from "@/stores/userStore";
 import mp from "@/utils/mp";
-import { useDataBackup } from "@/hooks/useDataBackup";
+import { useBackup } from "@/hooks/useBackup";
 
 export default function HomeMine() {
   const router = useRouter();
   const wallet = useUserStore((state) => state.wallet);
   const address = wallet?.address || mp.ZeroAddress;
   const exit = useUserStore((state) => state.exit);
-  const { handleExport } = useDataBackup();
+  const { handleExport } = useBackup();
 
   const quit = () => {
     modals.open({

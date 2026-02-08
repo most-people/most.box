@@ -43,15 +43,12 @@ const PageContent = () => {
 
   const [noteName, setNoteName] = useState("");
 
-  const updateUrl = (cid?: string, uid?: string) => {
+  const updateUrl = (cid?: string) => {
     const url = new URL(window.location.href);
     if (cid) {
       url.searchParams.set("cid", cid);
     } else {
       url.searchParams.delete("cid");
-    }
-    if (uid) {
-      url.searchParams.set("uid", uid);
     }
     window.history.replaceState(null, "", url.href);
   };
@@ -119,7 +116,7 @@ const PageContent = () => {
         content: newContent,
       });
 
-      updateUrl(localCid, wallet?.address);
+      updateUrl(localCid);
       notifications.show({
         message: `${name} 已保存至本地`,
         color: "blue",
@@ -177,19 +174,6 @@ const PageContent = () => {
       setIsEditing(true);
     }
 
-    const uid = params?.get("uid");
-    const name = params?.get("name");
-    // 获取最新 CID
-    if (uid && name) {
-      const notesList = notes;
-      const note = notesList.find((file) => file.name === name);
-      if (note) {
-        const cid = note.cid;
-        updateUrl(cid);
-        fetchNote(cid);
-        return;
-      }
-    }
     const cid = params?.get("cid");
     if (cid) {
       fetchNote(cid);

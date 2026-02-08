@@ -24,7 +24,6 @@ import { useRouter } from "next/navigation";
 import {
   IconFolderPlus,
   IconX,
-  IconRefresh,
   IconDotsVertical,
   IconPlus,
   IconFolderUp,
@@ -493,16 +492,6 @@ export default function HomeFile() {
             个文件
           </Badge>
           <Group>
-            <Tooltip label="刷新">
-              <ActionIcon
-                size="lg"
-                onClick={() => setItem("filesPath", currentPath)}
-                color="blue"
-                disabled={!wallet}
-              >
-                <IconRefresh size={18} />
-              </ActionIcon>
-            </Tooltip>
             <Tooltip label="上传文件">
               <ActionIcon
                 size="lg"
