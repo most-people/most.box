@@ -10,6 +10,7 @@ import {
   Group,
   Paper,
   Stack,
+  Switch,
   Text,
   Tooltip,
 } from "@mantine/core";
@@ -126,18 +127,28 @@ function Cell({
   isValid,
   onClick,
   isLastMove,
+  showHints,
+  currentPlayer,
 }: {
   value: number;
   isValid?: boolean;
+  showHints: boolean;
   onClick?: () => void;
   isLastMove?: boolean;
+  currentPlayer?: Player;
 }) {
   return (
     <Box
       onClick={onClick}
       className={`othello-cell${isValid ? " is-valid" : ""}`}
     >
-      {isValid && value === 0 && <Box className="othello-cell__hint" />}
+      {showHints && isValid && value === 0 && (
+        <Box
+          className={`othello-cell__hint ${
+            currentPlayer === 1 ? "is-black" : "is-white"
+          }`}
+        />
+      )}
       {value !== 0 && (
         <Box
           className={`othello-disc ${
@@ -230,6 +241,8 @@ export default function PageGameBlack() {
     return scores.black > scores.white ? "黑方胜" : "白方胜";
   }, [gameOver, scores]);
 
+  const [showHints, setShowHints] = useState(false);
+
   const boardGrid = useMemo(() => {
     const movesMap = new Set(validMoves.map((m) => `${m.r}-${m.c}`));
     const rows: JSX.Element[] = [];
@@ -239,11 +252,7 @@ export default function PageGameBlack() {
         const val = board[r][c];
         const isValid = movesMap.has(key);
         const isLast = lastMove && lastMove.r === r && lastMove.c === c;
-        const tooltipLabel = isValid
-          ? "可落子"
-          : val === 0
-            ? null
-            : toLabel(val as Player);
+        const tooltipLabel = null;
 
         rows.push(
           <Box key={key} className="cell-wrapper">
@@ -254,10 +263,12 @@ export default function PageGameBlack() {
             >
               <Box onClick={() => onCellClick(r, c)} className="cell-inner">
                 <Cell
+                  showHints={showHints}
                   value={val}
                   isValid={isValid}
                   isLastMove={isLast ?? undefined}
                   onClick={() => onCellClick(r, c)}
+                  currentPlayer={current}
                 />
               </Box>
             </Tooltip>
@@ -266,7 +277,7 @@ export default function PageGameBlack() {
       }
     }
     return rows;
-  }, [board, validMoves, lastMove]);
+  }, [board, validMoves, lastMove, showHints, current]);
 
   return (
     <Container py={20} id="page-game-black">
@@ -284,9 +295,15 @@ export default function PageGameBlack() {
               </Badge>
             </Group>
             <Group>
-              <Button onClick={resetGame} variant="light">
-                重开
-              </Button>
+              <Switch
+                size="md"
+                withThumbIndicator={false}
+                checked={showHints}
+                onChange={(e) => setShowHints(e.target.checked)}
+                label="落子提示"
+                labelPosition="left"
+              />
+
               <Button
                 onClick={undoMove}
                 variant="outline"
@@ -294,11 +311,18 @@ export default function PageGameBlack() {
               >
                 悔棋
               </Button>
+              <Button onClick={resetGame} variant="light">
+                重开
+              </Button>
             </Group>
           </Group>
           <Group mt="sm" gap="xs">
-            <Badge color={current === 1 ? "dark" : "gray"} variant="filled">
-              当前回合：{toLabel(current)}
+            <Badge
+              size="lg"
+              color={current === 1 ? "dark" : "gray"}
+              variant="filled"
+            >
+              {toLabel(current)}棋回合
             </Badge>
             {/* removed AI thinking badge */}
             {autoPassInfo && <Badge color="orange">{autoPassInfo}</Badge>}

@@ -129,10 +129,6 @@ export default function HomeExplore() {
               <Anchor component={Link} href="/game/black">
                 <Text>黑白棋</Text>
               </Anchor>
-
-              <Anchor component={Link} href="/game/21">
-                <Text>二十一点</Text>
-              </Anchor>
             </Group>
           </Accordion.Panel>
         </Accordion.Item>
