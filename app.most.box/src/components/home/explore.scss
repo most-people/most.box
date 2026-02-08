@@ -1,8 +1,37 @@
-#page-home-panel-explore {
+#page-index-panel-explore {
   width: 100%;
 
   .mantine-Accordion-content {
     padding-top: 0;
     padding-bottom: 8px;
+  }
+
+  .hero {
+    position: relative;
+    background-image: radial-gradient(var(--mantine-color-dimmed) 1px, transparent 1px);
+    background-size: 30px 30px;
+    padding-top: var(--mantine-spacing-xl);
+    padding-bottom: var(--mantine-spacing-xl);
+  }
+
+  .hero-title {
+    text-align: center;
+    font-size: 62px;
+    font-weight: 900;
+    line-height: 1.1;
+    margin: 0;
+    padding: 0;
+    color: var(--mantine-color-text);
+
+    @media (max-width: 768px) {
+      font-size: 42px;
+      line-height: 1.2;
+    }
+  }
+
+  .gradient-text {
+    background-image: linear-gradient(45deg, var(--mantine-color-blue-filled), var(--mantine-color-cyan-filled));
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 }

@@ -35,7 +35,7 @@ export default function PageHome() {
         }
       />
       <Tabs
-        id="page-home"
+        id="page-index"
         variant="pills"
         radius={0}
         value={homeTab}

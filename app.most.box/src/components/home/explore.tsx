@@ -10,11 +10,12 @@ import {
   Group,
   Box,
   Anchor,
+  Stack,
 } from "@mantine/core";
 import { useMarkdown } from "@/hooks/useMarkdown";
 import IPFS from "@/assets/docs/IPFS.md";
 import IPv6 from "@/assets/docs/IPv6.md";
-import RunDot from "@/assets/docs/run-dot.md";
+import Crust from "@/assets/docs/Crust.md";
 import { useUserStore } from "@/stores/userStore";
 import { Icon } from "@/components/Icon";
 import Link from "next/link";
@@ -25,7 +26,7 @@ export default function HomeExplore() {
 
   const ipfsElement = useRef<HTMLDivElement>(null);
   const ipv6Element = useRef<HTMLDivElement>(null);
-  const runDotElement = useRef<HTMLDivElement>(null);
+  const crustElement = useRef<HTMLDivElement>(null);
   const notesDark = useUserStore((state) => state.notesDark);
 
   const markdown = useMarkdown();
@@ -38,9 +39,9 @@ export default function HomeExplore() {
       const viewer = await markdown.initViewer(ipv6Element.current);
       viewer.setMarkdown(IPv6);
     }
-    if (runDotElement.current) {
-      const viewer = await markdown.initViewer(runDotElement.current);
-      viewer.setMarkdown(RunDot);
+    if (crustElement.current) {
+      const viewer = await markdown.initViewer(crustElement.current);
+      viewer.setMarkdown(Crust);
     }
   };
 
@@ -53,10 +54,20 @@ export default function HomeExplore() {
 
   return (
     <Container py="md">
-      <Title size="h3">Most.Box - 如影随形</Title>
-      <Text c="dimmed">——「轻松简单、开源免费、部署自己的节点」</Text>
+      <div className="hero">
+        <Container size="lg">
+          <Stack align="center" gap="xl">
+            <Stack className="hero-title">
+              <span className="gradient-text">数字资产，从此永生</span>
+            </Stack>
 
-      <Divider my="md" />
+            <Text c="dimmed" size="xl" maw={600} ta="center" lh={1.6}>
+              基于 Crust Network 物理级加密存储，配合 Cloudflare 全球加速。
+              告别传统云盘的审查与断电风险，让数据都拥有“自动续费”的永久生命力。
+            </Text>
+          </Stack>
+        </Container>
+      </div>
 
       <Accordion my="md" variant="separated" defaultValue="IPFS">
         <Accordion.Item value="IPFS">
@@ -66,17 +77,17 @@ export default function HomeExplore() {
           </Accordion.Panel>
         </Accordion.Item>
 
-        <Accordion.Item value="IPv6">
-          <Accordion.Control icon="🍌">2. 公网 IPV6</Accordion.Control>
+        <Accordion.Item value="Crust">
+          <Accordion.Control icon="🍌">2. Crust Network</Accordion.Control>
           <Accordion.Panel>
-            <Box className={notesDark} ref={ipv6Element} />
+            <Box className={notesDark} ref={crustElement} />
           </Accordion.Panel>
         </Accordion.Item>
 
-        <Accordion.Item value="DOT">
-          <Accordion.Control icon="🥦">3. 运行节点</Accordion.Control>
+        <Accordion.Item value="IPv6">
+          <Accordion.Control icon="🥦">3. 公网 IPV6</Accordion.Control>
           <Accordion.Panel>
-            <Box className={notesDark} ref={runDotElement} />
+            <Box className={notesDark} ref={ipv6Element} />
           </Accordion.Panel>
         </Accordion.Item>
       </Accordion>
