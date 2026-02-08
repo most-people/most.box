@@ -353,7 +353,7 @@ export const useUserStore = create<State>()(
         }
       },
       // 余额
-      balance: "",
+      balance: "0",
       async fetchBalance() {
         const { wallet } = get();
         if (wallet) {
