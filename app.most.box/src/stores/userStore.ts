@@ -64,9 +64,6 @@ interface UserStore {
   // 导入导出
   exportData: () => UserData;
   importData: (data: UserData) => void;
-  // 同步 (完全去中心化方案：Crust Remark)
-  syncToChain: () => Promise<void>;
-  syncFromChain: () => Promise<void>;
   // 退出登录
   exit: () => void;
   // Hydration 状态
@@ -274,87 +271,6 @@ export const useUserStore = create<State>()(
       importData({ notes, files }) {
         if (notes && files) {
           set({ notes, files });
-        }
-      },
-      // 同步到链上 (Crust Remark)
-      async syncToChain() {
-        const { wallet, exportData } = get();
-        if (!wallet) {
-          notifications.show({ message: "请先登录", color: "red" });
-          return;
-        }
-
-        try {
-          const data = exportData();
-
-          // 加密
-          const encrypted = encryptBackup(data, wallet.danger);
-
-          // 构造上传文件
-          // 1. 备份文件
-          const file = new File([encrypted], "most-box-backup.txt", {
-            type: "text/plain",
-          });
-
-          // 2. 上传到 IPFS
-          const crustWallet = mostCrust(wallet.danger);
-          const { cid } = await crust.upload(file, crustWallet);
-
-          // 3. 写入链上 Remark
-          await crust.saveRemark(cid, wallet.danger, get().balance);
-
-          notifications.show({
-            message: "同步到链上成功",
-            color: "green",
-          });
-        } catch (error) {
-          throw error;
-        }
-      },
-      // 从链上拉取 (Crust Remark)
-      async syncFromChain() {
-        const { wallet, dotCID } = get();
-        if (!wallet) {
-          notifications.show({ message: "请先登录", color: "red" });
-          return;
-        }
-
-        try {
-          const { crust_address } = mostCrust(wallet.danger);
-          // 1. 从链上获取最新 CID
-          const cid = await crust.getRemark(crust_address);
-          if (!cid) {
-            notifications.show({
-              message: "未在链上找到备份记录",
-              color: "red",
-            });
-            return;
-          }
-
-          // 2. 从网关拉取数据
-          const res = await fetch(`${dotCID}/ipfs/${cid}`);
-          if (!res.ok) {
-            throw new Error(
-              `从网关获取备份失败: ${res.status} ${res.statusText}`,
-            );
-          }
-          const content = await res.text();
-
-          const data = decryptBackup(content, wallet.danger);
-
-          if (data && data.notes && data.files) {
-            set({ notes: data.notes, files: data.files });
-            notifications.show({
-              message: "从链上恢复成功",
-              color: "green",
-            });
-          }
-        } catch (error: any) {
-          notifications.show({
-            message: error.message || "从链上恢复失败",
-            color: "red",
-          });
-          console.error("从链上恢复失败", error);
         }
       },
       // 余额

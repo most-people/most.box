@@ -33,6 +33,7 @@ import { mostCrust } from "@/utils/MostWallet";
 import { notifications } from "@mantine/notifications";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { encryptBackup, decryptBackup } from "@/utils/backup";
 
 const PageContent = () => {
   const router = useRouter();
@@ -76,9 +77,11 @@ const PageContent = () => {
       // Step 1: 准备数据
       setActiveStep(1);
       const data = exportData();
-      const backupContent = JSON.stringify(data);
-      const file = new File([backupContent], "most-box-backup.json", {
-        type: "application/json",
+
+      const encrypted = encryptBackup(data, wallet.danger);
+
+      const file = new File([encrypted], "most-box-backup.txt", {
+        type: "text/plain",
       });
 
       // Step 2: 上传到 IPFS
@@ -140,7 +143,8 @@ const PageContent = () => {
       if (!res.ok) {
         throw new Error(`从网关获取备份失败: ${res.status} ${res.statusText}`);
       }
-      const data = await res.json();
+      const content = await res.text();
+      const data = decryptBackup(content, wallet.danger);
 
       // Step 3: 恢复数据
       setActiveStep(3);
@@ -168,7 +172,7 @@ const PageContent = () => {
     <Container py="lg" size="sm">
       <AppHeader title="数据同步" />
 
-      <Group justify="flex-end" mt="md">
+      <Group justify="space-between" mt="md">
         <Badge
           size="lg"
           variant="light"
@@ -176,6 +180,9 @@ const PageContent = () => {
           leftSection={<IconWallet size={14} />}
         >
           余额: {parseFloat(balance || "0")} CRU
+        </Badge>
+        <Badge size="lg" variant="dot" color="green">
+          网关: {dotCID ? new URL(dotCID).hostname : "未选择"}
         </Badge>
       </Group>
 

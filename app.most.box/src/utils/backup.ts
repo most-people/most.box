@@ -1,4 +1,4 @@
-import { most25519, mostDecode, mostEncode } from "./MostWallet";
+import { most25519, mostDecode, mostEncode } from "@/utils/MostWallet";
 
 export const encryptBackup = (data: any, danger: string): string => {
   const { public_key, private_key } = most25519(danger);
