@@ -50,37 +50,21 @@ type DetectionResult = {
 // ===== 网关列表配置 =====
 const gatewayList: GatewayInfo[] = [
   {
-    title: "官方及基金会维护",
-    description: "最权威，由 IPFS 官方团队或相关基金会直接运营",
-    gateways: [
-      "https://gw.crust-gateway.com",
-      "https://gw.crust-gateway.xyz",
-      "https://ipfs.io",
-      "https://dweb.link",
-      // "https://trustless-gateway.link",
-    ],
+    title: "Crust 官方网关",
+    description: "由 Crust Network 提供的高速稳定网关",
+    gateways: ["https://gw.crust-gateway.com", "https://gw.crust-gateway.xyz"],
   },
   {
-    title: "基础设施服务商提供",
-    description: "速度较快，由 Web3 云存储公司维护，通常带有 CDN 加速",
+    title: "公共网关",
+    description: "由社区或第三方服务商提供的公共网关",
     gateways: [
+      "https://ipfs.io",
+      "https://dweb.link",
       "https://gateway.pinata.cloud",
       "https://ipfs.filebase.io",
       "https://w3s.link",
       "https://4everland.io",
-      // "https://ipfs.infura.io",
-      // "https://gateway.lighthouse.storage",
-      // "https://flk-ipfs.xyz",
-    ],
-  },
-  {
-    title: "活跃的社区/第三方网关",
-    description: "由社区维护的公共网关",
-    gateways: [
-      // "https://ipfs.eth.aragon.network",
       "https://ipfs.cyou",
-      // "https://dlunar.net",
-      // "https://storry.tv",
       "https://apac.orbitor.dev",
       "https://eu.orbitor.dev",
       "https://latam.orbitor.dev",

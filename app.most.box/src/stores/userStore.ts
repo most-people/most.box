@@ -287,15 +287,15 @@ export const useUserStore = create<State>()(
           const data = exportData();
           const backupContent = JSON.stringify(data);
 
-          // 构造上传列表
+          // 构造上传文件
           // 1. 备份文件
-          const uploadFiles = [
-            { path: "most-box-backup.json", content: backupContent },
-          ];
+          const file = new File([backupContent], "most-box-backup.json", {
+            type: "application/json",
+          });
 
-          // 2. 上传到 IPFS (作为文件夹上传)
+          // 2. 上传到 IPFS
           const crustWallet = mostCrust(wallet.danger);
-          const { cid } = await crust.upload(uploadFiles, crustWallet);
+          const { cid } = await crust.upload(file, crustWallet);
 
           // 3. 写入链上 Remark
           await crust.saveRemark(cid, wallet.danger, get().balance);
@@ -328,8 +328,8 @@ export const useUserStore = create<State>()(
             return;
           }
 
-          // 2. 从网关拉取 JSON 数据 (直接作为文件夹获取)
-          const res = await fetch(`${dotCID}/ipfs/${cid}/most-box-backup.json`);
+          // 2. 从网关拉取 JSON 数据
+          const res = await fetch(`${dotCID}/ipfs/${cid}`);
           if (!res.ok) {
             throw new Error(
               `从网关获取备份失败: ${res.status} ${res.statusText}`,
@@ -383,7 +383,7 @@ export const useUserStore = create<State>()(
           filesPath: "",
           notesPath: "",
           balance: "",
-          dotCID: "",
+          dotCID: "https://gw.crust-gateway.com",
           homeTab: "file",
         });
       },

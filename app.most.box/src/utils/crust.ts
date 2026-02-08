@@ -6,7 +6,7 @@ import { mostCrust } from "@/utils/MostWallet";
 // Crust IPFS Web3 Auth 网关
 const CRUST_IPFS_GW = "https://gw.crustfiles.app";
 // Crust Pinning 服务
-const CRUST_PIN = "https://pin.crustcode.com/psa";
+const CRUST_PIN = "https://pin.crustcode.com";
 // Crust 链 RPC 节点列表
 const CRUST_RPC_NODES = [
   "wss://crust.api.onfinality.io/public-ws",
@@ -109,7 +109,7 @@ const ipfsDir = async (
 const pin = async (cid: string, name: string, authHeader: string) => {
   try {
     return await axios.post(
-      `${CRUST_PIN}/pins`,
+      `${CRUST_PIN}/psa/pins`,
       {
         cid: cid,
         name: name,
