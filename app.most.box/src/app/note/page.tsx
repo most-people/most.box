@@ -88,6 +88,7 @@ const PageContent = () => {
       if (decrypted) {
         // 解密成功
         queueMicrotask(() => setIsSecret(true));
+        setContent(decrypted);
       }
     }
   }, [inited, wallet, content]);
