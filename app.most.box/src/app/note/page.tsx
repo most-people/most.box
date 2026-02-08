@@ -144,8 +144,8 @@ const PageContent = () => {
       } else {
         // https://mantine.dev/x/modals
         modals.openConfirmModal({
-          centered: true,
           title: "保存笔记",
+          centered: true,
           children: (
             <TextInput
               placeholder="请输入笔记名称"

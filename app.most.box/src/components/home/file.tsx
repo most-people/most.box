@@ -354,6 +354,7 @@ export default function HomeFile() {
     const isDir = item.type === "directory";
     modals.openConfirmModal({
       title: "提示",
+      centered: true,
       children: (
         <Text size="sm">
           确定要删除{isDir ? "文件夹" : "文件"} &quot;{item.name}

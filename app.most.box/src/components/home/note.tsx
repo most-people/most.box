@@ -250,6 +250,7 @@ export default function HomeNote() {
     const isDir = item.type === "directory";
     modals.openConfirmModal({
       title: "提示",
+      centered: true,
       children: (
         <Text size="sm">
           确定要删除{isDir ? "文件夹" : "笔记"} &quot;{item.name}

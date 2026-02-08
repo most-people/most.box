@@ -4,7 +4,6 @@ import { useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
 import {
   Container,
-  Paper,
   Text,
   Button,
   Stepper,
@@ -12,17 +11,14 @@ import {
   Stack,
   Alert,
   ThemeIcon,
-  RingProgress,
-  Center,
   SimpleGrid,
   Card,
-  rem,
+  Badge,
 } from "@mantine/core";
 import {
   IconCloudUpload,
   IconCloudDownload,
   IconCheck,
-  IconX,
   IconAlertCircle,
   IconDatabase,
   IconWorldUpload,
@@ -36,6 +32,7 @@ import crust from "@/utils/crust";
 import { mostCrust } from "@/utils/MostWallet";
 import { notifications } from "@mantine/notifications";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const PageContent = () => {
   const router = useRouter();
@@ -171,7 +168,18 @@ const PageContent = () => {
     <Container py="lg" size="sm">
       <AppHeader title="数据同步" />
 
-      <SimpleGrid cols={{ base: 1, sm: 2 }} mt="xl" spacing="lg">
+      <Group justify="flex-end" mt="md">
+        <Badge
+          size="lg"
+          variant="light"
+          color="gray"
+          leftSection={<IconWallet size={14} />}
+        >
+          余额: {parseFloat(balance || "0")} CRU
+        </Badge>
+      </Group>
+
+      <SimpleGrid cols={{ base: 1, sm: 2 }} mt="md" spacing="lg">
         {/* 同步到链上 Card */}
         <Card
           shadow="sm"
@@ -203,6 +211,7 @@ const PageContent = () => {
                 active={activeStep}
                 orientation="vertical"
                 size="sm"
+                color="blue"
                 iconSize={32}
               >
                 <Stepper.Step
@@ -237,7 +246,9 @@ const PageContent = () => {
                   color="red"
                   variant="light"
                 >
-                  {error}
+                  <Group justify="space-between" align="center">
+                    <Text size="sm">{error}</Text>
+                  </Group>
                 </Alert>
               )}
             </Stack>
@@ -339,17 +350,51 @@ const PageContent = () => {
         </Card>
       </SimpleGrid>
 
-      {/* 提示信息 */}
-      {!loading && !success && (
+      {parseFloat(balance || "0") === 0 ? (
         <Alert
           icon={<IconWallet size={16} />}
-          title="提示"
-          color="gray"
+          title="新用户福利"
+          color="green"
           mt="xl"
           variant="light"
         >
-          同步操作需要消耗少量的 CRU 代币作为 Gas
-          费和存储费。请确保您的钱包中有足够的余额。
+          <Group justify="space-between" align="center">
+            <Text size="sm">
+              检测到您的 CRU 余额为 0，作为新用户您可以免费领取 CRU 用于同步。
+            </Text>
+            <Button
+              component={Link}
+              href="/pay"
+              size="xs"
+              variant="white"
+              color="green"
+            >
+              免费领取
+            </Button>
+          </Group>
+        </Alert>
+      ) : (
+        <Alert
+          icon={<IconWallet size={16} />}
+          title="余额提示"
+          color="blue"
+          mt="xl"
+          variant="light"
+        >
+          <Group justify="space-between" align="center">
+            <Text size="sm" c="dimmed">
+              同步操作需要消耗少量的 CRU (Gas费 + 存储费)
+            </Text>
+            <Button
+              component={Link}
+              href="/pay"
+              size="sm"
+              variant="subtle"
+              color="blue"
+            >
+              去充值
+            </Button>
+          </Group>
         </Alert>
       )}
     </Container>

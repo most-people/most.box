@@ -2,16 +2,81 @@
 
 import "./mine.scss";
 import Link from "next/link";
-import { Avatar, Text, Stack, Group, Box, ActionIcon } from "@mantine/core";
+import { useRouter } from "next/navigation";
+import {
+  Avatar,
+  Text,
+  Stack,
+  Group,
+  Box,
+  ActionIcon,
+  Button,
+} from "@mantine/core";
+import { modals } from "@mantine/modals";
 import { Icon, type IconName } from "@/components/Icon";
 import { useUserStore } from "@/stores/userStore";
 import mp from "@/utils/mp";
+import { useDataBackup } from "@/hooks/useDataBackup";
 
 export default function HomeMine() {
+  const router = useRouter();
   const wallet = useUserStore((state) => state.wallet);
   const address = wallet?.address || mp.ZeroAddress;
-
   const exit = useUserStore((state) => state.exit);
+  const { handleExport } = useDataBackup();
+
+  const quit = () => {
+    modals.open({
+      title: "退出警告",
+      centered: true,
+      children: (
+        <Stack>
+          <Stack>
+            <Text size="sm" c="dimmed">
+              退出登录将清除本地所有内容。
+            </Text>
+            <Text size="sm" c="dimmed">
+              是否已经备份好数据？
+            </Text>
+          </Stack>
+          <Group justify="flex-end">
+            <Button
+              size="sm"
+              variant="light"
+              color="blue"
+              onClick={() => {
+                handleExport();
+                modals.closeAll();
+              }}
+            >
+              备份到本地
+            </Button>
+            <Button
+              size="sm"
+              variant="light"
+              color="green"
+              onClick={() => {
+                modals.closeAll();
+                router.push("/sync");
+              }}
+            >
+              同步到链上
+            </Button>
+            <Button
+              size="sm"
+              color="red"
+              onClick={() => {
+                modals.closeAll();
+                exit();
+              }}
+            >
+              确认退出
+            </Button>
+          </Group>
+        </Stack>
+      ),
+    });
+  };
 
   return (
     <>
@@ -55,12 +120,19 @@ export default function HomeMine() {
         <MenuItem icon="Join" label="志同道合" link="/join" />
       </Stack>
       <Stack className="menu-list" mt="xs">
-        <MenuItem
-          icon="Exit"
-          label={wallet ? "退出账户" : "去登录"}
-          link="/login"
-          onClick={wallet ? exit : undefined}
-        />
+        {wallet ? (
+          <MenuItem
+            icon="Exit"
+            label="退出账户"
+            link="#"
+            onClick={(e) => {
+              e.preventDefault();
+              quit();
+            }}
+          />
+        ) : (
+          <MenuItem icon="Exit" label="去登录" link="/login" />
+        )}
       </Stack>
     </>
   );

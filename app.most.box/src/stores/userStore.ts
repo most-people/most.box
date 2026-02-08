@@ -362,7 +362,7 @@ export const useUserStore = create<State>()(
             const balance = await crust.balance(crust_address);
             set({ balance });
           } catch (error) {
-            console.error("获取 Crust 余额失败", error);
+            console.info("获取 Crust 余额失败", error);
           }
         }
       },

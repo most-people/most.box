@@ -13,6 +13,7 @@ import {
   Anchor,
   Paper,
   Title,
+  Progress,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
 import { Turnstile } from "@marsidev/react-turnstile";
@@ -33,6 +34,7 @@ const PageContent = () => {
   const [crust_address, setCrustAddress] = useState("-");
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [claiming, setClaiming] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     if (wallet) {
@@ -48,16 +50,43 @@ const PageContent = () => {
     }
 
     setClaiming(true);
+    setProgress(0);
     try {
       await api.post("/free.claim.cru", {
         turnstileToken,
       });
 
       notifications.show({
-        message: "领取成功！请稍后检查余额。",
-        color: "green",
+        message: "领取请求已提交，正在确认余额...",
+        color: "blue",
       });
-      await fetchBalance();
+
+      // 轮询查询余额，最多 10 次，每次 5 秒
+      let success = false;
+      for (let i = 0; i < 10; i++) {
+        setProgress((i + 1) * 10);
+        await new Promise((r) => setTimeout(r, 5000));
+        await fetchBalance();
+        const currentBalance = useUserStore.getState().balance;
+        if (parseFloat(currentBalance || "0") > 0) {
+          success = true;
+          break;
+        }
+      }
+
+      setProgress(100);
+
+      if (success) {
+        notifications.show({
+          message: "领取成功！余额已更新。",
+          color: "green",
+        });
+      } else {
+        notifications.show({
+          message: "领取成功！区块链确认较慢，请稍后刷新查看。",
+          color: "green",
+        });
+      }
     } catch (error: any) {
       const message = error.response?.data?.error || "领取失败，请稍后重试。";
       notifications.show({
@@ -67,6 +96,7 @@ const PageContent = () => {
       console.error(error);
     } finally {
       setClaiming(false);
+      setProgress(0);
     }
   };
 
@@ -117,6 +147,15 @@ const PageContent = () => {
               >
                 新用户，免费领取 CRU
               </Button>
+              {claiming && (
+                <Progress
+                  value={progress}
+                  size="sm"
+                  w="100%"
+                  animated
+                  striped
+                />
+              )}
             </Stack>
           </Paper>
         )}

@@ -36,10 +36,10 @@ function LoginWalletContent() {
       const wallet = mostWallet(address, signature, "From Signature");
       setWallet(wallet);
       back();
-    } catch (e) {
-      console.error("Login failed", e);
+    } catch (e: any) {
+      console.info("Login failed", e);
       notifications.show({
-        message: "登录失败: " + (e as Error).message,
+        message: e.message,
         color: "red",
       });
     }
