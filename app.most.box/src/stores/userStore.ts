@@ -2,6 +2,7 @@
 
 import crust from "@/utils/crust";
 import { mostCrust, type MostWallet } from "@/utils/MostWallet";
+import { encryptBackup, decryptBackup } from "@/utils/backup";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { idbStorage } from "@/utils/idbStorage";
@@ -285,12 +286,14 @@ export const useUserStore = create<State>()(
 
         try {
           const data = exportData();
-          const backupContent = JSON.stringify(data);
+
+          // 加密
+          const encrypted = encryptBackup(data, wallet.danger);
 
           // 构造上传文件
           // 1. 备份文件
-          const file = new File([backupContent], "most-box-backup.json", {
-            type: "application/json",
+          const file = new File([encrypted], "most-box-backup.txt", {
+            type: "text/plain",
           });
 
           // 2. 上传到 IPFS
@@ -328,14 +331,16 @@ export const useUserStore = create<State>()(
             return;
           }
 
-          // 2. 从网关拉取 JSON 数据
+          // 2. 从网关拉取数据
           const res = await fetch(`${dotCID}/ipfs/${cid}`);
           if (!res.ok) {
             throw new Error(
               `从网关获取备份失败: ${res.status} ${res.statusText}`,
             );
           }
-          const data = await res.json();
+          const content = await res.text();
+
+          const data = decryptBackup(content, wallet.danger);
 
           if (data && data.notes && data.files) {
             set({ notes: data.notes, files: data.files });
@@ -344,9 +349,9 @@ export const useUserStore = create<State>()(
               color: "green",
             });
           }
-        } catch (error) {
+        } catch (error: any) {
           notifications.show({
-            message: "从链上恢复失败",
+            message: error.message || "从链上恢复失败",
             color: "red",
           });
           console.error("从链上恢复失败", error);
