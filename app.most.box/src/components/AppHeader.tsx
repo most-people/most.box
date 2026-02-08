@@ -9,13 +9,11 @@ import {
   IconFileImport,
   IconPackageExport,
   IconCloudUpload,
-  IconCloudDownload,
   IconWallet,
 } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { useUserStore } from "@/stores/userStore";
 import { useRouter } from "next/navigation";
-import { modals } from "@mantine/modals";
 
 interface AppHeaderProps {
   title: string | string[];
@@ -32,29 +30,7 @@ export const AppHeader = ({ title, variant, right, left }: AppHeaderProps) => {
   const wallet = useUserStore((state) => state.wallet);
   const importData = useUserStore((state) => state.importData);
   const balance = useUserStore((state) => state.balance);
-  const syncToChain = useUserStore((state) => state.syncToChain);
-  const syncFromChain = useUserStore((state) => state.syncFromChain);
 
-  const handleSyncToChain = async () => {
-    try {
-      await syncToChain();
-    } catch (error: any) {
-      if (error.cause === "INSUFFICIENT_BALANCE") {
-        modals.openConfirmModal({
-          title: "余额不足",
-          children: <Text size="sm">{error.message}</Text>,
-          labels: { confirm: "去充值", cancel: "取消" },
-          onConfirm: () => router.push("/pay"),
-        });
-      } else {
-        console.error("同步到链上失败", error);
-        notifications.show({
-          message: "同步到链上失败",
-          color: "red",
-        });
-      }
-    }
-  };
 
   const handleExport = () => {
     if (!wallet) {
@@ -153,15 +129,10 @@ export const AppHeader = ({ title, variant, right, left }: AppHeaderProps) => {
 
             <Menu.Item
               leftSection={<IconCloudUpload size={18} />}
-              onClick={handleSyncToChain}
+              component={Link}
+              href="/sync"
             >
-              同步到链上
-            </Menu.Item>
-            <Menu.Item
-              leftSection={<IconCloudDownload size={18} />}
-              onClick={syncFromChain}
-            >
-              从链上拉取
+              数据同步
             </Menu.Item>
 
             <Menu.Divider />
