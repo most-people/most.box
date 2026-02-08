@@ -45,7 +45,7 @@ interface UserStore {
   filesPath: string;
   // 余额
   balance: string;
-  initBalance: () => Promise<void>;
+  fetchBalance: () => Promise<void>;
   // IPFS 网关
   dotCID: string;
   // 首页 Tab
@@ -84,7 +84,7 @@ export const useUserStore = create<State>()(
       wallet: undefined,
       setWallet(wallet: MostWallet) {
         set({ wallet });
-        get().initBalance();
+        get().fetchBalance();
       },
       // 返回
       firstPath: "",
@@ -96,7 +96,6 @@ export const useUserStore = create<State>()(
       // 文件系统
       files: [],
       filesPath: "",
-
       // 本地文件操作实现
       addFile(file) {
         if (file.type === "directory") return;
@@ -127,7 +126,6 @@ export const useUserStore = create<State>()(
           return { files: [...items, newItem] };
         });
       },
-
       deleteFile(cid, path, name) {
         const normalizedPath = path !== undefined ? mp.normalizePath(path) : "";
         set((state) => ({
@@ -144,7 +142,6 @@ export const useUserStore = create<State>()(
           }),
         }));
       },
-
       renameFile(oldPath, newPath, newName) {
         const oldPathNorm = mp.normalizePath(oldPath);
         const newPathNorm = mp.normalizePath(newPath);
@@ -179,7 +176,6 @@ export const useUserStore = create<State>()(
           }),
         }));
       },
-
       // 笔记操作实现
       async addNote(file) {
         if (file.type === "directory") return "";
@@ -218,7 +214,6 @@ export const useUserStore = create<State>()(
 
         return cid;
       },
-
       deleteNote(cid, path, name) {
         const normalizedPath = path !== undefined ? mp.normalizePath(path) : "";
         set((state) => ({
@@ -235,7 +230,6 @@ export const useUserStore = create<State>()(
           }),
         }));
       },
-
       renameNote(oldPath, newPath, newName) {
         const oldPathNorm = mp.normalizePath(oldPath);
         const newPathNorm = mp.normalizePath(newPath);
@@ -270,20 +264,17 @@ export const useUserStore = create<State>()(
           }),
         }));
       },
-
       // 导出用户数据
       exportData() {
         const { notes, files } = get();
         return { notes, files };
       },
-
       // 导入用户数据
       importData({ notes, files }) {
         if (notes && files) {
           set({ notes, files });
         }
       },
-
       // 同步到链上 (Crust Remark)
       async syncToChain() {
         const { wallet, exportData } = get();
@@ -317,7 +308,6 @@ export const useUserStore = create<State>()(
           throw error;
         }
       },
-
       // 从链上拉取 (Crust Remark)
       async syncFromChain() {
         const { wallet, dotCID } = get();
@@ -362,10 +352,9 @@ export const useUserStore = create<State>()(
           console.error("从链上恢复失败", error);
         }
       },
-
       // 余额
       balance: "",
-      async initBalance() {
+      async fetchBalance() {
         const { wallet } = get();
         if (wallet) {
           try {

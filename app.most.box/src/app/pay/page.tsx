@@ -28,7 +28,7 @@ const CLOUDFLARE_SITE_KEY = isDev
 const PageContent = () => {
   const wallet = useUserStore((state) => state.wallet);
   const balance = useUserStore((state) => state.balance);
-  const initBalance = useUserStore((state) => state.initBalance);
+  const fetchBalance = useUserStore((state) => state.fetchBalance);
 
   const [crust_address, setCrustAddress] = useState("-");
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
@@ -39,7 +39,7 @@ const PageContent = () => {
       const { crust_address } = mostCrust(wallet.danger);
       setCrustAddress(crust_address);
     }
-  }, [wallet, initBalance]);
+  }, [wallet]);
 
   const handleClaim = async () => {
     if (!turnstileToken) {
@@ -49,18 +49,21 @@ const PageContent = () => {
 
     setClaiming(true);
     try {
-      const res = await api.post("/free.claim.cru", {
-        method: "POST",
-        body: { turnstileToken },
+      await api.post("/free.claim.cru", {
+        turnstileToken,
       });
 
       notifications.show({
         message: "领取成功！请稍后检查余额。",
         color: "green",
       });
-      await initBalance();
-    } catch (error) {
-      notifications.show({ message: "领取失败，请稍后重试。", color: "red" });
+      await fetchBalance();
+    } catch (error: any) {
+      const message = error.response?.data?.error || "领取失败，请稍后重试。";
+      notifications.show({
+        message,
+        color: "red",
+      });
       console.error(error);
     } finally {
       setClaiming(false);

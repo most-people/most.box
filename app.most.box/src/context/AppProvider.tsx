@@ -13,14 +13,21 @@ import { AppHeader } from "@/components/AppHeader";
 
 const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const hydrated = useHydrated();
-  // const exit = useUserStore((state) => state.exit);
   const setItem = useUserStore((state) => state.setItem);
+  const fetchBalance = useUserStore((state) => state.fetchBalance);
+  const wallet = useUserStore((state) => state.wallet);
 
   useEffect(() => {
     if (hydrated) {
       setItem("firstPath", window.location.pathname);
     }
   }, [hydrated]);
+
+  useEffect(() => {
+    if (wallet) {
+      fetchBalance();
+    }
+  }, [wallet]);
 
   const { colorScheme } = useMantineColorScheme();
   const computedColorScheme = useComputedColorScheme();

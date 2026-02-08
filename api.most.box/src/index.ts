@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { cryptoWaitReady, signatureVerify } from "@polkadot/util-crypto";
+import { formatUnits } from "ethers";
 
 const CRUST_RPC_NODES = [
   "wss://crust.api.onfinality.io/public-ws",
@@ -83,13 +84,12 @@ app.post("/free.claim.cru", async (c) => {
     // Check if running locally/dev to optionally skip Turnstile
     const isDev = c.env.ENVIRONMENT === "development";
 
-    if (!turnstileToken) {
-      if (isDev) {
-        console.log("开发环境跳过 Turnstile 验证");
-      } else {
+    if (isDev) {
+      console.log("开发环境跳过 Turnstile 验证");
+    } else {
+      if (!turnstileToken) {
         return c.json({ error: "缺少 Turnstile 令牌" }, 400);
       }
-    } else {
       // 1. Verify Turnstile if token is provided
       const ip = c.req.header("CF-Connecting-IP");
       const formData = new FormData();
@@ -135,7 +135,10 @@ app.post("/free.claim.cru", async (c) => {
 
       // If balance > 0, not a new user
       if (BigInt(freeBalance) > 0n) {
-        return c.json({ error: "非新用户（余额不为 0）" }, 400);
+        return c.json(
+          { error: `不是新用户，当前余额 ${formatUnits(freeBalance, 12)} CRU` },
+          400,
+        );
       }
 
       const keyring = new Keyring({ type: "sr25519" });
