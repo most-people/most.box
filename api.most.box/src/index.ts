@@ -12,6 +12,7 @@ const CRUST_RPC_NODES = [
 
 type Bindings = {
   DB: D1Database;
+  BACKUP_BUCKET: R2Bucket;
   TURNSTILE_SECRET_KEY: string;
   FAUCET_MNEMONIC: string;
   ENVIRONMENT: string;
@@ -176,6 +177,42 @@ app.post("/free.claim.cru", async (c) => {
   } catch (e: any) {
     console.error("领取失败:", e);
     return c.json({ error: "领取失败: " + e.message }, 500);
+  }
+});
+
+// 云端备份
+app.put("/backup", async (c) => {
+  try {
+    const address = c.get("address");
+    const content = await c.req.text();
+
+    if (!content) {
+      return c.json({ error: "备份内容为空" }, 400);
+    }
+
+    await c.env.BACKUP_BUCKET.put(address, content);
+    return c.json({ success: true });
+  } catch (e: any) {
+    console.error("备份上传失败:", e);
+    return c.json({ error: "备份上传失败: " + e.message }, 500);
+  }
+});
+
+// 云端恢复
+app.get("/backup", async (c) => {
+  try {
+    const address = c.get("address");
+    const object = await c.env.BACKUP_BUCKET.get(address);
+
+    if (!object) {
+      return c.json({ error: "未找到备份文件" }, 404);
+    }
+
+    const content = await object.text();
+    return c.text(content);
+  } catch (e: any) {
+    console.error("备份下载失败:", e);
+    return c.json({ error: "备份下载失败: " + e.message }, 500);
   }
 });
 

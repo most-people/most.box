@@ -586,9 +586,12 @@ export default function HomeFile() {
                           }
                         }}
                       >
-                        <Text fw={500} lineClamp={1}>
-                          {item.type === "directory" ? "📁" : "📄"} {item.name}
-                        </Text>
+                        <Tooltip label={item.name} openDelay={500} withArrow>
+                          <Text fw={500} lineClamp={1}>
+                            {item.type === "directory" ? "📁" : "📄"}{" "}
+                            {item.name}
+                          </Text>
+                        </Tooltip>
                       </Stack>
                       <Menu shadow="md" width={120}>
                         <Menu.Target>
@@ -598,14 +601,16 @@ export default function HomeFile() {
                         </Menu.Target>
 
                         <Menu.Dropdown>
-                          <Menu.Item
-                            leftSection="📖"
-                            onClick={() => {
-                              handleShareFile(item);
-                            }}
-                          >
-                            查看
-                          </Menu.Item>
+                          {item.type === "file" && (
+                            <Menu.Item
+                              leftSection="📖"
+                              onClick={() => {
+                                handleShareFile(item);
+                              }}
+                            >
+                              查看
+                            </Menu.Item>
+                          )}
 
                           <Menu.Item
                             leftSection="✏️"
@@ -616,16 +621,17 @@ export default function HomeFile() {
 
                           <Menu.Divider />
 
-                          <Menu.Item
-                            leftSection="⬇️"
-                            component={Link}
-                            target="_blank"
-                            href={formatDownload(item)}
-                            disabled={formatDownload(item) === "#"}
-                          >
-                            下载
-                          </Menu.Item>
-
+                          {item.type === "file" && (
+                            <Menu.Item
+                              leftSection="⬇️"
+                              component={Link}
+                              target="_blank"
+                              href={formatDownload(item)}
+                              disabled={formatDownload(item) === "#"}
+                            >
+                              下载
+                            </Menu.Item>
+                          )}
                           <Menu.Item
                             leftSection="🗑️"
                             onClick={() => {

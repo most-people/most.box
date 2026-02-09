@@ -5,6 +5,7 @@ import { notifications } from "@mantine/notifications";
 import { useUserStore } from "@/stores/userStore";
 import { useRouter } from "next/navigation";
 import { encryptBackup, decryptBackup } from "@/utils/backup";
+import { api } from "@/utils/api";
 
 export const useBackup = () => {
   const router = useRouter();
@@ -88,8 +89,88 @@ export const useBackup = () => {
     input.click();
   };
 
+  const cloudBackup = async () => {
+    if (!wallet) {
+      notifications.show({ message: "请先登录", color: "red" });
+      router.push("/login");
+      return;
+    }
+
+    try {
+      const data = exportData();
+      const encrypted = encryptBackup(data, wallet.danger);
+
+      await api.put("/backup", encrypted, {
+        headers: {
+          "Content-Type": "text/plain",
+        },
+      });
+
+      notifications.show({
+        title: "云端备份成功",
+        message: "数据已成功备份到云端",
+        color: "green",
+      });
+    } catch (error: any) {
+      notifications.show({
+        title: "云端备份失败",
+        message: error.message || "上传失败",
+        color: "red",
+      });
+    }
+  };
+
+  const cloudRestore = async () => {
+    if (!wallet) {
+      notifications.show({ message: "请先登录", color: "red" });
+      router.push("/login");
+      return;
+    }
+
+    try {
+      const response = await api.get("/backup", {
+        responseType: "text",
+      });
+
+      const content = response.data;
+      if (!content) {
+        throw new Error("云端无备份数据");
+      }
+
+      const data = decryptBackup(content, wallet.danger);
+
+      if (data.notes || data.files) {
+        importData(data);
+        notifications.show({
+          title: "云端恢复成功",
+          message: "数据已从云端恢复",
+          color: "green",
+        });
+      } else {
+        throw new Error("无效的备份数据");
+      }
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        notifications.show({
+          title: "无云端备份",
+          message: "您还没有在云端备份过数据",
+          color: "yellow",
+        });
+        return;
+      }
+
+      notifications.show({
+        title: "云端恢复失败",
+        message: error.message || "下载或解析失败",
+        color: "red",
+      });
+    }
+  };
+
   return {
     handleExport,
     handleImport,
+    cloudBackup,
+    cloudRestore,
   };
 };
