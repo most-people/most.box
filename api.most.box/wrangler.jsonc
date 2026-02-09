@@ -6,6 +6,13 @@
   // "compatibility_flags": [
   //   "nodejs_compat"
   // ],
+  "routes": [
+    {
+      "pattern": "api.most.box",
+      "zone_name": "most.box",
+      "custom_domain": true,
+    },
+  ],
   "vars": {
     "ENVIRONMENT": "production",
     "FAUCET_MNEMONIC": "",

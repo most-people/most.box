@@ -14,7 +14,7 @@
     "@polkadot/util": "^14.0.1",
     "@polkadot/util-crypto": "^14.0.1",
     "ethers": "^6.16.0",
-    "hono": "^4.11.8"
+    "hono": "^4.11.9"
   },
   "devDependencies": {
     "@babel/runtime": "^7.28.6",
