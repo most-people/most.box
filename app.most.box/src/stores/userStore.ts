@@ -2,12 +2,10 @@
 
 import crust from "@/utils/crust";
 import { mostCrust, type MostWallet } from "@/utils/MostWallet";
-import { encryptBackup, decryptBackup } from "@/utils/backup";
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { idbStorage } from "@/utils/idbStorage";
 import mp from "@/utils/mp";
-import { notifications } from "@mantine/notifications";
 
 interface BaseItem {
   name: string;
@@ -25,6 +23,7 @@ export interface FileItem extends BaseItem {
 
 export interface NoteItem extends BaseItem {
   content: string;
+  updated_at: number;
 }
 
 export interface UserData {

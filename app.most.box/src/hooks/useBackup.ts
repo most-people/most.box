@@ -6,12 +6,15 @@ import { useUserStore } from "@/stores/userStore";
 import { useRouter } from "next/navigation";
 import { encryptBackup, decryptBackup } from "@/utils/backup";
 import { api } from "@/utils/api";
+import mp from "@/utils/mp";
 
 export const useBackup = () => {
   const router = useRouter();
   const exportData = useUserStore((state) => state.exportData);
   const wallet = useUserStore((state) => state.wallet);
   const importData = useUserStore((state) => state.importData);
+  const notes = useUserStore((state) => state.notes);
+  const files = useUserStore((state) => state.files);
 
   const handleExport = () => {
     if (!wallet) {
@@ -98,11 +101,14 @@ export const useBackup = () => {
 
     try {
       const data = exportData();
+      const content = JSON.stringify(data);
+      const cid = await mp.calculateCID(content);
       const encrypted = encryptBackup(data, wallet.danger);
 
       await api.put("/backup", encrypted, {
         headers: {
           "Content-Type": "text/plain",
+          "x-backup-cid": cid,
         },
       });
 
@@ -131,6 +137,26 @@ export const useBackup = () => {
       const response = await api.get("/backup", {
         responseType: "text",
       });
+
+      const cloudTime = parseInt(response.headers["x-backup-time"] || "0");
+      const cloudCID = response.headers["x-backup-cid"] || "";
+
+      if (notes.length > 0 || files.length > 0) {
+        const localData = exportData();
+        const localContent = JSON.stringify(localData);
+        const localCID = await mp.calculateCID(localContent);
+
+        if (localCID !== cloudCID) {
+          const timeDiff = dayjs(cloudTime).fromNow();
+          if (
+            !window.confirm(
+              `云端备份（${timeDiff}）与本地数据不一致，恢复将覆盖本地更改，是否继续？`,
+            )
+          ) {
+            return;
+          }
+        }
+      }
 
       const content = response.data;
       if (!content) {

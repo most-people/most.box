@@ -25,7 +25,16 @@ type Variables = {
 const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
 // 1. CORS 中间件（必须在最前面以处理 OPTIONS 请求）
-app.use("/*", cors());
+app.use(
+  "/*",
+  cors({
+    origin: "*",
+    allowHeaders: ["Content-Type", "Authorization", "x-backup-cid"],
+    exposeHeaders: ["x-backup-time", "x-backup-cid"],
+    allowMethods: ["POST", "GET", "OPTIONS", "PUT"],
+    maxAge: 600,
+  }),
+);
 
 // 2. 认证中间件
 const authMiddleware = async (c: any, next: any) => {
@@ -185,12 +194,18 @@ app.put("/backup", async (c) => {
   try {
     const address = c.get("address");
     const content = await c.req.text();
+    const cid = c.req.header("x-backup-cid");
 
     if (!content) {
       return c.json({ error: "备份内容为空" }, 400);
     }
 
-    await c.env.BACKUP_BUCKET.put(address, content);
+    await c.env.BACKUP_BUCKET.put(address, content, {
+      customMetadata: {
+        updatedAt: Date.now().toString(),
+        cid: cid || "",
+      },
+    });
     return c.json({ success: true });
   } catch (e: any) {
     console.error("备份上传失败:", e);
@@ -209,7 +224,19 @@ app.get("/backup", async (c) => {
     }
 
     const content = await object.text();
-    return c.text(content);
+    const headers: Record<string, string> = {
+      "Content-Type": "text/plain",
+    };
+
+    if (object.customMetadata?.updatedAt) {
+      headers["x-backup-time"] = object.customMetadata.updatedAt;
+    }
+
+    if (object.customMetadata?.cid) {
+      headers["x-backup-cid"] = object.customMetadata.cid;
+    }
+
+    return c.text(content, 200, headers);
   } catch (e: any) {
     console.error("备份下载失败:", e);
     return c.json({ error: "备份下载失败: " + e.message }, 500);

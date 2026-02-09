@@ -115,6 +115,7 @@ const PageContent = () => {
         type: "file",
         path: "",
         content: newContent,
+        updated_at: Date.now(),
       });
 
       updateUrl(localCid);

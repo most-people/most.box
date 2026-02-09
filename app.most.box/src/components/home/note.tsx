@@ -113,6 +113,7 @@ export default function HomeNote() {
         type: "file",
         path: currentPath,
         content: "",
+        updated_at: Date.now(),
       });
 
       notifications.show({
@@ -155,6 +156,7 @@ export default function HomeNote() {
         type: "file",
         path: targetPath,
         content: "",
+        updated_at: Date.now(),
       });
 
       notifications.show({ message: "文件夹创建成功", color: "green" });
