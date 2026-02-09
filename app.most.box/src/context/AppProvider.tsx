@@ -10,6 +10,7 @@ import {
   useMantineColorScheme,
 } from "@mantine/core";
 import { AppHeader } from "@/components/AppHeader";
+import { cloudLoad } from "@/utils/backup";
 
 const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const hydrated = useHydrated();
@@ -25,6 +26,7 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (wallet) {
+      cloudLoad();
       fetchBalance();
     }
   }, [wallet]);
