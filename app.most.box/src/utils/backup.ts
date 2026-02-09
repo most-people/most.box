@@ -38,7 +38,7 @@ export const decryptBackup = (content: string, danger: string): any => {
 export const cloudSave = async () => {
   const { wallet, exportData } = useUserStore.getState();
   if (!wallet) {
-    notifications.show({ message: "请先登录", color: "red" });
+    // notifications.show({ message: "请先登录", color: "red" });
     return;
   }
 
@@ -55,24 +55,25 @@ export const cloudSave = async () => {
       },
     });
 
-    notifications.show({
-      title: "云端备份成功",
-      message: "数据已成功备份到云端",
-      color: "green",
-    });
+    // notifications.show({
+    //   title: "云端备份成功",
+    //   message: "数据已成功备份到云端",
+    //   color: "green",
+    // });
   } catch (error: any) {
-    notifications.show({
-      title: "云端备份失败",
-      message: error.message || "上传失败",
-      color: "red",
-    });
+    console.info(error.message || "上传失败");
+    // notifications.show({
+    //   title: "云端备份失败",
+    //   message: error.message || "上传失败",
+    //   color: "red",
+    // });
   }
 };
 export const cloudLoad = async () => {
   const { wallet, exportData, importData, notes, files } =
     useUserStore.getState();
   if (!wallet) {
-    notifications.show({ message: "请先登录", color: "red" });
+    // notifications.show({ message: "请先登录", color: "red" });
     return;
   }
 
@@ -88,8 +89,10 @@ export const cloudLoad = async () => {
       const localData = exportData();
       const localContent = JSON.stringify(localData);
       const localCID = await mp.calculateCID(localContent);
-
-      if (localCID !== cloudCID) {
+      if (localCID === cloudCID) {
+        // 本地数据与云端数据一致，无需恢复
+        return;
+      } else {
         const timeDiff = dayjs(cloudTime).fromNow();
         if (
           !window.confirm(
@@ -110,29 +113,29 @@ export const cloudLoad = async () => {
 
     if (data.notes || data.files) {
       importData(data);
-      notifications.show({
-        title: "云端恢复成功",
-        message: "数据已从云端恢复",
-        color: "green",
-      });
+      // notifications.show({
+      //   title: "云端恢复成功",
+      //   message: "数据已从云端恢复",
+      //   color: "green",
+      // });
     } else {
       throw new Error("无效的备份数据");
     }
   } catch (error: any) {
     if (error.response?.status === 404) {
-      notifications.show({
-        title: "无云端备份",
-        message: "您还没有在云端备份过数据",
-        color: "yellow",
-      });
+      // notifications.show({
+      //   title: "无云端备份",
+      //   message: "您还没有在云端备份过数据",
+      //   color: "yellow",
+      // });
       return;
     }
 
-    notifications.show({
-      title: "云端恢复失败",
-      message: error.message || "下载或解析失败",
-      color: "red",
-    });
+    // notifications.show({
+    //   title: "云端恢复失败",
+    //   message: error.message || "下载或解析失败",
+    //   color: "red",
+    // });
   }
 };
 
@@ -159,7 +162,7 @@ export const handleExport = () => {
     URL.revokeObjectURL(url);
     notifications.show({
       title: "导出成功",
-      message: "数据已成功加密并备份到本地文件",
+      message: "数据已加密备份到本地",
       color: "green",
     });
   } catch (error: any) {

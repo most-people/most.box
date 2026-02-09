@@ -6,6 +6,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { idbStorage } from "@/utils/idbStorage";
 import mp from "@/utils/mp";
+import { cloudSave } from "@/utils/backup";
 
 interface BaseItem {
   name: string;
@@ -122,6 +123,8 @@ export const useUserStore = create<State>()(
           }
           return { files: [...items, newItem] };
         });
+
+        cloudSave();
       },
       deleteFile(cid, path, name) {
         const normalizedPath = path !== undefined ? mp.normalizePath(path) : "";
@@ -138,6 +141,8 @@ export const useUserStore = create<State>()(
             return true;
           }),
         }));
+
+        cloudSave();
       },
       renameFile(oldPath, newPath, newName) {
         const oldPathNorm = mp.normalizePath(oldPath);
@@ -172,6 +177,8 @@ export const useUserStore = create<State>()(
             return item;
           }),
         }));
+
+        cloudSave();
       },
       // 笔记操作实现
       async addNote(file) {
@@ -209,6 +216,8 @@ export const useUserStore = create<State>()(
           return { notes: [...items, newItem] };
         });
 
+        cloudSave();
+
         return cid;
       },
       deleteNote(cid, path, name) {
@@ -226,6 +235,8 @@ export const useUserStore = create<State>()(
             return true;
           }),
         }));
+
+        cloudSave();
       },
       renameNote(oldPath, newPath, newName) {
         const oldPathNorm = mp.normalizePath(oldPath);
@@ -260,6 +271,8 @@ export const useUserStore = create<State>()(
             return item;
           }),
         }));
+
+        cloudSave();
       },
       // 导出用户数据
       exportData() {
