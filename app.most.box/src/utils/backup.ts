@@ -200,6 +200,7 @@ export const handleImport = () => {
             message: "数据已成功恢复",
             color: "green",
           });
+          cloudSave();
         } else {
           throw new Error("无效的备份文件数据");
         }

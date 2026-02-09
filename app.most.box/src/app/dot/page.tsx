@@ -27,8 +27,8 @@ import {
   IconRefresh,
   IconServer,
   IconActivity,
-  IconWorldWww,
   IconRocket,
+  IconPlus,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { useUserStore } from "@/stores/userStore";
@@ -134,6 +134,71 @@ function GatewayManagerContent() {
     Record<string, DetectionResult>
   >({});
   const [customGateway, setCustomGateway] = useState("");
+  const [isAddingGateway, setIsAddingGateway] = useState(false);
+  const [gateways, setGateways] = useState<GatewayInfo[]>(gatewayList);
+
+  const addCustomGateway = async () => {
+    let gateway = "";
+    try {
+      gateway = new URL(customGateway).origin;
+    } catch (error) {
+      notifications.show({
+        title: "无效的网关 URL",
+        message: "请输入正确的网关 URL",
+        color: "red",
+      });
+      return;
+    }
+    if (!gateway) return;
+
+    const isDuplicate = gateways.some((cat) => cat.gateways.includes(gateway));
+
+    if (isDuplicate) {
+      notifications.show({
+        title: "重复添加",
+        message: "该网关已存在列表中",
+        color: "orange",
+      });
+      return;
+    }
+
+    setIsAddingGateway(true);
+    const result = await checkGateway(gateway, customCid);
+    setIsAddingGateway(false);
+
+    if (result.status !== "success") {
+      notifications.show({
+        title: "网关不可用",
+        message: "无法连接到该网关，请检查 URL",
+        color: "red",
+      });
+      return;
+    }
+
+    setGateways((prev) => {
+      const newCategories = [...prev];
+      if (newCategories[0].title === "自定义网关") {
+        newCategories[0] = {
+          ...newCategories[0],
+          gateways: [gateway, ...newCategories[0].gateways],
+        };
+      } else {
+        newCategories.unshift({
+          title: "自定义网关",
+          description: "手动添加的网关列表",
+          gateways: [gateway],
+        });
+      }
+      return newCategories;
+    });
+
+    setCustomGateway("");
+    notifications.show({
+      title: "添加成功",
+      message: "自定义网关已添加",
+      color: "green",
+    });
+  };
 
   const handleDetectAll = async () => {
     if (!customCid) {
@@ -162,7 +227,7 @@ function GatewayManagerContent() {
 
     // 收集所有网关
     const allGateways: string[] = [];
-    gatewayList.forEach((cat) => allGateways.push(...cat.gateways));
+    gateways.forEach((cat) => allGateways.push(...cat.gateways));
     if (customGateway) allGateways.push(customGateway);
 
     // 初始化状态
@@ -312,11 +377,12 @@ function GatewayManagerContent() {
               rightSection={
                 <ActionIcon
                   variant="subtle"
-                  onClick={() =>
+                  onClick={() => {
                     setCustomCid(
                       "bafkreihp5o7tdipf6ajkgkdxknnffkuxpeecwqydi4q5iqt4gko6r2agk4",
-                    )
-                  }
+                    );
+                    setFilename("长征.jpg");
+                  }}
                 >
                   <IconRefresh size={16} />
                 </ActionIcon>
@@ -335,6 +401,16 @@ function GatewayManagerContent() {
               value={customGateway}
               onChange={(e) => setCustomGateway(e.currentTarget.value)}
               placeholder="https://..."
+              maw={230}
+              rightSection={
+                <ActionIcon
+                  variant="subtle"
+                  onClick={addCustomGateway}
+                  loading={isAddingGateway}
+                >
+                  <IconPlus size={16} />
+                </ActionIcon>
+              }
             />
           </Group>
 
@@ -351,7 +427,7 @@ function GatewayManagerContent() {
 
       {/* 网关列表 */}
       <Stack gap="xl">
-        {gatewayList.map((category, idx) => (
+        {gateways.map((category, idx) => (
           <Box key={idx}>
             <Title order={4} mb="xs" c="blue.7">
               {category.title}
@@ -457,93 +533,6 @@ function GatewayManagerContent() {
             </Grid>
           </Box>
         ))}
-
-        {/* 自定义网关显示 */}
-        {customGateway && (
-          <Box>
-            <Title order={4} mb="xs" c="violet.7">
-              自定义网关
-            </Title>
-            <Grid gutter="md">
-              <Grid.Col span={{ base: 12, md: 6, lg: 4 }}>
-                <Card
-                  shadow="sm"
-                  padding="lg"
-                  radius="md"
-                  withBorder
-                  style={{
-                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                    border:
-                      dotCID === customGateway
-                        ? "2px solid #228be6"
-                        : undefined,
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow =
-                      "0 4px 20px rgba(0,0,0,0.1)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "";
-                  }}
-                >
-                  <Group justify="space-between" mb="md">
-                    <Group gap="xs">
-                      <ThemeIcon
-                        size={36}
-                        radius="md"
-                        variant="light"
-                        color="violet"
-                      >
-                        <IconWorldWww size={20} />
-                      </ThemeIcon>
-                      <Text fw={600} size="md">
-                        Custom
-                      </Text>
-                    </Group>
-                    {dotCID === customGateway && (
-                      <Badge size="xs" color="blue" variant="filled">
-                        当前
-                      </Badge>
-                    )}
-                  </Group>
-
-                  <Text
-                    size="xs"
-                    c="dimmed"
-                    mb="md"
-                    lineClamp={1}
-                    title={customGateway}
-                  >
-                    {customGateway}
-                  </Text>
-
-                  <Group justify="space-between" align="center">
-                    <Badge
-                      color={getStatusColor(
-                        detectionResults[customGateway]?.status,
-                      )}
-                      variant="light"
-                      size="lg"
-                    >
-                      {getStatusLabel(detectionResults[customGateway])}
-                    </Badge>
-
-                    <Button
-                      variant={dotCID === customGateway ? "filled" : "light"}
-                      color={dotCID === customGateway ? "green" : "blue"}
-                      onClick={() => selectGateway(customGateway)}
-                      disabled={dotCID === customGateway}
-                    >
-                      {dotCID === customGateway ? "当前节点" : "选择节点"}
-                    </Button>
-                  </Group>
-                </Card>
-              </Grid.Col>
-            </Grid>
-          </Box>
-        )}
       </Stack>
 
       <Divider my="xl" label="相关工具" labelPosition="center" />

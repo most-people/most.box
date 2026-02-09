@@ -314,7 +314,7 @@ const balance = async (address: string): Promise<string> => {
     const balance = res.data?.data?.native?.[0]?.balance ?? "0";
     return formatUnits(balance, 12);
   } catch (error) {
-    console.error("查询余额失败:", error);
+    console.info("查询余额失败:", error);
     throw error;
   }
 };
