@@ -265,7 +265,7 @@ const filterFilesByPath = <
 
     // 如果是在当前目录下的项
     if (fPath === normalizedCurrentPath) {
-      if (item.type === "file") {
+      if (item.type === "file" || item.type === "directory") {
         directItems.push(item);
       }
       return;

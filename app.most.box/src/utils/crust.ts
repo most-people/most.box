@@ -245,27 +245,37 @@ const order = async (
     const tx = crust.tx.market.placeStorageOrder(cid, fileSize, tips, "");
 
     // 计算存储费
-    const unitPrice = await crust.query.market.unitPrice();
-    const unitPriceBigInt = BigInt(unitPrice.toString());
-    const sizeBigInt = BigInt(fileSize);
-    const MB = BigInt(1024 * 1024);
-    // 向上取整计算存储费
-    const storageFee = (unitPriceBigInt * sizeBigInt + MB - 1n) / MB;
+    // let unitPriceBigInt = BigInt(0);
+    // try {
+    //   if (crust.query?.market?.unitPrice) {
+    //     const unitPrice = await crust.query.market.unitPrice();
+    //     unitPriceBigInt = BigInt(unitPrice.toString());
+    //   } else {
+    //     console.warn("crust.query.market.unitPrice 不存在，跳过存储费估算");
+    //   }
+    // } catch (e) {
+    //   console.warn("获取存储单价失败:", e);
+    // }
 
-    // 估算交易费
-    const paymentInfo = await tx.paymentInfo(krp);
-    const txFee = BigInt(paymentInfo.partialFee.toString());
+    // const sizeBigInt = BigInt(fileSize);
+    // const MB = BigInt(1024 * 1024);
+    // // 向上取整计算存储费
+    // const storageFee = (unitPriceBigInt * sizeBigInt + MB - 1n) / MB;
 
-    const tipsBigInt = BigInt(tips);
-    const totalCost = storageFee + txFee + tipsBigInt;
+    // // 估算交易费
+    // const paymentInfo = await tx.paymentInfo(krp);
+    // const txFee = BigInt(paymentInfo.partialFee.toString());
 
-    if (balance < totalCost) {
-      const error = new Error(
-        `需要 ${formatUnits(totalCost, 12)} CRU，但只有 ${formatUnits(balance, 12)} CRU。`,
-        { cause: "INSUFFICIENT_BALANCE" },
-      );
-      throw error;
-    }
+    // const tipsBigInt = BigInt(tips);
+    // const totalCost = storageFee + txFee + tipsBigInt;
+
+    // if (balance < totalCost) {
+    //   const error = new Error(
+    //     `需要 ${formatUnits(totalCost, 12)} CRU，但只有 ${formatUnits(balance, 12)} CRU。`,
+    //     { cause: "INSUFFICIENT_BALANCE" },
+    //   );
+    //   throw error;
+    // }
 
     // 4. 发送并等待确认
     const result = await new Promise<string>((resolve, reject) => {
@@ -527,6 +537,7 @@ const getFileStatus = async (cid: string) => {
 const crust = {
   auth,
   ipfs,
+  ipfsDir,
   pin,
   upload,
   order,

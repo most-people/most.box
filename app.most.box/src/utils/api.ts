@@ -17,7 +17,8 @@ export const getAuthHeaders = async (wallet: MostWallet) => {
 };
 
 export const api = axios.create({
-  baseURL: isDev ? "http://localhost:8787" : "https://api.most.box",
+  // baseURL: isDev ? "http://localhost:8787" : "https://api.most.box",
+  baseURL: "https://api.most.box",
 });
 
 // 添加请求拦截器，自动在 header 中加载 Authorization

@@ -27,6 +27,7 @@ import {
   IconDotsVertical,
   IconPlus,
   IconFolderUp,
+  IconWorld,
 } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { modals } from "@mantine/modals";
@@ -238,6 +239,106 @@ export default function HomeFile() {
       });
     } finally {
       setNewFolderLoading(false);
+    }
+  };
+
+  const websiteInputRef = useRef<HTMLInputElement>(null);
+
+  const handleWebsiteUpload = () => {
+    websiteInputRef.current?.click();
+  };
+
+  const handleWebsiteChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    if (!wallet) {
+      notifications.show({ message: "请先登录", color: "red" });
+      return;
+    }
+
+    setUploadLoading(true);
+    const notificationId = notifications.show({
+      title: "上传中",
+      message: "正在打包上传网站...",
+      color: "blue",
+      autoClose: false,
+    });
+
+    try {
+      const fileArray = Array.from(files);
+      // Prepare files for ipfsDir
+      // Strip the first directory from path to make the content root-level
+      const ipfsFiles = fileArray.map((file) => {
+        const relPath = file.webkitRelativePath || file.name;
+        const parts = relPath.split("/");
+        const path = parts.length > 1 ? parts.slice(1).join("/") : relPath;
+        return {
+          path,
+          content: file,
+        };
+      });
+
+      // Auth
+      const { crust_address, sign } = mostCrust(wallet.danger);
+      const signature = sign(crust_address);
+      const authHeader = crust.auth(crust_address, signature);
+
+      // Upload Dir
+      const result = await crust.ipfsDir(ipfsFiles, authHeader);
+      // Pin
+      const folderName =
+        fileArray[0]?.webkitRelativePath?.split("/")[0] || "Website";
+      await crust.pin(result.cid, folderName, authHeader);
+
+      // Calculate total size
+      const totalSize = fileArray.reduce((acc, file) => acc + file.size, 0);
+
+      // Get expiration
+      let expiredAt = Date.now() + 180 * 24 * 60 * 60 * 1000;
+      try {
+        const status = await crust.getFileStatus(result.cid);
+        if (status && status.expiredAt) {
+          expiredAt = status.expiredAt;
+        }
+      } catch (error) {
+        console.warn("获取过期时间失败，使用默认值", error);
+      }
+
+      useUserStore.getState().addFile({
+        cid: result.cid,
+        name: folderName,
+        size: totalSize,
+        type: "directory", // Explicit directory with CID
+        path: currentPath,
+        expired_at: expiredAt,
+        tx_hash: "",
+      });
+
+      notifications.update({
+        id: notificationId,
+        title: "上传成功",
+        message: `网站 ${folderName} 已上传`,
+        color: "green",
+        autoClose: true,
+      });
+    } catch (error: unknown) {
+      console.error("网站上传失败:", error);
+      const message =
+        error instanceof Error ? error.message : "网站上传失败，请重试";
+      notifications.update({
+        id: notificationId,
+        title: "上传失败",
+        message,
+        color: "red",
+        autoClose: true,
+      });
+    } finally {
+      setUploadLoading(false);
+      // clear input
+      event.target.value = "";
     }
   };
 
@@ -522,6 +623,16 @@ export default function HomeFile() {
                 <IconFolderUp size={18} />
               </ActionIcon>
             </Tooltip>
+            <Tooltip label="上传网站">
+              <ActionIcon
+                size="lg"
+                onClick={handleWebsiteUpload}
+                color="blue"
+                disabled={!wallet || uploadLoading}
+              >
+                <IconWorld size={18} />
+              </ActionIcon>
+            </Tooltip>
           </Group>
         </Group>
 
@@ -582,13 +693,21 @@ export default function HomeFile() {
                         }}
                         onClick={() => {
                           if (item.type === "directory") {
-                            handleFolderClick(item.name);
+                            if (item.cid) {
+                              handleShareFile(item);
+                            } else {
+                              handleFolderClick(item.name);
+                            }
                           }
                         }}
                       >
                         <Tooltip label={item.name} openDelay={500} withArrow>
                           <Text fw={500} lineClamp={1}>
-                            {item.type === "directory" ? "📁" : "📄"}{" "}
+                            {item.type === "directory"
+                              ? item.cid
+                                ? "🌐"
+                                : "📁"
+                              : "📄"}{" "}
                             {item.name}
                           </Text>
                         </Tooltip>
@@ -694,6 +813,15 @@ export default function HomeFile() {
         multiple
         style={{ display: "none" }}
         onChange={handleFileChange}
+      />
+      <input
+        ref={websiteInputRef}
+        type="file"
+        // @ts-ignore
+        webkitdirectory=""
+        multiple
+        style={{ display: "none" }}
+        onChange={handleWebsiteChange}
       />
 
       {/* 新建文件夹模态框 */}

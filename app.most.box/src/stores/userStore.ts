@@ -96,7 +96,6 @@ export const useUserStore = create<State>()(
       filesPath: "",
       // 本地文件操作实现
       addFile(file) {
-        if (file.type === "directory") return;
         const normalizedPath = mp.normalizePath(file.path);
         const newItem = {
           ...file,

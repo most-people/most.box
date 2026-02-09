@@ -417,25 +417,29 @@ export default function HomeNote() {
                 >
                   <Card radius="md" withBorder>
                     <Group justify="space-between" wrap="nowrap" gap={0}>
-                      <Text
-                        flex={1}
-                        fw={500}
-                        lineClamp={1}
-                        component={
-                          (note.type === "directory" ? "div" : Link) as any
-                        }
-                        href={
-                          note.type === "directory" ? undefined : shareUrl(note)
-                        }
-                        onClick={() => {
-                          if (note.type === "directory") {
-                            handleFolderClick(note.name);
+                      <Tooltip label={note.name} openDelay={500} withArrow>
+                        <Text
+                          flex={1}
+                          fw={500}
+                          lineClamp={1}
+                          component={
+                            (note.type === "directory" ? "div" : Link) as any
                           }
-                        }}
-                        style={{ cursor: "pointer" }}
-                      >
-                        {note.type === "directory" ? "📁" : "📝"} {note.name}
-                      </Text>
+                          href={
+                            note.type === "directory"
+                              ? undefined
+                              : shareUrl(note)
+                          }
+                          onClick={() => {
+                            if (note.type === "directory") {
+                              handleFolderClick(note.name);
+                            }
+                          }}
+                          style={{ cursor: "pointer" }}
+                        >
+                          {note.type === "directory" ? "📁" : "📝"} {note.name}
+                        </Text>
+                      </Tooltip>
                       <Menu shadow="md" width={120}>
                         <Menu.Target>
                           <ActionIcon variant="subtle" color="gray">
