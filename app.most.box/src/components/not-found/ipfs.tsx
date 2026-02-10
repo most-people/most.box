@@ -22,7 +22,7 @@ import Link from "next/link";
 import { IconCopy, IconInfoCircle } from "@tabler/icons-react";
 import { useUserStore } from "@/stores/userStore";
 
-type CidType = "dir" | "note" | "file";
+type CidType = "website" | "file";
 
 const PageContent = () => {
   const pathname = usePathname();
@@ -51,7 +51,7 @@ const PageContent = () => {
       url.pathname = `/ipfs/${cid}`;
       url.searchParams.set("download", "true");
       if (filename) {
-        if (cidType === "dir" || cidType === "note") {
+        if (cidType === "website") {
           url.searchParams.set("format", "tar");
           url.searchParams.set("filename", `${filename}.tar`);
         } else {
@@ -77,8 +77,10 @@ const PageContent = () => {
 
         <Group justify="space-between" align="center">
           <Group gap={8}>
-            {cidType === "dir" ? "📁" : "📄"}
-            <Title order={4}>{cidType === "dir" ? "文件夹" : "文件"}信息</Title>
+            {cidType === "website" ? "🌐" : "📄"}
+            <Title order={4}>
+              {cidType === "website" ? "网站" : "文件"}信息
+            </Title>
           </Group>
           {initFilename && (
             <Text size="sm" c="dimmed">
@@ -89,7 +91,7 @@ const PageContent = () => {
 
         <TextInput
           radius="md"
-          placeholder={cidType === "dir" ? "文件夹" : "文件名"}
+          placeholder={cidType === "website" ? "网站" : "文件名"}
           value={filename}
           onChange={(e) => setFilename(e.currentTarget.value)}
         />
@@ -157,18 +159,6 @@ const PageContent = () => {
             </Button>
           )}
         </Group>
-
-        {cidType === "note" && (
-          <Button
-            variant="light"
-            w="100%"
-            component={Link}
-            href={`/note/?cid=${cid}`}
-            target="_blank"
-          >
-            打开笔记
-          </Button>
-        )}
 
         <Center>
           <div className="ipfs-qrcode">

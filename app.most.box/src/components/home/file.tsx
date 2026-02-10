@@ -573,7 +573,11 @@ export default function HomeFile() {
     const cid = item.cid;
     const params = new URLSearchParams({ filename: item.name });
     if (item.type === "directory") {
-      params.set("type", "dir");
+      if (item.cid) {
+        params.set("type", "website");
+      } else {
+        params.set("type", "dir");
+      }
     }
     const url = `/ipfs/${cid}/?${params.toString()}`;
     window.open(url);
