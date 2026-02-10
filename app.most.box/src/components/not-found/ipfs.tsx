@@ -1,8 +1,8 @@
 "use client";
 import "./ipfs.scss";
 import { AppHeader } from "@/components/AppHeader";
-import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
+import { Suspense, useMemo, useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import {
   Text,
@@ -17,14 +17,16 @@ import {
   Button,
   Center,
   Box,
+  Badge,
 } from "@mantine/core";
 import Link from "next/link";
-import { IconCopy, IconInfoCircle } from "@tabler/icons-react";
+import { IconCopy, IconInfoCircle, IconSettings } from "@tabler/icons-react";
 import { useUserStore } from "@/stores/userStore";
 
 type CidType = "website" | "file";
 
 const PageContent = () => {
+  const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
   const cidType = (params.get("type") || "file") as CidType;
@@ -32,6 +34,52 @@ const PageContent = () => {
   const initFilename = params.get("filename") || "";
   const [filename, setFilename] = useState<string>(initFilename);
   const dotCID = useUserStore((state) => state.dotCID);
+
+  const [isGatewayAvailable, setIsGatewayAvailable] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
+
+  useEffect(() => {
+    if (!dotCID || !cid) {
+      setIsChecking(false);
+      return;
+    }
+
+    const checkGateway = async () => {
+      setIsChecking(true);
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        // 使用当前 CID 检查网关连通性
+        const res = await fetch(`${dotCID}/ipfs/${cid}`, {
+          method: "HEAD",
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (res.ok) {
+          setIsGatewayAvailable(true);
+        } else {
+          throw new Error(`网关返回 ${res.status}`);
+        }
+      } catch (error) {
+        console.warn("网关检查失败...", error);
+        setIsGatewayAvailable(false);
+      } finally {
+        setIsChecking(false);
+      }
+    };
+
+    checkGateway();
+  }, [dotCID, cid]);
+
+  const goToSwitchGateway = () => {
+    const params = new URLSearchParams();
+    if (filename) params.set("filename", filename);
+    if (cid) params.set("cid", cid);
+    router.push(`/dot?${params.toString()}`);
+  };
 
   const previewUrl = useMemo(() => {
     if (cid) {
@@ -100,9 +148,46 @@ const PageContent = () => {
           <Title>IPFS</Title>
         </Center>
 
+        <Group justify="center" gap="xs">
+          <Badge size="lg" variant="dot" color="green">
+            网关: {dotCID ? new URL(dotCID).hostname : "未选择"}
+          </Badge>
+          <Tooltip label="切换网关" position="top">
+            <ActionIcon
+              variant="subtle"
+              color="gray"
+              size="lg"
+              onClick={goToSwitchGateway}
+            >
+              <IconSettings size={18} />
+            </ActionIcon>
+          </Tooltip>
+        </Group>
+
         {!dotCID && (
           <Alert color="gray" radius="md" mb="sm">
             未连接到 Dot 节点，下载链接将不可用。
+          </Alert>
+        )}
+
+        {dotCID && !isChecking && !isGatewayAvailable && (
+          <Alert
+            color="red"
+            radius="md"
+            mb="sm"
+            icon={<IconInfoCircle size={18} />}
+          >
+            <Group justify="space-between" align="center">
+              <Text size="sm">当前网关无法访问</Text>
+              <Button
+                size="xs"
+                color="red"
+                variant="white"
+                onClick={goToSwitchGateway}
+              >
+                切换网关
+              </Button>
+            </Group>
           </Alert>
         )}
 
@@ -139,6 +224,8 @@ const PageContent = () => {
             component={Link}
             target="_blank"
             href={previewUrl}
+            disabled={!isGatewayAvailable || isChecking}
+            loading={isChecking}
           >
             预览
           </Button>
@@ -150,11 +237,19 @@ const PageContent = () => {
               component={Link}
               target="_blank"
               href={downloadUrl}
+              disabled={!isGatewayAvailable || isChecking}
+              loading={isChecking}
             >
               下载
             </Button>
           ) : (
-            <Button variant="light" color="blue" w="100%" disabled>
+            <Button
+              variant="light"
+              color="blue"
+              w="100%"
+              disabled
+              loading={isChecking}
+            >
               下载
             </Button>
           )}

@@ -97,8 +97,9 @@ const checkGateway = async (
 
   try {
     const response = await fetch(testUrl, {
-      method: "GET",
-      headers: { Range: "bytes=0-0" }, // 请求极小部分数据以测试连通性
+      // method: "GET",
+      // headers: { Range: "bytes=0-0" }, // 请求极小部分数据以测试连通性
+      method: "HEAD",
       signal: controller.signal,
     });
 
