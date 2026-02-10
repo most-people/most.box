@@ -72,12 +72,11 @@ export default function HomeNote() {
   const [renameDirPath, setRenameDirPath] = useState("");
   const [renameBaseName, setRenameBaseName] = useState("");
 
-  const shareUrl = (note: NoteItem) => {
-    const shareUrl = new URL(window.location.href);
-    shareUrl.pathname = "/note/";
-    shareUrl.searchParams.set("name", note.name);
-    shareUrl.searchParams.set("cid", note.cid);
-    return shareUrl.href;
+  const openUrl = (note: NoteItem) => {
+    const openUrl = new URL(window.location.href);
+    openUrl.pathname = "/note/";
+    openUrl.searchParams.set("cid", note.cid);
+    return openUrl.href;
   };
 
   // 创建笔记函数
@@ -182,7 +181,7 @@ export default function HomeNote() {
   };
 
   const handleEdit = (note: NoteItem) => {
-    const url = new URL(shareUrl(note));
+    const url = new URL(openUrl(note));
     url.searchParams.set("mode", "edit");
     window.open(url.href);
   };
@@ -428,7 +427,7 @@ export default function HomeNote() {
                           href={
                             note.type === "directory"
                               ? undefined
-                              : shareUrl(note)
+                              : openUrl(note)
                           }
                           onClick={() => {
                             if (note.type === "directory") {

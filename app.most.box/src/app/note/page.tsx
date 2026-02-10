@@ -9,6 +9,7 @@ import {
   Loader,
   Center,
   Container,
+  Stack,
   TextInput,
 } from "@mantine/core";
 
@@ -23,6 +24,7 @@ import { notifications } from "@mantine/notifications";
 import { most25519, mostDecode, mostEncode } from "@/utils/MostWallet";
 import Link from "next/link";
 import { modals } from "@mantine/modals";
+import mp from "@/utils/mp";
 
 const PageContent = () => {
   const params = useSearchParams();
@@ -42,6 +44,7 @@ const PageContent = () => {
   const [inited, setInited] = useState(false);
 
   const [noteName, setNoteName] = useState("");
+  const [notePath, setNotePath] = useState("");
 
   const updateUrl = (cid?: string) => {
     const url = new URL(window.location.href);
@@ -53,11 +56,13 @@ const PageContent = () => {
     window.history.replaceState(null, "", url.href);
   };
 
-  const fetchNote = (cid?: string) => {
+  const fetchNote = (cid: string | null) => {
     if (!cid) {
       setInited(true);
       setIsSecret(false);
       setContent("");
+      setNotePath("");
+      setNoteName("");
       setLoading(false);
       return;
     }
@@ -68,6 +73,8 @@ const PageContent = () => {
       setInited(true);
       setIsSecret(false);
       setContent(localNote.content);
+      setNotePath(localNote.path || "");
+      setNoteName(localNote.name);
       setLoading(false);
       return;
     }
@@ -76,6 +83,8 @@ const PageContent = () => {
     setInited(true);
     setIsSecret(false);
     setContent("");
+    setNotePath("");
+    setNoteName("");
     setLoading(false);
   };
 
@@ -113,7 +122,7 @@ const PageContent = () => {
         name: name,
         size: blob.size,
         type: "file",
-        path: "",
+        path: notePath,
         content: newContent,
         updated_at: Date.now(),
       });
@@ -137,25 +146,52 @@ const PageContent = () => {
     if (editor) {
       const newContent = editor.getMarkdown();
       setContent(newContent);
-      const name = params?.get("name");
-      if (name) {
-        updateNote(name, newContent);
+      if (noteName) {
+        updateNote(noteName, newContent);
       } else {
-        // https://mantine.dev/x/modals
-        modals.openConfirmModal({
-          title: "保存笔记",
+        let newNoteName = "";
+        const modalId = modals.open({
+          title: "创建新笔记",
           centered: true,
           children: (
-            <TextInput
-              placeholder="请输入笔记名称"
-              value={noteName}
-              onChange={(event) => setNoteName(event.currentTarget.value)}
-            />
+            <Stack>
+              <TextInput
+                placeholder="请输入笔记名称"
+                onChange={(event) => (newNoteName = event.currentTarget.value)}
+              />
+              <Group justify="flex-end">
+                <Button variant="default" onClick={() => modals.close(modalId)}>
+                  取消
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (newNoteName) {
+                      const normalizedPath = mp.normalizePath(notePath);
+                      const exists = notes.some(
+                        (n) =>
+                          mp.normalizePath(n.path) === normalizedPath &&
+                          n.name === newNoteName,
+                      );
+
+                      if (exists) {
+                        notifications.show({
+                          message: "该名称已存在，请使用其他名称",
+                          color: "red",
+                        });
+                        return;
+                      }
+
+                      setNoteName(newNoteName);
+                      updateNote(newNoteName, newContent);
+                      modals.close(modalId);
+                    }
+                  }}
+                >
+                  保存
+                </Button>
+              </Group>
+            </Stack>
           ),
-          labels: { confirm: "保存", cancel: "取消" },
-          onConfirm: () => {
-            updateNote(noteName, newContent);
-          },
         });
       }
     }
@@ -175,27 +211,21 @@ const PageContent = () => {
     if (mode === "edit") {
       setIsEditing(true);
     }
-
     const cid = params?.get("cid");
-    if (cid) {
-      fetchNote(cid);
-    } else {
-      fetchNote();
-    }
+    fetchNote(cid);
   };
 
   // 使用 useMemo 缓存标题提取结果
   const title = useMemo(() => {
-    let t = "笔记";
-    const name = params?.get("name");
-    if (name) {
-      t = name;
+    let t = "新笔记";
+    if (noteName) {
+      t = noteName;
     }
     if (isSecret) {
       t = "🔒 " + t;
     }
     return t;
-  }, [isSecret, params]);
+  }, [isSecret, noteName]);
 
   // 根据编辑状态渲染不同的按钮
   const renderHeaderButtons = () => {
@@ -216,7 +246,7 @@ const PageContent = () => {
           </Button>
         ) : (
           <Button size="xs" variant="gradient" component={Link} href="/login">
-            编辑
+            登录
           </Button>
         )}
       </Group>

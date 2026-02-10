@@ -36,6 +36,7 @@ import { CID } from "multiformats";
 
 // ===== 类型定义 =====
 type GatewayInfo = {
+  key: string;
   title: string;
   description: string;
   gateways: string[];
@@ -50,11 +51,19 @@ type DetectionResult = {
 // ===== 网关列表配置 =====
 const gatewayList: GatewayInfo[] = [
   {
+    key: "custom",
+    title: "自定义网关",
+    description: "用户自定义的 IPFS 网关",
+    gateways: ["http://localhost:8080"],
+  },
+  {
+    key: "crust",
     title: "Crust 官方网关",
     description: "由 Crust Network 提供的高速稳定网关",
     gateways: ["https://gw.crust-gateway.com", "https://gw.crust-gateway.xyz"],
   },
   {
+    key: "public",
     title: "公共网关",
     description: "由社区或第三方服务商提供的公共网关",
     gateways: [
@@ -177,17 +186,11 @@ function GatewayManagerContent() {
 
     setGateways((prev) => {
       const newCategories = [...prev];
-      if (newCategories[0].title === "自定义网关") {
+      if (newCategories[0].key === "custom") {
         newCategories[0] = {
           ...newCategories[0],
           gateways: [gateway, ...newCategories[0].gateways],
         };
-      } else {
-        newCategories.unshift({
-          title: "自定义网关",
-          description: "手动添加的网关列表",
-          gateways: [gateway],
-        });
       }
       return newCategories;
     });
@@ -377,6 +380,7 @@ function GatewayManagerContent() {
               rightSection={
                 <ActionIcon
                   variant="subtle"
+                  c="blue"
                   onClick={() => {
                     setCustomCid(
                       "bafkreihp5o7tdipf6ajkgkdxknnffkuxpeecwqydi4q5iqt4gko6r2agk4",
@@ -405,6 +409,7 @@ function GatewayManagerContent() {
               rightSection={
                 <ActionIcon
                   variant="subtle"
+                  c="blue"
                   onClick={addCustomGateway}
                   loading={isAddingGateway}
                 >

@@ -163,7 +163,7 @@ const PageContent = () => {
             variant="light"
             w="100%"
             component={Link}
-            href={`/note/?cid=${cid}&name=${filename}`}
+            href={`/note/?cid=${cid}`}
             target="_blank"
           >
             打开笔记
