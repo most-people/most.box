@@ -93,6 +93,11 @@ const ipfsDir = async (
       cid: root.cid.toString(),
       size: root.size,
       url: `${CRUST_IPFS_GW}/ipfs/${root.cid.toString()}`,
+      allFiles: results.map((r) => ({
+        cid: r.cid.toString(),
+        path: r.path,
+        size: r.size,
+      })),
     };
   } catch (error) {
     console.error("IPFS 文件夹上传失败:", error);

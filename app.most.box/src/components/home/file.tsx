@@ -37,6 +37,7 @@ import { mostCrust } from "@/utils/MostWallet";
 import crust from "@/utils/crust";
 import { useFileExplorer } from "@/hooks/useExplorer";
 
+// 预览文件接口定义
 interface PreviewFile {
   file: File;
   path: string;
@@ -44,10 +45,11 @@ interface PreviewFile {
 }
 
 export default function HomeFile() {
+  // 从 userStore 获取钱包信息和 dotCID
   const wallet = useUserStore((state) => state.wallet);
-  const setItem = useUserStore((state) => state.setItem);
   const dotCID = useUserStore((state) => state.dotCID);
 
+  // 使用文件浏览器钩子获取当前路径、搜索、筛选等状态和方法
   const {
     currentPath,
     searchQuery,
@@ -60,27 +62,35 @@ export default function HomeFile() {
     handleBreadcrumbClick,
   } = useFileExplorer();
 
+  // 从 userStore 获取所有文件列表
   const files = useUserStore((state) => state.files);
-  const [uploadLoading, setUploadLoading] = useState(false);
-  const [previewFiles, setPreviewFiles] = useState<PreviewFile[]>([]);
-  const [showPreview, setShowPreview] = useState(false);
-  const [renameModalOpen, setRenameModalOpen] = useState(false);
-  const [renamingItem, setRenamingItem] = useState<FileItem | null>(null);
-  const [newName, setNewName] = useState("");
-  const [newDirPath, setNewDirPath] = useState("");
-  const [renameLoading, setRenameLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const folderInputRef = useRef<HTMLInputElement>(null);
-  const [importCID, setImportCID] = useState("");
-  const [importName, setImportName] = useState("");
-  const [importLoading, setImportLoading] = useState(false);
+
+  // 状态管理
+  const [uploadLoading, setUploadLoading] = useState(false); // 上传加载状态
+  const [previewFiles, setPreviewFiles] = useState<PreviewFile[]>([]); // 预览文件列表
+  const [showPreview, setShowPreview] = useState(false); // 是否显示预览模态框
+  const [renameModalOpen, setRenameModalOpen] = useState(false); // 重命名模态框状态
+  const [renamingItem, setRenamingItem] = useState<FileItem | null>(null); // 当前正在重命名的项目
+  const [newName, setNewName] = useState(""); // 新名称
+  const [newDirPath, setNewDirPath] = useState(""); // 新目录路径
+  const [renameLoading, setRenameLoading] = useState(false); // 重命名加载状态
+
+  // Refs
+  const fileInputRef = useRef<HTMLInputElement>(null); // 文件输入框 Ref
+  const folderInputRef = useRef<HTMLInputElement>(null); // 文件夹输入框 Ref
+
+  // 新建文件夹相关状态
   const [newFolderModalOpen, setNewFolderModalOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [newFolderLoading, setNewFolderLoading] = useState(false);
+
   const router = useRouter();
+
+  // 大文件相关状态
   const [showLargeFileModal, setShowLargeFileModal] = useState(false);
   const [largeFiles, setLargeFiles] = useState<File[]>([]);
 
+  // 上传文件函数
   const uploadFiles = async (files: File[]) => {
     if (!files || files.length === 0) return;
     if (!wallet) {
@@ -130,7 +140,7 @@ export default function HomeFile() {
           console.warn("获取过期时间失败，使用默认值", error);
         }
 
-        // 3. 注册到本地
+        // 3. 注册到本地状态管理
         const targetPath = mp.formatFilePath(file, currentPath);
         const directoryPath =
           targetPath.split("/").slice(0, -1).join("/") || "/";
@@ -153,6 +163,7 @@ export default function HomeFile() {
         });
       }
 
+      // 上传完成通知
       notifications.update({
         id: notificationId,
         title: "上传完成",
@@ -181,6 +192,7 @@ export default function HomeFile() {
     }
   };
 
+  // 创建文件夹函数
   const createFolder = async () => {
     if (!newFolderName) {
       notifications.show({
@@ -190,6 +202,7 @@ export default function HomeFile() {
       });
       return;
     }
+    // 检查文件夹是否存在
     const folderExists = filteredItems.some(
       (file) => file.type === "directory" && file.name === newFolderName,
     );
@@ -214,6 +227,7 @@ export default function HomeFile() {
         ? `${currentPath}/${newFolderName}`
         : newFolderName;
 
+      // 添加文件夹到状态管理（实际上是创建一个占位文件）
       useUserStore.getState().addFile({
         name: "index.txt",
         cid: "bafybeidzwbgdh55qpw6zbrxbyk3hywy2fobqrjukeimb5axvfdpzvcfysq",
@@ -244,10 +258,12 @@ export default function HomeFile() {
 
   const websiteInputRef = useRef<HTMLInputElement>(null);
 
+  // 触发网站上传输入框
   const handleWebsiteUpload = () => {
     websiteInputRef.current?.click();
   };
 
+  // 处理网站文件选择变化
   const handleWebsiteChange = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -269,8 +285,8 @@ export default function HomeFile() {
 
     try {
       const fileArray = Array.from(files);
-      // Prepare files for ipfsDir
-      // Strip the first directory from path to make the content root-level
+      // 准备文件以上传到 IPFS 目录
+      // 去除路径中的第一个目录，使内容在根级别
       const ipfsFiles = fileArray.map((file) => {
         const relPath = file.webkitRelativePath || file.name;
         const parts = relPath.split("/");
@@ -281,22 +297,34 @@ export default function HomeFile() {
         };
       });
 
-      // Auth
+      // 认证
       const { crust_address, sign } = mostCrust(wallet.danger);
       const signature = sign(crust_address);
       const authHeader = crust.auth(crust_address, signature);
 
-      // Upload Dir
+      // 上传目录
       const result = await crust.ipfsDir(ipfsFiles, authHeader);
-      // Pin
+      // Pin 操作
       const folderName =
         fileArray[0]?.webkitRelativePath?.split("/")[0] || "Website";
       await crust.pin(result.cid, folderName, authHeader);
 
-      // Calculate total size
+      // Pin 所有子文件
+      if (result.allFiles) {
+        await Promise.all(
+          result.allFiles.map((file) => {
+            if (file.cid !== result.cid) {
+              return crust.pin(file.cid, file.path || file.cid, authHeader);
+            }
+            return Promise.resolve();
+          }),
+        );
+      }
+
+      // 计算总大小
       const totalSize = fileArray.reduce((acc, file) => acc + file.size, 0);
 
-      // Get expiration
+      // 获取过期时间
       let expiredAt = Date.now() + 180 * 24 * 60 * 60 * 1000;
       try {
         const status = await crust.getFileStatus(result.cid);
@@ -307,11 +335,12 @@ export default function HomeFile() {
         console.warn("获取过期时间失败，使用默认值", error);
       }
 
+      // 添加到本地状态
       useUserStore.getState().addFile({
         cid: result.cid,
         name: folderName,
         size: totalSize,
-        type: "directory", // Explicit directory with CID
+        type: "directory", // 明确标记为带有 CID 的目录
         path: currentPath,
         expired_at: expiredAt,
         tx_hash: "",
@@ -337,32 +366,35 @@ export default function HomeFile() {
       });
     } finally {
       setUploadLoading(false);
-      // clear input
+      // 清空输入框
       event.target.value = "";
     }
   };
 
+  // 触发文件上传输入框
   const handleFileUpload = () => {
     fileInputRef.current?.click();
   };
 
+  // 触发文件夹上传输入框
   const handleFolderUpload = () => {
     folderInputRef.current?.click();
   };
 
+  // 处理文件选择变化
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files && files.length > 0) {
       const fileArray = Array.from(files);
 
-      // Check for files larger than 200MB
+      // 检查是否有超过 200MB 的大文件
       const MAX_SIZE = 200 * 1024 * 1024; // 200MB
       const oversizedFiles = fileArray.filter((file) => file.size > MAX_SIZE);
 
       if (oversizedFiles.length > 0) {
         setLargeFiles(oversizedFiles);
         setShowLargeFileModal(true);
-        // Clear input to allow re-selecting
+        // 清空输入框以便重新选择
         event.target.value = "";
         return;
       }
@@ -385,16 +417,19 @@ export default function HomeFile() {
     event.target.value = "";
   };
 
+  // 确认上传
   const handleConfirmUpload = () => {
     const files = previewFiles.map((item) => item.file);
     uploadFiles(files);
   };
 
+  // 取消上传
   const handleCancelUpload = () => {
     setShowPreview(false);
     setPreviewFiles([]);
   };
 
+  // 移除预览文件
   const removePreviewFile = (index: number) => {
     const newPreviewFiles = previewFiles.filter((_, i) => i !== index);
     setPreviewFiles(newPreviewFiles);
@@ -403,6 +438,7 @@ export default function HomeFile() {
     }
   };
 
+  // 获取总大小
   const getTotalSize = () => {
     const totalBytes = previewFiles.reduce(
       (sum, item) => sum + item.file.size,
@@ -436,6 +472,7 @@ export default function HomeFile() {
         title: "提示",
         message: `${item.type === "directory" ? "文件夹" : "文件"} ${item.name} 已删除`,
         color: "green",
+        autoClose: true,
       });
     } catch (error) {
       console.error("删除失败:", error);
@@ -508,6 +545,7 @@ export default function HomeFile() {
         title: "操作成功",
         message: `新路径名称 "${mp.normalizePath(newFullPath)}"`,
         color: "green",
+        autoClose: true,
       });
 
       setRenameModalOpen(false);
@@ -522,6 +560,7 @@ export default function HomeFile() {
         title: "操作失败",
         message: `${message}，请重试`,
         color: "red",
+        autoClose: true,
       });
     } finally {
       setRenameLoading(false);
@@ -539,7 +578,7 @@ export default function HomeFile() {
     window.open(url);
   };
 
-  // 下载文件
+  // 下载文件链接格式化
   const formatDownload = (item: FileItem) => {
     const params = new URLSearchParams({
       download: "true",
@@ -553,6 +592,7 @@ export default function HomeFile() {
     return `${dotCID}/ipfs/${item.cid}?${params.toString()}`;
   };
 
+  // 比较路径以判断是否更改
   const oldPathForCompare = renamingItem
     ? currentPath
       ? `${currentPath}/${renamingItem.name}`
@@ -562,6 +602,9 @@ export default function HomeFile() {
     ((newDirPath ? `${newDirPath}/` : "") + newName).trim(),
   );
   const isUnchangedRename = oldPathForCompare === newPathForCompare;
+
+  // 判断是否为纯文件夹（没有 CID）
+  const isFolder = (item: FileItem) => item.type === "directory" && !item.cid;
 
   return (
     <>
@@ -689,15 +732,14 @@ export default function HomeFile() {
                       <Stack
                         flex={1}
                         style={{
-                          cursor: item.type === "directory" ? "pointer" : "",
+                          cursor:
+                            item.type === "directory" && !item.cid
+                              ? "pointer"
+                              : "",
                         }}
                         onClick={() => {
-                          if (item.type === "directory") {
-                            if (item.cid) {
-                              handleShareFile(item);
-                            } else {
-                              handleFolderClick(item.name);
-                            }
+                          if (isFolder(item)) {
+                            handleFolderClick(item.name);
                           }
                         }}
                       >
@@ -720,7 +762,7 @@ export default function HomeFile() {
                         </Menu.Target>
 
                         <Menu.Dropdown>
-                          {item.type === "file" && (
+                          {!isFolder(item) && (
                             <Menu.Item
                               leftSection="📖"
                               onClick={() => {
@@ -740,7 +782,7 @@ export default function HomeFile() {
 
                           <Menu.Divider />
 
-                          {item.type === "file" && (
+                          {!isFolder(item) && (
                             <Menu.Item
                               leftSection="⬇️"
                               component={Link}
