@@ -171,18 +171,13 @@ const PageContent = () => {
         )}
 
         {dotCID && !isChecking && !isGatewayAvailable && (
-          <Alert
-            color="red"
-            radius="md"
-            mb="sm"
-            icon={<IconInfoCircle size={18} />}
-          >
+          <Alert color="red" radius="md">
             <Group justify="space-between" align="center">
-              <Text size="sm">当前网关无法访问</Text>
+              <Text>当前网关无法访问</Text>
               <Button
                 size="xs"
-                color="red"
-                variant="white"
+                color="#e8c99b"
+                variant="light"
                 onClick={goToSwitchGateway}
               >
                 切换网关
