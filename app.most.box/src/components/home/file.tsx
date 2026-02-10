@@ -311,17 +311,18 @@ export default function HomeFile() {
 
       // Pin 所有子文件
       if (result.allFiles) {
-        await Promise.all(
-          result.allFiles.map((file) => {
-            if (file.cid !== result.cid) {
-              return crust.pin(file.cid, file.path || file.cid, authHeader);
-            }
-            return Promise.resolve();
-          }),
-        );
+        const subFiles = result.allFiles
+          .filter((file) => file.cid !== result.cid)
+          .map((file) => ({
+            cid: file.cid,
+            name: file.path || file.cid,
+          }));
+
+        // 批量 Pin 所有子文件
+        await crust.pinBatch(subFiles, authHeader);
       }
 
-      // 计算总大小
+      // 计算总大小（包括所有子文件）
       const totalSize = fileArray.reduce((acc, file) => acc + file.size, 0);
 
       // 获取过期时间

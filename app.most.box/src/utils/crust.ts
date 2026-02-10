@@ -132,6 +132,44 @@ const pin = async (cid: string, name: string, authHeader: string) => {
 };
 
 /**
+ * 批量 Pin 文件，带有并发控制
+ * @param items 要 Pin 的文件列表 { cid, name }
+ * @param authHeader 认证头
+ * @param concurrency 最大并发数，默认为 5
+ */
+const pinBatch = async (
+  items: { cid: string; name: string }[],
+  authHeader: string,
+  concurrency = 5,
+) => {
+  const queue = [...items];
+  const results: { cid: string; status: "success" | "error"; error?: any }[] =
+    [];
+
+  const worker = async () => {
+    while (queue.length > 0) {
+      const item = queue.shift();
+      if (!item) break;
+      try {
+        await pin(item.cid, item.name, authHeader);
+        results.push({ cid: item.cid, status: "success" });
+      } catch (error) {
+        console.warn(`Failed to pin ${item.cid}:`, error);
+        results.push({ cid: item.cid, status: "error", error });
+      }
+    }
+  };
+
+  const workers = [];
+  for (let i = 0; i < Math.min(items.length, concurrency); i++) {
+    workers.push(worker());
+  }
+
+  await Promise.all(workers);
+  return results;
+};
+
+/**
  * 使用预计算的认证头上传文件到 Crust 网络
  * @param file 要上传的文件对象
  * @param authHeader Base64 编码的认证头
@@ -307,6 +345,91 @@ const order = async (
     return result;
   } catch (error) {
     console.error("下存储订单失败:", error);
+    throw error;
+  } finally {
+    await crust.disconnect();
+  }
+};
+
+/**
+ * 批量下存储订单 (使用 utility.batch)
+ * @param files 文件列表 { cid: string, size: number }
+ * @param danger Substrate 账户种子/助记词
+ * @param tips 订单小费（每个订单）
+ * @param currentBalance 当前余额
+ * @returns 交易哈希
+ */
+const orderBatch = async (
+  files: { cid: string; size: number }[],
+  danger: string,
+  tips = 0,
+  currentBalance: string,
+) => {
+  const { ApiPromise, WsProvider } = await import("@polkadot/api");
+  const { typesBundleForPolkadot } = await import("@crustio/type-definitions");
+  const { Keyring } = await import("@polkadot/keyring");
+
+  const crust = new ApiPromise({
+    provider: new WsProvider(CRUST_RPC_NODES),
+    typesBundle: typesBundleForPolkadot,
+  });
+
+  try {
+    const balance = parseUnits(currentBalance, 12);
+    if (balance <= 0) {
+      throw new Error(`新用户，请先领取 CRU 代币。`, {
+        cause: "INSUFFICIENT_BALANCE",
+      });
+    }
+
+    await crust.isReady;
+
+    const keyring = new Keyring({ type: "sr25519" });
+    const { crust_mnemonic } = mostCrust(danger);
+    const krp = keyring.addFromUri(crust_mnemonic);
+
+    // 构造批量交易调用
+    // 注意：一次 batch 的交易数量受限于区块大小，建议不要超过 100 个
+    const BATCH_LIMIT = 50;
+    const results = [];
+
+    // 分批处理，防止单次 batch 过大
+    for (let i = 0; i < files.length; i += BATCH_LIMIT) {
+      const chunk = files.slice(i, i + BATCH_LIMIT);
+      const calls = chunk.map((file) =>
+        crust.tx.market.placeStorageOrder(file.cid, file.size, tips, ""),
+      );
+
+      // 使用 utility.batch (允许部分成功) 或 utility.batchAll (原子性)
+      // 这里使用 batch，因为不同文件的存储订单是独立的
+      const tx = crust.tx.utility.batch(calls);
+
+      const txHash = await new Promise<string>((resolve, reject) => {
+        tx.signAndSend(krp, ({ status, dispatchError, txHash }) => {
+          if (status.isFinalized) {
+            console.log(`批量订单交易在区块 ${status.asFinalized} 确认`);
+            resolve(txHash.toHex());
+          } else if (dispatchError) {
+            if (dispatchError.isModule) {
+              const decoded = crust.registry.findMetaError(
+                dispatchError.asModule,
+              );
+              const { docs, name, section } = decoded;
+              reject(new Error(`${section}.${name}: ${docs.join(" ")}`));
+            } else {
+              reject(new Error(dispatchError.toString()));
+            }
+          }
+        }).catch(reject);
+      });
+
+      results.push(txHash);
+    }
+
+    // 返回所有 hash
+    return results;
+  } catch (error) {
+    console.error("批量下存储订单失败:", error);
     throw error;
   } finally {
     await crust.disconnect();
@@ -544,8 +667,10 @@ const crust = {
   ipfs,
   ipfsDir,
   pin,
+  pinBatch,
   upload,
   order,
+  orderBatch,
   balance,
   saveRemark,
   getRemark,
