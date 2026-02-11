@@ -288,16 +288,6 @@ function GatewayManagerContent() {
     }));
   };
 
-  const selectGateway = (gateway: string) => {
-    setItem("dotCID", gateway);
-    notifications.show({
-      title: "已选择网关",
-      message: `当前网关已设置为: ${new URL(gateway).hostname}`,
-      color: "blue",
-      icon: <IconCheck size={16} />,
-    });
-  };
-
   const getStatusColor = (status?: DetectionStatus) => {
     switch (status) {
       case "success":
@@ -526,7 +516,7 @@ function GatewayManagerContent() {
                           size="sm"
                           variant={isSelected ? "filled" : "light"}
                           color={isSelected ? "green" : "blue"}
-                          onClick={() => selectGateway(gateway)}
+                          onClick={() => setItem("dotCID", gateway)}
                           disabled={isSelected}
                         >
                           {isSelected ? "当前 IPFS 网关" : "选择"}
