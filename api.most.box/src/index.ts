@@ -21,11 +21,21 @@ app.get("/", (c) => {
   return c.text("Most.Box 如影随形 - 数字资产，从此永生");
 });
 
-// 转发
-app.get("/81.jpg", (c) => {
-  const targetUrl =
-    "https://gw.crust-gateway.xyz/ipfs/bafkreihp5o7tdipf6ajkgkdxknnffkuxpeecwqydi4q5iqt4gko6r2agk4?filename=%E9%95%BF%E5%BE%81.jpg";
-  return c.redirect(targetUrl, 302);
+// 转发 IPFS 和 IPNS
+app.get("/ipfs/*", (c) => {
+  const url = new URL(c.req.url);
+  url.hostname = "gw.crust-gateway.xyz";
+  url.protocol = "https:";
+  url.port = "";
+  return c.redirect(url.toString(), 302);
+});
+
+app.get("/ipns/*", (c) => {
+  const url = new URL(c.req.url);
+  url.hostname = "gw.crust-gateway.xyz";
+  url.protocol = "https:";
+  url.port = "";
+  return c.redirect(url.toString(), 302);
 });
 
 app.route("/api", api);

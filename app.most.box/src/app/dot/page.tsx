@@ -54,7 +54,7 @@ const gatewayList: GatewayInfo[] = [
     key: "custom",
     title: "自定义网关",
     description: "用户自定义的 IPFS 网关",
-    gateways: ["http://localhost:8080"],
+    gateways: ["https://mp9.io", "http://localhost:8080"],
   },
   {
     key: "crust",

@@ -299,7 +299,7 @@ export const useUserStore = create<State>()(
         }
       },
       // IPFS 网关
-      dotCID: "https://gw.crust-gateway.xyz",
+      dotCID: "https://mp9.io",
       // 首页 Tab
       homeTab: "file",
       // 通用设置器
@@ -315,7 +315,7 @@ export const useUserStore = create<State>()(
           filesPath: "",
           notesPath: "",
           balance: "",
-          dotCID: "https://gw.crust-gateway.xyz",
+          dotCID: "https://mp9.io",
           homeTab: "file",
         });
       },
