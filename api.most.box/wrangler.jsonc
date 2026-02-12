@@ -12,6 +12,11 @@
       "zone_name": "most.box",
       "custom_domain": true,
     },
+    {
+      "pattern": "mp9.io",
+      "zone_name": "mp9.io",
+      "custom_domain": true,
+    },
   ],
   "vars": {
     "ENVIRONMENT": "production",
