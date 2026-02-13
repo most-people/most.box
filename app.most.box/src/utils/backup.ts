@@ -48,7 +48,8 @@ export const cloudSave = async () => {
     const cid = await mp.calculateCID(content);
     const encrypted = encryptBackup(data, wallet.danger);
 
-    await api.put("/backup", encrypted, {
+    await api.put("backup", {
+      body: encrypted,
       headers: {
         "Content-Type": "text/plain",
         "x-backup-cid": cid,
@@ -78,12 +79,10 @@ export const cloudLoad = async () => {
   }
 
   try {
-    const response = await api.get("/backup", {
-      responseType: "text",
-    });
+    const response = await api.get("backup");
 
-    const cloudTime = parseInt(response.headers["x-backup-time"] || "0");
-    const cloudCID = response.headers["x-backup-cid"] || "";
+    const cloudTime = parseInt(response.headers.get("x-backup-time") || "0");
+    const cloudCID = response.headers.get("x-backup-cid") || "";
 
     if (notes.length > 0 || files.length > 0) {
       const localData = exportData();
@@ -104,7 +103,7 @@ export const cloudLoad = async () => {
       }
     }
 
-    const content = response.data;
+    const content = await response.text();
     if (!content) {
       throw new Error("云端无备份数据");
     }

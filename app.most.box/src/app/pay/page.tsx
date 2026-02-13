@@ -52,8 +52,10 @@ const PageContent = () => {
     setClaiming(true);
     setProgress(0);
     try {
-      await api.post("/free.claim.cru", {
-        turnstileToken,
+      await api.post("free.claim.cru", {
+        json: {
+          turnstileToken,
+        },
       });
 
       notifications.show({
@@ -88,7 +90,14 @@ const PageContent = () => {
         });
       }
     } catch (error: any) {
-      const message = error.response?.data?.error || "领取失败，请稍后重试。";
+      let message = "领取失败，请稍后重试。";
+      try {
+        const errorData = await error.response?.json();
+        if (errorData?.error) {
+          message = errorData.error;
+        }
+      } catch {}
+
       notifications.show({
         message,
         color: "red",

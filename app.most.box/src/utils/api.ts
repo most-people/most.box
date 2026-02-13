@@ -1,4 +1,4 @@
-import axios from "axios";
+import ky from "ky";
 import { mostCrust, type MostWallet } from "@/utils/MostWallet";
 import { useUserStore } from "@/stores/userStore";
 
@@ -16,34 +16,20 @@ export const getAuthHeaders = async (wallet: MostWallet) => {
   };
 };
 
-export const api = axios.create({
-  baseURL: isDev ? "http://localhost:8787/api" : "https://api.most.box/api",
-  // baseURL: "https://api.most.box/api",
+export const api = ky.create({
+  prefixUrl: isDev ? "http://localhost:8787/api" : "https://api.most.box/api",
+  hooks: {
+    beforeRequest: [
+      async (request) => {
+        // 自动加载 Web3 鉴权 Headers
+        const wallet = useUserStore.getState().wallet;
+        if (wallet) {
+          const headers = await getAuthHeaders(wallet);
+          Object.entries(headers).forEach(([key, value]) => {
+            request.headers.set(key, value);
+          });
+        }
+      },
+    ],
+  },
 });
-
-// 添加请求拦截器，自动在 header 中加载 Authorization
-api.interceptors.request.use(
-  async (config) => {
-    // 自动加载 Web3 鉴权 Headers
-    const wallet = useUserStore.getState().wallet;
-    if (wallet) {
-      const headers = await getAuthHeaders(wallet);
-      Object.assign(config.headers, headers);
-    }
-
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  },
-);
-
-// 添加响应拦截器，自动处理 token 失效
-api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  (error) => {
-    return Promise.reject(error);
-  },
-);

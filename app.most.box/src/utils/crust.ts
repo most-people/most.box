@@ -1,6 +1,6 @@
 import { formatUnits, parseUnits } from "ethers";
 import { create } from "kubo-rpc-client";
-import axios from "axios";
+import ky from "ky";
 import { mostCrust } from "@/utils/MostWallet";
 
 // Crust IPFS Web3 Auth 网关
@@ -113,18 +113,17 @@ const ipfsDir = async (
  */
 const pin = async (cid: string, name: string, authHeader: string) => {
   try {
-    return await axios.post(
-      `${CRUST_PIN}/psa/pins`,
-      {
-        cid: cid,
-        name: name,
-      },
-      {
+    return await ky
+      .post(`${CRUST_PIN}/psa/pins`, {
+        json: {
+          cid: cid,
+          name: name,
+        },
         headers: {
           authorization: `Bearer ${authHeader}`,
         },
-      },
-    );
+      })
+      .json();
   } catch (pinError) {
     console.warn("Pin 失败。", pinError);
     throw pinError;
@@ -443,13 +442,14 @@ const orderBatch = async (
  */
 const balance = async (address: string): Promise<string> => {
   try {
-    const res = await axios.post(
-      CRUST_SUBSCAN_API + "/api/scan/account/tokens",
-      {
-        address,
-      },
-    );
-    const balance = res.data?.data?.native?.[0]?.balance ?? "0";
+    const res = await ky
+      .post(CRUST_SUBSCAN_API + "/api/scan/account/tokens", {
+        json: {
+          address,
+        },
+      })
+      .json<any>();
+    const balance = res.data?.native?.[0]?.balance ?? "0";
     return formatUnits(balance, 12);
   } catch (error) {
     console.info("查询余额失败:", error);
@@ -544,38 +544,36 @@ const saveRemark = async (
 const getRemark = async (address: string) => {
   try {
     // 1. 获取 Remark 交易列表
-    const res = await axios.post(
-      CRUST_SUBSCAN_API + "/api/v2/scan/extrinsics",
-      {
-        address,
-        row: 20,
-        page: 0,
-        module: "system",
-        call: "remark",
-      },
-      {
+    const res = await ky
+      .post(CRUST_SUBSCAN_API + "/api/v2/scan/extrinsics", {
+        json: {
+          address,
+          row: 20,
+          page: 0,
+          module: "system",
+          call: "remark",
+        },
         headers: {
           "Content-Type": "application/json",
         },
-      },
-    );
+      })
+      .json<any>();
 
-    const extrinsics = res.data?.data?.extrinsics || [];
+    const extrinsics = res.data?.extrinsics || [];
     for (const ext of extrinsics) {
       if (ext.success) {
         // 2. 获取交易详情以读取 params
         try {
-          const detailRes = await axios.post(
-            CRUST_SUBSCAN_API + "/api/scan/extrinsic",
-            { extrinsic_index: ext.extrinsic_index },
-            {
+          const detailRes = await ky
+            .post(CRUST_SUBSCAN_API + "/api/scan/extrinsic", {
+              json: { extrinsic_index: ext.extrinsic_index },
               headers: {
                 "Content-Type": "application/json",
               },
-            },
-          );
+            })
+            .json<any>();
 
-          const params = detailRes.data?.data?.params;
+          const params = detailRes.data?.params;
           let remarkValue;
 
           if (Array.isArray(params)) {
