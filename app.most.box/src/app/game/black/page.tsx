@@ -322,7 +322,7 @@ export default function PageGameBlack() {
               color={current === 1 ? "dark" : "gray"}
               variant="filled"
             >
-              {toLabel(current)}棋回合
+              {toLabel(current)}棋落子
             </Badge>
             {/* removed AI thinking badge */}
             {autoPassInfo && <Badge color="orange">{autoPassInfo}</Badge>}

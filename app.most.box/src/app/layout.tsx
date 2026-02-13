@@ -19,7 +19,7 @@ import "@/app/global.scss";
 
 export const metadata: Metadata = {
   title: "Most.Box - 如影随形",
-  description: "回归数据存储本质，随时访问，随时分享",
+  description: "数字资产，从此永生",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
