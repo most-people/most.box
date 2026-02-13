@@ -21,21 +21,31 @@ app.get("/", (c) => {
   return c.text("Most.Box 如影随形 - 数字资产，从此永生");
 });
 
+// 优选网关列表
+const GATEWAYS = [
+  "https://gw.crust-gateway.xyz",
+  "https://gw.crust-gateway.com",
+  "https://ipfs.io",
+  "https://dweb.link",
+  "https://gateway.pinata.cloud",
+  "https://ipfs.filebase.io",
+  "https://w3s.link",
+  "https://dget.top",
+];
+
+const GATEWAY = GATEWAYS[0];
+
 // 转发 IPFS 和 IPNS
-app.get("/ipfs/*", (c) => {
+app.get("/ipfs/*", async (c) => {
   const url = new URL(c.req.url);
-  url.hostname = "gw.crust-gateway.xyz";
-  url.protocol = "https:";
-  url.port = "";
-  return c.redirect(url.toString(), 302);
+  const path = url.pathname + url.search;
+  return c.redirect(`${GATEWAY}${path}`, 302);
 });
 
 app.get("/ipns/*", (c) => {
   const url = new URL(c.req.url);
-  url.hostname = "gw.crust-gateway.xyz";
-  url.protocol = "https:";
-  url.port = "";
-  return c.redirect(url.toString(), 302);
+  const path = url.pathname + url.search;
+  return c.redirect(`${GATEWAY}${path}`, 302);
 });
 
 app.route("/api", api);
