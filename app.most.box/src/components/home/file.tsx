@@ -569,9 +569,8 @@ export default function HomeFile() {
   };
 
   // 分享文件
-  const handleShareFile = (item: FileItem) => {
-    const cid = item.cid;
-    const params = new URLSearchParams({ filename: item.name });
+  const handleOpenFile = (item: FileItem) => {
+    const params = new URLSearchParams({ cid: item.cid, filename: item.name });
     if (item.type === "directory") {
       if (item.cid) {
         params.set("type", "website");
@@ -579,8 +578,8 @@ export default function HomeFile() {
         params.set("type", "dir");
       }
     }
-    const url = `/ipfs/${cid}/?${params.toString()}`;
-    window.open(url);
+    const url = `/ipfs/?${params.toString()}`;
+    router.push(url);
   };
 
   // 下载文件链接格式化
@@ -736,15 +735,12 @@ export default function HomeFile() {
                     <Group justify="space-between" wrap="nowrap" gap={4}>
                       <Stack
                         flex={1}
-                        style={{
-                          cursor:
-                            item.type === "directory" && !item.cid
-                              ? "pointer"
-                              : "",
-                        }}
+                        style={{ cursor: "pointer" }}
                         onClick={() => {
                           if (isFolder(item)) {
                             handleFolderClick(item.name);
+                          } else {
+                            handleOpenFile(item);
                           }
                         }}
                       >
@@ -771,10 +767,10 @@ export default function HomeFile() {
                             <Menu.Item
                               leftSection="📖"
                               onClick={() => {
-                                handleShareFile(item);
+                                handleOpenFile(item);
                               }}
                             >
-                              查看
+                              打开
                             </Menu.Item>
                           )}
 

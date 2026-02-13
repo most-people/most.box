@@ -123,7 +123,7 @@ const pin = async (cid: string, name: string, authHeader: string) => {
           authorization: `Bearer ${authHeader}`,
         },
       })
-      .json();
+      .json<any>();
   } catch (pinError) {
     console.warn("Pin 失败。", pinError);
     throw pinError;

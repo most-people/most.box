@@ -67,6 +67,7 @@ const gatewayList: GatewayInfo[] = [
     title: "公共网关",
     description: "由社区或第三方服务商提供的公共网关",
     gateways: [
+      "https://cid.most.red",
       "https://ipfs.io",
       "https://dweb.link",
       "https://gateway.pinata.cloud",

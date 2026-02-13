@@ -2,7 +2,7 @@
 import "./ipfs.scss";
 import { AppHeader } from "@/components/AppHeader";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
-import { Suspense, useMemo, useState, useEffect } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import {
   Text,
@@ -30,54 +30,15 @@ const PageContent = () => {
   const pathname = usePathname();
   const params = useSearchParams();
   const cidType = (params.get("type") || "file") as CidType;
-  const cid = pathname.split("/")[2] || "";
+  const cid = pathname.split("/")[2] || params.get("cid") || "";
   const initFilename = params.get("filename") || "";
   const [filename, setFilename] = useState<string>(initFilename);
   const dotCID = useUserStore((state) => state.dotCID);
 
-  const [isGatewayAvailable, setIsGatewayAvailable] = useState(false);
-  const [isChecking, setIsChecking] = useState(true);
-
-  useEffect(() => {
-    if (!dotCID || !cid) {
-      setIsChecking(false);
-      return;
-    }
-
-    const checkGateway = async () => {
-      setIsChecking(true);
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-        // 使用当前 CID 检查网关连通性
-        const res = await fetch(`${dotCID}/ipfs/${cid}`, {
-          method: "HEAD",
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (res.ok) {
-          setIsGatewayAvailable(true);
-        } else {
-          throw new Error(`网关返回 ${res.status}`);
-        }
-      } catch (error) {
-        console.warn("网关检查失败...", error);
-        setIsGatewayAvailable(false);
-      } finally {
-        setIsChecking(false);
-      }
-    };
-
-    checkGateway();
-  }, [dotCID, cid]);
-
   const goToSwitchGateway = () => {
     const params = new URLSearchParams();
-    if (filename) params.set("filename", filename);
     if (cid) params.set("cid", cid);
+    if (filename) params.set("filename", filename);
     router.push(`/dot?${params.toString()}`);
   };
 
@@ -123,7 +84,7 @@ const PageContent = () => {
           </Alert>
         )}
 
-        <Group justify="space-between" align="center">
+        <Group justify="space-between" align="center" mt="lg">
           <Group gap={8}>
             {cidType === "website" ? "🌐" : "📄"}
             <Title order={4}>
@@ -170,22 +131,6 @@ const PageContent = () => {
           </Alert>
         )}
 
-        {dotCID && !isChecking && !isGatewayAvailable && (
-          <Alert color="red" radius="md">
-            <Group justify="space-between" align="center">
-              <Text>当前网关无法访问</Text>
-              <Button
-                size="xs"
-                color="#e8c99b"
-                variant="light"
-                onClick={goToSwitchGateway}
-              >
-                切换网关
-              </Button>
-            </Group>
-          </Alert>
-        )}
-
         <TextInput
           radius="md"
           value={previewUrl || ""}
@@ -219,8 +164,6 @@ const PageContent = () => {
             component={Link}
             target="_blank"
             href={previewUrl}
-            disabled={!isGatewayAvailable || isChecking}
-            loading={isChecking}
           >
             预览
           </Button>
@@ -232,19 +175,11 @@ const PageContent = () => {
               component={Link}
               target="_blank"
               href={downloadUrl}
-              disabled={!isGatewayAvailable || isChecking}
-              loading={isChecking}
             >
               下载
             </Button>
           ) : (
-            <Button
-              variant="light"
-              color="blue"
-              w="100%"
-              disabled
-              loading={isChecking}
-            >
+            <Button variant="light" color="blue" w="100%" disabled>
               下载
             </Button>
           )}

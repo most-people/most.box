@@ -60,9 +60,7 @@ const NotFoundContent = () => {
         </Stack>
       ) : type === "user" ? (
         <PageUser />
-      ) : type === "ipfs" ? (
-        <PageIPFS />
-      ) : type === "ipns" ? (
+      ) : type === "ipfs" || type === "ipns" ? (
         <PageIPFS />
       ) : (
         <Page404 />
@@ -73,16 +71,14 @@ const NotFoundContent = () => {
 
 export default function PageNotFound() {
   return (
-    <Container w="100%" p="md">
-      <Suspense
-        fallback={
-          <Stack align="center" py={50}>
-            <Loader size="lg" type="dots" />
-          </Stack>
-        }
-      >
-        <NotFoundContent />
-      </Suspense>
-    </Container>
+    <Suspense
+      fallback={
+        <Stack align="center" py={50}>
+          <Loader size="lg" type="dots" />
+        </Stack>
+      }
+    >
+      <NotFoundContent />
+    </Suspense>
   );
 }
