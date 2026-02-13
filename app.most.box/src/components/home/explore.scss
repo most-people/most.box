@@ -34,4 +34,45 @@
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
+
+  .card {
+    transition:
+      transform 150ms ease,
+      box-shadow 150ms ease;
+    height: 100%;
+    border: 1px solid var(--mantine-color-default-border);
+    background-color: var(--mantine-color-body);
+
+    &:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--mantine-shadow-md);
+      border-color: var(--mantine-color-blue-filled);
+    }
+  }
+
+  .featureIcon {
+    width: 54px;
+    height: 54px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--mantine-radius-md);
+    background-color: light-dark(var(--mantine-color-blue-0), var(--mantine-color-blue-9));
+    margin-bottom: var(--mantine-spacing-md);
+  }
+
+  .sectionTitle {
+    font-size: 34px;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: var(--mantine-spacing-xl);
+
+    @media (max-width: 768px) {
+      font-size: 28px;
+    }
+  }
+
+  .sectionBg {
+    background-color: light-dark(var(--mantine-color-gray-0), var(--mantine-color-dark-6));
+  }
 }

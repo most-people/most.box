@@ -1,7 +1,7 @@
 import PageIPFS from "@/components/not-found/ipfs";
 
-export const PageGateway = () => {
+const PageGatewayIPNS = () => {
   return <PageIPFS />;
 };
 
-export default PageGateway;
+export default PageGatewayIPNS;
