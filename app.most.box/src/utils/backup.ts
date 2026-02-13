@@ -5,6 +5,8 @@ import { useUserStore } from "@/stores/userStore";
 import { api } from "@/utils/api";
 import dayjs from "dayjs";
 
+let conflictIgnored = false;
+
 export const encryptBackup = (data: any, danger: string): string => {
   const { public_key, private_key } = most25519(danger);
   const encrypted = mostEncode(JSON.stringify(data), public_key, private_key);
@@ -40,6 +42,17 @@ export const cloudSave = async () => {
   if (!wallet) {
     // notifications.show({ message: "请先登录", color: "red" });
     return;
+  }
+
+  if (conflictIgnored) {
+    if (
+      !window.confirm(
+        "本地数据与云端不一致，本地修改将会覆盖云端数据，是否继续？",
+      )
+    ) {
+      return;
+    }
+    conflictIgnored = false;
   }
 
   try {
@@ -98,6 +111,7 @@ export const cloudLoad = async () => {
             `云端数据（${timeDiff}）与本地数据不一致，恢复将覆盖本地更改，是否继续？`,
           )
         ) {
+          conflictIgnored = true;
           return;
         }
       }
