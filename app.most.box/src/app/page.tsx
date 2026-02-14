@@ -16,7 +16,7 @@ export default function PageHome() {
   const setItem = useUserStore((state) => state.setItem);
 
   const tabChange = (value: string | null) => {
-    setItem("homeTab", value || "file");
+    setItem("homeTab", value || "explore");
   };
 
   return (

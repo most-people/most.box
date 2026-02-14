@@ -22,12 +22,10 @@ import {
   IconCoin,
   IconRocket,
   IconCopy,
-  IconDeviceMobile,
   IconServer,
-  IconCloud,
+  IconUserBitcoin,
   IconDatabase,
   IconWorld,
-  IconCheck,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import "./explore.scss";
@@ -75,18 +73,6 @@ export default function HomeExplore() {
       description:
         "独特的多副本冗余机制（20+ 随机副本）。即使 90% 的节点下线，你的文件依然可以在地球的另一个角落被找回。",
     },
-    {
-      icon: IconCoin,
-      title: "极简支付与自动化管理",
-      description:
-        "无需折腾加密货币。支持法币便捷充值，系统自动转化为链上存储押金，并智能监控余额，自动触发续费订单。",
-    },
-    {
-      icon: IconDeviceMobile,
-      title: "PWA 原生体验",
-      description:
-        "支持安装至手机桌面。无需下载臃肿的 App，通过浏览器即可享受如原生应用般的丝滑操作。",
-    },
   ];
 
   const stack = [
@@ -96,9 +82,9 @@ export default function HomeExplore() {
       icon: IconServer,
     },
     {
-      label: "逻辑层：Cloudflare Workers",
-      desc: "毫秒级响应的边缘计算",
-      icon: IconCloud,
+      label: "用户层：Cold Wallet",
+      desc: "基于 NaCl 与 sr25519 的本地密钥离线派生",
+      icon: IconUserBitcoin,
     },
     {
       label: "数据层：Cloudflare R2",
