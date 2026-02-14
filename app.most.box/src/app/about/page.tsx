@@ -26,20 +26,20 @@ export default function PageAbout() {
           </Text>
         </Box>
 
-        <Box>
+        <Stack>
           <Text size="lg" fw="bold" mb="xs">
             论文
           </Text>
-          <Link href="/about/thesis">
-            IPFS + Fastify + Smart Contracts = Fully DApp
+          <Link href="https://most-people.github.io/" target="_blank">
+            Most People 宣言
           </Link>
-        </Box>
+        </Stack>
 
         <Stack gap="xs">
           <Text size="lg" fw="bold">
             最后更新
           </Text>
-          <Text c="dimmed">{mp.formatTime(1756062128975)}</Text>
+          <Text c="dimmed">{mp.formatTime(1771062881712)}</Text>
         </Stack>
       </Stack>
     </Box>
