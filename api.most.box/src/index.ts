@@ -17,10 +17,6 @@ app.use(
   }),
 );
 
-app.get("/", (c) => {
-  return c.text("Most.Box 如影随形 - 数字资产，从此永生");
-});
-
 // 优选网关列表
 const GATEWAYS = [
   "https://gw.crust-gateway.xyz",
@@ -49,5 +45,13 @@ app.get("/ipns/*", (c) => {
 });
 
 app.route("/api", api);
+
+// 兜底路由：重定向到主站
+app.get("/*", (c) => {
+  // return c.text("Most.Box 如影随形 - 数字资产，从此永生");
+  const url = new URL(c.req.url);
+  const path = url.pathname + url.search;
+  return c.redirect(`https://most.box${path}`, 302);
+});
 
 export default app;
