@@ -2,7 +2,7 @@
 import "./ipfs.scss";
 import { AppHeader } from "@/components/AppHeader";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useMemo, useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import {
   Text,
@@ -22,6 +22,7 @@ import {
 import Link from "next/link";
 import { IconCopy, IconInfoCircle, IconSettings } from "@tabler/icons-react";
 import { useUserStore } from "@/stores/userStore";
+import { checkGateway } from "@/utils/ipfs";
 
 type CidType = "website" | "file";
 
@@ -74,6 +75,30 @@ const PageContent = () => {
 
   const host = `https://most.box/${pathname.split("/")[1]}/`;
 
+  const [gatewayStatus, setGatewayStatus] = useState<
+    "ok" | "error" | "checking"
+  >("checking");
+
+  useEffect(() => {
+    if (!dotCID) {
+      setGatewayStatus("ok");
+      return;
+    }
+
+    const check = async () => {
+      setGatewayStatus("checking");
+      // 使用空文件夹 CID 检测网关连通性
+      const result = await checkGateway(dotCID, cid);
+      if (result.status === "success") {
+        setGatewayStatus("ok");
+      } else {
+        setGatewayStatus("error");
+      }
+    };
+
+    check();
+  }, [dotCID, cid]);
+
   return (
     <Box id="page-ipfs">
       <AppHeader title={filename || cid || "CID"} />
@@ -110,19 +135,30 @@ const PageContent = () => {
         </Center>
 
         <Group justify="center" gap="xs">
-          <Badge size="lg" variant="dot" color="green">
+          <Badge
+            size="lg"
+            variant="dot"
+            color={gatewayStatus === "error" ? "red" : "green"}
+          >
             网关: {dotCID ? new URL(dotCID).hostname : "未选择"}
           </Badge>
+
           <Tooltip label="切换网关" position="top">
             <ActionIcon
               variant="subtle"
-              color="gray"
+              color={gatewayStatus === "error" ? "red" : "gray"}
               size="lg"
               onClick={goToSwitchGateway}
             >
               <IconSettings size={18} />
             </ActionIcon>
           </Tooltip>
+
+          {gatewayStatus === "error" && (
+            <Text c="red" size="sm" ta="center">
+              当前网关无法访问，请切换网关
+            </Text>
+          )}
         </Group>
 
         {!dotCID && (
