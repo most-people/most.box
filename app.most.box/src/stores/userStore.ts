@@ -40,7 +40,6 @@ interface UserStore {
   notes: NoteItem[];
   notesQuery: string;
   notesPath: string;
-  notesDark: "toastui-editor-dark" | "";
   // 文件
   files: FileItem[];
   filesPath: string;
@@ -90,7 +89,6 @@ export const useUserStore = create<State>()(
       notes: [],
       notesQuery: "",
       notesPath: "",
-      notesDark: "",
       // 文件系统
       files: [],
       filesPath: "",

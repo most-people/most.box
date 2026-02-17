@@ -14,7 +14,7 @@ import {
 } from "@mantine/core";
 
 import { AppHeader } from "@/components/AppHeader";
-import { useMarkdown } from "@/hooks/useMarkdown";
+import { MilkdownEditor, MilkdownEditorRef } from "@/components/MilkdownEditor";
 
 import "@/app/note/page.scss";
 
@@ -33,10 +33,7 @@ const PageContent = () => {
   const notes = useUserStore((state) => state.notes);
 
   const [loading, setLoading] = useState(true);
-  const [viewer, setViewer] = useState<any>(null);
-  const [editor, setEditor] = useState<any>(null);
-  const focusTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const markdown = useMarkdown();
+  const editorRef = useRef<MilkdownEditorRef>(null);
 
   const [content, setContent] = useState("");
   const [isEditing, setIsEditing] = useState(false);
@@ -143,8 +140,8 @@ const PageContent = () => {
   };
 
   const handleSave = () => {
-    if (editor) {
-      const newContent = editor.getMarkdown();
+    if (editorRef.current) {
+      const newContent = editorRef.current.getMarkdown();
       setContent(newContent);
       if (noteName) {
         updateNote(noteName, newContent);
@@ -199,9 +196,9 @@ const PageContent = () => {
   };
 
   const handleCancel = () => {
-    if (editor) {
+    if (editorRef.current) {
       // 恢复原始内容
-      editor.setMarkdown(content);
+      editorRef.current.setMarkdown(content);
     }
     setIsEditing(false);
   };
@@ -254,53 +251,6 @@ const PageContent = () => {
   };
 
   useEffect(() => {
-    if (isEditing && editor) {
-      focusTimeoutRef.current = setTimeout(() => {
-        editor.focus();
-      }, 100);
-    }
-    return () => {
-      if (focusTimeoutRef.current) {
-        clearTimeout(focusTimeoutRef.current);
-      }
-    };
-  }, [isEditing, editor]);
-
-  useEffect(() => {
-    if (!inited) return;
-    viewer?.setMarkdown(content);
-    editor?.setMarkdown(content);
-  }, [inited, content, viewer, editor]);
-
-  const viewerElement = useRef<HTMLDivElement>(null);
-  const editorElement = useRef<HTMLDivElement>(null);
-
-  const notesDark = useUserStore((state) => state.notesDark);
-
-  useEffect(() => {
-    let viewerInstance: any;
-    let editorInstance: any;
-
-    const initUI = async () => {
-      if (viewerElement.current) {
-        viewerInstance = await markdown.initViewer(viewerElement.current);
-        setViewer(viewerInstance);
-      }
-      if (editorElement.current) {
-        editorInstance = await markdown.initEditor(editorElement.current);
-        setEditor(editorInstance);
-      }
-    };
-
-    initUI();
-
-    return () => {
-      if (viewerInstance) viewerInstance.destroy();
-      if (editorInstance) editorInstance.destroy();
-    };
-  }, []);
-
-  useEffect(() => {
     init();
   }, [dotCID]);
 
@@ -308,18 +258,14 @@ const PageContent = () => {
     <Container id="page-note">
       <AppHeader title={title} variant="text" right={renderHeaderButtons()} />
 
-      <Box
-        id="viewer-box"
-        className={notesDark}
-        ref={viewerElement}
-        style={{ display: isEditing ? "none" : "block" }}
-      />
-      <Box
-        id="editor-box"
-        className={notesDark}
-        ref={editorElement}
-        style={{ display: isEditing ? "block" : "none" }}
-      />
+      <Box style={{ minHeight: "calc(100vh - 100px)" }}>
+        <MilkdownEditor
+          ref={editorRef}
+          content={content}
+          readOnly={!isEditing}
+          className={isEditing ? "editor-mode" : "viewer-mode"}
+        />
+      </Box>
 
       <Box id="switch-box" style={{ display: isEditing ? "block" : "none" }}>
         <Switch

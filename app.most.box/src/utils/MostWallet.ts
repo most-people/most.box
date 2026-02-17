@@ -124,7 +124,7 @@ export const mostEncode = (
   text: string,
   public_key: string,
   private_key: string,
-) => {
+): string => {
   const bytes = new TextEncoder().encode(text);
   const nonce = nacl.randomBytes(nacl.box.nonceLength);
   const encrypted = nacl.box(
@@ -144,7 +144,7 @@ export const mostDecode = (
   data: string,
   public_key: string,
   private_key: string,
-) => {
+): string => {
   const [prefix, nonce64, encrypted64] = data.split(".");
   if (prefix !== "mp://2") {
     console.info("无效协议");

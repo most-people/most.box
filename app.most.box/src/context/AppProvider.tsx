@@ -34,10 +34,10 @@ const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const { colorScheme } = useMantineColorScheme();
   const computedColorScheme = useComputedColorScheme();
   useEffect(() => {
-    if (hydrated) {
-      const theme = colorScheme === "auto" ? computedColorScheme : colorScheme;
-      setItem("notesDark", theme === "dark" ? "toastui-editor-dark" : "");
-    }
+    // if (hydrated) {
+    //   const theme = colorScheme === "auto" ? computedColorScheme : colorScheme;
+    //   setItem("notesDark", theme === "dark" ? "toastui-editor-dark" : "");
+    // }
   }, [hydrated, colorScheme, computedColorScheme]);
 
   if (!hydrated) {

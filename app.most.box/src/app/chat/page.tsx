@@ -31,8 +31,7 @@ import {
 } from "@tabler/icons-react";
 import { useRef, useState, useEffect } from "react";
 import type { DataConnection, MediaConnection } from "peerjs";
-import { useUserStore } from "@/stores/userStore";
-import { useMarkdown } from "@/hooks/useMarkdown";
+import { MilkdownEditor } from "@/components/MilkdownEditor";
 import IPv6 from "@/assets/docs/IPv6.md";
 import mp from "@/utils/mp";
 
@@ -43,10 +42,6 @@ export default function PageChat() {
   const [roomId, setRoomId] = useState<string>("001");
   const [role, setRole] = useState<Role | null>(null);
   const [connected, setConnected] = useState(false);
-
-  const markdown = useMarkdown();
-  const ipv6Element = useRef<HTMLDivElement>(null);
-  const notesDark = useUserStore((state) => state.notesDark);
 
   const [p2pConnected, setP2pConnected] = useState(false);
   // 本地音视频开关状态
@@ -306,16 +301,7 @@ export default function PageChat() {
     setIsCameraOn(false);
   };
 
-  const initIPv6 = async () => {
-    if (ipv6Element.current) {
-      const viewer = await markdown.initViewer(ipv6Element.current);
-      viewer.setMarkdown(IPv6);
-    }
-  };
-
   useEffect(() => {
-    initIPv6();
-
     const uuid = Math.random().toString(36).slice(2, 10).toUpperCase();
     setClientId(uuid);
 
@@ -701,7 +687,13 @@ export default function PageChat() {
         </Paper>
 
         <Card withBorder>
-          <Box className={notesDark} ref={ipv6Element} />
+          <Box>
+            <MilkdownEditor
+              content={IPv6}
+              readOnly={true}
+              className="viewer-mode"
+            />
+          </Box>
         </Card>
         <Center>基于 PeerJS，WebRTC 协议</Center>
       </Stack>
