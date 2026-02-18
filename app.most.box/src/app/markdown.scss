@@ -2,3 +2,67 @@
   font-size: 16px;
   font-family: inherit;
 }
+
+/* Milkdown Crepe 暗黑模式支持 */
+:root[data-mantine-color-scheme="dark"] .milkdown {
+  --crepe-color-background: #1a1b1e;
+  --crepe-color-on-background: #c1c2c5;
+  --crepe-color-surface: #25262b;
+  --crepe-color-surface-low: #141517;
+  --crepe-color-on-surface: #c1c2c5;
+  --crepe-color-on-surface-variant: #909296;
+  --crepe-color-outline: #373a40;
+  --crepe-color-primary: #1971c2;
+  --crepe-color-secondary: #2c2e33;
+  --crepe-color-on-secondary: #c1c2c5;
+  --crepe-color-inverse: #c1c2c5;
+  --crepe-color-on-inverse: #1a1b1e;
+  --crepe-color-inline-code: #e64980;
+  --crepe-color-error: #fa5252;
+  --crepe-color-hover: #2c2e33;
+  --crepe-color-selected: #373a40;
+  --crepe-color-inline-area: #25262b;
+
+  --crepe-shadow-1: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.24);
+  --crepe-shadow-2: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+}
+
+/* 移动端响应式适配 */
+@media (max-width: 768px) {
+  .milkdown {
+    .ProseMirror {
+      /* 移除两侧和顶部的内边距 */
+      padding: 0 !important;
+    }
+  }
+
+  /* 仅在编辑模式下增加底部内边距，防止键盘遮挡 */
+  .editor-mode .milkdown .ProseMirror {
+    padding-bottom: 40vh !important;
+  }
+
+  /* 浏览模式下使用较小的底部内边距 */
+  .viewer-mode .milkdown .ProseMirror {
+    padding-bottom: 0 !important;
+  }
+
+  .milkdown {
+    /* 移动端隐藏块级操作手柄，避免难以交互 */
+    .milkdown-block-handle {
+      display: none !important;
+    }
+
+    /* 确保斜杠菜单和工具栏适应屏幕宽度 */
+    .milkdown-slash-menu,
+    .milkdown-toolbar {
+      max-width: 94vw;
+      overflow-x: auto;
+    }
+
+    /* 确保图片自适应宽度 */
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+  }
+}

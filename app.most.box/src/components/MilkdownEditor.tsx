@@ -136,7 +136,14 @@ export const MilkdownEditor = forwardRef<
       });
     });
 
+    let isDestroyed = false;
+
     crepe.create().then(() => {
+      if (isDestroyed) {
+        crepe.destroy();
+        return;
+      }
+
       crepeRef.current = crepe;
       // Set initial readonly state
       if (readOnly !== undefined) {
@@ -146,6 +153,7 @@ export const MilkdownEditor = forwardRef<
     });
 
     return () => {
+      isDestroyed = true;
       if (crepeRef.current) {
         crepeRef.current.destroy();
         crepeRef.current = null;

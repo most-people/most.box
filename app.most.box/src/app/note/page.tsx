@@ -258,14 +258,12 @@ const PageContent = () => {
     <Container id="page-note">
       <AppHeader title={title} variant="text" right={renderHeaderButtons()} />
 
-      <Box style={{ minHeight: "calc(100vh - 100px)" }}>
-        <MilkdownEditor
-          ref={editorRef}
-          content={content}
-          readOnly={!isEditing}
-          className={isEditing ? "editor-mode" : "viewer-mode"}
-        />
-      </Box>
+      <MilkdownEditor
+        ref={editorRef}
+        content={content}
+        readOnly={!isEditing}
+        className={isEditing ? "editor-mode" : "viewer-mode"}
+      />
 
       <Box id="switch-box" style={{ display: isEditing ? "block" : "none" }}>
         <Switch
