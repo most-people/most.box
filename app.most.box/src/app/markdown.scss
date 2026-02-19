@@ -3,9 +3,9 @@
   font-family: inherit;
 }
 
-/* Milkdown Crepe 暗黑模式支持 */
+/* MilkdownEditor Crepe 暗黑模式支持 */
 :root[data-mantine-color-scheme="dark"] .milkdown {
-  --crepe-color-background: #1a1b1e;
+  --crepe-color-background: transparent;
   --crepe-color-on-background: #c1c2c5;
   --crepe-color-surface: #25262b;
   --crepe-color-surface-low: #141517;
