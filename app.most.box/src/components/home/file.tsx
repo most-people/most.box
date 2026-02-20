@@ -36,13 +36,8 @@ import { FileItem, useUserStore } from "@/stores/userStore";
 import { mostCrust } from "@/utils/MostWallet";
 import crust from "@/utils/crust";
 import { useFileExplorer } from "@/hooks/useExplorer";
-
-// 预览文件接口定义
-interface PreviewFile {
-  file: File;
-  path: string;
-  size: string;
-}
+import { useUploadStore } from "@/stores/uploadStore";
+import UploadProgressDialog from "@/components/common/UploadProgressDialog";
 
 export default function HomeFile() {
   // 从 userStore 获取钱包信息和 dotCID
@@ -66,9 +61,11 @@ export default function HomeFile() {
   const files = useUserStore((state) => state.files);
 
   // 状态管理
-  const [uploadLoading, setUploadLoading] = useState(false); // 上传加载状态
-  const [previewFiles, setPreviewFiles] = useState<PreviewFile[]>([]); // 预览文件列表
-  const [showPreview, setShowPreview] = useState(false); // 是否显示预览模态框
+  const {
+    addFiles,
+    addDirectory,
+    isUploading: uploadLoading,
+  } = useUploadStore();
   const [renameModalOpen, setRenameModalOpen] = useState(false); // 重命名模态框状态
   const [renamingItem, setRenamingItem] = useState<FileItem | null>(null); // 当前正在重命名的项目
   const [newName, setNewName] = useState(""); // 新名称
@@ -98,98 +95,7 @@ export default function HomeFile() {
       return;
     }
 
-    setUploadLoading(true);
-    const notificationId = notifications.show({
-      title: "上传中",
-      message: "正在准备上传...",
-      color: "blue",
-      autoClose: false,
-    });
-
-    try {
-      // 1. 生成 Auth Header (一次生成，批量使用)
-      const { crust_address, sign } = mostCrust(wallet.danger);
-      const signature = sign(crust_address);
-      const authHeader = crust.auth(crust_address, signature);
-
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-
-        // 更新进度通知
-        notifications.update({
-          id: notificationId,
-          title: "上传中",
-          message: `正在上传 ${file.name} (${i + 1}/${files.length})...`,
-          autoClose: false,
-        });
-
-        // 2. 上传到 Crust/IPFS
-        const ipfs = await crust.ipfs(file, authHeader);
-        const pinResult = await crust.pin(ipfs.cid, file.name, authHeader);
-
-        // 默认为 6 个月 (180天)
-        let expiredAt = Date.now() + 180 * 24 * 60 * 60 * 1000;
-
-        // 尝试获取链上过期时间 (如果是秒传，可以获取到真实过期时间)
-        try {
-          const status = await crust.getFileStatus(ipfs.cid);
-          if (status && status.expiredAt) {
-            expiredAt = status.expiredAt;
-          }
-        } catch (error: unknown) {
-          console.warn("获取过期时间失败，使用默认值", error);
-        }
-
-        // 3. 注册到本地状态管理
-        const targetPath = mp.formatFilePath(file, currentPath);
-        const directoryPath =
-          targetPath.split("/").slice(0, -1).join("/") || "/";
-
-        useUserStore.getState().addFile({
-          cid: ipfs.cid,
-          name: file.name,
-          size: file.size,
-          type: "file",
-          path: directoryPath,
-          expired_at: expiredAt,
-          tx_hash: pinResult?.data?.requestid || "",
-        });
-
-        notifications.update({
-          id: notificationId,
-          title: "上传中",
-          message: `${file.name} 上传成功`,
-          autoClose: false,
-        });
-      }
-
-      // 上传完成通知
-      notifications.update({
-        id: notificationId,
-        title: "上传完成",
-        message: `共上传 ${files.length} 个文件`,
-        color: "green",
-        autoClose: true,
-      });
-
-      setShowPreview(false);
-      setPreviewFiles([]);
-    } catch (error: unknown) {
-      console.error("上传失败:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "文件上传失败，请重试";
-      let message = errorMessage;
-
-      notifications.update({
-        id: notificationId,
-        title: "上传失败",
-        message,
-        color: "red",
-        autoClose: true,
-      });
-    } finally {
-      setUploadLoading(false);
-    }
+    addFiles(files, currentPath);
   };
 
   // 创建文件夹函数
@@ -275,101 +181,29 @@ export default function HomeFile() {
       return;
     }
 
-    setUploadLoading(true);
-    const notificationId = notifications.show({
-      title: "上传中",
-      message: "正在打包上传网站...",
-      color: "blue",
-      autoClose: false,
+    const fileArray = Array.from(files);
+    // 准备文件以上传到 IPFS 目录
+    // 去除路径中的第一个目录，使内容在根级别
+    const ipfsFiles = fileArray.map((file) => {
+      const relPath = file.webkitRelativePath || file.name;
+      const parts = relPath.split("/");
+      const path = parts.length > 1 ? parts.slice(1).join("/") : relPath;
+      return {
+        path,
+        content: file,
+      };
     });
 
-    try {
-      const fileArray = Array.from(files);
-      // 准备文件以上传到 IPFS 目录
-      // 去除路径中的第一个目录，使内容在根级别
-      const ipfsFiles = fileArray.map((file) => {
-        const relPath = file.webkitRelativePath || file.name;
-        const parts = relPath.split("/");
-        const path = parts.length > 1 ? parts.slice(1).join("/") : relPath;
-        return {
-          path,
-          content: file,
-        };
-      });
+    const folderName =
+      fileArray[0]?.webkitRelativePath?.split("/")[0] || "Website";
+    const totalSize = fileArray.reduce((acc, file) => acc + file.size, 0);
 
-      // 认证
-      const { crust_address, sign } = mostCrust(wallet.danger);
-      const signature = sign(crust_address);
-      const authHeader = crust.auth(crust_address, signature);
+    // 网站上传通常作为整体，不使用预览模式，直接开始
+    // 如果需要预览，可以将 autoStart 设置为 false
+    addDirectory(ipfsFiles, folderName, totalSize, currentPath, true);
 
-      // 上传目录
-      const result = await crust.ipfsDir(ipfsFiles, authHeader);
-      // Pin 操作
-      const folderName =
-        fileArray[0]?.webkitRelativePath?.split("/")[0] || "Website";
-      await crust.pin(result.cid, folderName, authHeader);
-
-      // Pin 所有子文件
-      if (result.allFiles) {
-        const subFiles = result.allFiles
-          .filter((file) => file.cid !== result.cid)
-          .map((file) => ({
-            cid: file.cid,
-            name: file.path || file.cid,
-          }));
-
-        // 批量 Pin 所有子文件
-        await crust.pinBatch(subFiles, authHeader);
-      }
-
-      // 计算总大小（包括所有子文件）
-      const totalSize = fileArray.reduce((acc, file) => acc + file.size, 0);
-
-      // 获取过期时间
-      let expiredAt = Date.now() + 180 * 24 * 60 * 60 * 1000;
-      try {
-        const status = await crust.getFileStatus(result.cid);
-        if (status && status.expiredAt) {
-          expiredAt = status.expiredAt;
-        }
-      } catch (error) {
-        console.warn("获取过期时间失败，使用默认值", error);
-      }
-
-      // 添加到本地状态
-      useUserStore.getState().addFile({
-        cid: result.cid,
-        name: folderName,
-        size: totalSize,
-        type: "directory", // 明确标记为带有 CID 的目录
-        path: currentPath,
-        expired_at: expiredAt,
-        tx_hash: "",
-      });
-
-      notifications.update({
-        id: notificationId,
-        title: "上传成功",
-        message: `网站 ${folderName} 已上传`,
-        color: "green",
-        autoClose: true,
-      });
-    } catch (error: unknown) {
-      console.error("网站上传失败:", error);
-      const message =
-        error instanceof Error ? error.message : "网站上传失败，请重试";
-      notifications.update({
-        id: notificationId,
-        title: "上传失败",
-        message,
-        color: "red",
-        autoClose: true,
-      });
-    } finally {
-      setUploadLoading(false);
-      // 清空输入框
-      event.target.value = "";
-    }
+    // 清空输入框
+    event.target.value = "";
   };
 
   // 触发文件上传输入框
@@ -404,48 +238,12 @@ export default function HomeFile() {
       if (fileArray.length === 1 && !fileArray[0].webkitRelativePath) {
         uploadFiles(fileArray);
       } else {
-        // 多个文件或文件夹上传才显示预览
-        const previewData: PreviewFile[] = fileArray.map((file) => ({
-          file,
-          path: file.webkitRelativePath || file.name,
-          size: mp.formatFileSize(file.size),
-        }));
-        setPreviewFiles(previewData);
-        setShowPreview(true);
+        // 多个文件或文件夹上传才显示预览，使用 autoStart=false 触发 UploadProgressDialog 的预览模式
+        addFiles(fileArray, currentPath, false);
       }
     }
     // 清空input值，允许重复选择同一文件
     event.target.value = "";
-  };
-
-  // 确认上传
-  const handleConfirmUpload = () => {
-    const files = previewFiles.map((item) => item.file);
-    uploadFiles(files);
-  };
-
-  // 取消上传
-  const handleCancelUpload = () => {
-    setShowPreview(false);
-    setPreviewFiles([]);
-  };
-
-  // 移除预览文件
-  const removePreviewFile = (index: number) => {
-    const newPreviewFiles = previewFiles.filter((_, i) => i !== index);
-    setPreviewFiles(newPreviewFiles);
-    if (newPreviewFiles.length === 0) {
-      setShowPreview(false);
-    }
-  };
-
-  // 获取总大小
-  const getTotalSize = () => {
-    const totalBytes = previewFiles.reduce(
-      (sum, item) => sum + item.file.size,
-      0,
-    );
-    return mp.formatFileSize(totalBytes);
   };
 
   // 删除文件函数
@@ -915,69 +713,6 @@ export default function HomeFile() {
         </Stack>
       </Modal>
 
-      {/* 文件预览模态框 */}
-      <Modal
-        opened={showPreview}
-        onClose={handleCancelUpload}
-        title="文件预览"
-        size="lg"
-        centered
-      >
-        <Stack gap="md">
-          <Group justify="space-between">
-            <Text size="sm" c="dimmed">
-              共 {previewFiles.length} 个文件，总大小: {getTotalSize()}
-            </Text>
-          </Group>
-
-          <ScrollArea h={300}>
-            <Stack gap="xs">
-              {previewFiles.map((item, index) => (
-                <Card key={index} p="sm" withBorder>
-                  <Group justify="space-between" align="center" wrap="nowrap">
-                    <Group align="center" wrap="nowrap">
-                      <Text size="sm">📄</Text>
-                      <Stack gap={2}>
-                        <Text size="sm" fw={500}>
-                          {item.path}
-                        </Text>
-                        <Text size="xs" c="dimmed">
-                          {item.size}
-                        </Text>
-                      </Stack>
-                    </Group>
-                    <ActionIcon
-                      variant="subtle"
-                      color="gray"
-                      onClick={() => removePreviewFile(index)}
-                    >
-                      <IconX />
-                    </ActionIcon>
-                  </Group>
-                </Card>
-              ))}
-            </Stack>
-          </ScrollArea>
-
-          <Group justify="flex-end" gap="sm">
-            <Button
-              variant="outline"
-              onClick={handleCancelUpload}
-              disabled={uploadLoading}
-            >
-              取消
-            </Button>
-            <Button
-              onClick={handleConfirmUpload}
-              loading={uploadLoading}
-              disabled={previewFiles.length === 0}
-            >
-              确认上传
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
-
       <Modal
         opened={renameModalOpen}
         onClose={() => {
@@ -1081,6 +816,7 @@ export default function HomeFile() {
           </Group>
         </Stack>
       </Modal>
+      <UploadProgressDialog />
     </>
   );
 }

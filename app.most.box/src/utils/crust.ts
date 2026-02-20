@@ -32,9 +32,16 @@ const auth = (address: string, signature: string) => {
  * 上传文件到 IPFS 网关（不进行 Pin）
  * @param file 要上传的文件对象
  * @param authHeader Base64 编码的认证头
+ * @param onProgress 上传进度回调函数 (bytes: number) => void
+ * @param signal AbortSignal 用于取消请求
  * @returns 包含 CID 和大小的上传结果
  */
-const ipfs = async (file: File, authHeader: string) => {
+const ipfs = async (
+  file: File,
+  authHeader: string,
+  onProgress?: (bytes: number) => void,
+  signal?: AbortSignal,
+) => {
   // 创建连接到 Crust 网关的 IPFS 客户端
   const ipfsClient = create({
     url: `${CRUST_IPFS_GW}/api/v0`,
@@ -44,7 +51,11 @@ const ipfs = async (file: File, authHeader: string) => {
   });
 
   try {
-    const result = await ipfsClient.add(file, { cidVersion: 1 });
+    const result = await ipfsClient.add(file, {
+      cidVersion: 1,
+      progress: onProgress,
+      signal,
+    });
     return {
       cid: result.cid.toString(),
       size: result.size,
@@ -60,11 +71,15 @@ const ipfs = async (file: File, authHeader: string) => {
  * 上传文件夹到 IPFS 网关
  * @param files 文件列表 { path: string, content: string | Blob | Buffer }
  * @param authHeader Base64 编码的认证头
+ * @param onProgress 上传进度回调函数 (bytes: number) => void
+ * @param signal AbortSignal 用于取消请求
  * @returns 包含 Root CID 的上传结果
  */
 const ipfsDir = async (
   files: { path: string; content: string | Blob | Buffer }[],
   authHeader: string,
+  onProgress?: (bytes: number) => void,
+  signal?: AbortSignal,
 ) => {
   const ipfsClient = create({
     url: `${CRUST_IPFS_GW}/api/v0`,
@@ -73,12 +88,23 @@ const ipfsDir = async (
     },
   });
 
+  const progressMap = new Map<string, number>();
+  const internalProgress = (bytes: number, path?: string) => {
+    if (path) {
+      progressMap.set(path, bytes);
+    }
+    const total = Array.from(progressMap.values()).reduce((a, b) => a + b, 0);
+    if (onProgress) onProgress(total);
+  };
+
   try {
     const results = [];
     // wrapWithDirectory: true 会把所有文件包裹在一个空路径的文件夹中
     for await (const result of ipfsClient.addAll(files, {
       cidVersion: 1,
       wrapWithDirectory: true,
+      progress: internalProgress,
+      signal,
     })) {
       results.push(result);
     }
@@ -172,12 +198,19 @@ const pinBatch = async (
  * 使用预计算的认证头上传文件到 Crust 网络
  * @param file 要上传的文件对象
  * @param authHeader Base64 编码的认证头
+ * @param onProgress 上传进度回调
+ * @param signal AbortSignal 用于取消请求
  * @returns 带 CID 的上传结果
  */
-const uploadWithAuth = async (file: File, authHeader: string) => {
+const uploadWithAuth = async (
+  file: File,
+  authHeader: string,
+  onProgress?: (bytes: number) => void,
+  signal?: AbortSignal,
+) => {
   try {
     // 1. 上传到 IPFS 网关
-    const result = await ipfs(file, authHeader);
+    const result = await ipfs(file, authHeader, onProgress, signal);
 
     // 2. 将文件 Pin 到 Crust 网络
     await pin(result.cid, file.name, authHeader);
@@ -193,18 +226,37 @@ const uploadWithAuth = async (file: File, authHeader: string) => {
  * 使用预计算的认证头上传文件夹到 Crust 网络
  * @param files 文件列表
  * @param authHeader Base64 编码的认证头
+ * @param onProgress 上传进度回调
+ * @param signal AbortSignal 用于取消请求
+ * @param name 文件夹名称
  * @returns 带 CID 的上传结果
  */
 const uploadDirWithAuth = async (
   files: { path: string; content: string | Blob | Buffer }[],
   authHeader: string,
+  onProgress?: (bytes: number) => void,
+  signal?: AbortSignal,
+  name = "most-box-backup",
 ) => {
   try {
     // 1. 上传到 IPFS 网关
-    const result = await ipfsDir(files, authHeader);
+    const result = await ipfsDir(files, authHeader, onProgress, signal);
 
     // 2. 将文件夹 Pin 到 Crust 网络 (使用根 CID)
-    await pin(result.cid, "most-box-backup", authHeader);
+    await pin(result.cid, name, authHeader);
+
+    // 3. 批量 Pin 子文件
+    if (result.allFiles) {
+      const subFiles = result.allFiles
+        .filter((file) => file.cid !== result.cid)
+        .map((file) => ({
+          cid: file.cid,
+          name: file.path || file.cid,
+        }));
+      // 这里的并发可能需要在 store 中控制，或者在这里简单处理
+      // 这里 pinBatch 已经有并发控制 (默认为 5)
+      await pinBatch(subFiles, authHeader);
+    }
 
     return result;
   } catch (error) {
@@ -217,11 +269,17 @@ const uploadDirWithAuth = async (
  * 通过 Web3 Auth 网关上传文件到 Crust 网络
  * @param file 要上传的文件对象
  * @param crustWallet mostCrust 返回的钱包对象 { crust_address, sign }
+ * @param onProgress 上传进度回调
+ * @param signal AbortSignal 用于取消请求
+ * @param name 文件夹名称 (如果上传的是文件夹)
  * @returns 带 CID 的上传结果
  */
 const upload = async (
   file: File | { path: string; content: string | Blob | Buffer }[],
   crustWallet: { crust_address: string; sign: (msg: string) => string },
+  onProgress?: (bytes: number) => void,
+  signal?: AbortSignal,
+  name?: string,
 ) => {
   const { crust_address, sign } = crustWallet;
 
@@ -232,9 +290,9 @@ const upload = async (
   const authHeader = auth(crust_address, signature);
 
   if (Array.isArray(file)) {
-    return uploadDirWithAuth(file, authHeader);
+    return uploadDirWithAuth(file, authHeader, onProgress, signal, name);
   } else {
-    return uploadWithAuth(file, authHeader);
+    return uploadWithAuth(file, authHeader, onProgress, signal);
   }
 };
 
