@@ -5,7 +5,8 @@ import { useUserStore } from "@/stores/userStore";
 import { api } from "@/utils/api";
 import dayjs from "dayjs";
 
-let conflictIgnored = false;
+// 冲突
+let conflicts = true;
 
 export const encryptBackup = (data: any, danger: string): string => {
   const { public_key, private_key } = most25519(danger);
@@ -44,7 +45,7 @@ export const cloudSave = async () => {
     return;
   }
 
-  if (conflictIgnored) {
+  if (conflicts) {
     if (
       !window.confirm(
         "本地数据与云端不一致，本地修改将会覆盖云端数据，是否继续？",
@@ -52,7 +53,7 @@ export const cloudSave = async () => {
     ) {
       return;
     }
-    conflictIgnored = false;
+    conflicts = false;
   }
 
   try {
@@ -103,6 +104,7 @@ export const cloudLoad = async () => {
       const localCID = await mp.calculateCID(localContent);
       if (localCID === cloudCID) {
         // 本地数据与云端数据一致，无需恢复
+        conflicts = false;
         return;
       } else {
         const timeDiff = dayjs(cloudTime).fromNow();
@@ -111,7 +113,7 @@ export const cloudLoad = async () => {
             `云端数据（${timeDiff}）与本地数据不一致，恢复将覆盖本地更改，是否继续？`,
           )
         ) {
-          conflictIgnored = true;
+          conflicts = true;
           return;
         }
       }
@@ -126,6 +128,7 @@ export const cloudLoad = async () => {
 
     if (data.notes || data.files) {
       importData(data);
+      conflicts = false;
       // notifications.show({
       //   title: "云端恢复成功",
       //   message: "数据已从云端恢复",
@@ -141,9 +144,11 @@ export const cloudLoad = async () => {
       //   message: "您还没有在云端备份过数据",
       //   color: "yellow",
       // });
+      conflicts = false;
       return;
     }
 
+    conflicts = true;
     // notifications.show({
     //   title: "云端恢复失败",
     //   message: error.message || "下载或解析失败",

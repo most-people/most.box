@@ -640,16 +640,6 @@ export default function HomeFile() {
             个文件
           </Badge>
           <Group>
-            <Tooltip label="上传文件">
-              <ActionIcon
-                size="lg"
-                onClick={handleFileUpload}
-                color="green"
-                disabled={!wallet || uploadLoading}
-              >
-                <IconPlus size={18} />
-              </ActionIcon>
-            </Tooltip>
             <Tooltip label="新建文件夹">
               <ActionIcon
                 size="lg"
@@ -658,6 +648,16 @@ export default function HomeFile() {
                 disabled={!wallet || uploadLoading}
               >
                 <IconFolderPlus size={18} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label="上传文件">
+              <ActionIcon
+                size="lg"
+                onClick={handleFileUpload}
+                color="green"
+                disabled={!wallet || uploadLoading}
+              >
+                <IconPlus size={18} />
               </ActionIcon>
             </Tooltip>
             <Tooltip label="上传文件夹">
