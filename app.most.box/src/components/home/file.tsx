@@ -95,7 +95,7 @@ export default function HomeFile() {
       return;
     }
 
-    addFiles(files, currentPath);
+    addFiles(files, currentPath, false);
   };
 
   // 创建文件夹函数
@@ -200,7 +200,7 @@ export default function HomeFile() {
 
     // 网站上传通常作为整体，不使用预览模式，直接开始
     // 如果需要预览，可以将 autoStart 设置为 false
-    addDirectory(ipfsFiles, folderName, totalSize, currentPath, true);
+    addDirectory(ipfsFiles, folderName, totalSize, currentPath, false);
 
     // 清空输入框
     event.target.value = "";
@@ -234,13 +234,7 @@ export default function HomeFile() {
         return;
       }
 
-      // 如果是单个文件且不是文件夹上传，直接上传
-      if (fileArray.length === 1 && !fileArray[0].webkitRelativePath) {
-        uploadFiles(fileArray);
-      } else {
-        // 多个文件或文件夹上传才显示预览，使用 autoStart=false 触发 UploadProgressDialog 的预览模式
-        addFiles(fileArray, currentPath, false);
-      }
+      uploadFiles(fileArray);
     }
     // 清空input值，允许重复选择同一文件
     event.target.value = "";
