@@ -1,8 +1,8 @@
 #page-ipfs {
   padding: 0 20px;
   .ipfs-qrcode {
+    background-color: var(--mantine-color-body);
     position: relative;
-    margin-top: 30px;
     display: flex;
     align-items: center;
     justify-content: center;

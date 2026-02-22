@@ -232,7 +232,7 @@ const PageContent = () => {
           }
         />
 
-        <Group wrap="nowrap">
+        <Group wrap="nowrap" mb={30}>
           <Button
             color="green"
             variant="light"
