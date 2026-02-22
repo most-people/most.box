@@ -213,18 +213,6 @@ function GatewayManagerContent() {
 
     await Promise.all(promises);
     setIsDetecting(false);
-
-    // 统计结果
-    const successCount = Object.values(detectionResults).filter(
-      (r) => r.status === "success",
-    ).length;
-    // 注意：这里拿到的 detectionResults 可能是旧的闭包值，所以最好不依赖它做即时统计，或者用 setState 回调
-    // 简单起见，检测完成后弹窗提示
-    notifications.show({
-      title: "检测完成",
-      message: "所有网关连通性测试已完成",
-      color: "green",
-    });
   };
 
   const handleTestSingle = async (gateway: string) => {

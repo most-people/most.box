@@ -43,6 +43,7 @@
     "@tabler/icons-react": "^3.36.1",
     "dayjs": "^1.11.19",
     "ethers": "^6.16.0",
+    "html-to-image": "^1.11.13",
     "kubo-rpc-client": "^6.1.0",
     "ky": "^1.14.3",
     "peerjs": "^1.5.5",

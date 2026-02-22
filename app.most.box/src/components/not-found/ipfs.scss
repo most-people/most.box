@@ -1,6 +1,7 @@
 #page-ipfs {
   padding: 0 20px;
   .ipfs-qrcode {
+    position: relative;
     margin-top: 30px;
     display: flex;
     align-items: center;
@@ -8,6 +9,12 @@
     border: 1px solid rgba(232, 201, 155, 0.94);
     padding: 40px;
     border-radius: 20px;
+
+    .cid-type {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+    }
 
     .qrcode-frame {
       display: flex;

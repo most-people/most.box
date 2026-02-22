@@ -2,8 +2,16 @@
 import "./ipfs.scss";
 import { AppHeader } from "@/components/AppHeader";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
-import { Suspense, useMemo, useState, useEffect } from "react";
+import {
+  Suspense,
+  useMemo,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+} from "react";
 import { QRCodeSVG } from "qrcode.react";
+import { toPng } from "html-to-image";
 import {
   Text,
   Stack,
@@ -20,7 +28,14 @@ import {
   Badge,
 } from "@mantine/core";
 import Link from "next/link";
-import { IconCopy, IconInfoCircle, IconSettings } from "@tabler/icons-react";
+import {
+  IconCopy,
+  IconFileText,
+  IconFolderOpen,
+  IconInfoCircle,
+  IconSettings,
+  IconWorld,
+} from "@tabler/icons-react";
 import { useUserStore } from "@/stores/userStore";
 import { checkGateway } from "@/utils/ipfs";
 
@@ -73,11 +88,30 @@ const PageContent = () => {
     return "";
   }, [dotCID, cid, filename, cidType]);
 
-  const host = `https://most.box/${pathname.split("/")[1]}/`;
+  const host = `most.box/${pathname.split("/")[1]}/`;
 
   const [gatewayStatus, setGatewayStatus] = useState<
     "ok" | "error" | "checking"
   >("checking");
+
+  const qrRef = useRef<HTMLDivElement>(null);
+
+  const handleDownload = useCallback(() => {
+    if (qrRef.current === null) {
+      return;
+    }
+
+    toPng(qrRef.current, { cacheBust: true })
+      .then((dataUrl) => {
+        const link = document.createElement("a");
+        link.download = `share-${cid}.png`;
+        link.href = dataUrl;
+        link.click();
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }, [qrRef, cid]);
 
   useEffect(() => {
     if (!dotCID) {
@@ -138,10 +172,22 @@ const PageContent = () => {
           <Badge
             size="lg"
             variant="dot"
-            color={gatewayStatus === "error" ? "red" : "green"}
+            color={
+              gatewayStatus === "error"
+                ? "red"
+                : gatewayStatus === "checking"
+                  ? "yellow"
+                  : "green"
+            }
           >
             网关: {dotCID ? new URL(dotCID).hostname : "未选择"}
           </Badge>
+
+          {gatewayStatus === "error" && (
+            <Text c="red" size="sm" ta="center">
+              当前网关无法访问，请切换网关
+            </Text>
+          )}
 
           <Tooltip label="切换网关" position="top">
             <ActionIcon
@@ -153,12 +199,6 @@ const PageContent = () => {
               <IconSettings size={18} />
             </ActionIcon>
           </Tooltip>
-
-          {gatewayStatus === "error" && (
-            <Text c="red" size="sm" ta="center">
-              当前网关无法访问，请切换网关
-            </Text>
-          )}
         </Group>
 
         {!dotCID && (
@@ -221,28 +261,49 @@ const PageContent = () => {
           )}
         </Group>
 
-        <Center>
-          <div className="ipfs-qrcode">
-            <div className="qrcode-frame">
-              <QRCodeSVG
-                className="qrcode"
-                value={`${host}${cid}`}
-                size={158}
-                bgColor="#FFF"
-                fgColor="#000"
-              />
-            </div>
-            <div className="line"></div>
+        <Stack align="center">
+          <Stack align="center" ref={qrRef}>
+            <div className="ipfs-qrcode">
+              <div className="cid-type">
+                {cidType === "website" ? (
+                  <IconWorld size={24} />
+                ) : (
+                  <IconFileText size={24} />
+                )}
+              </div>
 
-            <div className="info">
-              <Text className="name" lineClamp={3}>
-                {filename}
-              </Text>
-              <Text className="host">{host}</Text>
-              <Text className="ipns">{cid}</Text>
+              <div className="qrcode-frame">
+                <QRCodeSVG
+                  className="qrcode"
+                  value={`${host}${cid}`}
+                  size={158}
+                  bgColor="#FFF"
+                  fgColor="#000"
+                />
+              </div>
+              <div className="line"></div>
+
+              <div className="info">
+                <Text className="name" lineClamp={3}>
+                  {filename}
+                </Text>
+                <Text>{host}</Text>
+                <Text>{cid}</Text>
+              </div>
             </div>
-          </div>
-        </Center>
+          </Stack>
+
+          <Group>
+            <Button
+              onClick={handleDownload}
+              variant="subtle"
+              size="sm"
+              color="gray"
+            >
+              下载分享图片
+            </Button>
+          </Group>
+        </Stack>
       </Stack>
     </Box>
   );
