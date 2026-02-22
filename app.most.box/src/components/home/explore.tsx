@@ -5,10 +5,8 @@ import {
   Text,
   Container,
   Title,
-  Accordion,
   Divider,
   Group,
-  Anchor,
   Stack,
   SimpleGrid,
   ThemeIcon,
@@ -27,7 +25,6 @@ import {
   IconDatabase,
   IconWorld,
 } from "@tabler/icons-react";
-import Link from "next/link";
 import "./explore.scss";
 
 export default function HomeExplore() {
@@ -210,28 +207,6 @@ export default function HomeExplore() {
         <Group justify="center">
           <Text c="dimmed">「{randomWord}」</Text>
         </Group>
-
-        <Title size="h3" mt="xl">
-          快捷入口
-        </Title>
-        <Divider my="md" />
-
-        <Accordion my="md" variant="separated">
-          <Accordion.Item value="GAME">
-            <Accordion.Control icon="🦕">小游戏</Accordion.Control>
-            <Accordion.Panel>
-              <Group>
-                <Anchor component={Link} href="/game/5">
-                  <Text>五子棋</Text>
-                </Anchor>
-
-                <Anchor component={Link} href="/game/black">
-                  <Text>黑白棋</Text>
-                </Anchor>
-              </Group>
-            </Accordion.Panel>
-          </Accordion.Item>
-        </Accordion>
       </Container>
     </div>
   );

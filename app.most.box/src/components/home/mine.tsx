@@ -110,8 +110,8 @@ export default function HomeMine() {
       <Stack className="menu-list" mb="xs" gap={0}>
         <MenuItem icon="Web3" label="Web3" link="/web3" />
         <MenuItem icon="Website" label="主页" link={`/@${address}`} />
-        <MenuItem icon="Earth" label="节点" link="/dot" />
         <MenuItem icon="Chat" label="聊天" link="/chat/?id=001" />
+        <MenuItem icon="Game" label="游戏" link="/game" />
       </Stack>
       <Stack className="menu-list" gap={0}>
         <MenuItem icon="About" label="关于" link="/about" />

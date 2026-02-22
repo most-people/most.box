@@ -41,6 +41,9 @@ import Telegram from "@/assets/icons/telegram.svg";
 // https://www.flaticon.com/free-icon-font/meeting-alt_13085451?term=talk&related_id=13085451
 import Chat from "@/assets/icons/chat.svg";
 
+// https://www.flaticon.com/free-icon-font/multi-player_19020464?term=game&related_id=19020464
+import Game from "@/assets/icons/game.svg";
+
 const icons = {
   File,
   FileActive,
@@ -69,6 +72,7 @@ const icons = {
   Github,
   Mail,
   Telegram,
+  Game,
 } as const;
 
 export type IconName = keyof typeof icons;
