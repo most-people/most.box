@@ -221,8 +221,11 @@ const PageContent = () => {
     if (isSecret) {
       t = "🔒 " + t;
     }
+    if (isEditing) {
+      t += " [编辑中]";
+    }
     return t;
-  }, [isSecret, noteName]);
+  }, [isSecret, noteName, isEditing]);
 
   // 根据编辑状态渲染不同的按钮
   const renderHeaderButtons = () => {

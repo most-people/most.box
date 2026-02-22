@@ -23,7 +23,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   IconFolderPlus,
-  IconX,
   IconDotsVertical,
   IconPlus,
   IconFolderUp,
@@ -33,11 +32,9 @@ import { notifications } from "@mantine/notifications";
 import { modals } from "@mantine/modals";
 import mp from "@/utils/mp";
 import { FileItem, useUserStore } from "@/stores/userStore";
-import { mostCrust } from "@/utils/MostWallet";
-import crust from "@/utils/crust";
 import { useFileExplorer } from "@/hooks/useExplorer";
 import { useUploadStore } from "@/stores/uploadStore";
-import UploadProgressDialog from "@/components/common/UploadProgressDialog";
+import UploadProgress from "@/components/UploadProgress";
 
 export default function HomeFile() {
   // 从 userStore 获取钱包信息和 dotCID
@@ -810,7 +807,7 @@ export default function HomeFile() {
           </Group>
         </Stack>
       </Modal>
-      <UploadProgressDialog />
+      <UploadProgress />
     </>
   );
 }

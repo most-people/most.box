@@ -181,7 +181,7 @@ const TaskItem = ({
   );
 };
 
-export default function UploadProgressDialog() {
+export default function UploadProgress() {
   const {
     isOpen,
     setIsOpen,

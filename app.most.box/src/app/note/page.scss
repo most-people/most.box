@@ -19,8 +19,12 @@
 
   #switch-box {
     position: fixed;
-    bottom: 3px;
+    left: 0;
+    bottom: 0;
     z-index: 10;
-    left: 10px;
+    padding: 4px 10px;
+    border-top: 1px solid var(--crepe-color-outline);
+    background: var(--tab-background);
+    border-radius: 0 10px 0 0;
   }
 }
