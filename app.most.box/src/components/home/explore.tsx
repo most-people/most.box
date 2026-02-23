@@ -5,7 +5,6 @@ import {
   Text,
   Container,
   Title,
-  Divider,
   Group,
   Stack,
   SimpleGrid,
@@ -24,6 +23,9 @@ import {
   IconUserBitcoin,
   IconDatabase,
   IconWorld,
+  IconAppWindow,
+  IconShare,
+  IconBrandGithub,
 } from "@tabler/icons-react";
 import "./explore.scss";
 
@@ -46,18 +48,23 @@ export default function HomeExplore() {
     {
       icon: IconCoin,
       title: "怕忘记续费？",
-      description:
-        "我们内置了“智能续费池”机制。只需一次托管，后端自动完成链上清算，无需手动操作，数据如影随形，跨越世纪。",
+      description: "利用 Crust 网络动态订单续费与预存池功能，一键批量续费。",
     },
     {
       icon: IconRocket,
       title: "怕访问慢？",
       description:
-        "利用 Cloudflare Workers 边缘计算与全球 CDN，即使是去中心化存储，也能拥有秒开的上传下载体验。",
+        "聚合全球多个高速网关，支持智能测速与切换。即使是去中心化存储，也能拥有秒开的上传下载体验。",
     },
   ];
 
   const features = [
+    {
+      icon: IconBrandGithub,
+      title: "开源透明",
+      description:
+        "遵循 MIT 协议完全开源，支持本地离线运行。拒绝黑箱操作，让每一行代码都经得起审查。",
+    },
     {
       icon: IconShieldLock,
       title: "物理级安全隐私",
@@ -70,9 +77,20 @@ export default function HomeExplore() {
       description:
         "独特的多副本冗余机制（20+ 随机副本）。即使 90% 的节点下线，你的文件依然可以在地球的另一个角落被找回。",
     },
+    {
+      icon: IconShare,
+      title: "一键分享",
+      description:
+        "支持一键分享文件 / 文件夹 / 笔记，生成包含二维码的分享卡片，通过 IPFS 网关永久分享你的文件。",
+    },
   ];
 
   const stack = [
+    {
+      label: "协议层：IPFS Network",
+      desc: "内容寻址，全球唯一标识",
+      icon: IconWorld,
+    },
     {
       label: "存储层：Crust Network",
       desc: "基于 TEE 的去中心化存储层",
@@ -84,11 +102,10 @@ export default function HomeExplore() {
       icon: IconUserBitcoin,
     },
     {
-      label: "数据层：Cloudflare R2",
-      desc: "高性能边缘对象存储",
+      label: "数据层：Cloudflare R2 + Workers",
+      desc: "高性能边缘计算与对象存储",
       icon: IconDatabase,
     },
-    { label: "协议层：IPFS", desc: "内容寻址，全球唯一标识", icon: IconWorld },
   ];
 
   return (
@@ -101,8 +118,8 @@ export default function HomeExplore() {
             </Stack>
 
             <Text c="dimmed" size="xl" maw={600} ta="center" lh={1.6}>
-              基于 Crust Network 物理级加密存储，配合 Cloudflare 全球加速。
-              告别传统云盘的审查与断电风险，让数据都拥有“自动续费”的永久生命力。
+              基于 Crust Network 物理级加密存储，配合全球 IPFS
+              网关加速。告别传统云盘的审查与断电风险，让数据在区块链上拥有“自动续费”的永久生命力。
             </Text>
           </Stack>
         </Container>

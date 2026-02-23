@@ -15,9 +15,11 @@
 
 ## 🚀 核心特性 | Features
 
-- **🌐 网络优化**: 针对复杂的网络环境进行路由与节点优化，确保存储与检索的高速稳定。
-- **♾️ 永续存储**: 基于 **Crust Network** 提供的去中心化存储激励层，确保数据在 IPFS 网络中被持久化备份。
-- **🛡️ 防止篡改**: 数据指纹（CID）寻址，内容不可篡改，无中心化审核机制。
+- **🌐 网络优化**: 聚合全球多个高速网关，支持智能测速与切换，确保存储与检索的高速稳定。
+- **♾️ 永续存储**: 基于 **Crust Network** 提供的去中心化存储激励层，支持动态订单续费与预存池功能，确保数据在 IPFS 网络中被持久化备份。
+- **🛡️ 极致安全**: 物理级安全隐私，数据上传前即进行分片加密，仅私钥持有者可重组；多副本冗余机制（20+ 随机副本），即使 90% 节点下线仍可找回。
+- **🔒 防止篡改**: 数据指纹（CID）寻址，内容不可篡改，无中心化审核机制。
+- **💻 开源透明**: 代码完全开源 (MIT License)，支持本地离线运行，无需联网，拒绝黑盒操作。
 - **⚡ 极速体验**: 现代化的 **Next.js** 前端与 **Mantine** UI 组件库，打造极客且优雅的交互界面。
 
 ## 🛠️ 技术栈 | Tech Stack
@@ -32,10 +34,12 @@
 - **Web3 Integration**: [Viem](https://viem.sh/) (Ethereum Interface)
 - **State Management**: Zustand
 
-### Storage & Protocol
+### Storage, Protocol & Security
 
 - **Storage Layer**: [IPFS](https://ipfs.tech/) (InterPlanetary File System)
 - **Incentive Layer**: [Crust Network](https://crust.network/) (Polkadot Ecosystem)
+- **Data Layer**: Cloudflare R2 (High-Performance Edge Object Storage)
+- **User Layer**: Local Key Derivation (NaCl / sr25519)
 
 ### Backend / Edge (`api.most.box`)
 
