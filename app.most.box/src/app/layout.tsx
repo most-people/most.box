@@ -1,5 +1,6 @@
 import AppProvider from "@/context/AppProvider";
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { theme } from "@/utils/theme";
 
 import { ColorSchemeScript, MantineProvider } from "@mantine/core";
@@ -7,7 +8,6 @@ import { Notifications } from "@mantine/notifications";
 import { ModalsProvider } from "@mantine/modals";
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
-
 
 import "prismjs/themes/prism.css";
 import "@/app/markdown.scss";
@@ -53,6 +53,11 @@ export default function RootLayout({
         <ColorSchemeScript defaultColorScheme="auto" />
       </head>
       <body>
+        <Script
+          defer
+          src="https://cloud.umami.is/script.js"
+          data-website-id="82aea45a-4109-4e69-8e3b-7bcc01ad75ab"
+        />
         <div id="app">
           <MantineProvider defaultColorScheme="auto" theme={theme}>
             <Notifications limit={3} position="top-center" />
