@@ -36,4 +36,4 @@
 
 随时准备为党和人民牺牲一切
 
-app.most.box@gmail.com
+联系我们：app.most.box@gmail.com

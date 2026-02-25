@@ -1,6 +1,6 @@
 import { AppHeader } from "@/components/AppHeader";
 import mp from "@/utils/mp";
-import { Box, Text, Stack } from "@mantine/core";
+import { Box, Text, Stack, Anchor } from "@mantine/core";
 import Link from "next/link";
 
 export default function PageAbout() {
@@ -30,16 +30,28 @@ export default function PageAbout() {
           <Text size="lg" fw="bold" mb="xs">
             论文
           </Text>
-          <Link href="https://most-people.github.io/" target="_blank">
+          <Anchor href="https://most-people.github.io/" target="_blank">
             Most People 宣言
-          </Link>
+          </Anchor>
         </Stack>
 
         <Stack gap="xs">
           <Text size="lg" fw="bold">
             最后更新
           </Text>
-          <Text c="dimmed">{mp.formatTime(1771062881712)}</Text>
+          <Text c="dimmed">{mp.formatTime(1772035412750)}</Text>
+        </Stack>
+
+        <Stack gap="xs">
+          <Text size="lg" fw="bold">
+            访问统计
+          </Text>
+          <Anchor
+            target="_blank"
+            href="https://cloud.umami.is/analytics/eu/share/q4FDMk69VWpeO6wx"
+          >
+            https://cloud.umami.is/analytics/eu/share/q4FDMk69VWpeO6wx
+          </Anchor>
         </Stack>
       </Stack>
     </Box>
