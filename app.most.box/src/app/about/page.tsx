@@ -1,7 +1,6 @@
 import { AppHeader } from "@/components/AppHeader";
 import mp from "@/utils/mp";
 import { Box, Text, Stack, Anchor } from "@mantine/core";
-import Link from "next/link";
 
 export default function PageAbout() {
   return (
@@ -40,18 +39,6 @@ export default function PageAbout() {
             最后更新
           </Text>
           <Text c="dimmed">{mp.formatTime(1772035412750)}</Text>
-        </Stack>
-
-        <Stack gap="xs">
-          <Text size="lg" fw="bold">
-            访问统计
-          </Text>
-          <Anchor
-            target="_blank"
-            href="https://cloud.umami.is/analytics/eu/share/q4FDMk69VWpeO6wx"
-          >
-            https://cloud.umami.is/analytics/eu/share/q4FDMk69VWpeO6wx
-          </Anchor>
         </Stack>
       </Stack>
     </Box>
