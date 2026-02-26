@@ -1,61 +1,97 @@
 "use client";
 
-import { Button } from "@mantine/core";
-import { notifications } from "@mantine/notifications";
 import {
-  useAppKit,
-  useAppKitAccount,
-  useAppKitProvider,
-} from "@reown/appkit/react";
-import { AppKitProvider } from "@/context/AppKitProvider";
-import { BrowserProvider } from "ethers";
+  Button,
+  useComputedColorScheme,
+  useMantineColorScheme,
+} from "@mantine/core";
+import { notifications } from "@mantine/notifications";
+import { useActiveAccount, useConnectModal } from "thirdweb/react";
+import { client } from "@/utils/thirdweb";
+import ThirdwebProvider from "@/context/ThirdwebProvider";
 import { mostWallet } from "@/utils/MostWallet";
 import { useUserStore } from "@/stores/userStore";
 import { useBack } from "@/hooks/useBack";
+import { createWallet, inAppWallet } from "thirdweb/wallets";
+
+const wallets = [
+  inAppWallet({
+    auth: {
+      options: ["passkey", "google", "apple", "email"],
+    },
+  }),
+  createWallet("com.okex.wallet"),
+];
 
 function LoginWalletContent() {
-  const { open } = useAppKit();
-  const { address, isConnected } = useAppKitAccount();
-  const { walletProvider } = useAppKitProvider("eip155");
+  const account = useActiveAccount();
   const setWallet = useUserStore((state) => state.setWallet);
   const back = useBack();
+  const { colorScheme } = useMantineColorScheme();
+  const computedColorScheme = useComputedColorScheme("light");
+  const { connect } = useConnectModal();
 
-  const LoginWallet = async () => {
-    if (!isConnected || !address) {
-      open();
-      return;
-    }
+  const theme = colorScheme === "auto" ? computedColorScheme : colorScheme;
+
+  const handleSign = async () => {
+    if (!account) return;
+
     try {
       const message = "most.box";
-      if (!walletProvider) {
-        throw new Error("Wallet provider not found");
-      }
-      const ethersProvider = new BrowserProvider(walletProvider as any);
-      const signer = await ethersProvider.getSigner();
-      const signature = await signer.signMessage(message);
-      const wallet = mostWallet(address, signature, "From Signature");
-      setWallet(wallet);
+      // 使用 Thirdweb account 签名
+      const signature = await account.signMessage({ message });
+
+      // 生成本地钱包实例
+      const walletInstance = mostWallet(
+        account.address,
+        signature,
+        "From Signature",
+      );
+      setWallet(walletInstance);
       back();
     } catch (e: any) {
-      console.info("Login failed", e);
+      console.info("Sign failed", e);
       notifications.show({
-        message: e.message,
+        title: "签名失败",
+        message: e.message || "请重试",
         color: "red",
       });
     }
   };
 
+  const handleConnect = async () => {
+    try {
+      await connect({
+        showThirdwebBranding: false,
+        client,
+        wallets,
+        locale: "zh_CN",
+        theme: theme === "dark" ? "dark" : "light",
+      });
+    } catch (error) {
+      console.error("Connect failed", error);
+    }
+  };
+
+  if (!account) {
+    return (
+      <Button onClick={handleConnect} variant="light">
+        连接钱包
+      </Button>
+    );
+  }
+
   return (
-    <Button onClick={LoginWallet} variant={isConnected ? "red" : "light"}>
-      {isConnected ? "签名登录" : "连接钱包"}
+    <Button onClick={handleSign} variant="red">
+      签名登录
     </Button>
   );
 }
 
 export default function LoginWallet() {
   return (
-    <AppKitProvider>
+    <ThirdwebProvider>
       <LoginWalletContent />
-    </AppKitProvider>
+    </ThirdwebProvider>
   );
 }

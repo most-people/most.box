@@ -35,8 +35,6 @@
     "@noble/hashes": "^2.0.1",
     "@polkadot/api": "^16.5.4",
     "@polkadot/keyring": "^14.0.1",
-    "@reown/appkit": "^1.8.18",
-    "@reown/appkit-adapter-ethers": "^1.8.18",
     "@scure/base": "^2.0.0",
     "@scure/sr25519": "^1.0.0",
     "@svgr/webpack": "^8.1.0",
@@ -52,6 +50,7 @@
     "qrcode.react": "^4.2.0",
     "raw-loader": "^4.0.2",
     "sass": "^1.97.3",
+    "thirdweb": "^5.119.0",
     "tweetnacl": "^1.0.3",
     "zustand": "^5.0.11"
   },

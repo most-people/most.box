@@ -19,7 +19,7 @@ Most.Box 是一个基于 Web3 技术的去中心化应用，致力于提供安�
 - **存储网络**: [IPFS](https://ipfs.tech/) (Kubo RPC), [Crust Network](https://crust.network/)
 - **区块链交互**:
   - Polkadot: `@polkadot/api`, `@polkadot/keyring` (用于 Crust 交互)
-  - Ethereum: `ethers`, `@reown/appkit` (用于 EVM 兼容链交互)
+  - Ethereum: `ethers`, `thirdweb` (用于 EVM 兼容链交互)
 - **P2P 通信**: `peerjs` (点对点数据同步与通信)
 
 ### 加密与安全
