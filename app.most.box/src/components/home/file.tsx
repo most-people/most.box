@@ -179,6 +179,19 @@ export default function HomeFile() {
     }
 
     const fileArray = Array.from(files);
+
+    // Check for large files in website upload
+    const MAX_SIZE = 200 * 1024 * 1024; // 200MB
+    const oversizedFiles = fileArray.filter((file) => file.size > MAX_SIZE);
+
+    if (oversizedFiles.length > 0) {
+      setLargeFiles(oversizedFiles);
+      setShowLargeFileModal(true);
+      // Clear input
+      event.target.value = "";
+      return;
+    }
+
     // 准备文件以上传到 IPFS 目录
     // 去除路径中的第一个目录，使内容在根级别
     const ipfsFiles = fileArray.map((file) => {
@@ -798,7 +811,9 @@ export default function HomeFile() {
             <Button
               onClick={() => {
                 setShowLargeFileModal(false);
-                router.push("/upload");
+                const params = new URLSearchParams();
+                if (currentPath) params.set("path", currentPath);
+                router.push(`/upload?${params.toString()}`);
               }}
               color="blue"
             >
