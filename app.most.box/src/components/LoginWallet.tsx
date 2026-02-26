@@ -8,7 +8,7 @@ import {
 import { notifications } from "@mantine/notifications";
 import { useActiveAccount, useConnectModal } from "thirdweb/react";
 import { client } from "@/utils/thirdweb";
-import ThirdwebProvider from "@/context/ThirdwebProvider";
+import Thirdweb from "@/context/Thirdweb";
 import { mostWallet } from "@/utils/MostWallet";
 import { useUserStore } from "@/stores/userStore";
 import { useBack } from "@/hooks/useBack";
@@ -23,7 +23,7 @@ const wallets = [
   createWallet("com.okex.wallet"),
 ];
 
-function LoginWalletContent() {
+const LoginWalletContent = () => {
   const account = useActiveAccount();
   const setWallet = useUserStore((state) => state.setWallet);
   const back = useBack();
@@ -76,22 +76,22 @@ function LoginWalletContent() {
   if (!account) {
     return (
       <Button onClick={handleConnect} variant="light">
-        连接钱包
+        快捷登录
       </Button>
     );
   }
 
   return (
     <Button onClick={handleSign} variant="red">
-      签名登录
+      签名认证
     </Button>
   );
-}
+};
 
 export default function LoginWallet() {
   return (
-    <ThirdwebProvider>
+    <Thirdweb>
       <LoginWalletContent />
-    </ThirdwebProvider>
+    </Thirdweb>
   );
 }
