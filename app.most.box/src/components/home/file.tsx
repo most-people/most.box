@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef } from "react";
+import dayjs from "dayjs";
 import {
   Text,
   Group,
@@ -17,6 +18,9 @@ import {
   Badge,
   Breadcrumbs,
   Anchor,
+  CopyButton,
+  Code,
+  Table,
 } from "@mantine/core";
 import "./file.scss";
 import Link from "next/link";
@@ -27,6 +31,10 @@ import {
   IconPlus,
   IconFolderUp,
   IconWorld,
+  IconInfoCircle,
+  IconCopy,
+  IconCheck,
+  IconExternalLink,
 } from "@tabler/icons-react";
 import { notifications } from "@mantine/notifications";
 import { modals } from "@mantine/modals";
@@ -35,6 +43,7 @@ import { FileItem, useUserStore } from "@/stores/userStore";
 import { useFileExplorer } from "@/hooks/useExplorer";
 import { useUploadStore } from "@/stores/uploadStore";
 import UploadProgress from "@/components/UploadProgress";
+import { CRUST_SUBSCAN } from "@/utils/crust";
 
 export default function HomeFile() {
   // 从 userStore 获取钱包信息和 dotCID
@@ -68,6 +77,11 @@ export default function HomeFile() {
   const [newName, setNewName] = useState(""); // 新名称
   const [newDirPath, setNewDirPath] = useState(""); // 新目录路径
   const [renameLoading, setRenameLoading] = useState(false); // 重命名加载状态
+
+  // 属性查看状态
+  const [attributesModalOpen, setAttributesModalOpen] = useState(false);
+  const [selectedFileForAttributes, setSelectedFileForAttributes] =
+    useState<FileItem | null>(null);
 
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null); // 文件输入框 Ref
@@ -313,6 +327,12 @@ export default function HomeFile() {
     setNewName(item.name);
     setNewDirPath(item.path || "");
     setRenameModalOpen(true);
+  };
+
+  // 显示属性函数
+  const handleShowAttributes = (item: FileItem) => {
+    setSelectedFileForAttributes(item);
+    setAttributesModalOpen(true);
   };
 
   // 执行重命名
@@ -605,6 +625,13 @@ export default function HomeFile() {
                             删除
                           </Menu.Item>
 
+                          <Menu.Item
+                            leftSection="⚙️"
+                            onClick={() => handleShowAttributes(item)}
+                          >
+                            属性
+                          </Menu.Item>
+
                           {item.size > 0 && (
                             <Menu.Label>
                               <Center>
@@ -776,6 +803,92 @@ export default function HomeFile() {
             </Button>
           </Group>
         </Stack>
+      </Modal>
+
+      {/* 属性查看模态框 */}
+      <Modal
+        opened={attributesModalOpen}
+        onClose={() => setAttributesModalOpen(false)}
+        title="文件属性"
+        centered
+      >
+        {selectedFileForAttributes && (
+          <Stack gap="md">
+            <Table withTableBorder withColumnBorders>
+              <Table.Tbody>
+                <Table.Tr>
+                  <Table.Th w={100}>名称</Table.Th>
+                  <Table.Td style={{ wordBreak: "break-all" }}>
+                    {selectedFileForAttributes.name}
+                  </Table.Td>
+                </Table.Tr>
+                <Table.Tr>
+                  <Table.Th>大小</Table.Th>
+                  <Table.Td>
+                    {mp.formatFileSize(selectedFileForAttributes.size)}
+                  </Table.Td>
+                </Table.Tr>
+                <Table.Tr>
+                  <Table.Th>类型</Table.Th>
+                  <Table.Td>
+                    <Badge
+                      variant="light"
+                      color={
+                        selectedFileForAttributes.type === "directory"
+                          ? "blue"
+                          : "gray"
+                      }
+                    >
+                      {selectedFileForAttributes.type === "directory"
+                        ? "文件夹"
+                        : "文件"}
+                    </Badge>
+                  </Table.Td>
+                </Table.Tr>
+                {selectedFileForAttributes.expired_at ? (
+                  <Table.Tr>
+                    <Table.Th>过期时间</Table.Th>
+                    <Table.Td>
+                      {dayjs(selectedFileForAttributes.expired_at).format(
+                        "YYYY-MM-DD HH:mm:ss",
+                      )}
+                    </Table.Td>
+                  </Table.Tr>
+                ) : null}
+
+                {selectedFileForAttributes.tx_hash ? (
+                  <Table.Tr>
+                    <Table.Th>交易哈希</Table.Th>
+                    <Table.Td>
+                      <Anchor
+                        href={`${CRUST_SUBSCAN}/extrinsic/${selectedFileForAttributes.tx_hash}`}
+                        target="_blank"
+                        size="sm"
+                      >
+                        {selectedFileForAttributes.tx_hash}
+                      </Anchor>
+                    </Table.Td>
+                  </Table.Tr>
+                ) : null}
+
+                {selectedFileForAttributes.cid ? (
+                  <Table.Tr>
+                    <Table.Th>CID</Table.Th>
+                    <Table.Td>
+                      <Anchor
+                        href={`${dotCID}/ipfs/${selectedFileForAttributes.cid}`}
+                        target="_blank"
+                        size="sm"
+                      >
+                        {selectedFileForAttributes.cid}
+                      </Anchor>
+                    </Table.Td>
+                  </Table.Tr>
+                ) : null}
+              </Table.Tbody>
+            </Table>
+          </Stack>
+        )}
       </Modal>
 
       {/* 大文件提示模态框 */}

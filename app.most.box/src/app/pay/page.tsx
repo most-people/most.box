@@ -20,6 +20,7 @@ import { Turnstile } from "@marsidev/react-turnstile";
 import { notifications } from "@mantine/notifications";
 import Link from "next/link";
 import { api, isDev } from "@/utils/api";
+import { CRUST_SUBSCAN } from "@/utils/crust";
 
 // Use Cloudflare Testing Site Key that always passes
 const CLOUDFLARE_SITE_KEY = isDev
@@ -128,7 +129,7 @@ const PageContent = () => {
         <Anchor
           size="sm"
           c="dimmed"
-          href={`https://crust.subscan.io/account/${crust_address || ""}`}
+          href={`${CRUST_SUBSCAN}/account/${crust_address || ""}`}
           target="_blank"
         >
           {crust_address || "-"}

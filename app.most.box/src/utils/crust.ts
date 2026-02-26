@@ -3,6 +3,9 @@ import { create } from "kubo-rpc-client";
 import ky from "ky";
 import { mostCrust } from "@/utils/MostWallet";
 
+// Subscan 浏览器
+export const CRUST_SUBSCAN = "https://crust.subscan.io";
+
 // Crust IPFS Web3 Auth 网关
 const CRUST_IPFS_GW = "https://gw.crustfiles.app";
 // Crust Pinning 服务

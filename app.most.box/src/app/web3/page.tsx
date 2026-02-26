@@ -15,6 +15,7 @@ import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import Link from "next/link";
 import mp from "@/utils/mp";
 import { most25519, mostCrust } from "@/utils/MostWallet";
+import { CRUST_SUBSCAN } from "@/utils/crust";
 
 export default function PageWeb3() {
   const wallet = useUserStore((state) => state.wallet);
@@ -88,7 +89,7 @@ export default function PageWeb3() {
         <Group>
           <Text>{crust_address || "-"}</Text>
           <Anchor
-            href={`https://crust.subscan.io/account/${crust_address || ""}`}
+            href={`${CRUST_SUBSCAN}/account/${crust_address || ""}`}
             target="_blank"
           >
             查看
