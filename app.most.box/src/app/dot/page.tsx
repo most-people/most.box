@@ -22,7 +22,6 @@ import {
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import {
-  IconCheck,
   IconX,
   IconRefresh,
   IconServer,
@@ -39,48 +38,7 @@ import {
   type DetectionStatus,
 } from "@/utils/ipfs";
 
-// ===== 类型定义 =====
-type GatewayInfo = {
-  key: string;
-  title: string;
-  description: string;
-  gateways: string[];
-};
-
-// ===== 网关列表配置 =====
-const gatewayList: GatewayInfo[] = [
-  {
-    key: "custom",
-    title: "自定义网关",
-    description: "用户自定义的 IPFS 网关",
-    gateways: ["https://mp9.io", "http://localhost:8080"],
-  },
-  {
-    key: "crust",
-    title: "Crust 官方网关",
-    description: "由 Crust Network 提供的高速稳定网关",
-    gateways: ["https://gw.crust-gateway.com", "https://gw.crust-gateway.xyz"],
-  },
-  {
-    key: "public",
-    title: "公共网关",
-    description: "由社区或第三方服务商提供的公共网关",
-    gateways: [
-      "https://cid.most.red",
-      "https://ipfs.io",
-      "https://dweb.link",
-      "https://gateway.pinata.cloud",
-      "https://ipfs.filebase.io",
-      "https://w3s.link",
-      "https://4everland.io",
-      "https://ipfs.cyou",
-      "https://apac.orbitor.dev",
-      "https://eu.orbitor.dev",
-      "https://latam.orbitor.dev",
-      "https://dget.top",
-    ],
-  },
-];
+import { GatewayList, GatewayInfo } from "@/utils/ipfs";
 
 function GatewayManagerContent() {
   const searchParams = useSearchParams();
@@ -107,7 +65,7 @@ function GatewayManagerContent() {
   >({});
   const [customGateway, setCustomGateway] = useState("");
   const [isAddingGateway, setIsAddingGateway] = useState(false);
-  const [gateways, setGateways] = useState<GatewayInfo[]>(gatewayList);
+  const [gateways, setGateways] = useState<GatewayInfo[]>(GatewayList);
 
   const addCustomGateway = async () => {
     let gateway = "";
