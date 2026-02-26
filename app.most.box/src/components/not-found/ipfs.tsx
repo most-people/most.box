@@ -31,7 +31,6 @@ import Link from "next/link";
 import {
   IconCopy,
   IconFileText,
-  IconFolderOpen,
   IconInfoCircle,
   IconSettings,
   IconWorld,
@@ -121,7 +120,7 @@ const PageContent = () => {
 
     const check = async () => {
       setGatewayStatus("checking");
-      // 使用空文件夹 CID 检测网关连通性
+      // 使用 CID 检测网关连通性
       const result = await checkGateway(dotCID, cid);
       if (result.status === "success") {
         setGatewayStatus("ok");

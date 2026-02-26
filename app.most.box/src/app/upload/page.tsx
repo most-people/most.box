@@ -19,8 +19,6 @@ import {
   Modal,
   ActionIcon,
   Tooltip,
-  Breadcrumbs,
-  Anchor,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import {
@@ -47,7 +45,6 @@ interface UploadItem {
 }
 
 function UploadContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const path = searchParams.get("path") || "";
 
@@ -231,13 +228,7 @@ function UploadContent() {
 
         if (controller.signal.aborted) return;
 
-        updateItemStatus(
-          id,
-          "success",
-          100,
-          "上传成功！",
-          result.cid,
-        );
+        updateItemStatus(id, "success", 100, "上传成功！", result.cid);
 
         // Add to local file list
         addFile({
@@ -314,9 +305,9 @@ function UploadContent() {
             <IconUpload size={48} color="gray" />
             <Text ta="center">点击选择或拖拽文件到此处</Text>
             {path && (
-                <Text size="sm" c="dimmed">
-                    上传至目录: <Badge variant="light">{path}</Badge>
-                </Text>
+              <Text size="sm" c="dimmed">
+                上传至目录: <Badge variant="light">{path}</Badge>
+              </Text>
             )}
             <FileInput
               placeholder="选择文件"
@@ -459,7 +450,13 @@ function UploadContent() {
 
 export default function UploadPage() {
   return (
-    <Suspense fallback={<Container p="xl"><Text ta="center">加载中...</Text></Container>}>
+    <Suspense
+      fallback={
+        <Container p="xl">
+          <Text ta="center">加载中...</Text>
+        </Container>
+      }
+    >
       <UploadContent />
     </Suspense>
   );
