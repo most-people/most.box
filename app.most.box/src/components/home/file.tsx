@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import dayjs from "dayjs";
 import {
   Text,
@@ -82,6 +82,35 @@ export default function HomeFile() {
   const [attributesModalOpen, setAttributesModalOpen] = useState(false);
   const [selectedFileForAttributes, setSelectedFileForAttributes] =
     useState<FileItem | null>(null);
+
+  // 计算选中文件的大小（如果是文件夹，递归计算）
+  const selectedFileSize = useMemo(() => {
+    if (!selectedFileForAttributes) return 0;
+    if (selectedFileForAttributes.type !== "directory") {
+      return selectedFileForAttributes.size;
+    }
+
+    const dirPath = selectedFileForAttributes.path
+      ? `${selectedFileForAttributes.path}/${selectedFileForAttributes.name}`
+      : selectedFileForAttributes.name;
+    const normalizedDirPath = mp.normalizePath(dirPath);
+
+    return files.reduce((acc, file) => {
+      // 只计算文件，不重复计算目录（因为目录大小通常为0或需要递归计算）
+      if (file.type !== "file") return acc;
+
+      const fileDirPath = mp.normalizePath(file.path);
+
+      // 如果文件在目录下（直接或间接）
+      if (
+        fileDirPath === normalizedDirPath ||
+        fileDirPath.startsWith(normalizedDirPath + "/")
+      ) {
+        return acc + file.size;
+      }
+      return acc;
+    }, 0);
+  }, [selectedFileForAttributes, files]);
 
   // Refs
   const fileInputRef = useRef<HTMLInputElement>(null); // 文件输入框 Ref
@@ -824,9 +853,7 @@ export default function HomeFile() {
                 </Table.Tr>
                 <Table.Tr>
                   <Table.Th>大小</Table.Th>
-                  <Table.Td>
-                    {mp.formatFileSize(selectedFileForAttributes.size)}
-                  </Table.Td>
+                  <Table.Td>{mp.formatFileSize(selectedFileSize)}</Table.Td>
                 </Table.Tr>
                 <Table.Tr>
                   <Table.Th>类型</Table.Th>
