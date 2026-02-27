@@ -40,6 +40,13 @@ import { checkGateway } from "@/utils/ipfs";
 
 type CidType = "website" | "file";
 
+const isVideoOrAudio = (filename: string) => {
+  const ext = filename.split(".").pop()?.toLowerCase();
+  return ["mp4", "webm", "ogg", "mp3", "wav", "mkv", "avi", "mov"].includes(
+    ext || "",
+  );
+};
+
 const PageContent = () => {
   const router = useRouter();
   const pathname = usePathname();
@@ -232,16 +239,28 @@ const PageContent = () => {
         />
 
         <Group wrap="nowrap" mb={30}>
-          <Button
-            color="green"
-            variant="light"
-            w="100%"
-            component={Link}
-            target="_blank"
-            href={previewUrl}
-          >
-            在线预览
-          </Button>
+          {isVideoOrAudio(filename) ? (
+            <Button
+              color="grape"
+              variant="light"
+              w="100%"
+              component={Link}
+              href={`/player?cid=${cid}&filename=${filename}`}
+            >
+              在线播放
+            </Button>
+          ) : (
+            <Button
+              color="green"
+              variant="light"
+              w="100%"
+              component={Link}
+              target="_blank"
+              href={previewUrl}
+            >
+              在线预览
+            </Button>
+          )}
           {filename ? (
             <Button
               variant="light"

@@ -23,7 +23,6 @@ import {
   IconUserBitcoin,
   IconDatabase,
   IconWorld,
-  IconAppWindow,
   IconShare,
   IconBrandGithub,
 } from "@tabler/icons-react";
