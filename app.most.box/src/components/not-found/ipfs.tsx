@@ -40,11 +40,10 @@ import { checkGateway } from "@/utils/ipfs";
 
 type CidType = "website" | "file";
 
-const isVideoOrAudio = (filename: string) => {
-  const ext = filename.split(".").pop()?.toLowerCase();
-  return ["mp4", "webm", "ogg", "mp3", "wav", "mkv", "avi", "mov"].includes(
-    ext || "",
-  );
+const isMedia = (filename: string) => {
+  const ext = filename.split(".").pop()?.toLowerCase() || "";
+  const exts = ["mp4", "webm", "ogg", "mp3", "wav", "mkv", "avi", "mov"];
+  return exts.includes(ext);
 };
 
 const PageContent = () => {
@@ -239,7 +238,7 @@ const PageContent = () => {
         />
 
         <Group wrap="nowrap" mb={30}>
-          {isVideoOrAudio(filename) ? (
+          {isMedia(filename) ? (
             <Button
               color="grape"
               variant="light"

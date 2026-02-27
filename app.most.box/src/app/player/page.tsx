@@ -1,12 +1,6 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import {
-  LivepeerConfig,
-  createReactClient,
-  studioProvider,
-  Player,
-} from "@livepeer/react";
 import { useMemo, useState, useEffect } from "react";
 import { AppHeader } from "@/components/AppHeader";
 import {
@@ -20,19 +14,21 @@ import {
 } from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
 
-// Initialize the Livepeer client
-// Note: You should replace the apiKey with your own Livepeer Studio API Key
-const client = createReactClient({
-  provider: studioProvider({
-    apiKey: "c666c547-596f-4796-9d66-7b8956973656", // Placeholder or env var
-  }),
-});
+import "@vidstack/react/player/styles/default/theme.css";
+import "@vidstack/react/player/styles/default/layouts/video.css";
+import { MediaPlayer, MediaProvider } from "@vidstack/react";
+import {
+  defaultLayoutIcons,
+  DefaultVideoLayout,
+} from "@vidstack/react/player/layouts/default";
+import { useUserStore } from "@/stores/userStore";
 
 export default function PlayerPage() {
   const searchParams = useSearchParams();
   const cid = searchParams.get("cid");
   const filename = searchParams.get("filename") || "Video";
   const [mounted, setMounted] = useState(false);
+  const dotCID = useUserStore((state) => state.dotCID);
 
   useEffect(() => {
     setMounted(true);
@@ -40,11 +36,10 @@ export default function PlayerPage() {
 
   const src = useMemo(() => {
     if (cid) {
-      // Construct IPFS URL
-      // Livepeer Player can handle ipfs:// protocol if configured or standard gateways
-      return `ipfs://${cid}`;
+      // Convert IPFS CID to a public gateway URL
+      return `${dotCID}/ipfs/${cid}`;
     }
-    return null;
+    return "";
   }, [cid]);
 
   if (!mounted) {
@@ -56,43 +51,31 @@ export default function PlayerPage() {
   }
 
   return (
-    <LivepeerConfig client={client}>
-      <Box>
-        <AppHeader title={filename} />
-        <Container size="md" py="xl">
-          <Stack gap="md">
-            {!cid ? (
-              <Alert
-                icon={<IconAlertCircle size={16} />}
-                title="Error"
-                color="red"
-              >
-                Missing CID parameter.
-              </Alert>
-            ) : (
-              <Box>
-                <Player
-                  title={filename}
-                  src={src}
-                  showPipButton
-                  objectFit="contain"
-                  autoPlay
-                  controls={{
-                    autohide: 3000,
-                  }}
-                  theme={{
-                    borderStyles: { containerBorderStyle: "solid" },
-                    radii: { containerBorderRadius: "10px" },
-                  }}
-                />
-                <Text size="xs" c="dimmed" mt="xs" ta="center">
-                  CID: {cid}
-                </Text>
-              </Box>
-            )}
-          </Stack>
-        </Container>
-      </Box>
-    </LivepeerConfig>
+    <Box>
+      <AppHeader title={filename} />
+      <Container size="md" py="md">
+        <Stack gap="md">
+          {!cid ? (
+            <Alert
+              icon={<IconAlertCircle size={16} />}
+              title="Error"
+              color="red"
+            >
+              Missing CID parameter.
+            </Alert>
+          ) : (
+            <Box>
+              <MediaPlayer src={src} autoPlay>
+                <MediaProvider />
+                <DefaultVideoLayout icons={defaultLayoutIcons} noAudioGain />
+              </MediaPlayer>
+              <Text c="dimmed" mt="xs" ta="center">
+                {src}
+              </Text>
+            </Box>
+          )}
+        </Stack>
+      </Container>
+    </Box>
   );
 }
