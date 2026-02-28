@@ -19,7 +19,7 @@ import { useEffect, useState } from "react";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { notifications } from "@mantine/notifications";
 import Link from "next/link";
-import { api, isDev } from "@/utils/api";
+import { apiAuth, isDev } from "@/utils/api";
 import { CRUST_SUBSCAN } from "@/utils/crust";
 
 // Use Cloudflare Testing Site Key that always passes
@@ -53,7 +53,7 @@ const PageContent = () => {
     setClaiming(true);
     setProgress(0);
     try {
-      await api.post("free.claim.cru", {
+      await apiAuth.post("free.claim.cru", {
         json: {
           turnstileToken,
         },
@@ -138,7 +138,7 @@ const PageContent = () => {
         <Title order={4}>当前余额：{parseFloat(balance) || "0"} CRU</Title>
 
         {isNewUser && (
-          <Paper withBorder p="xl" radius="md" w="100%">
+          <Paper withBorder px="md" py="xl" radius="md" w="100%">
             <Stack align="center">
               <Turnstile
                 siteKey={CLOUDFLARE_SITE_KEY}
@@ -151,7 +151,6 @@ const PageContent = () => {
                 onClick={handleClaim}
                 loading={claiming}
                 disabled={!turnstileToken}
-                fullWidth
                 size="md"
                 variant="gradient"
               >

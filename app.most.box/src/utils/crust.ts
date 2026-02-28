@@ -1,6 +1,6 @@
 import { formatUnits, parseUnits } from "ethers";
 import { create } from "kubo-rpc-client";
-import ky from "ky";
+import { apiX } from "@/utils/api";
 import { mostCrust } from "@/utils/MostWallet";
 
 // Subscan 浏览器
@@ -142,7 +142,7 @@ const ipfsDir = async (
  */
 const pin = async (cid: string, name: string, authHeader: string) => {
   try {
-    return await ky
+    return await apiX
       .post(`${CRUST_PIN}/psa/pins`, {
         json: {
           cid: cid,
@@ -503,7 +503,7 @@ const orderBatch = async (
  */
 const balance = async (address: string): Promise<string> => {
   try {
-    const res = await ky
+    const res = await apiX
       .post(CRUST_SUBSCAN_API + "/api/scan/account/tokens", {
         json: {
           address,
@@ -605,7 +605,7 @@ const saveRemark = async (
 const getRemark = async (address: string) => {
   try {
     // 1. 获取 Remark 交易列表
-    const res = await ky
+    const res = await apiX
       .post(CRUST_SUBSCAN_API + "/api/v2/scan/extrinsics", {
         json: {
           address,
@@ -625,7 +625,7 @@ const getRemark = async (address: string) => {
       if (ext.success) {
         // 2. 获取交易详情以读取 params
         try {
-          const detailRes = await ky
+          const detailRes = await apiX
             .post(CRUST_SUBSCAN_API + "/api/scan/extrinsic", {
               json: { extrinsic_index: ext.extrinsic_index },
               headers: {

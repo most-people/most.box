@@ -2,7 +2,7 @@ import { mostDecode, mostEncode } from "@/utils/MostWallet";
 import mp from "@/utils/mp";
 import { notifications } from "@mantine/notifications";
 import { useUserStore } from "@/stores/userStore";
-import { api } from "@/utils/api";
+import { apiAuth } from "@/utils/api";
 import dayjs from "dayjs";
 
 // 冲突
@@ -60,7 +60,7 @@ export const cloudSave = async () => {
     const cid = await mp.calculateCID(content);
     const encrypted = encryptBackup(data, wallet.danger);
 
-    await api.put("backup", {
+    await apiAuth.put("backup", {
       body: encrypted,
       headers: {
         "Content-Type": "text/plain",
@@ -91,7 +91,7 @@ export const cloudLoad = async () => {
   }
 
   try {
-    const response = await api.get("backup");
+    const response = await apiAuth.get("backup");
 
     const cloudTime = parseInt(response.headers.get("x-backup-time") || "0");
     const cloudCID = response.headers.get("x-backup-cid") || "";

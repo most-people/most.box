@@ -34,6 +34,7 @@ import { notifications } from "@mantine/notifications";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { encryptBackup, decryptBackup } from "@/utils/backup";
+import { apiX } from "@/utils/api";
 
 const PageContent = () => {
   const router = useRouter();
@@ -139,11 +140,7 @@ const PageContent = () => {
 
       // Step 2: 拉取数据
       setActiveStep(2);
-      const res = await fetch(`${dotCID}/ipfs/${cid}`);
-      if (!res.ok) {
-        throw new Error(`从网关获取备份失败: ${res.status} ${res.statusText}`);
-      }
-      const content = await res.text();
+      const content = await apiX.get(`${dotCID}/ipfs/${cid}`).text();
       const data = decryptBackup(content, wallet.danger);
 
       // Step 3: 恢复数据

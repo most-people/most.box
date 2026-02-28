@@ -16,9 +16,12 @@ export const getAuthHeaders = async (wallet: MostWallet) => {
   };
 };
 
-export const api = ky.create({
-  // prefixUrl: isDev ? "http://localhost:8787/api" : "https://api.most.box/api",
-  prefixUrl: "https://api.most.box/api",
+export const apiX = ky.create({
+  timeout: false,
+});
+
+export const apiAuth = apiX.extend({
+  prefixUrl: isDev ? "http://localhost:8787/api" : "https://api.most.box/api",
   hooks: {
     beforeRequest: [
       async (request) => {

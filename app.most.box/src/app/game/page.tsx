@@ -3,6 +3,7 @@
 import { AppHeader } from "@/components/AppHeader";
 import { Container, SimpleGrid, Paper, Text, Group } from "@mantine/core";
 import Link from "next/link";
+import { IconGridDots, IconCircleHalf2 } from "@tabler/icons-react";
 
 export default function GamePage() {
   const games = [
@@ -10,13 +11,13 @@ export default function GamePage() {
       title: "五子棋",
       description: "五子连珠即可获胜",
       href: "/game/5",
-      icon: "⚫",
+      icon: <IconGridDots size={24} />,
     },
     {
       title: "黑白棋",
       description: "翻转对手的棋子，占据棋盘",
       href: "/game/black",
-      icon: "⚫",
+      icon: <IconCircleHalf2 size={24} />,
     },
   ];
 
@@ -37,9 +38,11 @@ export default function GamePage() {
                 textDecoration: "none",
                 color: "inherit",
                 cursor: "pointer",
+                transition: "transform 0.2s ease",
               }}
             >
               <Group>
+                {game.icon}
                 <div style={{ flex: 1 }}>
                   <Text size="lg" fw={700} mb={5}>
                     {game.title}
