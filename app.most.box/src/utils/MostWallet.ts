@@ -21,6 +21,8 @@ export interface MostWallet {
   type?: "From Signature";
 }
 
+const PBKDF2_ITERATIONS = 3;
+
 export const mostWallet = (
   username_address: string,
   password_signature: string,
@@ -29,10 +31,8 @@ export const mostWallet = (
   let seed: Uint8Array;
   let address: string;
   let username = username_address;
-  let sign = false;
 
   if (type === "From Signature") {
-    sign = true;
     address = username_address;
     username = username_address.slice(-4);
     const signature = password_signature;
@@ -41,7 +41,8 @@ export const mostWallet = (
     const password = password_signature;
     const p = toUtf8Bytes(password);
     const salt = toUtf8Bytes("/most.box/" + username);
-    const kdf = pbkdf2(p, salt, 3, 32, "sha512");
+
+    const kdf = pbkdf2(p, salt, PBKDF2_ITERATIONS, 32, "sha512");
     seed = getBytes(sha256(getBytes(kdf)));
 
     // wallet all in one
@@ -50,19 +51,17 @@ export const mostWallet = (
     address = account.address;
   }
 
-  const mostWallet: MostWallet = {
+  return {
     username,
     address,
     danger: hexlify(seed),
     type,
   };
-  return mostWallet;
 };
 
 // Wallet Mnemonic
 export const mostMnemonic = (danger: string) => {
-  const mnemonic = Mnemonic.entropyToPhrase(getBytes(danger));
-  return mnemonic;
+  return Mnemonic.entropyToPhrase(getBytes(danger));
 };
 
 // X25519 & Ed25519 key pair
@@ -81,9 +80,9 @@ export const mostCrust = (danger: string) => {
   const entropy = getBytes(danger);
   const mnemonic = Mnemonic.entropyToPhrase(entropy);
 
-  // Polkadot uses entropy as password for PBKDF2, not mnemonic phrase!
+  const mnemonicBytes = toUtf8Bytes(mnemonic);
   const salt = toUtf8Bytes("mnemonic");
-  const seed = pbkdf2(entropy, salt, 2048, 64, "sha512");
+  const seed = pbkdf2(mnemonicBytes, salt, 2048, 64, "sha512");
   const miniSecret = getBytes(seed).slice(0, 32);
 
   const secretKey = sr25519.secretFromSeed(miniSecret);
@@ -120,7 +119,33 @@ export const mostCrust = (danger: string) => {
   };
 };
 
-export const mostEncode = (
+// 加密本地数据
+export const mostEncode = (text: string, danger_seed: string): string => {
+  const bytes = new TextEncoder().encode(text);
+  const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
+  // 直接使用高熵的 danger_seed 作为对称密钥
+  const key = getBytes(danger_seed).slice(0, nacl.secretbox.keyLength);
+  const encrypted = nacl.secretbox(bytes, nonce, key);
+
+  return ["mp://1", encodeBase64(nonce), encodeBase64(encrypted)].join(".");
+};
+
+export const mostDecode = (data: string, danger_seed: string): string => {
+  const [prefix, nonce64, encrypted64] = data.split(".");
+  if (prefix !== "mp://1") return "";
+
+  const key = getBytes(danger_seed).slice(0, nacl.secretbox.keyLength);
+  const decrypted = nacl.secretbox.open(
+    decodeBase64(encrypted64),
+    decodeBase64(nonce64),
+    key,
+  );
+
+  return decrypted ? new TextDecoder().decode(decrypted) : "";
+};
+
+// 加密端到端通信
+export const mostEncodeMessage = (
   text: string,
   public_key: string,
   private_key: string,
@@ -140,7 +165,7 @@ export const mostEncode = (
   return ["mp://2", encodeBase64(nonce), encodeBase64(encrypted)].join(".");
 };
 
-export const mostDecode = (
+export const mostDecodeMessage = (
   data: string,
   public_key: string,
   private_key: string,

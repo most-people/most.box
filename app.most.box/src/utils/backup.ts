@@ -1,4 +1,4 @@
-import { most25519, mostDecode, mostEncode } from "@/utils/MostWallet";
+import { mostDecode, mostEncode } from "@/utils/MostWallet";
 import mp from "@/utils/mp";
 import { notifications } from "@mantine/notifications";
 import { useUserStore } from "@/stores/userStore";
@@ -9,8 +9,7 @@ import dayjs from "dayjs";
 let conflicts = true;
 
 export const encryptBackup = (data: any, danger: string): string => {
-  const { public_key, private_key } = most25519(danger);
-  const encrypted = mostEncode(JSON.stringify(data), public_key, private_key);
+  const encrypted = mostEncode(JSON.stringify(data), danger);
 
   if (!encrypted) {
     throw new Error("数据加密失败");
@@ -19,12 +18,11 @@ export const encryptBackup = (data: any, danger: string): string => {
   return encrypted;
 };
 export const decryptBackup = (content: string, danger: string): any => {
-  if (!content.startsWith("mp://2")) {
+  if (!content.startsWith("mp://1")) {
     throw new Error("无效的备份数据格式");
   }
 
-  const { public_key, private_key } = most25519(danger);
-  const decrypted = mostDecode(content, public_key, private_key);
+  const decrypted = mostDecode(content, danger);
 
   if (!decrypted) {
     throw new Error("解密失败，请确保使用正确的钱包账户");

@@ -30,19 +30,14 @@ import Website from "@/assets/icons/website.svg";
 // https://www.flaticon.com/free-icon-font/earth-americas_9585915?page=1&position=2&term=earth&origin=search&related_id=9585915
 import Earth from "@/assets/icons/earth.svg";
 
-// https://supabase.com/dashboard/project/vibeseycqiisftkweeat/auth/providers
-import Google from "@/assets/icons/google.svg";
-import X from "@/assets/icons/x.svg";
-import Discord from "@/assets/icons/discord.svg";
-import Github from "@/assets/icons/github.svg";
-import Mail from "@/assets/icons/mail.svg";
-import Telegram from "@/assets/icons/telegram.svg";
-
 // https://www.flaticon.com/free-icon-font/meeting-alt_13085451?term=talk&related_id=13085451
 import Chat from "@/assets/icons/chat.svg";
 
 // https://www.flaticon.com/free-icon-font/multi-player_19020464?term=game&related_id=19020464
 import Game from "@/assets/icons/game.svg";
+
+// https://www.flaticon.com/free-icon-font/shovel_10801980?page=2&position=22&term=tools&origin=search&related_id=10801980
+import Shovel from "@/assets/icons/shovel.svg";
 
 const icons = {
   File,
@@ -66,13 +61,8 @@ const icons = {
   Join,
   Setting,
   Earth,
-  Google,
-  X,
-  Discord,
-  Github,
-  Mail,
-  Telegram,
   Game,
+  Shovel,
 } as const;
 
 export type IconName = keyof typeof icons;

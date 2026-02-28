@@ -21,7 +21,7 @@ import "@/app/note/page.scss";
 import { useSearchParams } from "next/navigation";
 import { useUserStore } from "@/stores/userStore";
 import { notifications } from "@mantine/notifications";
-import { most25519, mostDecode, mostEncode } from "@/utils/MostWallet";
+import { mostDecode, mostEncode } from "@/utils/MostWallet";
 import Link from "next/link";
 import { modals } from "@mantine/modals";
 import mp from "@/utils/mp";
@@ -87,10 +87,9 @@ const PageContent = () => {
 
   useEffect(() => {
     if (!inited) return;
-    if (wallet && content.startsWith("mp://2")) {
-      const { public_key, private_key } = most25519(wallet.danger);
+    if (wallet && content.startsWith("mp://1")) {
       // 尝试解密
-      const decrypted = mostDecode(content, public_key, private_key);
+      const decrypted = mostDecode(content, wallet.danger);
       if (decrypted) {
         // 解密成功
         queueMicrotask(() => setIsSecret(true));
@@ -107,8 +106,7 @@ const PageContent = () => {
 
     // 加密
     if (wallet && isSecret) {
-      const { public_key, private_key } = most25519(wallet.danger);
-      newContent = mostEncode(newContent, public_key, private_key);
+      newContent = mostEncode(newContent, wallet.danger);
     }
 
     try {

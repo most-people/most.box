@@ -13,12 +13,7 @@ import {
   Group,
 } from "@mantine/core";
 import { useEffect, useState } from "react";
-import {
-  mostEncode,
-  mostDecode,
-  mostWallet,
-  most25519,
-} from "@/utils/MostWallet";
+import { mostEncode, mostDecode, mostWallet } from "@/utils/MostWallet";
 import { notifications } from "@mantine/notifications";
 import { IconInfoCircle, IconCopy } from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
@@ -81,8 +76,7 @@ export default function PageMpMi() {
     try {
       // 使用密码生成密钥对
       const { danger } = mostWallet(username, password);
-      const { public_key, private_key } = most25519(danger);
-      const encrypted = mostEncode(plaintext, public_key, private_key);
+      const encrypted = mostEncode(plaintext, danger);
 
       if (encrypted) {
         setCipherText(encrypted);
@@ -125,8 +119,7 @@ export default function PageMpMi() {
     try {
       // 使用密码生成密钥对
       const { danger } = mostWallet(username, password);
-      const { public_key, private_key } = most25519(danger);
-      const decrypted = mostDecode(cipherText, public_key, private_key);
+      const decrypted = mostDecode(cipherText, danger);
 
       if (decrypted) {
         setPlaintext(decrypted);
@@ -166,7 +159,7 @@ export default function PageMpMi() {
 
       <Stack gap="md" mt="md">
         <Alert icon={<IconInfoCircle size={16} />}>
-          使用 X25519 加密算法对文本进行加密和解密
+          使用高强度对称加密算法(XSalsa20-Poly1305)对文本进行加密和解密
         </Alert>
 
         <Box>

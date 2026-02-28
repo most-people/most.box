@@ -1,4 +1,4 @@
-import { createTheme, MantineColorsTuple } from "@mantine/core";
+import { createTheme, MantineColorsTuple, Textarea } from "@mantine/core";
 
 // https://mantine.dev/colors-generator/?color=862e2a
 const mostColor: MantineColorsTuple = [
@@ -26,17 +26,22 @@ export const theme = createTheme({
     deg: 45,
   },
   components: {
+    PasswordInput: {
+      defaultProps: {
+        size: "md",
+      },
+    },
+    Textarea: {
+      defaultProps: {
+        size: "md",
+      },
+    },
     Input: {
       defaultProps: {
         size: "md",
       },
     },
     TextInput: {
-      defaultProps: {
-        size: "md",
-      },
-    },
-    Textarea: {
       defaultProps: {
         size: "md",
       },
