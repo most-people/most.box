@@ -61,17 +61,7 @@ export const AppHeader = ({ title, variant, right, left }: AppHeaderProps) => {
               component={Link}
               href="/sync"
             >
-              数据同步
-            </Menu.Item>
-
-            <Menu.Divider />
-
-            <Menu.Item
-              leftSection={<Icon name="Earth" size={16} />}
-              component={Link}
-              href="/dot"
-            >
-              我的节点
+              链上同步
             </Menu.Item>
 
             <Menu.Divider />

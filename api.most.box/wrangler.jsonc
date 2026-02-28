@@ -20,8 +20,8 @@
   ],
   "vars": {
     "ENVIRONMENT": "production",
-    "FAUCET_MNEMONIC": "",
-    "TURNSTILE_SECRET_KEY": "",
+    // "FAUCET_MNEMONIC": "",
+    // "TURNSTILE_SECRET_KEY": "",
   },
   // "kv_namespaces": [
   //   {

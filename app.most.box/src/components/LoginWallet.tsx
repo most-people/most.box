@@ -6,9 +6,12 @@ import {
   useMantineColorScheme,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
-import { useActiveAccount, useConnectModal } from "thirdweb/react";
+import {
+  ThirdwebProvider,
+  useActiveAccount,
+  useConnectModal,
+} from "thirdweb/react";
 import { client } from "@/utils/thirdweb";
-import Thirdweb from "@/context/Thirdweb";
 import { mostWallet } from "@/utils/MostWallet";
 import { useUserStore } from "@/stores/userStore";
 import { useBack } from "@/hooks/useBack";
@@ -90,8 +93,8 @@ const LoginWalletContent = () => {
 
 export default function LoginWallet() {
   return (
-    <Thirdweb>
+    <ThirdwebProvider>
       <LoginWalletContent />
-    </Thirdweb>
+    </ThirdwebProvider>
   );
 }

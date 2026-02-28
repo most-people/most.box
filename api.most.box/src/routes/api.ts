@@ -63,7 +63,7 @@ api.post("/free.claim.cru", async (c) => {
     const address = c.get("address");
     const { turnstileToken } = await c.req.json();
 
-    // Check if running locally/dev to optionally skip Turnstile
+    // 检查是否在本地/开发环境运行，以便选择性跳过 Turnstile 验证
     const isDev = c.env.ENVIRONMENT === "development";
 
     if (isDev) {
@@ -72,7 +72,7 @@ api.post("/free.claim.cru", async (c) => {
       if (!turnstileToken) {
         return c.json({ error: "缺少 Turnstile 令牌" }, 400);
       }
-      // 1. Verify Turnstile if token is provided
+      // 1. 如果提供了令牌，则验证 Turnstile
       const ip = c.req.header("CF-Connecting-IP");
       const formData = new FormData();
       formData.append("secret", c.env.TURNSTILE_SECRET_KEY);
@@ -90,14 +90,14 @@ api.post("/free.claim.cru", async (c) => {
       }
     }
 
-    // 2. Check on-chain balance (Must be 0 to claim)
-    // Dynamic import to avoid loading heavy libs for other routes
+    // 2. 检查链上余额（必须为 0 才能领取）
+    // 动态导入以避免为其他路由加载繁重的库
     const { ApiPromise, WsProvider } = await import("@polkadot/api");
     const { Keyring } = await import("@polkadot/keyring");
     const { typesBundleForPolkadot } =
       await import("@crustio/type-definitions");
 
-    // Connect to Crust
+    // 连接到 Crust
     const provider = new WsProvider(CRUST_RPC_NODES);
 
     const api = await ApiPromise.create({
@@ -108,11 +108,11 @@ api.post("/free.claim.cru", async (c) => {
     try {
       await api.isReady;
 
-      // Check balance
+      // 检查余额
       const accountInfo = (await api.query.system.account(address)) as any;
       const freeBalance = accountInfo.data.free.toString();
 
-      // If balance > 0, not a new user
+      // 如果余额 > 0，则不是新用户
       if (BigInt(freeBalance) > 0n) {
         return c.json(
           { error: `不是新用户，当前余额 ${formatUnits(freeBalance, 12)} CRU` },

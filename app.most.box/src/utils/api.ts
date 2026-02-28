@@ -21,7 +21,8 @@ export const apiKy = ky.create({
 });
 
 export const apiAuth = apiKy.extend({
-  prefixUrl: isDev ? "http://localhost:8787/api" : "https://api.most.box/api",
+  // prefixUrl: isDev ? "http://localhost:8787/api" : "https://api.most.box/api",
+  prefixUrl: "https://api.most.box/api",
   hooks: {
     beforeRequest: [
       async (request) => {
