@@ -95,6 +95,17 @@ const PageContent = () => {
 
   const host = `most.box/${pathname.split("/")[1]}/`;
 
+  const qrValue = useMemo(() => {
+    let url = `${host}${cid}`;
+    if (filename) {
+      const ext = filename.split(".").pop()?.toLowerCase() || "";
+      if (ext) {
+        url += `?filename=${cid.slice(-3)}.${ext}`;
+      }
+    }
+    return url;
+  }, [host, cid, filename]);
+
   const [gatewayStatus, setGatewayStatus] = useState<
     "ok" | "error" | "checking"
   >("checking");
@@ -246,7 +257,7 @@ const PageContent = () => {
               component={Link}
               href={`/player?cid=${cid}&filename=${filename}`}
             >
-              在线播放
+              播放
             </Button>
           ) : (
             <Button
@@ -257,7 +268,7 @@ const PageContent = () => {
               target="_blank"
               href={previewUrl}
             >
-              在线预览
+              打开
             </Button>
           )}
           {filename ? (
@@ -292,7 +303,7 @@ const PageContent = () => {
               <div className="qrcode-frame">
                 <QRCodeSVG
                   className="qrcode"
-                  value={`${host}${cid}`}
+                  value={qrValue}
                   size={158}
                   bgColor="#FFF"
                   fgColor="#000"
@@ -302,10 +313,9 @@ const PageContent = () => {
 
               <div className="info">
                 <Text className="name" lineClamp={3}>
-                  {filename}
+                  {filename || "-"}
                 </Text>
-                <Text>{host}</Text>
-                <Text>{cid}</Text>
+                <Text>{qrValue}</Text>
               </div>
             </div>
           </Stack>

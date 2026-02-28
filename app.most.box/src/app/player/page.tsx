@@ -16,12 +16,17 @@ import { IconAlertCircle } from "@tabler/icons-react";
 
 import "@vidstack/react/player/styles/default/theme.css";
 import "@vidstack/react/player/styles/default/layouts/video.css";
+import "@vidstack/react/player/styles/plyr/theme.css";
 import { MediaPlayer, MediaProvider } from "@vidstack/react";
 import {
   defaultLayoutIcons,
   DefaultVideoLayout,
 } from "@vidstack/react/player/layouts/default";
 import { useUserStore } from "@/stores/userStore";
+import {
+  PlyrLayout,
+  plyrLayoutIcons,
+} from "@vidstack/react/player/layouts/plyr";
 
 export default function PlayerPage() {
   const searchParams = useSearchParams();
@@ -40,7 +45,11 @@ export default function PlayerPage() {
       return `${dotCID}/ipfs/${cid}`;
     }
     return "";
-  }, [cid]);
+  }, [cid, dotCID]);
+
+  const isAudio = useMemo(() => {
+    return /\.(mp3|wav|ogg|m4a|flac|aac|wma)$/i.test(filename);
+  }, [filename]);
 
   if (!mounted) {
     return (
@@ -65,12 +74,20 @@ export default function PlayerPage() {
             </Alert>
           ) : (
             <Box>
-              <MediaPlayer src={src} autoPlay>
+              <MediaPlayer src={src} autoPlay title={filename}>
                 <MediaProvider />
-                <DefaultVideoLayout icons={defaultLayoutIcons} noAudioGain />
+                {isAudio ? (
+                  <PlyrLayout
+                    icons={plyrLayoutIcons}
+                    style={{ marginTop: "40px" }}
+                  />
+                ) : (
+                  <DefaultVideoLayout icons={defaultLayoutIcons} noAudioGain />
+                )}
               </MediaPlayer>
+
               <Text c="dimmed" mt="xs" ta="center">
-                {src}
+                {src}?filename={filename}
               </Text>
             </Box>
           )}
