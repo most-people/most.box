@@ -16,11 +16,11 @@ export const getAuthHeaders = async (wallet: MostWallet) => {
   };
 };
 
-export const apiX = ky.create({
+export const apiKy = ky.create({
   timeout: false,
 });
 
-export const apiAuth = apiX.extend({
+export const apiAuth = apiKy.extend({
   prefixUrl: isDev ? "http://localhost:8787/api" : "https://api.most.box/api",
   hooks: {
     beforeRequest: [

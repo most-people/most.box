@@ -34,7 +34,7 @@ import { notifications } from "@mantine/notifications";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { encryptBackup, decryptBackup } from "@/utils/backup";
-import { apiX } from "@/utils/api";
+import { apiKy } from "@/utils/api";
 
 const PageContent = () => {
   const router = useRouter();
@@ -140,7 +140,7 @@ const PageContent = () => {
 
       // Step 2: 拉取数据
       setActiveStep(2);
-      const content = await apiX.get(`${dotCID}/ipfs/${cid}`).text();
+      const content = await apiKy.get(`${dotCID}/ipfs/${cid}`).text();
       const data = decryptBackup(content, wallet.danger);
 
       // Step 3: 恢复数据

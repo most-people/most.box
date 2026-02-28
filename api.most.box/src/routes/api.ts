@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { cryptoWaitReady, signatureVerify } from "@polkadot/util-crypto";
 import { formatUnits } from "ethers";
 import { Bindings, Variables } from "../types";
+import { apiKy } from "../utils/api";
 
 const CRUST_RPC_NODES = [
   "wss://crust.api.onfinality.io/public-ws",
@@ -78,14 +79,11 @@ api.post("/free.claim.cru", async (c) => {
       formData.append("response", turnstileToken);
       formData.append("remoteip", ip || "");
 
-      const turnstileRes = await fetch(
-        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-        {
-          method: "POST",
+      const turnstileResult = await apiKy
+        .post("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
           body: formData,
-        },
-      );
-      const turnstileResult = await turnstileRes.json<any>();
+        })
+        .json<any>();
 
       if (!turnstileResult.success) {
         return c.json({ error: "无效的 Turnstile 令牌" }, 400);

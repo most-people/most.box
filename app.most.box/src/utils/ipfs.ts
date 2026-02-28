@@ -1,4 +1,4 @@
-import { apiX } from "@/utils/api";
+import { apiKy } from "@/utils/api";
 
 export type GatewayInfo = {
   key: string;
@@ -66,7 +66,7 @@ export const checkGateway = async (
   const startTime = Date.now();
 
   try {
-    const response = await apiX.head(testUrl, {
+    const response = await apiKy.head(testUrl, {
       timeout: 10000,
       throwHttpErrors: false,
     });
