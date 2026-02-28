@@ -2,6 +2,7 @@ import { formatUnits, parseUnits } from "ethers";
 import { create } from "kubo-rpc-client";
 import { apiKy } from "@/utils/api";
 import { mostCrust } from "@/utils/MostWallet";
+import type { ApiPromise } from "@polkadot/api";
 
 // Subscan 浏览器
 export const CRUST_SUBSCAN = "https://crust.subscan.io";
@@ -12,13 +13,32 @@ const CRUST_IPFS_GW = "https://gw.crustfiles.app";
 const CRUST_PIN = "https://pin.crustcode.com";
 // Crust 链 RPC 节点列表
 const CRUST_RPC_NODES = [
-  "wss://crust.api.onfinality.io/public-ws",
   "wss://rpc.crust.network",
   "wss://rpc-crust-mainnet.decoo.io",
   "wss://api.decloudf.com",
+  "wss://crust.api.onfinality.io/public-ws",
 ];
 // Subscan 浏览器 API
 const CRUST_SUBSCAN_API = "https://crust.api.subscan.io";
+
+let crustApi: any = null;
+
+const getCrustApi = async (): Promise<ApiPromise> => {
+  if (crustApi && crustApi.isConnected) {
+    return crustApi;
+  }
+
+  const { ApiPromise, WsProvider } = await import("@polkadot/api");
+  const { typesBundleForPolkadot } = await import("@crustio/type-definitions");
+
+  crustApi = new ApiPromise({
+    provider: new WsProvider(CRUST_RPC_NODES),
+    typesBundle: typesBundleForPolkadot,
+  });
+
+  await crustApi.isReady;
+  return crustApi;
+};
 
 /**
  * 创建 Crust Web3 认证头
@@ -315,15 +335,7 @@ const order = async (
   tips = 0,
   currentBalance: string,
 ) => {
-  const { ApiPromise, WsProvider } = await import("@polkadot/api");
-  const { typesBundleForPolkadot } = await import("@crustio/type-definitions");
-  const { Keyring } = await import("@polkadot/keyring");
-
-  // 1. 初始化 API
-  const crust = new ApiPromise({
-    provider: new WsProvider(CRUST_RPC_NODES),
-    typesBundle: typesBundleForPolkadot,
-  });
+  const crust = await getCrustApi();
 
   try {
     // 检查余额
@@ -335,9 +347,8 @@ const order = async (
       throw error;
     }
 
-    await crust.isReady;
-
     // 2. 创建 Keyring
+    const { Keyring } = await import("@polkadot/keyring");
     const keyring = new Keyring({ type: "sr25519" });
     const { crust_mnemonic } = mostCrust(danger);
     const krp = keyring.addFromUri(crust_mnemonic);
@@ -407,7 +418,8 @@ const order = async (
     console.error("下存储订单失败:", error);
     throw error;
   } finally {
-    await crust.disconnect();
+    // Do not disconnect to reuse the connection
+    // await crust.disconnect();
   }
 };
 
@@ -425,14 +437,7 @@ const orderBatch = async (
   tips = 0,
   currentBalance: string,
 ) => {
-  const { ApiPromise, WsProvider } = await import("@polkadot/api");
-  const { typesBundleForPolkadot } = await import("@crustio/type-definitions");
-  const { Keyring } = await import("@polkadot/keyring");
-
-  const crust = new ApiPromise({
-    provider: new WsProvider(CRUST_RPC_NODES),
-    typesBundle: typesBundleForPolkadot,
-  });
+  const crust = await getCrustApi();
 
   try {
     const balance = parseUnits(currentBalance, 12);
@@ -442,8 +447,7 @@ const orderBatch = async (
       });
     }
 
-    await crust.isReady;
-
+    const { Keyring } = await import("@polkadot/keyring");
     const keyring = new Keyring({ type: "sr25519" });
     const { crust_mnemonic } = mostCrust(danger);
     const krp = keyring.addFromUri(crust_mnemonic);
@@ -492,7 +496,8 @@ const orderBatch = async (
     console.error("批量下存储订单失败:", error);
     throw error;
   } finally {
-    await crust.disconnect();
+    // Do not disconnect to reuse the connection
+    // await crust.disconnect();
   }
 };
 
@@ -539,18 +544,10 @@ const saveRemark = async (
     throw error;
   }
 
-  const { ApiPromise, WsProvider } = await import("@polkadot/api");
-  const { typesBundleForPolkadot } = await import("@crustio/type-definitions");
-  const { Keyring } = await import("@polkadot/keyring");
-
-  const crust = new ApiPromise({
-    provider: new WsProvider(CRUST_RPC_NODES),
-    typesBundle: typesBundleForPolkadot,
-  });
+  const crust = await getCrustApi();
 
   try {
-    await crust.isReady;
-
+    const { Keyring } = await import("@polkadot/keyring");
     const keyring = new Keyring({ type: "sr25519" });
     const { crust_mnemonic } = mostCrust(danger);
     const krp = keyring.addFromUri(crust_mnemonic);
@@ -593,7 +590,8 @@ const saveRemark = async (
     console.error("写入链上 Remark 失败:", error);
     throw error;
   } finally {
-    await crust.disconnect();
+    // Do not disconnect to reuse the connection
+    // await crust.disconnect();
   }
 };
 
@@ -667,60 +665,6 @@ const getRemark = async (address: string) => {
   }
 };
 
-/**
- * 获取文件存储状态和过期时间
- * @param cid IPFS CID
- * @returns { expiredAt: number, fileSize: number } | null
- */
-const getFileStatus = async (cid: string) => {
-  const { ApiPromise, WsProvider } = await import("@polkadot/api");
-  const { typesBundleForPolkadot } = await import("@crustio/type-definitions");
-
-  const crust = new ApiPromise({
-    provider: new WsProvider(CRUST_RPC_NODES),
-    typesBundle: typesBundleForPolkadot,
-  });
-
-  try {
-    await crust.isReady;
-
-    // 1. 获取当前区块高度
-    const header = await crust.rpc.chain.getHeader();
-    const currentBlock = header.number.toNumber();
-
-    // 2. 获取文件订单信息
-    // 优先尝试 filesV2
-    let res = await crust.query.market.filesV2(cid);
-    if (res.isEmpty) {
-      // 兼容旧版
-      res = await crust.query.market.files(cid);
-    }
-
-    if (res.isEmpty) {
-      return null;
-    }
-
-    const data = res.toJSON() as any;
-    // data.expired_at 是过期区块高度
-    const expiredBlock = data.expired_at;
-
-    // Crust 出块时间约 6 秒
-    const BLOCK_TIME = 6000;
-    const remainingBlocks = expiredBlock - currentBlock;
-    const expiredAt = Date.now() + remainingBlocks * BLOCK_TIME;
-
-    return {
-      expiredAt,
-      fileSize: data.file_size,
-    };
-  } catch (error) {
-    console.error("获取文件状态失败:", error);
-    return null;
-  } finally {
-    await crust.disconnect();
-  }
-};
-
 const crust = {
   auth,
   ipfs,
@@ -733,7 +677,6 @@ const crust = {
   balance,
   saveRemark,
   getRemark,
-  getFileStatus,
 };
 
 export default crust;

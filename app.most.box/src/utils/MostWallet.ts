@@ -80,9 +80,9 @@ export const mostCrust = (danger: string) => {
   const entropy = getBytes(danger);
   const mnemonic = Mnemonic.entropyToPhrase(entropy);
 
-  const mnemonicBytes = toUtf8Bytes(mnemonic);
+  // Polkadot uses entropy as password for PBKDF2, not mnemonic phrase!
   const salt = toUtf8Bytes("mnemonic");
-  const seed = pbkdf2(mnemonicBytes, salt, 2048, 64, "sha512");
+  const seed = pbkdf2(entropy, salt, 2048, 64, "sha512");
   const miniSecret = getBytes(seed).slice(0, 32);
 
   const secretKey = sr25519.secretFromSeed(miniSecret);

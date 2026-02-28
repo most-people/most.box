@@ -88,6 +88,18 @@ const PageContent = () => {
       // Step 2: 上传到 IPFS
       setActiveStep(2);
       const crustWallet = mostCrust(wallet.danger);
+
+      // // 生成认证头
+      // const { crust_address, sign } = crustWallet;
+      // const signature = sign(crust_address);
+      // const authHeader = crust.auth(crust_address, signature);
+
+      // // 使用 IPFS 上传
+      // const { cid, size } = await crust.ipfs(file, authHeader);
+
+      // // 下存储订单
+      // await crust.order(cid, size, wallet.danger, 0, balance || "0");
+
       const { cid } = await crust.upload(file, crustWallet);
 
       // Step 3: 写入链上
