@@ -8,7 +8,11 @@ import type { ApiPromise } from "@polkadot/api";
 export const CRUST_SUBSCAN = "https://crust.subscan.io";
 
 // Crust IPFS Web3 Auth 网关
-const CRUST_IPFS_GW = "https://gw.crustfiles.app";
+const CRUST_IPFS_GWS = [
+  "https://ipfs-gw.decloud.foundation",
+  // "https://gw.crustfiles.app",
+  // "https://gw.crustfiles.net",
+];
 // Crust Pinning 服务
 const CRUST_PIN = "https://pin.crustcode.com";
 // Crust 链 RPC 节点列表
@@ -65,9 +69,10 @@ const ipfs = async (
   onProgress?: (bytes: number) => void,
   signal?: AbortSignal,
 ) => {
+  const gateway = CRUST_IPFS_GWS[0];
   // 创建连接到 Crust 网关的 IPFS 客户端
   const ipfsClient = create({
-    url: `${CRUST_IPFS_GW}/api/v0`,
+    url: `${gateway}/api/v0`,
     headers: {
       authorization: `Basic ${authHeader}`,
     },
@@ -82,7 +87,7 @@ const ipfs = async (
     return {
       cid: result.cid.toString(),
       size: result.size,
-      url: `${CRUST_IPFS_GW}/ipfs/${result.cid.toString()}`,
+      url: `${gateway}/ipfs/${result.cid.toString()}`,
     };
   } catch (error) {
     console.error("IPFS 上传失败:", error);
@@ -104,8 +109,9 @@ const ipfsDir = async (
   onProgress?: (bytes: number) => void,
   signal?: AbortSignal,
 ) => {
+  const gateway = CRUST_IPFS_GWS[0];
   const ipfsClient = create({
-    url: `${CRUST_IPFS_GW}/api/v0`,
+    url: `${gateway}/api/v0`,
     headers: {
       authorization: `Basic ${authHeader}`,
     },
@@ -141,7 +147,7 @@ const ipfsDir = async (
     return {
       cid: root.cid.toString(),
       size: root.size,
-      url: `${CRUST_IPFS_GW}/ipfs/${root.cid.toString()}`,
+      url: `${gateway}/ipfs/${root.cid.toString()}`,
       allFiles: results.map((r) => ({
         cid: r.cid.toString(),
         path: r.path,
@@ -562,7 +568,10 @@ const saveRemark = async (
 
     if (balance < txFee) {
       const error = new Error(
-        `需要 ${formatUnits(txFee, 12)} CRU，但只有 ${formatUnits(balance, 12)} CRU。`,
+        `需要 ${formatUnits(txFee, 12)} CRU，但只有 ${formatUnits(
+          balance,
+          12,
+        )} CRU。`,
         { cause: "INSUFFICIENT_BALANCE" },
       );
       throw error;

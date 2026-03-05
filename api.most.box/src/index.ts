@@ -20,7 +20,7 @@ app.use(
 // 优选网关列表
 const GATEWAYS = [
   "https://gw.crust-gateway.xyz",
-  "https://gw.crust-gateway.com",
+  // "https://gw.crust-gateway.com",
   "https://ipfs.io",
   "https://dweb.link",
   "https://gateway.pinata.cloud",

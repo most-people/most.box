@@ -18,7 +18,10 @@ export const GatewayList: GatewayInfo[] = [
     key: "crust",
     title: "Crust 官方网关",
     description: "由 Crust Network 提供的高速稳定网关",
-    gateways: ["https://gw.crust-gateway.xyz", "https://gw.crust-gateway.com"],
+    gateways: [
+      "https://gw.crust-gateway.xyz",
+      // "https://gw.crust-gateway.com"
+    ],
   },
   {
     key: "public",
@@ -57,7 +60,7 @@ export type DetectionResult = {
 
 export const checkGateway = async (
   gateway: string,
-  cid: string,
+  cid: string
 ): Promise<DetectionResult> => {
   // 移除末尾斜杠
   const baseUrl = gateway.replace(/\/$/, "");
