@@ -28,9 +28,6 @@ export const GatewayList: GatewayInfo[] = [
     title: "公共网关",
     description: "由社区或第三方服务商提供的公共网关",
     gateways: [
-      "https://cloudflare-ipfs.com",
-      "https://nftstorage.link",
-      "https://ipfs.runfission.com",
       "https://cid.most.red",
       "https://ipfs.io",
       "https://dweb.link",
@@ -60,7 +57,7 @@ export type DetectionResult = {
 
 export const checkGateway = async (
   gateway: string,
-  cid: string
+  cid: string,
 ): Promise<DetectionResult> => {
   // 移除末尾斜杠
   const baseUrl = gateway.replace(/\/$/, "");
