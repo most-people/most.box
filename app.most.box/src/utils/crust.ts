@@ -10,7 +10,7 @@ export const CRUST_SUBSCAN = "https://crust.subscan.io";
 // Crust IPFS Web3 Auth 网关
 const CRUST_IPFS_GWS = [
   "https://ipfs-gw.decloud.foundation",
-  // "https://gw.crustfiles.app",
+  "https://gw.crustfiles.app",
   // "https://gw.crustfiles.net",
 ];
 // Crust Pinning 服务
@@ -69,30 +69,37 @@ const ipfs = async (
   onProgress?: (bytes: number) => void,
   signal?: AbortSignal,
 ) => {
-  const gateway = CRUST_IPFS_GWS[0];
-  // 创建连接到 Crust 网关的 IPFS 客户端
-  const ipfsClient = create({
-    url: `${gateway}/api/v0`,
-    headers: {
-      authorization: `Basic ${authHeader}`,
-    },
-  });
+  let lastError: any;
 
-  try {
-    const result = await ipfsClient.add(file, {
-      cidVersion: 1,
-      progress: onProgress,
-      signal,
-    });
-    return {
-      cid: result.cid.toString(),
-      size: result.size,
-      url: `${gateway}/ipfs/${result.cid.toString()}`,
-    };
-  } catch (error) {
-    console.error("IPFS 上传失败:", error);
-    throw error;
+  for (const gateway of CRUST_IPFS_GWS) {
+    try {
+      // 创建连接到 Crust 网关的 IPFS 客户端
+      const ipfsClient = create({
+        url: `${gateway}/api/v0`,
+        headers: {
+          authorization: `Basic ${authHeader}`,
+        },
+      });
+
+      const result = await ipfsClient.add(file, {
+        cidVersion: 1,
+        progress: onProgress,
+        signal,
+      });
+      return {
+        cid: result.cid.toString(),
+        size: result.size,
+        url: `${gateway}/ipfs/${result.cid.toString()}`,
+      };
+    } catch (error) {
+      if (signal?.aborted) throw error;
+      console.warn(`Gateway ${gateway} failed, trying next...`, error);
+      lastError = error;
+    }
   }
+
+  console.error("所有 IPFS 网关上传失败:", lastError);
+  throw lastError;
 };
 
 /**
@@ -109,55 +116,68 @@ const ipfsDir = async (
   onProgress?: (bytes: number) => void,
   signal?: AbortSignal,
 ) => {
-  const gateway = CRUST_IPFS_GWS[0];
-  const ipfsClient = create({
-    url: `${gateway}/api/v0`,
-    headers: {
-      authorization: `Basic ${authHeader}`,
-    },
-  });
+  let lastError: any;
 
-  const progressMap = new Map<string, number>();
-  const internalProgress = (bytes: number, path?: string) => {
-    if (path) {
-      progressMap.set(path, bytes);
+  for (const gateway of CRUST_IPFS_GWS) {
+    try {
+      const ipfsClient = create({
+        url: `${gateway}/api/v0`,
+        headers: {
+          authorization: `Basic ${authHeader}`,
+        },
+      });
+
+      const progressMap = new Map<string, number>();
+      const internalProgress = (bytes: number, path?: string) => {
+        if (path) {
+          progressMap.set(path, bytes);
+        }
+        const total = Array.from(progressMap.values()).reduce(
+          (a, b) => a + b,
+          0,
+        );
+        if (onProgress) onProgress(total);
+      };
+
+      const results = [];
+      for await (const result of ipfsClient.addAll(files, {
+        cidVersion: 1,
+        // wrapWithDirectory: true 会把所有文件包裹在一个空路径的文件夹中
+        wrapWithDirectory: true,
+        progress: internalProgress,
+        signal,
+      })) {
+        results.push(result);
+      }
+
+      // 找到根目录（path 为 "" 的项）
+      const root = results.find((r) => r.path === "");
+      if (!root) {
+        throw new Error("无法获取根目录 CID");
+      }
+
+      return {
+        cid: root.cid.toString(),
+        size: root.size,
+        url: `${gateway}/ipfs/${root.cid.toString()}`,
+        allFiles: results.map((r) => ({
+          cid: r.cid.toString(),
+          path: r.path,
+          size: r.size,
+        })),
+      };
+    } catch (error) {
+      if (signal?.aborted) throw error;
+      console.warn(
+        `Directory upload to gateway ${gateway} failed, trying next...`,
+        error,
+      );
+      lastError = error;
     }
-    const total = Array.from(progressMap.values()).reduce((a, b) => a + b, 0);
-    if (onProgress) onProgress(total);
-  };
-
-  try {
-    const results = [];
-    // wrapWithDirectory: true 会把所有文件包裹在一个空路径的文件夹中
-    for await (const result of ipfsClient.addAll(files, {
-      cidVersion: 1,
-      wrapWithDirectory: true,
-      progress: internalProgress,
-      signal,
-    })) {
-      results.push(result);
-    }
-
-    // 找到根目录（path 为 "" 的项）
-    const root = results.find((r) => r.path === "");
-    if (!root) {
-      throw new Error("无法获取根目录 CID");
-    }
-
-    return {
-      cid: root.cid.toString(),
-      size: root.size,
-      url: `${gateway}/ipfs/${root.cid.toString()}`,
-      allFiles: results.map((r) => ({
-        cid: r.cid.toString(),
-        path: r.path,
-        size: r.size,
-      })),
-    };
-  } catch (error) {
-    console.error("IPFS 文件夹上传失败:", error);
-    throw error;
   }
+
+  console.error("所有 IPFS 网关文件夹上传失败:", lastError);
+  throw lastError;
 };
 
 /**
