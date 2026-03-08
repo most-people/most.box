@@ -3,8 +3,7 @@ import { StateStorage } from "zustand/middleware";
 /**
  * 一个简单的基于 IndexedDB 的 Zustand 存储适配器
  */
-const DB_NAME = "most-box-db";
-const STORE_NAME = "keyvaluepairs";
+import { DB_NAME, STORE_NAME } from "@/constants";
 
 export const idbStorage: StateStorage = {
   getItem: async (name: string): Promise<string | null> => {

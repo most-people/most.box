@@ -27,9 +27,11 @@ export const apiKy = ky.create({
   timeout: false,
 });
 
+import { API_PREFIX_URL, API_LOCAL_PREFIX_URL } from "@/constants";
+
 export const apiAuth = apiKy.extend({
-  // prefixUrl: isDev ? "http://localhost:8787/api" : "https://api.most.box/api",
-  prefixUrl: "https://api.most.box/api",
+  // prefixUrl: isDev ? API_LOCAL_PREFIX_URL : API_PREFIX_URL,
+  prefixUrl: API_PREFIX_URL,
   hooks: {
     beforeRequest: [
       async (request) => {

@@ -3,27 +3,17 @@ import { create } from "kubo-rpc-client";
 import { apiKy } from "@/utils/api";
 import { mostCrust } from "@/utils/MostWallet";
 import type { ApiPromise } from "@polkadot/api";
+import {
+  CRUST_SUBSCAN,
+  CRUST_IPFS_GWS,
+  CRUST_PIN,
+  CRUST_RPC_NODES,
+  CRUST_SUBSCAN_API,
+  CRUST_BATCH_LIMIT,
+} from "@/constants";
 
 // Subscan 浏览器
-export const CRUST_SUBSCAN = "https://crust.subscan.io";
-
-// Crust IPFS Web3 Auth 网关
-const CRUST_IPFS_GWS = [
-  "https://ipfs-gw.decloud.foundation",
-  "https://gw.crustfiles.app",
-  // "https://gw.crustfiles.net",
-];
-// Crust Pinning 服务
-const CRUST_PIN = "https://pin.crustcode.com";
-// Crust 链 RPC 节点列表
-const CRUST_RPC_NODES = [
-  "wss://rpc.crust.network",
-  "wss://rpc-crust-mainnet.decoo.io",
-  "wss://api.decloudf.com",
-  "wss://crust.api.onfinality.io/public-ws",
-];
-// Subscan 浏览器 API
-const CRUST_SUBSCAN_API = "https://crust.api.subscan.io";
+export { CRUST_SUBSCAN };
 
 let crustApi: any = null;
 
@@ -480,12 +470,11 @@ const orderBatch = async (
 
     // 构造批量交易调用
     // 注意：一次 batch 的交易数量受限于区块大小，建议不要超过 100 个
-    const BATCH_LIMIT = 50;
     const results = [];
 
     // 分批处理，防止单次 batch 过大
-    for (let i = 0; i < files.length; i += BATCH_LIMIT) {
-      const chunk = files.slice(i, i + BATCH_LIMIT);
+    for (let i = 0; i < files.length; i += CRUST_BATCH_LIMIT) {
+      const chunk = files.slice(i, i + CRUST_BATCH_LIMIT);
       const calls = chunk.map((file) =>
         crust.tx.market.placeStorageOrder(file.cid, file.size, tips, ""),
       );

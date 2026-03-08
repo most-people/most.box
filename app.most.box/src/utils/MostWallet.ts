@@ -21,7 +21,7 @@ export interface MostWallet {
   type?: "From Signature";
 }
 
-const PBKDF2_ITERATIONS = 3;
+import { PBKDF2_ITERATIONS } from "@/constants";
 
 export const mostWallet = (
   username_address: string,

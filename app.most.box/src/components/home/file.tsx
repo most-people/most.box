@@ -43,7 +43,7 @@ import { FileItem, useUserStore } from "@/stores/userStore";
 import { useFileExplorer } from "@/hooks/useExplorer";
 import { useUploadStore } from "@/stores/uploadStore";
 import UploadProgress from "@/components/UploadProgress";
-import { CRUST_SUBSCAN } from "@/utils/crust";
+import { CRUST_SUBSCAN, MAX_FILE_SIZE } from "@/constants";
 
 export default function HomeFile() {
   // 从 userStore 获取钱包信息和 dotCID
@@ -224,8 +224,8 @@ export default function HomeFile() {
     const fileArray = Array.from(files);
 
     // Check for large files in website upload
-    const MAX_SIZE = 200 * 1024 * 1024; // 200MB
-    const oversizedFiles = fileArray.filter((file) => file.size > MAX_SIZE);
+    // const MAX_SIZE = 200 * 1024 * 1024; // 200MB
+    const oversizedFiles = fileArray.filter((file) => file.size > MAX_FILE_SIZE);
 
     if (oversizedFiles.length > 0) {
       setLargeFiles(oversizedFiles);
@@ -276,8 +276,8 @@ export default function HomeFile() {
       const fileArray = Array.from(files);
 
       // 检查是否有超过 200MB 的大文件
-      const MAX_SIZE = 200 * 1024 * 1024; // 200MB
-      const oversizedFiles = fileArray.filter((file) => file.size > MAX_SIZE);
+      // const MAX_SIZE = 200 * 1024 * 1024; // 200MB
+      const oversizedFiles = fileArray.filter((file) => file.size > MAX_FILE_SIZE);
 
       if (oversizedFiles.length > 0) {
         setLargeFiles(oversizedFiles);

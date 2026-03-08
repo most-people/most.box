@@ -6,6 +6,7 @@ import {
   ZeroAddress,
   getBytes,
 } from "ethers";
+import { BASE36_ALPHABET } from "@/constants";
 import { createAvatar } from "@dicebear/core";
 import { botttsNeutral, icons } from "@dicebear/collection";
 import { type MostWallet, mostWallet } from "@/utils/MostWallet";
@@ -207,8 +208,8 @@ const getIPNS = (private_key: string, ed_public_key: string) => {
   const cidBytes = new Uint8Array(cidHeader.length + mh.length);
   cidBytes.set(cidHeader, 0);
   cidBytes.set(mh, cidHeader.length);
-  const BASE36_LC = "0123456789abcdefghijklmnopqrstuvwxyz";
-  const ipnsId = "k" + baseXEncode(cidBytes, BASE36_LC);
+  // const BASE36_LC = "0123456789abcdefghijklmnopqrstuvwxyz";
+  const ipnsId = "k" + baseXEncode(cidBytes, BASE36_ALPHABET);
   return ipnsId;
 };
 

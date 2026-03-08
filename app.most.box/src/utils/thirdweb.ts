@@ -1,7 +1,8 @@
 import { createThirdwebClient } from "thirdweb";
+import { THIRDWEB_CLIENT_ID } from "@/constants";
 
 //  Thirdweb Client ID https://thirdweb.com/dashboard/settings/api-keys
-const clientId = "35e78b1757357d0969058cfe8bb24e36";
+const clientId = THIRDWEB_CLIENT_ID;
 
 export const client = createThirdwebClient({
   clientId,

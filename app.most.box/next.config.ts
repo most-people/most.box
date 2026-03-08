@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
   devIndicators: false,
   // @polkadot fix
   webpack(config, { isServer }) {
+    config.infrastructureLogging = {
+      level: "error",
+    };
     // 生产环境下强制使用 Terser 替换 SWC 混淆
     if (!isServer && process.env.NODE_ENV === "production") {
       config.optimization.minimizer = [
