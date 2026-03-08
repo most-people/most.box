@@ -14,7 +14,20 @@ import {
 } from "@mantine/core";
 
 import { AppHeader } from "@/components/AppHeader";
-import { MilkdownEditor, MilkdownEditorRef } from "@/components/MilkdownEditor";
+import { MilkdownEditorRef } from "@/components/MilkdownEditor";
+import dynamic from "next/dynamic";
+
+const MilkdownEditor = dynamic(
+  () => import("@/components/MilkdownEditor").then((mod) => mod.MilkdownEditor),
+  {
+    ssr: false,
+    loading: () => (
+      <Center h={400}>
+        <Loader size="xl" type="dots" />
+      </Center>
+    ),
+  },
+);
 
 import "@/app/note/page.scss";
 

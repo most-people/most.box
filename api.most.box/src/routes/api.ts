@@ -3,13 +3,7 @@ import { cryptoWaitReady, signatureVerify } from "@polkadot/util-crypto";
 import { formatUnits } from "ethers";
 import { Bindings, Variables } from "../types";
 import { apiKy } from "../utils/api";
-
-const CRUST_RPC_NODES = [
-  "wss://crust.api.onfinality.io/public-ws",
-  "wss://rpc.crust.network",
-  "wss://rpc-crust-mainnet.decoo.io",
-  "wss://api.decloudf.com",
-];
+import { CRUST_RPC_NODES } from "../constants";
 
 // 认证中间件
 const authMiddleware = async (c: any, next: any) => {
@@ -38,8 +32,11 @@ const authMiddleware = async (c: any, next: any) => {
     await cryptoWaitReady();
 
     // 验证签名
+    // 签名内容：timestamp:method:path
+    const message = `${timestamp}:${c.req.method.toUpperCase()}:${c.req.path}`;
+
     // signatureVerify 能够识别并验证 Polkadot (Sr25519/Ed25519) 和 Ethereum (ECDSA) 签名
-    const { isValid } = signatureVerify(timestamp, signature, address);
+    const { isValid } = signatureVerify(message, signature, address);
 
     if (!isValid) {
       return c.json({ error: "签名无效" }, 401);
@@ -94,8 +91,9 @@ api.post("/free.claim.cru", async (c) => {
     // 动态导入以避免为其他路由加载繁重的库
     const { ApiPromise, WsProvider } = await import("@polkadot/api");
     const { Keyring } = await import("@polkadot/keyring");
-    const { typesBundleForPolkadot } =
-      await import("@crustio/type-definitions");
+    const { typesBundleForPolkadot } = await import(
+      "@crustio/type-definitions"
+    );
 
     // 连接到 Crust
     const provider = new WsProvider(CRUST_RPC_NODES);

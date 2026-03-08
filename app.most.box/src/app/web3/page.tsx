@@ -75,9 +75,10 @@ export default function PageWeb3() {
           <Group>
             <Text>{wallet?.address.toLowerCase() || "-"}</Text>
             <Anchor
-              href={`https://web3.okx.com/zh-hans/portfolio/${wallet?.address || ""}`}
-              target="_blank"
-            >
+              href={`https://web3.okx.com/zh-hans/portfolio/${
+                wallet?.address || ""
+              }`}
+              target="_blank">
               查看
             </Anchor>
           </Group>
@@ -90,8 +91,7 @@ export default function PageWeb3() {
           <Text>{crust_address || "-"}</Text>
           <Anchor
             href={`${CRUST_SUBSCAN}/account/${crust_address || ""}`}
-            target="_blank"
-          >
+            target="_blank">
             查看
           </Anchor>
         </Group>
@@ -105,8 +105,7 @@ export default function PageWeb3() {
             <Text>{balance || "-"} CRU</Text>
             <Anchor
               href="https://www.gate.com/zh/trade/CRU_USDT"
-              target="_blank"
-            >
+              target="_blank">
               购买
             </Anchor>
           </Group>
@@ -138,8 +137,7 @@ export default function PageWeb3() {
             variant="subtle"
             size="sm"
             ml="xs"
-            onClick={() => setShowX25519(!showX25519)}
-          >
+            onClick={() => setShowX25519(!showX25519)}>
             {showX25519 ? <IconEye size={16} /> : <IconEyeOff size={16} />}
           </ActionIcon>
         </Group>
@@ -156,8 +154,7 @@ export default function PageWeb3() {
             variant="subtle"
             size="sm"
             ml="xs"
-            onClick={() => setShowCrust(!showCrust)}
-          >
+            onClick={() => setShowCrust(!showCrust)}>
             {showCrust ? <IconEye size={16} /> : <IconEyeOff size={16} />}
           </ActionIcon>
         </Group>
@@ -167,16 +164,6 @@ export default function PageWeb3() {
           IPNS ID
         </Text>
         <Text>{ipns}</Text>
-
-        <Divider variant="dashed" labelPosition="center" my="md" />
-
-        <Anchor component={Link} href="/web3/ethers">
-          <Text>Ethers</Text>
-        </Anchor>
-
-        <Anchor component={Link} href="/ipns">
-          <Text>IPFS 二维码</Text>
-        </Anchor>
 
         <Text>{mp.formatTime(new Date().getTime())}</Text>
       </Stack>

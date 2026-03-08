@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import api from "./routes/api";
 import { Bindings, Variables } from "./types";
+import { GATEWAYS } from "./constants";
 
 const app = new Hono<{ Bindings: Bindings; Variables: Variables }>();
 
@@ -16,18 +17,6 @@ app.use(
     maxAge: 600,
   }),
 );
-
-// 优选网关列表
-const GATEWAYS = [
-  "https://gw.crust-gateway.xyz",
-  // "https://gw.crust-gateway.com",
-  "https://ipfs.io",
-  "https://dweb.link",
-  "https://gateway.pinata.cloud",
-  "https://ipfs.filebase.io",
-  "https://w3s.link",
-  "https://dget.top",
-];
 
 const GATEWAY = GATEWAYS[0];
 

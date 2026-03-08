@@ -1,8 +1,20 @@
 "use client";
 import { AppHeader } from "@/components/AppHeader";
-import { Container, Box } from "@mantine/core";
+import { Container, Box, Loader, Center } from "@mantine/core";
 import content from "./join.md";
-import { MilkdownEditor } from "@/components/MilkdownEditor";
+import dynamic from "next/dynamic";
+
+const MilkdownEditor = dynamic(
+  () => import("@/components/MilkdownEditor").then((mod) => mod.MilkdownEditor),
+  {
+    ssr: false,
+    loading: () => (
+      <Center h={400}>
+        <Loader size="xl" type="dots" />
+      </Center>
+    ),
+  },
+);
 
 const PageJoin = () => {
   return (

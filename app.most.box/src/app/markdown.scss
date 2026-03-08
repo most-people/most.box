@@ -1,10 +1,27 @@
-.ProseMirror {
-  font-size: 16px;
-  font-family: inherit;
+/* 增加权重 #app */
+#app .milkdown {
+  .ProseMirror {
+    padding: 0;
+
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+
+    a {
+      color: var(--mantine-color-anchor);
+      text-decoration: none;
+    }
+
+    a:hover {
+      // color: var(--mantine-color-anchor);
+      text-decoration: underline;
+    }
+  }
 }
 
 /* MilkdownEditor Crepe 暗黑模式支持 */
-:root[data-mantine-color-scheme="dark"] .milkdown {
+:root[data-mantine-color-scheme="dark"] #app .milkdown {
   --crepe-color-background: transparent;
   --crepe-color-on-background: #c1c2c5;
   --crepe-color-surface: #25262b;
@@ -29,27 +46,25 @@
 
 /* 移动端响应式适配 */
 @media (max-width: 768px) {
-  .milkdown {
+  #app .milkdown {
     .ProseMirror {
       /* 移除两侧和顶部的内边距 */
-      padding: 0 !important;
+      padding: 0;
     }
-  }
 
-  /* 仅在编辑模式下增加底部内边距，防止键盘遮挡 */
-  .editor-mode .milkdown .ProseMirror {
-    padding-bottom: 40vh !important;
-  }
+    /* 仅在编辑模式下增加底部内边距，防止键盘遮挡 */
+    .editor-mode .milkdown .ProseMirror {
+      padding-bottom: 40vh;
+    }
 
-  /* 浏览模式下使用较小的底部内边距 */
-  .viewer-mode .milkdown .ProseMirror {
-    padding-bottom: 0 !important;
-  }
+    /* 浏览模式下使用较小的底部内边距 */
+    .viewer-mode .milkdown .ProseMirror {
+      padding-bottom: 0;
+    }
 
-  .milkdown {
     /* 移动端隐藏块级操作手柄，避免难以交互 */
     .milkdown-block-handle {
-      display: none !important;
+      display: none;
     }
 
     /* 确保斜杠菜单和工具栏适应屏幕宽度 */
@@ -57,12 +72,6 @@
     .milkdown-toolbar {
       max-width: 94vw;
       overflow-x: auto;
-    }
-
-    /* 确保图片自适应宽度 */
-    img {
-      max-width: 100%;
-      height: auto;
     }
   }
 }

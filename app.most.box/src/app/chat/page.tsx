@@ -19,6 +19,7 @@ import {
   Box,
   Card,
   Textarea,
+  Loader,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import {
@@ -31,9 +32,21 @@ import {
 } from "@tabler/icons-react";
 import { useRef, useState, useEffect } from "react";
 import type { DataConnection, MediaConnection } from "peerjs";
-import { MilkdownEditor } from "@/components/MilkdownEditor";
 import IPv6 from "@/assets/docs/IPv6.md";
 import mp from "@/utils/mp";
+import dynamic from "next/dynamic";
+
+const MilkdownEditor = dynamic(
+  () => import("@/components/MilkdownEditor").then((mod) => mod.MilkdownEditor),
+  {
+    ssr: false,
+    loading: () => (
+      <Center h={200}>
+        <Loader size="sm" type="dots" />
+      </Center>
+    ),
+  },
+);
 
 type Role = "joiner" | "creator";
 
@@ -401,8 +414,7 @@ export default function PageChat() {
               color={statusColor}
               variant="light"
               aria-live="polite"
-              aria-atomic
-            >
+              aria-atomic>
               {statusText}
             </Badge>
 
@@ -411,8 +423,7 @@ export default function PageChat() {
                 size="lg"
                 color={p2pStatusColor}
                 variant="light"
-                aria-label="P2P 连接状态"
-              >
+                aria-label="P2P 连接状态">
                 {p2pStatusText}
               </Badge>
             )}
@@ -440,8 +451,7 @@ export default function PageChat() {
                         variant={copied ? "filled" : "light"}
                         color={copied ? "teal" : "gray"}
                         onClick={copy}
-                        aria-label="复制房间ID"
-                      >
+                        aria-label="复制房间ID">
                         {copied ? "✓" : "⧉"}
                       </ActionIcon>
                     </Tooltip>
@@ -457,8 +467,7 @@ export default function PageChat() {
                     color="red"
                     variant="light"
                     onClick={disconnect}
-                    leftSection={<IconPhoneOff size={16} />}
-                  >
+                    leftSection={<IconPhoneOff size={16} />}>
                     断开
                   </Button>
                 </>
@@ -469,8 +478,7 @@ export default function PageChat() {
                     disabled={!clientId}
                     leftSection={<IconPhonePlus size={16} />}
                     color="blue"
-                    variant="light"
-                  >
+                    variant="light">
                     加入
                   </Button>
                 </>
@@ -529,8 +537,7 @@ export default function PageChat() {
                     inset: 0,
                     borderRadius: 8,
                     backgroundColor: "var(--mantine-color-gray-light)",
-                  }}
-                >
+                  }}>
                   <Group gap="xs">
                     <Text size="sm" c="dimmed">
                       摄像头已关闭
@@ -554,8 +561,7 @@ export default function PageChat() {
                     ) : (
                       <IconMicrophoneOff size={16} />
                     )
-                  }
-                >
+                  }>
                   麦克风
                 </Button>
               </Tooltip>
@@ -573,8 +579,7 @@ export default function PageChat() {
                     ) : (
                       <IconVideoOff size={16} />
                     )
-                  }
-                >
+                  }>
                   摄像头
                 </Button>
               </Tooltip>
@@ -615,8 +620,7 @@ export default function PageChat() {
               backgroundColor: "var(--mantine-color-gray-light)",
               borderRadius: 6,
               padding: 8,
-            }}
-          >
+            }}>
             {chatMessages.length === 0 ? (
               <Center c="dimmed" h={220}>
                 <Text size="sm">
@@ -641,8 +645,7 @@ export default function PageChat() {
                       textAlign: m.self ? "right" : "left",
                     }}
                     aria-label={`${m.from} 的消息`}
-                    title={mp.formatDate(m.ts)}
-                  >
+                    title={mp.formatDate(m.ts)}>
                     <Text size="xs" c="dimmed">
                       {m.from} {mp.formatDate(m.ts)}
                     </Text>
@@ -678,8 +681,7 @@ export default function PageChat() {
             <Group gap="xs">
               <Button
                 onClick={sendChat}
-                disabled={!chatReady || !chatInput.trim()}
-              >
+                disabled={!chatReady || !chatInput.trim()}>
                 发送
               </Button>
             </Group>
@@ -687,13 +689,11 @@ export default function PageChat() {
         </Paper>
 
         <Card withBorder>
-          <Box>
-            <MilkdownEditor
-              content={IPv6}
-              readOnly={true}
-              className="viewer-mode"
-            />
-          </Box>
+          <MilkdownEditor
+            content={IPv6}
+            readOnly={true}
+            className="viewer-mode"
+          />
         </Card>
         <Center>基于 PeerJS，WebRTC 协议</Center>
       </Stack>
