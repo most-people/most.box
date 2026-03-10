@@ -1,4 +1,3 @@
-
 // API Configuration
 export const API_PREFIX_URL = "https://api.most.box/api";
 export const API_LOCAL_PREFIX_URL = "http://localhost:8787/api";
@@ -53,6 +52,12 @@ export const IPFS_GATEWAY_LIST: GatewayInfo[] = [
     title: "自定义网关",
     description: "用户自定义的 IPFS 网关",
     gateways: ["https://mp9.io", "http://localhost:8080"],
+  },
+  {
+    key: "thirdweb",
+    title: "Thirdweb 加速",
+    description: "由 Thirdweb 提供的全球 CDN 加速网关",
+    gateways: [`https://${THIRDWEB_CLIENT_ID}.ipfscdn.io`],
   },
   {
     key: "crust",

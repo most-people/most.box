@@ -366,8 +366,8 @@ function GatewayManagerContent() {
                         e.currentTarget.style.boxShadow = "";
                       }}
                     >
-                      <Group justify="space-between" mb="md">
-                        <Group gap="xs">
+                      <Group justify="space-between" mb="md" wrap="nowrap">
+                        <Group gap="xs" wrap="nowrap">
                           <ThemeIcon
                             size={36}
                             radius="md"

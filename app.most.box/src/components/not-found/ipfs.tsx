@@ -192,8 +192,8 @@ const PageContent = () => {
               gatewayStatus === "error"
                 ? "red"
                 : gatewayStatus === "checking"
-                  ? "yellow"
-                  : "green"
+                ? "yellow"
+                : "green"
             }
           >
             网关: {dotCID ? new URL(dotCID).hostname : "未选择"}
@@ -259,18 +259,19 @@ const PageContent = () => {
             >
               播放
             </Button>
-          ) : (
-            <Button
-              color="green"
-              variant="light"
-              w="100%"
-              component={Link}
-              target="_blank"
-              href={previewUrl}
-            >
-              打开
-            </Button>
-          )}
+          ) : null}
+
+          <Button
+            color="green"
+            variant="light"
+            w="100%"
+            component={Link}
+            target="_blank"
+            href={previewUrl}
+          >
+            打开
+          </Button>
+
           {filename ? (
             <Button
               variant="light"
