@@ -81,14 +81,16 @@ Most.Box 的诞生，深受数学与密码朋克精神的指引。我们不相�
 
 ```bash
 .
-├── api.most.box/         # 后端 API 服务 (Cloudflare Workers)
-├── app.most.box/         # 前端应用主目录
-│   ├── src/
-│   │   ├── app/          # Next.js App Router 页面
-│   │   ├── components/   # React 组件
-│   │   └── utils/        # 核心逻辑 (crust.ts, ipfs.ts 等)
+├── src/
+│   ├── app/          # Next.js App Router 页面
+│   ├── components/   # React 组件
+│   └── utils/        # 核心逻辑 (crust.ts, ipfs.ts 等)
+├── public/           # 静态资源
+├── package.json
 └── README.md
 ```
+
+> 后端 API 服务已独立至 [api.most.box](https://github.com/most-people/api.most.box) 仓库。
 
 ---
 
@@ -111,9 +113,6 @@ npm install
 
 # 启动前端 (默认端口: 2026)
 npm start
-
-# 启动后端 API
-npm run api
 ```
 
 访问 `http://localhost:2026` 即可预览。
@@ -121,7 +120,7 @@ npm run api
 ### 3. 构建与部署
 
 ```bash
-# 构建静态文件 (产物位于 app.most.box/out)
+# 构建静态文件 (产物位于 /out)
 npm run build
 ```
 
