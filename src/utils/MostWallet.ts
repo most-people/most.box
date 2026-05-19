@@ -23,40 +23,46 @@ export interface MostWallet {
 
 import { PBKDF2_ITERATIONS } from "@/constants";
 
+export const mostWalletWithIterations = (
+  username: string,
+  password: string,
+  iterations: number,
+): MostWallet => {
+  const p = toUtf8Bytes(password);
+  const salt = toUtf8Bytes("/most.box/" + username);
+  const kdf = pbkdf2(p, salt, iterations, 32, "sha512");
+  const seed = getBytes(sha256(getBytes(kdf)));
+  const mnemonic = Mnemonic.entropyToPhrase(seed);
+  const account = HDNodeWallet.fromPhrase(mnemonic);
+  return {
+    username,
+    address: account.address,
+    danger: hexlify(seed),
+  };
+};
+
 export const mostWallet = (
   username_address: string,
   password_signature: string,
   type?: "From Signature",
 ): MostWallet => {
-  let seed: Uint8Array;
-  let address: string;
-  let username = username_address;
-
   if (type === "From Signature") {
-    address = username_address;
-    username = username_address.slice(-4);
+    const address = username_address;
+    const username = username_address.slice(-4);
     const signature = password_signature;
-    seed = getBytes(sha256(getBytes(signature)));
-  } else {
-    const password = password_signature;
-    const p = toUtf8Bytes(password);
-    const salt = toUtf8Bytes("/most.box/" + username);
-
-    const kdf = pbkdf2(p, salt, PBKDF2_ITERATIONS, 32, "sha512");
-    seed = getBytes(sha256(getBytes(kdf)));
-
-    // wallet all in one
-    const mnemonic = Mnemonic.entropyToPhrase(seed);
-    const account = HDNodeWallet.fromPhrase(mnemonic);
-    address = account.address;
+    const seed = getBytes(sha256(getBytes(signature)));
+    return {
+      username,
+      address,
+      danger: hexlify(seed),
+      type,
+    };
   }
-
-  return {
-    username,
-    address,
-    danger: hexlify(seed),
-    type,
-  };
+  return mostWalletWithIterations(
+    username_address,
+    password_signature,
+    PBKDF2_ITERATIONS,
+  );
 };
 
 // Wallet Mnemonic

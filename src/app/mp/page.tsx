@@ -3,7 +3,7 @@
 import { AppHeader } from "@/components/AppHeader";
 import { Container, SimpleGrid, Paper, Text, Group } from "@mantine/core";
 import Link from "next/link";
-import { IconLock, IconDatabaseImport } from "@tabler/icons-react";
+import { IconLock, IconDatabaseImport, IconTransfer } from "@tabler/icons-react";
 
 export default function MpPage() {
   const tools = [
@@ -18,6 +18,12 @@ export default function MpPage() {
       description: "将旧版加密数据迁移到新版格式",
       href: "/mp/migrate",
       icon: <IconDatabaseImport size={24} />,
+    },
+    {
+      title: "账户迁移",
+      description: "将旧版迭代密钥数据迁移到新版账户",
+      href: "/mp/migrate/account",
+      icon: <IconTransfer size={24} />,
     },
   ];
 
