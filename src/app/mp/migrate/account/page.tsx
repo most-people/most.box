@@ -123,12 +123,13 @@ export default function PageAccountMigrate() {
         });
       }
 
-      const json = JSON.stringify(data, null, 2);
-      const blob = new Blob([json], { type: "application/json" });
+      const json = JSON.stringify(data);
+      const encrypted = mostEncode(json, newWallet.danger);
+      const blob = new Blob([encrypted], { type: "text/plain" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${newUsername}-migrated-${dayjs().format("YYYY-MM-DD")}.json`;
+      a.download = `${newUsername}-migrated-${dayjs().format("YYYY-MM-DD")}.txt`;
       a.click();
       URL.revokeObjectURL(url);
 
@@ -250,7 +251,7 @@ export default function PageAccountMigrate() {
           size="md"
           mt="md"
         >
-          开始转换并下载 JSON
+          开始转换并下载
         </Button>
       </Stack>
     </Container>
